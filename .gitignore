@@ -92,3 +92,4 @@ ENV/
 SECRET*
 *_run_jekyll.sh
 docs/_site
+docs/.jekyll-metadata

@@ -1,4 +1,4 @@
-![The Mystic River]({{ site.url }}/assets/mystic.jpg)
+![The Mystic River](assets/mystic.jpg)
 
 # About
 
