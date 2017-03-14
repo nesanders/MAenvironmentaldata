@@ -8,7 +8,7 @@ author: NES
 
 	{% for thepage in site.posts %}
 		{% if thepage.layout == 'post' %}
-		<li><span><a href="{{ thepage.url }}" title="{{ thepage.title }}">{{ thepage.title }}</a></li>
+		<li><span><a href="{{ site.url }}{{ site.baseurl }}{{ thepage.url }}">{{ thepage.title }}</a></li>
 		{% endif %}
 	{% endfor %}
 </ul>

@@ -8,7 +8,7 @@ author: NES
 
 	{% for thepage in site.pages %}
 		{% if thepage.layout == 'data_listing' %}
-		<li><span><a href="{{ thepage.url }}" title="{{ thepage.title }}">{{ thepage.title }}</a></li>
+		<li><span><a href="{{ site.url }}{{ site.baseurl }}{{ thepage.url }}" title="{{ thepage.title }}">{{ thepage.title }}</a></li>
 		{% endif %}
 	{% endfor %}
 </ul>
