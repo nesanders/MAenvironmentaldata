@@ -1,0 +1,15 @@
+---
+---
+
+@import "{{ site.theme }}";
+
+/* Sidebar background color */
+header { background-color: #27563a; width: 220px; }
+
+/* Sidebar button colors */
+header li { background: #285858; background: -moz-linear-gradient(top, #285858 0%, #3f8d8d 100%); background: -webkit-gradient(linear, left top, left bottom, color-stop(0%, #f8f8f8), color-stop(100%, #dddddd)); background: -webkit-linear-gradient(top, #285858 0%, #3f8d8d 100%); background: -o-linear-gradient(top, #285858 0%, #3f8d8d 100%); background: -ms-linear-gradient(top, #285858 0%, #3f8d8d 100%); background: linear-gradient(top, #285858 0%, #3f8d8d 100%);  -webkit-box-shadow: none; box-shadow: none; }
+
+header li:hover { background: #72c0c0; background: -moz-linear-gradient(top, #72c0c0 0%, #95d0d0 100%); background: -webkit-gradient(linear, left top, left bottom, color-stop(0%, #f8f8f8), color-stop(100%, #dddddd)); background: -webkit-linear-gradient(top, #72c0c0 0%, #95d0d0 100%); background: -o-linear-gradient(top, #72c0c0 0%, #95d0d0 100%); background: -ms-linear-gradient(top, #72c0c0 0%, #95d0d0 100%); background: linear-gradient(top, #72c0c0 0%, #95d0d0 100%); }
+
+/* Linkcolor */
+a { color: #285858; }

@@ -90,4 +90,5 @@ ENV/
 
 # NES
 SECRET*
-
+*_run_jekyll.sh
+docs/_site
