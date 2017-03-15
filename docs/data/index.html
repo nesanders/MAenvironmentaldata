@@ -6,9 +6,19 @@ author: NES
 <h1>{{ site.data.site_config.site_abbrev }} {{ page.title }}</h1>
 <ul class="posts">
 
+<h2>MA Environmental Datasets</h2>
 	{% for thepage in site.pages %}
-		{% if thepage.layout == 'data_listing' %}
+		{% if thepage.layout == 'data_listing' and thepage.ancillary != 1 %}
 		<li><span><a href="{{ site.url }}{{ site.baseurl }}{{ thepage.url }}" title="{{ thepage.title }}">{{ thepage.title }}</a></li>
 		{% endif %}
 	{% endfor %}
+
+<h2>Supporting Datasets</h2>
+
+	{% for thepage in site.pages %}
+		{% if thepage.layout == 'data_listing' and thepage.ancillary == 1 %}
+		<li><span><a href="{{ site.url }}{{ site.baseurl }}{{ thepage.url }}" title="{{ thepage.title }}">{{ thepage.title }}</a></li>
+		{% endif %}
+	{% endfor %}
+
 </ul>

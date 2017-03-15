@@ -2,6 +2,7 @@
 title: Massachusetts Department of Environmental Protection enforcement action data
 author: NES
 layout: data_listing
+ancillary: 0
 ---
 
 ## Data source
