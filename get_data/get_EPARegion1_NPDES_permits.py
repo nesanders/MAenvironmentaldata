@@ -36,6 +36,8 @@ for ci, content in enumerate(all_content):
 	print stage, state
 	header = [table[0].findAll('th')[i].get_text() for i in range(len(table[0].findAll('th')))]
 
+	if stage == 'final' and state == 'ma': pdb.set_trace()
+	
 	for row in table[1:]:
 		permit_data += [{}]
 		
@@ -82,7 +84,7 @@ for ci, content in enumerate(all_content):
 					permit_data[-1]['City/Town'] = permit_data[-1][col].split(' (')[0].strip()
 				
 			if col == 'Facility Name':
-				permit_data[-1]['Facility_name_clean'] = permit_data[-1][col].split(' (PDF')[0]
+				permit_data[-1]['Facility_name_clean'] = permit_data[-1][col].split(' (PDF')[0].split('\n')[0]
 				if '(PDF' in permit_data[-1][col]:
 					permit_data[-1]['Permit_URL'] = ['https://www3.epa.gov/region1/npdes/' + element.findAll('a')[j].get('href') for j in range(len(element.findAll('a')))]
 				else:
@@ -91,7 +93,8 @@ for ci, content in enumerate(all_content):
 
 permit_df = pd.DataFrame(permit_data)
 
-permit_dir = '../docs/assets/permits/EPA_Region1_NPDES_permits/{}/{}/{}_'
+permit_dir = 'EPA_Region1_NPDES_permits/{}/{}/{}_'
+gsURL = 'http://storage.googleapis.com/ns697-merdr/EPA_Region1_NPDES_permits/{}/{}/{}_'
 os.system('mkdir '+permit_dir.split('/')[0])
 
 out_files = []
@@ -108,16 +111,22 @@ for i in range(len(permit_df)):
 				check_path = '/'.join(out_path.split('/')[:i])
 				if os.path.exists(check_path) == 0:
 					os.system('mkdir '+check_path)
-			out_files[-1] += [out_path + permit.split('/')[-1]]
-			os.system('wget '+permit+' --no-clobber -O ' + out_files[-1][-1])
+			out_files[-1] += [gsURL.format(state, stage, permitID) + permit.split('/')[-1]]
+			os.system('wget '+permit+' --no-clobber -O ' + out_path + permit.split('/')[-1])
 	else:
 		out_files += [['']]
 
-permit_df['permit_path'] = out_files
+permit_df['gs_path'] = ['<br>'.join(['[Permit PDF]('+xx+')' for xx in x if xx!= '']) for x in out_files]
+
+permit_df = permit_df.sort_values(by = ['State','Watershed','Stage','Facility_name_clean'])
+
+## Push PDFs to Google Cloud
+os.system('gsutil rsync -r '+permit_dir.split('/{}/')[0]+' gs://ns697-merdr/'+permit_dir.split('/{}/')[0])
+## access at e.g. http://storage.googleapis.com/ns697-merdr/EPA_Region1_NPDES_permits/nh/final/NH0000116_finalnh0000116permit.pdf
 
 ## Write out data
 permit_df.to_pickle('EPARegion1_NPDES_permit_data.p')
-permit_df.to_csv('../docs/data/EPARegion1_NPDES_permit_data.csv', index=0)
+permit_df.to_csv('../docs/data/EPARegion1_NPDES_permit_data.csv', index=0, encoding='ascii') #UTF8 outputs break tables in jekyll!  http://support.markedapp.com/discussions/problems/18583-rendering-tables-with-kramdown
 os.system('cp ../docs/data/EPARegion1_NPDES_permit_data.csv ../docs/_data/EPARegion1_NPDES_permit_data.csv')
 
 

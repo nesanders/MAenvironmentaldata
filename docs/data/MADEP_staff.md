@@ -9,7 +9,7 @@ ancillary: 0
 
 MA Department of Environmental Protection staff records dating back to 2004 are availabe on the [VisibleGovernment](https://qvs.visiblegovernment.us/QvAJAXZfc/notoolbar.htm?document=Clients/Massachusetts/Payroll/MA_Payroll.qvw).  
 
-These enforcements actions have been archived on this site, last updated on **{{ site.data.ts_update_MADEP_enforcement_actions.updated | date: "%-d %B %Y" }}**.
+These records have been archived on this site, last updated on **{{ site.data.ts_update_MADEP_enforcement_actions.updated | date: "%-d %B %Y" }}**.
 
 ## Download our archive of this data in [CSV format](MADEP_staff.csv).
 

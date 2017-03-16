@@ -28,13 +28,18 @@ The federal Evironmental Protection Agency (EPA) Region 1 (New England) stores p
 * [VT final permits](https://www3.epa.gov/region1/npdes/draft_permits_listing_vt.html)
 
 
-These enforcements actions have been archived on this site, last updated on **{{ site.data.ts_update_EPARegion1_NPDES_permit.updated | date: "%-d %B %Y %I:%M %P" }}**.
+These permits have been archived on this site, last updated on **{{ site.data.ts_update_EPARegion1_NPDES_permit.updated | date: "%-d %B %Y %I:%M %P" }}**.
 
 ## Download our archive of this data in [CSV format](EPARegion1_NPDES_permit_data.csv).
 
 <!-- Note: need to have the for loop markup on the same line as the table rows as described here: http://stackoverflow.com/questions/35642820/jekyll-how-to-use-for-loop-to-generate-table-row-within-the-same-table-inside-m -->
 
-| State | Stage | Watershed | Facility_name_clean | Permit_URL |
-| --- | --- | --- | --- | --- |{% for row in site.data.EPARegion1_NPDES_permit_data %}{% assign path_array = {{ row.permit_path }} | split: 'docs/' %}
-| {{ row.State }} | {{ row.Stage }} | {{ row.Watershed }} | {{ row.Facility_name_clean }} | [link](../{{ path_array[1] }}) |{% endfor %}
+<!--| State | Stage | Watershed | Facility name | PDF link |
+| --- | --- | --- | --- | --- |{% for row in site.data.EPARegion1_NPDES_permit_data %}{% assign path_array = {{ row.gs_path }} | split: '||'  %}
+| {{ row.State }} | {{ row.Stage }} | {{ row.Watershed }} | {{ row.Facility_name_clean }} | {% for i in path_array %} [link]({{ path_array[i] }}) <br> {% endfor %} |{% endfor %}-->
+
+| State | Stage | Watershed | Facility name | PDF link |
+| --- | --- | --- | --- | --- |{% for row in site.data.EPARegion1_NPDES_permit_data %}
+| {{ row.State | upcase }} | {{ row.Stage }} | {{ row.Watershed }} | {{ row.Facility_name_clean }} | {{ row.gs_path }} |{% endfor %}
+
 
