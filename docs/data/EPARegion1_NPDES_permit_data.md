@@ -41,12 +41,8 @@ We provide our archive of this data in [CSV format](EPARegion1_NPDES_permit_data
 
 <!-- Note: need to have the for loop markup on the same line as the table rows as described here: http://stackoverflow.com/questions/35642820/jekyll-how-to-use-for-loop-to-generate-table-row-within-the-same-table-inside-m -->
 
-<!--| State | Stage | Watershed | Facility name | PDF link |
-| --- | --- | --- | --- | --- |{% for row in site.data.EPARegion1_NPDES_permit_data %}{% assign path_array = {{ row.gs_path }} | split: '||'  %}
-| {{ row.State }} | {{ row.Stage }} | {{ row.Watershed }} | {{ row.Facility_name_clean }} | {% for i in path_array %} [link]({{ path_array[i] }}) <br> {% endfor %} |{% endfor %}-->
-
-| State | Stage | Watershed | Facility name | PDF link |
-| --- | --- | --- | --- | --- |{% for row in site.data.EPARegion1_NPDES_permit_data %}
-| {{ row.State | upcase }} | {{ row.Stage }} | {{ row.Watershed }} | {{ row.Facility_name_clean }} | {{ row.gs_path }} |{% endfor %}
+| State | Stage | Watershed | Facility name | Date of Issuance | PDF link |
+| --- | --- | --- | --- | --- | --- |{% for row in site.data.EPARegion1_NPDES_permit_data %}
+| {{ row.State | upcase }} | {{ row.Stage }} | {{ row.Watershed }} | {{ row.Facility_name_clean }} | {{ row.Date_of_Issuance }} | {{ row.gs_path }} |{% endfor %}
 {: .sortable}
 

@@ -65,56 +65,61 @@ for ci, content in enumerate(all_content):
 		if stage == 'final' and state == 'ma': pdb.set_trace()
 		
 		for row in table[1:]:
-			permit_data += [{}]
-			
-			permit_data[-1]['Stage'] = stage
-			permit_data[-1]['State'] = state
-			
-			for i,col in enumerate(header):
-				if '<td>' in str(row):
-					element = row.findAll('td')[i]
-				elif '<th>' in str(row):
-					element = row.findAll('th')[i]
-				else:
-					raise 
+			if 'Facility Name' not in row.text:
 				
-				permit_data[-1][col] = unidecode(element.get_text())
+				permit_data += [{}]
 				
-				if permit_data[-1][col] == 'N/A':
-					nullcol = 1
-					permit_data[-1][col] = np.nan
-				else:
-					nullcol = 0
+				permit_data[-1]['Stage'] = stage
+				permit_data[-1]['State'] = state
 				
-				if stage == 'draft':
-					
-					permit_data[-1]['Watershed'] = np.nan
-					
-					if col == 'Comment Period Dates':
-						if nullcol == 0 and '-' not in permit_data[-1][col]: nullcol=1
-						if nullcol:
-							for cc in ['Comment_date_start', 'Comment_date_end', 'Comment_date_extension']:
-								permit_data[-1][cc] = np.nan
-						else:
-							permit_data[-1]['Comment_date_start'] = permit_data[-1][col].split()[0]
-							permit_data[-1]['Comment_date_end'] = permit_data[-1][col].split(' - ')[1].split(' (')[0]
-							permit_data[-1]['Comment_date_extension'] = permit_data[-1][col].split()[-1][:-1] if ('Extended' in permit_data[-1][col] or 'Re-opening' in permit_data[-1][col]) else np.nan
-					
-				
-				if stage == 'final':
-					if 'Watershed' in col:
-						if '(' in permit_data[-1][col]:
-							permit_data[-1]['Watershed'] = permit_data[-1][col].split('(')[1][:-1].strip()
-						else:
-							permit_data[-1]['Watershed'] = np.nan
-						permit_data[-1]['City/Town'] = permit_data[-1][col].split(' (')[0].strip()
-					
-				if col == 'Facility Name':
-					permit_data[-1]['Facility_name_clean'] = permit_data[-1][col].split(' (PDF')[0].split('\n')[0]
-					if '(PDF' in permit_data[-1][col]:
-						permit_data[-1]['Permit_URL'] = ['https://www3.epa.gov/region1/npdes/' + element.findAll('a')[j].get('href') for j in range(len(element.findAll('a')))]
+				for i,col in enumerate(header):
+					if '<td>' in str(row):
+						element = row.findAll('td')[i]
+					elif '<th>' in str(row):
+						element = row.findAll('th')[i]
 					else:
-						permit_data[-1]['Permit_URL'] = np.nan
+						raise 
+					
+					permit_data[-1][col] = unidecode(element.get_text())
+					
+					if permit_data[-1][col] == 'N/A':
+						nullcol = 1
+						permit_data[-1][col] = np.nan
+					else:
+						nullcol = 0
+					
+					if stage == 'draft':
+						
+						permit_data[-1]['Watershed'] = np.nan
+						
+						if col == 'Comment Period Dates':
+							if nullcol == 0 and '-' not in permit_data[-1][col]: nullcol=1
+							if nullcol:
+								for cc in ['Comment_date_start', 'Comment_date_end', 'Comment_date_extension']:
+									permit_data[-1][cc] = np.nan
+							else:
+								permit_data[-1]['Comment_date_start'] = permit_data[-1][col].split()[0]
+								permit_data[-1]['Comment_date_end'] = permit_data[-1][col].split(' - ')[1].split(' (')[0]
+								permit_data[-1]['Comment_date_extension'] = permit_data[-1][col].split()[-1][:-1] if ('Extended' in permit_data[-1][col] or 'Re-opening' in permit_data[-1][col]) else np.nan
+						
+					
+					if stage == 'final':
+						if 'Watershed' in col:
+							if '(' in permit_data[-1][col]:
+								permit_data[-1]['Watershed'] = permit_data[-1][col].split('(')[1][:-1].strip()
+							else:
+								permit_data[-1]['Watershed'] = np.nan
+							permit_data[-1]['City/Town'] = permit_data[-1][col].split(' (')[0].strip()
+							
+						if 'Issuance' in col:
+							permit_data[-1]['Date of Issuance'] = permit_data[-1][col]
+						
+					if col == 'Facility Name':
+						permit_data[-1]['Facility_name_clean'] = permit_data[-1][col].split(' (PDF')[0].split('\n')[0]
+						if '(PDF' in permit_data[-1][col]:
+							permit_data[-1]['Permit_URL'] = ['https://www3.epa.gov/region1/npdes/' + element.findAll('a')[j].get('href') for j in range(len(element.findAll('a')))]
+						else:
+							permit_data[-1]['Permit_URL'] = np.nan
 
 
 permit_df = pd.DataFrame(permit_data)
@@ -152,6 +157,7 @@ os.system('gsutil rsync -r '+permit_dir.split('/{}/')[0]+' gs://ns697-merdr/'+pe
 
 ## Write out data
 permit_df.to_pickle('EPARegion1_NPDES_permit_data.p')
+permit_df.rename(columns = {c:c.replace(' ','_') for c in permit_df.columns}, inplace=1)
 permit_df.to_csv('../docs/data/EPARegion1_NPDES_permit_data.csv', index=0, encoding='ascii') #UTF8 outputs break tables in jekyll!  http://support.markedapp.com/discussions/problems/18583-rendering-tables-with-kramdown
 os.system('cp ../docs/data/EPARegion1_NPDES_permit_data.csv ../docs/_data/EPARegion1_NPDES_permit_data.csv')
 
