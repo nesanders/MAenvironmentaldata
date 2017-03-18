@@ -24,71 +24,97 @@ for state in all_states:
 		all_url_states += [state]
 		all_url_stages += [stage]
 
-all_content = [urllib2.urlopen(all_urls[i]).read() for i in range(len(all_urls))]
+opener = urllib2.build_opener()  
+all_content = [opener.open(urllib2.Request(all_urls[i])).read() for i in range(len(all_urls))]
 with open('EPARegion1_NPDES_permit_pages.p', 'w') as f: pickle.dump(all_content, f)
 
 permit_data = []
 for ci, content in enumerate(all_content):
-	soup = BeautifulSoup(content, 'lxml')
-	table = soup.findAll('tr')
+	
 	stage = all_url_stages[ci]
 	state = all_url_states[ci]
-	print stage, state
-	header = [table[0].findAll('th')[i].get_text() for i in range(len(table[0].findAll('th')))]
-
-	if stage == 'final' and state == 'ma': pdb.set_trace()
+		
+	## ajax/json table
+	if "'ajax': jsonURL" in content:
+		jsonfn = content.split("jsonURL = '")[1].split("';")[0]
+		jsonURL = '/'.join(all_urls[ci].split('/')[:-1]) + '/' + jsonfn
+		jsoncontent = unidecode(opener.open(urllib2.Request(jsonURL)).read())
+		pdf = pd.read_json(jsoncontent, orient='split')
+		pdf['City/Town'] = pdf['City / Town (Watershed)'].apply(lambda x: x.split(' (')[0].strip())
+		pdf['Facility_name_clean'] = pdf['Facility Name'].apply(lambda x: BeautifulSoup(x).text.split(' (PDF')[0].split('\n')[0].split("in new window.'>")[-1])
+		pdf['Permit_URL'] = pdf['Facility Name'].apply(lambda x: [
+				BeautifulSoup(x).findAll('a')[j].get('href') 
+				for j in range(len(BeautifulSoup(x).findAll('a')))
+				])
+		pdf['Stage'] = stage
+		pdf['State'] = state
+		pdf['Watershed'] = pdf['City / Town (Watershed)'].apply(lambda x: x.split('(')[1][:-1].strip() if '(' in x else np.nan)
+		
+		## Add to list readout
+		for i in range(len(pdf)):
+			permit_data += [dict(pdf.iloc[i])]
 	
-	for row in table[1:]:
-		permit_data += [{}]
+	## HTML table
+	else:
+		soup = BeautifulSoup(content, 'lxml')
 		
-		permit_data[-1]['Stage'] = stage
-		permit_data[-1]['State'] = state
+		table = soup.findAll('tr')
+		print stage, state
+		header = [table[0].findAll('th')[i].get_text() for i in range(len(table[0].findAll('th')))]
+
+		if stage == 'final' and state == 'ma': pdb.set_trace()
 		
-		for i,col in enumerate(header):
-			if '<td>' in str(row):
-				element = row.findAll('td')[i]
-			elif '<th>' in str(row):
-				element = row.findAll('th')[i]
-			else:
-				raise 
+		for row in table[1:]:
+			permit_data += [{}]
 			
-			permit_data[-1][col] = unidecode(element.get_text())
+			permit_data[-1]['Stage'] = stage
+			permit_data[-1]['State'] = state
 			
-			if permit_data[-1][col] == 'N/A':
-				nullcol = 1
-				permit_data[-1][col] = np.nan
-			else:
-				nullcol = 0
-			
-			if stage == 'draft':
-				
-				permit_data[-1]['Watershed'] = np.nan
-				
-				if col == 'Comment Period Dates':
-					if nullcol == 0 and '-' not in permit_data[-1][col]: nullcol=1
-					if nullcol:
-						for cc in ['Comment_date_start', 'Comment_date_end', 'Comment_date_extension']:
-							permit_data[-1][cc] = np.nan
-					else:
-						permit_data[-1]['Comment_date_start'] = permit_data[-1][col].split()[0]
-						permit_data[-1]['Comment_date_end'] = permit_data[-1][col].split(' - ')[1].split(' (')[0]
-						permit_data[-1]['Comment_date_extension'] = permit_data[-1][col].split()[-1][:-1] if ('Extended' in permit_data[-1][col] or 'Re-opening' in permit_data[-1][col]) else np.nan
-				
-			
-			if stage == 'final':
-				if 'Watershed' in col:
-					if '(' in permit_data[-1][col]:
-						permit_data[-1]['Watershed'] = permit_data[-1][col].split('(')[1][:-1].strip()
-					else:
-						permit_data[-1]['Watershed'] = np.nan
-					permit_data[-1]['City/Town'] = permit_data[-1][col].split(' (')[0].strip()
-				
-			if col == 'Facility Name':
-				permit_data[-1]['Facility_name_clean'] = permit_data[-1][col].split(' (PDF')[0].split('\n')[0]
-				if '(PDF' in permit_data[-1][col]:
-					permit_data[-1]['Permit_URL'] = ['https://www3.epa.gov/region1/npdes/' + element.findAll('a')[j].get('href') for j in range(len(element.findAll('a')))]
+			for i,col in enumerate(header):
+				if '<td>' in str(row):
+					element = row.findAll('td')[i]
+				elif '<th>' in str(row):
+					element = row.findAll('th')[i]
 				else:
-					permit_data[-1]['Permit_URL'] = np.nan
+					raise 
+				
+				permit_data[-1][col] = unidecode(element.get_text())
+				
+				if permit_data[-1][col] == 'N/A':
+					nullcol = 1
+					permit_data[-1][col] = np.nan
+				else:
+					nullcol = 0
+				
+				if stage == 'draft':
+					
+					permit_data[-1]['Watershed'] = np.nan
+					
+					if col == 'Comment Period Dates':
+						if nullcol == 0 and '-' not in permit_data[-1][col]: nullcol=1
+						if nullcol:
+							for cc in ['Comment_date_start', 'Comment_date_end', 'Comment_date_extension']:
+								permit_data[-1][cc] = np.nan
+						else:
+							permit_data[-1]['Comment_date_start'] = permit_data[-1][col].split()[0]
+							permit_data[-1]['Comment_date_end'] = permit_data[-1][col].split(' - ')[1].split(' (')[0]
+							permit_data[-1]['Comment_date_extension'] = permit_data[-1][col].split()[-1][:-1] if ('Extended' in permit_data[-1][col] or 'Re-opening' in permit_data[-1][col]) else np.nan
+					
+				
+				if stage == 'final':
+					if 'Watershed' in col:
+						if '(' in permit_data[-1][col]:
+							permit_data[-1]['Watershed'] = permit_data[-1][col].split('(')[1][:-1].strip()
+						else:
+							permit_data[-1]['Watershed'] = np.nan
+						permit_data[-1]['City/Town'] = permit_data[-1][col].split(' (')[0].strip()
+					
+				if col == 'Facility Name':
+					permit_data[-1]['Facility_name_clean'] = permit_data[-1][col].split(' (PDF')[0].split('\n')[0]
+					if '(PDF' in permit_data[-1][col]:
+						permit_data[-1]['Permit_URL'] = ['https://www3.epa.gov/region1/npdes/' + element.findAll('a')[j].get('href') for j in range(len(element.findAll('a')))]
+					else:
+						permit_data[-1]['Permit_URL'] = np.nan
 
 
 permit_df = pd.DataFrame(permit_data)

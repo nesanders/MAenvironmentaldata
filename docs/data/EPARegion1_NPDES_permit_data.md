@@ -12,8 +12,8 @@ The federal Evironmental Protection Agency (EPA) Region 1 (New England) stores p
 ### Final permits
 
 * [CT final permits](https://www3.epa.gov/region1/npdes/permits_listing_ct.html)
-* [MA final permits](https://www3.epa.gov/region1/npdes/permits_listing_ma.html)
-* [ME final permits](https://www3.epa.gov/region1/npdes/permits_listing_me.html)
+* [MA final permits](https://www3.epa.gov/region1/npdes/permits_listing_ma.html) - **not yet archived**
+* [ME final permits](https://www3.epa.gov/region1/npdes/permits_listing_me.html) **not yet archived**
 * [NH final permits](https://www3.epa.gov/region1/npdes/permits_listing_nh.html)
 * [RI final permits](https://www3.epa.gov/region1/npdes/permits_listing_ri.html)
 * [VT final permits](https://www3.epa.gov/region1/npdes/permits_listing_vt.html)
