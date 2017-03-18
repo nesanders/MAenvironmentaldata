@@ -13,3 +13,9 @@ header li:hover { background: #72c0c0; background: -moz-linear-gradient(top, #72
 
 /* Linkcolor */
 a { color: #285858; }
+
+/* Sort-table sort icons on by default */
+/* https://www.kryogenix.org/code/browser/sorttable/#symbolsbeforesorting */
+table.sortable th:not(.sorttable_sorted):not(.sorttable_sorted_reverse):not(.sorttable_nosort):after { 
+    content: " \25B4\25BE" 
+}

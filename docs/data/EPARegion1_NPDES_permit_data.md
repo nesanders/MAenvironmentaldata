@@ -30,7 +30,14 @@ The federal Evironmental Protection Agency (EPA) Region 1 (New England) stores p
 
 These permits have been archived on this site, last updated on **{{ site.data.ts_update_EPARegion1_NPDES_permit.updated | date: "%-d %B %Y %I:%M %P" }}**.
 
-## Download our archive of this data in [CSV format](EPARegion1_NPDES_permit_data.csv).
+## Download archive
+
+We provide our archive of this data in [CSV format](EPARegion1_NPDES_permit_data.csv).
+
+## Data table
+
+*Click on the table headers to re-sort by that field.*
+
 
 <!-- Note: need to have the for loop markup on the same line as the table rows as described here: http://stackoverflow.com/questions/35642820/jekyll-how-to-use-for-loop-to-generate-table-row-within-the-same-table-inside-m -->
 
@@ -41,5 +48,5 @@ These permits have been archived on this site, last updated on **{{ site.data.ts
 | State | Stage | Watershed | Facility name | PDF link |
 | --- | --- | --- | --- | --- |{% for row in site.data.EPARegion1_NPDES_permit_data %}
 | {{ row.State | upcase }} | {{ row.Stage }} | {{ row.Watershed }} | {{ row.Facility_name_clean }} | {{ row.gs_path }} |{% endfor %}
-
+{: .sortable}
 
