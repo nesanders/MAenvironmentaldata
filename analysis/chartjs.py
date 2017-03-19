@@ -6,6 +6,13 @@
 #
 ctypes = ["Bar", "Pie", "Doughnut", "PolarArea", "Radar", "Line"]
 
+def js_str(x):
+	out = '{'
+	for i, key in enumerate(x.keys()):
+		out += (", " if i > 0 else '') + "'"+key+"': " + str(x[key])
+	return out + '}'
+
+
 class chart:
 	# Set labels for all chart types
 	def set_labels(self, labels):
@@ -62,19 +69,15 @@ class chart:
 			self.ylabel = ylabel
 
 	# Add a dataset to the chart
-	def add_dataset(self, data, dataset_label = ''):
+	def add_dataset(self, data, dataset_label = '', **kwargs):
 		if self.ctype == "Bar" or self.ctype == "Radar" or self.ctype == "Line": # Line, radar or bar charts
 			if len(data) != len(self.labels):
 				raise ValueError("Data must be the same size as labels.")
-			self.data.append({
-				"data": data, 
-				"fillColor": self.fillColor, "strokeColor": self.strokeColor, 
-				"highlightFill": self.highlightFill, "highlightStroke": self.highlightStroke, 
-				"pointColor": self.pointColor, "pointStrokeColor": self.pointStrokeColor, 
-				"pointHighlightFill": self.pointHighlightFill, "pointHighlightStroke": self.pointHighlightStroke,
-				"label": dataset_label,
-				
-				})
+			
+			appendargs = {'data':data, 'label':"'"+dataset_label+"'"}
+			appendargs.update(kwargs.iteritems())
+			
+			self.data.append(js_str(appendargs))
 		else: # Pie, doughnut or polar charts
 			if len(data) != len(self.labels) or len(data) != len(self.highlights) or len(data) != len(self.colors):
 				raise ValueError("Data, labels, colors and highlights should all have the same number of values for Pie, Doughnut and PolarArea charts.")
@@ -108,7 +111,7 @@ class chart:
 							}}]
 						}}
 					}}
-				}}""".format(str(self.labels), str(self.data), str(self.ctype).lower(), self.ylabel, self.xlabel)
+				}}""".format(str(self.labels), '['+','.join([str(c) for c in self.data])+']', str(self.ctype).lower(), self.ylabel, self.xlabel)
 		else:
 			dataset = """
 			{0}

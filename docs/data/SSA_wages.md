@@ -16,6 +16,8 @@ We provide our archive of this data in [CSV format](SSAWages_2016-12-09.csv).
 
 ## Data visualization
 
+*Click on legend titles to add or remove series from the plot.*
+
 {% include charts/SSAwages.html %}
 
 ## Data table
