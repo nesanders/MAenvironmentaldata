@@ -4,6 +4,8 @@
 #
 # Updated by nesanders to support chart.js 2.5
 #
+import numpy as np
+
 ctypes = ["Bar", "Pie", "Doughnut", "PolarArea", "Radar", "Line"]
 
 def js_str(x):
@@ -70,6 +72,7 @@ class chart:
 
 	# Add a dataset to the chart
 	def add_dataset(self, data, dataset_label = '', **kwargs):
+		data = ['null' if np.isnan(d) else d for d in data]
 		if self.ctype == "Bar" or self.ctype == "Radar" or self.ctype == "Line": # Line, radar or bar charts
 			if len(data) != len(self.labels):
 				raise ValueError("Data must be the same size as labels.")
@@ -172,13 +175,31 @@ class chart:
 		output += "Content-Type: text/html; charset=utf-8\n\n"
 		output += self.make_chart_full_html()
 		return output
+	
+	def jekyll_write(self, path, full=1):
+		"""
+		Write out in a way appropriate to include in jekyll sites
+		"""
+		with open(path, 'w') as f:
+			f.write("{% raw  %}\n")
+			if full: mc = self.make_chart_full_html()
+			else: 
+				mc = self.make_chart()
+			if full == 0:
+				indents = mc.split('<canvas id=')[0]
+				mc = '\n'.join([row.lstrip(indents) for row in mc.split('\n')])
+			out = mc.split('\n')
+			out = [o for o in out if '<h2>' not in o and 'doctype html' not in o]
+			out = '\n'.join(out)
+			f.write(out)
+			f.write("{% endraw  %}\n")
 
 	# Initialize default values
 	def __init__(self, title = "Untitled chart", ctype = "Bar", width = 640, height = 480):
 		if ctype not in ctypes:
 			raise ValueError("Invalid chart type specified.")
 		self.title = title
-		self.canvas = "canvas"
+		self.canvas = title.strip()
 		self.context = "2d"
 		self.ctype = ctype
 		self.width = int(width)

@@ -15,7 +15,11 @@ data_csv['MADEP_staff'] = pd.read_csv('../docs/_data/MADEP_staff.csv')
 data_csv['MassBudget_infadjusted'] = pd.read_csv('../docs/_data/MassBudget_environmental_infadjusted.csv')
 data_csv['MassBudget_noinfadjusted'] = pd.read_csv('../docs/_data/MassBudget_environmental_noinfadjusted.csv')
 data_csv['MassBudget_summary'] = pd.read_csv('../docs/_data/MassBudget_environmental_summary.csv')
+
+## Temporary insertion for 2016 assuming no inflation
 data_csv['SSAWages'] = pd.read_csv('../docs/_data/SSAWages_2016-12-09.csv')
+data_csv['SSAWages'] = data_csv['SSAWages'].append(data_csv['SSAWages'].iloc[-1])
+data_csv['SSAWages'].Year.iloc[-1] = 2016
 
 data_csv['MERDR_metadata'] = pd.Series({
 	'Website':'https://nesanders.github.io/MAenvironmentaldata/index.html',

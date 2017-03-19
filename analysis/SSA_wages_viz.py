@@ -14,11 +14,13 @@ mychart.set_params(
 	JSinline = 0, ylabel = 'AWI', xlabel='Year')
 
 ## Write out
-with open('../docs/_includes/charts/SSAwages.html', 'w') as f:
-	f.write("{% raw  %}\n")
-	out = mychart.make_chart_full_html().split('\n')
-	out = [o for o in out if '<h2>' not in o and 'doctype html' not in o]
-	out = '\n'.join(out)
-	f.write(out)
-	f.write("{% endraw  %}\n")
+#with open('../docs/_includes/charts/SSAwages.html', 'w') as f:
+	#f.write("{% raw  %}\n")
+	#out = mychart.make_chart_full_html().split('\n')
+	#out = [o for o in out if '<h2>' not in o and 'doctype html' not in o]
+	#out = '\n'.join(out)
+	#f.write(out)
+	#f.write("{% endraw  %}\n")
 	
+mychart.jekyll_write('../docs/_includes/charts/SSAwages.html')
+
