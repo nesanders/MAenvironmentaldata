@@ -26,3 +26,4 @@ We provide our archive of this data in [CSV format](MADEP_enforcement_actions.cs
 | --- | --- | --- |{% for row in site.data.MADEP_enforcement_actions %}
 | {{ row.Year }} | {{ row.Date }} | {{ row.Text }} |{% endfor %}
 {: .sortable}
+

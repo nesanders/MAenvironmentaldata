@@ -19,6 +19,7 @@ def fix_commas(df):
 				print "Fixed commas for "+col
 			except:
 				print "Wrong type: "+col
+	df.rename(columns = {c:c.replace(' ','_') for c in df.columns if ' ' in c}, inplace=1)
 
 
 #########################

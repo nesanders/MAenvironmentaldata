@@ -32,7 +32,23 @@ We provide our archive of three tables from this source:
 
 <!-- Note: need to have the for loop markup on the same line as the table rows as described here: http://stackoverflow.com/questions/35642820/jekyll-how-to-use-for-loop-to-generate-table-row-within-the-same-table-inside-m -->
 
+### Summary table
+
 | Fiscal Year | Total Environmental Budget (inflation adjusted) | Total Environmental Budget (not inflation adjusted) | DEP Administrative Budget (inflation adjusted) | DEP Administrative (not inflation adjusted) |
 | --- | --- | --- |{% for row in site.data.MassBudget_environmental_summary %}
 | {{ row.FiscalYear }} | {{ row.TotalBudget_inf }} | {{ row.TotalBudget_noinf }} | {{ row.DEPAdministration_inf }} | {{ row.DEPAdministration_noinf }} |{% endfor %}
+{: .sortable}
+
+### Line-item level table (inflation adjusted)
+
+| Line Item | Name | FY01 | FY02 | FY03 | FY04 | FY05 | FY06 | FY07 | FY08 | FY09 | FY10 | FY11 | FY12 | FY13 | FY14 | FY15 | FY16 | FY17 | FY18_Gov |
+| --- | --- | --- |{% for row in site.data.MassBudget_environmental_infadjusted %}
+| {{ row.LineItem }} | {{ row.LineItemName }} | {{ row.FY01 }} | {{ row.FY02 }} | {{ row.FY03 }} | {{ row.FY04 }} | {{ row.FY05 }} | {{ row.FY06 }} | {{ row.FY07 }} | {{ row.FY08 }} | {{ row.FY09 }} | {{ row.FY10 }} | {{ row.FY11 }} | {{ row.FY12 }} | {{ row.FY13 }} | {{ row.FY14 }} | {{ row.FY15 }} | {{ row.FY16 }} | {{ row.FY17 }} | {{ row.FY18_Gov }} |{% endfor %}
+{: .sortable}
+
+### Line-item level table (not inflation adjusted)
+
+| Line Item | Name | FY01 | FY02 | FY03 | FY04 | FY05 | FY06 | FY07 | FY08 | FY09 | FY10 | FY11 | FY12 | FY13 | FY14 | FY15 | FY16 | FY17 | FY18_Gov |
+| --- | --- | --- |{% for row in site.data.MassBudget_environmental_noinfadjusted %}
+| {{ row.LineItem }} | {{ row.LineItemName }} | {{ row.FY01 }} | {{ row.FY02 }} | {{ row.FY03 }} | {{ row.FY04 }} | {{ row.FY05 }} | {{ row.FY06 }} | {{ row.FY07 }} | {{ row.FY08 }} | {{ row.FY09 }} | {{ row.FY10 }} | {{ row.FY11 }} | {{ row.FY12 }} | {{ row.FY13 }} | {{ row.FY14 }} | {{ row.FY15 }} | {{ row.FY16 }} | {{ row.FY17 }} | {{ row.FY18_Gov }} |{% endfor %}
 {: .sortable}
