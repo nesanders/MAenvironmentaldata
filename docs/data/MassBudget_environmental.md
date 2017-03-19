@@ -21,7 +21,7 @@ We provide our archive of three tables from this source:
 
 ## Data visualization
 
-*Click on legend titles to add or remove series from the plot.*
+*Click on legend titles to add or remove series from the plot.  Right click and save image to export the figure.*
 
 {% include charts/MADEP_budget_summary.html %}
 

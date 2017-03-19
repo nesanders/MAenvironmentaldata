@@ -95,3 +95,4 @@ docs/_site
 docs/.jekyll-metadata
 *.kate-swp
 get_data/EPA_Region1_NPDES_permits
+*.db
