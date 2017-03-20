@@ -7,15 +7,16 @@ ancillary: 0
 
 ## Data source
 
-MA Department of Environmental Protection staff records dating back to 2004 are availabe on the [VisibleGovernment](https://qvs.visiblegovernment.us/QvAJAXZfc/notoolbar.htm?document=Clients/Massachusetts/Payroll/MA_Payroll.qvw).  
+MA Department of Environmental Protection staff records dating back to 2004 are available on the [VisibleGovernment](https://qvs.visiblegovernment.us/QvAJAXZfc/notoolbar.htm?document=Clients/Massachusetts/Payroll/MA_Payroll.qvw).  These records have been archived on this site, last updated on **{{ site.data.ts_update_MADEP_staff.updated | date: "%-d %B %Y" }}**.
 
-These records have been archived on this site, last updated on **{{ site.data.ts_update_MADEP_enforcement_actions.updated | date: "%-d %B %Y" }}**.
+Additionally, the [MA office of the Comptroller of the Commonwealth](https://cthru.data.socrata.com/Government/Comptroller-of-the-Commonwealth-Payroll/rr3a-7twk) provides staffing data for each department.  This data is more detailed than the VisibleGovernment records, but extends only as far back as 2010.  These records have been archived on this site, last updated on **{{ site.data.ts_update_MADEP_staff_SODA.updated | date: "%-d %B %Y" }}**.
 
 ## Download archive
 
-We provide our archive of this data in [CSV format](MADEP_staff.csv).
+* VisibleGovernment data in [CSV format](MADEP_staff.csv)
+* Comptroller's data in [CSV format](MADEP_staff_SODA.csv)
 
-## Data table
+## Data table: VisibleGovernment
 
 *Click on the table headers to re-sort by that field.*
 

@@ -9,6 +9,7 @@ import pandas as pd
 import numpy as np
 from matplotlib import pyplot as plt
 import os
+import datetime
 
 s_data = pd.read_excel('DEP_staff_data_2017-03-14.xls')
 s_data = s_data.sort('Calendar Year')
@@ -47,17 +48,30 @@ def identify_level(x):
 
 s_data['JobLevel'] = s_data['Job Title'].apply(identify_level)
 
+## Split names
+def get_middle_initial(x): 
+	given_name_array = x.split(', ')[1].split()
+	if len(given_name_array) > 1:
+		out = given_name_array[-1].replace('.','')
+	else:
+		out = np.nan
+	return out
+
+s_data['name_first'] = s_data['Employee Name'].apply(lambda x: x.split(', ')[1].split()[0])
+s_data['name_middleI'] = s_data['Employee Name'].apply(get_middle_initial)
+s_data['name_last'] = s_data['Employee Name'].apply(lambda x: x.split(', ')[0])
+
 ## Sort in a reasonable way
 s_data.sort(['Calendar Year','JobType','JobLevel'], inplace=1)
 
 ## Export
-e_cols = [u'Calendar Year', u'Employee Name', u'Job Title', u'Earnings', u'JobType', u'JobLevel', u'Seniority']
+e_cols = [u'Calendar Year', u'Employee Name', u'Job Title', u'Earnings', u'JobType', u'JobLevel', u'Seniority', u'name_first', u'name_middleI', u'name_last']
 s_data[e_cols].rename(columns = {d:d.replace(' ','') for d in e_cols}).to_csv('../docs/data/MADEP_staff.csv', index=0)
 os.system('cp ../docs/data/MADEP_staff.csv ../docs/_data/MADEP_staff.csv')
 
 
 ## Report last update
 with open('../docs/_data/ts_update_MADEP_staff.yml', 'w') as f:
-	f.write('updated: 2017-03-14\n')
+	f.write('updated: '+str(datetime.datetime.now()).split('.')[0]+'\n')
 
 

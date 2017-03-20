@@ -7,6 +7,10 @@ A key element of the evolution of the role and effectiveness of environmental re
 
 <!-- ![]({{ site.url }}{{ site.baseurl }}/assets/figures/MADEP_staff_earnings_by_role.png) -->
 
+As of 2017, overall DEP staffing levels have been reduced by about 20% overall from 2009 levels.  Starting in 2010, we can use the [Comptroller's staffing records]({{ site.url }}{{ site.baseurl }}/data/MADEP_staff.html) to further break down these positions by full time versus part time and contractor roles.  Full time staff have grown somewhat as a fraction of overall DEP employment since 2010.
+
+{% include charts/MADEP_staffing_overall.html %}
+
 We can better understand the staffing picture at DEP by breaking the staff down by role types within the agency, focusing on the critical roles of environmental analyst, engineer, regional planners, and program coordinator.  Indexing these numbers to 2004 levels, we see relatively constant employment (and some growth) for analysts, while the most technical staff, engineers, have steadily declined by a cumulative total of more than 20%. The planning staff stands at only about half what it was in 2004.  The ranks of program coordinators rose about 10% from 2014-2016, though this rise corresponds to a sharp decrease in experience level for this role (shown below).
 
 {% include charts/MADEP_staffing_rolevolume.html %}

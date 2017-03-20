@@ -9,12 +9,12 @@ https://dev.socrata.com/foundry/cthru.data.socrata.com/rr3a-7twk
 
 Unfortunately, the Comptroller's site only provides data back
 to 2010, whereas other sources extend back to 2004.
-
-This script serves as an example of SODA usage to access the Comptroller's site
 """
 
 import pandas as pd
 import sodapy
+import datetime
+import os
 
 DEP_slug = "rr3a-7twk"
 
@@ -56,4 +56,12 @@ df = pd.concat([pd.DataFrame(d) for d in df_d])
 
 for f in fields: df[f] = df[f].astype(fields[f])
 
-df.to_csv('data_DEP_staff_SODA.csv', index=0)
+df.to_csv('../docs/data/MADEP_staff_SODA.csv', index=0)
+os.system('cp ../docs/data/MADEP_staff_SODA.csv ../docs/_data/MADEP_staff_SODA.csv')
+
+
+## Report last update
+with open('../docs/_data/ts_update_MADEP_staff_SODA.yml', 'w') as f:
+	f.write('updated: '+str(datetime.datetime.now()).split('.')[0]+'\n')
+
+

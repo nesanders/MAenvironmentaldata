@@ -1,0 +1,50 @@
+{% raw  %}
+<html>
+	<head>
+		<title>Overall DEP Staffing</title>
+		<script src='https://cdnjs.cloudflare.com/ajax/libs/Chart.js/2.5.0/Chart.bundle.min.js'></script>
+	</head>
+	<body>
+		<div style="width: 640px; height: 480px; max-width: 99%" class="chartjs">
+
+			<canvas id="Overall DEP Staffing" height="480" width="640"></canvas>
+			<script>
+				var chart_data = {
+				
+					data: {
+						labels: [2004, 2005, 2006, 2007, 2008, 2009, 2010, 2011, 2012, 2013, 2014, 2015, 2016],
+						datasets: [{'data': [0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 786.0, 729.0, 732.0, 786.0, 814.0, 821.0, 771.0], 'stack': 'annual', 'backgroundColor': 'rgba(50,50,200,0.8)', 'label': 'Full time DEP employees'},{'data': [967.0, 946.0, 966.0, 1010.0, 1014.0, 1032.0, 167.0, 124.0, 102.0, 84.0, 43.0, 18.0, 59.0], 'stack': 'annual', 'backgroundColor': 'rgba(50,50,50,0.5)', 'label': 'Total DEP employment'}]
+					},
+					type: 'bar',
+					options: {
+						scales: {
+							yAxes: [{
+								scaleLabel: {
+									display: true,
+									labelString: 'Total employment'
+								},
+								ticks: {
+									beginAtZero: true
+								}
+							}],
+							xAxes: [{
+								scaleLabel: {
+									display: true,
+									labelString: 'Year'
+								}
+							}]
+						}
+					}
+				}
+			</script>
+			<script>
+				{{
+					var ctx = document.getElementById("Overall DEP Staffing").getContext("2d");
+					var mychart = new Chart(ctx, chart_data);
+				}}
+			</script>
+
+		</div>
+	</body>
+</html>
+{% endraw  %}

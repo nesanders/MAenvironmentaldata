@@ -63,8 +63,8 @@ class chart:
 				self.js = jsinline
 			else:
 				self.js = jsurl
-		if scaleBeginAtZero != None:
-			self.scaleBeginAtZero = scaleBeginAtZero
+		if scaleBeginAtZero:
+			self.scaleBeginAtZero = "true"
 		if xlabel != None:
 			self.xlabel = xlabel
 		if ylabel != None:
@@ -104,6 +104,9 @@ class chart:
 								scaleLabel: {{
 									display: true,
 									labelString: '{3}'
+								}},
+								ticks: {{
+									beginAtZero: {5}
 								}}
 							}}],
 							xAxes: [{{
@@ -114,7 +117,12 @@ class chart:
 							}}]
 						}}
 					}}
-				}}""".format(str(self.labels), '['+','.join([str(c) for c in self.data])+']', str(self.ctype).lower(), self.ylabel, self.xlabel)
+				}}""".format(
+					str(self.labels), 
+					'['+','.join([str(c) for c in self.data])+']', str(self.ctype).lower(), 
+					self.ylabel, 
+					self.xlabel,
+					self.scaleBeginAtZero)
 		else:
 			dataset = """
 			{0}
@@ -132,7 +140,7 @@ class chart:
 		output = """
 					var ctx = document.getElementById("{0}").getContext("{1}");
 					var mychart = new Chart(ctx, chart_data);
-""".format(str(self.canvas), str(self.context), str(self.ctype), str(self.barValueSpacing), str(self.scaleShowGridLines).lower(), str(self.scaleBeginAtZero).lower())
+""".format(str(self.canvas), str(self.context))
 		return output
 
 	# Make a chart based on datasets
@@ -219,7 +227,7 @@ class chart:
 		self.barValueSpacing = 5
 		self.scaleShowGridLines = True
 		self.js = jsinline
-		self.scaleBeginAtZero = False
+		self.scaleBeginAtZero = 'false'
 		self.xlabel = ''
 		self.ylabel = ''
 

@@ -1,4 +1,6 @@
-<!-- <table class="image"> -->
+<table class="image">
 <caption align="bottom" style="text-align: right">{{ include.description }}</caption>
-<img src="{{ include.url }}" alt="{{ include.description }}"/>
-<!-- </table> -->
+<tr><td><img src="{{ include.url }}" alt="{{ include.description }}"/></td></tr>
+</table>
+
+<!-- Use with e.g. {% include image_caption.html url="assets/mystic.jpg" description="The Mystic River in February, 2016" %} -->
