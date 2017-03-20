@@ -1,19 +1,19 @@
 {% raw  %}
 <html>
 	<head>
-		<title>Overall DEP Staffing</title>
+		<title>DEP buyouts</title>
 		<script src='https://cdnjs.cloudflare.com/ajax/libs/Chart.js/2.5.0/Chart.bundle.min.js'></script>
 	</head>
 	<body>
 		<div style="width: 640px; height: 480px; max-width: 99%" class="chartjs">
 
-			<canvas id="Overall DEP Staffing" height="480" width="640"></canvas>
+			<canvas id="DEP buyouts" height="480" width="640"></canvas>
 			<script>
 				var chart_data = {
 				
 					data: {
 						labels: [2004, 2005, 2006, 2007, 2008, 2009, 2010, 2011, 2012, 2013, 2014, 2015, 2016],
-						datasets: [{'backgroundColor': 'rgba(50,50,200,0.8)', 'data': [0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 786.0, 729.0, 732.0, 786.0, 814.0, 821.0, 771.0], 'stack': 'annual', 'yAxisID': 'y-axis-0', 'label': 'Full time DEP employees'},{'backgroundColor': 'rgba(50,50,50,0.5)', 'data': [967.0, 946.0, 966.0, 1010.0, 1014.0, 1032.0, 167.0, 124.0, 102.0, 84.0, 43.0, 18.0, 59.0], 'stack': 'annual', 'yAxisID': 'y-axis-0', 'label': 'Total DEP employment'}]
+						datasets: [{'data': ['null', 'null', 'null', 'null', 'null', 'null', 0.42716859502431981, 0.22575302498665553, 0.43787139120909668, 0.35088909420071218, 0.49826305618863576, 1.1377993200000003, 0.81174383999999999], 'yAxisID': 'y-axis-0', 'label': 'Buyout expenditures', 'borderWidth': 2, 'backgroundColor': 'rgba(50,50,50,0.5)', 'type': 'line', 'stack': 'annual', 'fill': false},{'borderColor': '#ff7f0e', 'data': ['null', 'null', 'null', 'null', 'null', 'null', 67.0, 14.0, 25.0, 24.0, 34.0, 138.0, 124.0], 'yAxisID': 'y-axis-1', 'label': 'Staff Bought Out', 'borderWidth': 2, 'type': 'line', 'steppedLine': true, 'stack': 'annual', 'fill': false}]
 					},
 					type: 'bar',
 					options: {
@@ -22,7 +22,7 @@
 								display: true,
 								scaleLabel: {
 									
-display: true,									labelString: 'Total employment'
+display: true,									labelString: 'Cost($M)'
 								},
 								ticks: {
 									beginAtZero: true
@@ -30,10 +30,10 @@ display: true,									labelString: 'Total employment'
 								"id": "y-axis-0",
 								"position": "left"
 							}, {
-								display: false,
+								display: true,
 								scaleLabel: {
 											display: true,
-									labelString: ''
+									labelString: 'Number of personnel'
 								},
 								ticks: {
 									beginAtZero: true
@@ -53,7 +53,7 @@ display: true,									labelString: 'Total employment'
 			</script>
 			<script>
 				{{
-					var ctx = document.getElementById("Overall DEP Staffing").getContext("2d");
+					var ctx = document.getElementById("DEP buyouts").getContext("2d");
 					var mychart = new Chart(ctx, chart_data);
 				}}
 			</script>

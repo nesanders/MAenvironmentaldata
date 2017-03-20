@@ -36,6 +36,7 @@ class chart:
 		scaleShowGridLines = None, pointColor = None, pointStrokeColor = None, 
 		pointHighlightFill = None, pointHighlightStroke = None, 
 		JSinline = None, scaleBeginAtZero = None,
+		y2nd = None, y2nd_title = None,
 		xlabel = None, ylabel = None):
 		
 		if fillColor:
@@ -65,6 +66,10 @@ class chart:
 				self.js = jsurl
 		if scaleBeginAtZero:
 			self.scaleBeginAtZero = "true"
+		if y2nd:
+			self.y2nd = 'true'
+		if y2nd_title != None:
+			self.y2nd_title = y2nd_title
 		if xlabel != None:
 			self.xlabel = xlabel
 		if ylabel != None:
@@ -101,13 +106,27 @@ class chart:
 					options: {{
 						scales: {{
 							yAxes: [{{
+								display: true,
 								scaleLabel: {{
-									display: true,
-									labelString: '{3}'
+									
+display: true,									labelString: '{3}'
 								}},
 								ticks: {{
 									beginAtZero: {5}
-								}}
+								}},
+								"id": "y-axis-0",
+								"position": "left"
+							}}, {{
+								display: {6},
+								scaleLabel: {{
+											display: true,
+									labelString: '{7}'
+								}},
+								ticks: {{
+									beginAtZero: {5}
+								}},
+								"id": "y-axis-1",
+								"position": "right"
 							}}],
 							xAxes: [{{
 								scaleLabel: {{
@@ -122,7 +141,9 @@ class chart:
 					'['+','.join([str(c) for c in self.data])+']', str(self.ctype).lower(), 
 					self.ylabel, 
 					self.xlabel,
-					self.scaleBeginAtZero)
+					self.scaleBeginAtZero,
+					self.y2nd,
+					self.y2nd_title,)
 		else:
 			dataset = """
 			{0}
@@ -228,6 +249,8 @@ class chart:
 		self.scaleShowGridLines = True
 		self.js = jsinline
 		self.scaleBeginAtZero = 'false'
+		self.y2nd = 'false'
+		self.y2nd_title = ""
 		self.xlabel = ''
 		self.ylabel = ''
 

@@ -1,0 +1,53 @@
+{% raw  %}
+
+<canvas id="DEP seniority over time" height="480" width="640"></canvas>
+<script>
+var chart_data = {
+
+data: {
+labels: [2004, 2005, 2006, 2007, 2008, 2009, 2010, 2011, 2012, 2013, 2014, 2015, 2016],
+datasets: [{'borderColor': '#1f77b4', 'fill': false, 'data': [0.0, -0.019292604501607746, -0.13538461538461544, -0.45480225988700562, -0.55890410958904102, -0.74603174603174605, -0.72328767123287641, -0.76035502958579926, -0.80769230769230749, -1.0857142857142854, -1.3304843304843299, -1.7471590909090917, -2.2584269662921344], 'borderWidth': 2, 'label': 'Environmental Analyst'},{'borderColor': '#ff7f0e', 'fill': false, 'data': [0.0, 0.0, -0.0090497737556560764, -0.16888888888888909, -0.17567567567567588, -0.28054298642533926, -0.32380952380952355, -0.48979591836734659, -0.51322751322751348, -0.87817258883248783, -1.1832460732984291, -1.7608695652173907, -1.8882681564245818], 'borderWidth': 2, 'label': 'Environmental Engineer'},{'borderColor': '#2ca02c', 'fill': false, 'data': [0.0, -0.044776119402985093, -0.18181818181818188, -0.43076923076923057, -0.49253731343283569, -0.62686567164179063, -0.609375, -0.52631578947368407, -0.67857142857142883, -0.86440677966101731, -1.0909090909090917, -1.6666666666666661, -2.4032258064516121], 'borderWidth': 2, 'label': 'Program Coordinator'},{'borderColor': '#d62728', 'fill': false, 'data': [0.0, -0.038961038961038974, -0.17500000000000004, -0.24675324675324672, -0.33333333333333348, -0.5512820512820511, -0.44285714285714306, -0.51785714285714324, -0.43396226415094308, -1.1428571428571432, -1.672727272727272, -1.591836734693878, -1.5111111111111111], 'borderWidth': 2, 'label': 'Regional Planner'},{'borderColor': '#9467bd', 'fill': false, 'data': [0.0, -0.047619047619047672, -0.24444444444444446, -0.52272727272727293, -0.62790697674418583, -1.25, -1.1739130434782608, -1.3720930232558137, -1.6136363636363633, -1.666666666666667, -1.8478260869565215, -1.9777777777777779, -2.0888888888888886], 'borderWidth': 2, 'label': 'Counsel'}]
+},
+type: 'line',
+options: {
+scales: {
+yAxes: [{
+display: true,
+scaleLabel: {
+
+display: true,									labelString: 'Average seniority gain (yrs with DEP since 2004)'
+},
+ticks: {
+beginAtZero: false
+},
+"id": "y-axis-0",
+"position": "left"
+}, {
+display: false,
+scaleLabel: {
+display: true,
+labelString: ''
+},
+ticks: {
+beginAtZero: false
+},
+"id": "y-axis-1",
+"position": "right"
+}],
+xAxes: [{
+scaleLabel: {
+display: true,
+labelString: 'Year'
+}
+}]
+}
+}
+}
+</script>
+<script>
+{{
+var ctx = document.getElementById("DEP seniority over time").getContext("2d");
+var mychart = new Chart(ctx, chart_data);
+}}
+</script>
+{% endraw  %}

@@ -12,13 +12,27 @@ type: 'line',
 options: {
 scales: {
 yAxes: [{
-scaleLabel: {
 display: true,
-labelString: 'Total staff change since 2004 (%)'
+scaleLabel: {
+
+display: true,									labelString: 'Total staff change since 2004 (%)'
 },
 ticks: {
 beginAtZero: false
-}
+},
+"id": "y-axis-0",
+"position": "left"
+}, {
+display: false,
+scaleLabel: {
+display: true,
+labelString: ''
+},
+ticks: {
+beginAtZero: false
+},
+"id": "y-axis-1",
+"position": "right"
 }],
 xAxes: [{
 scaleLabel: {
