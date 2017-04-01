@@ -15,6 +15,13 @@ These enforcements actions have been archived on this site, last updated on **{{
 
 We provide our archive of this data in [CSV format](MADEP_enforcement_actions.csv).
 
+## Data visualization
+
+*Right click and save image to export the figure.*
+
+{% include /charts/MADEP_enforcement_overall.html %}
+
+
 ## Data table
 
 *Click on the table headers to re-sort by that field.*
