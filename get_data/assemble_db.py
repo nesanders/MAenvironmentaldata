@@ -16,6 +16,7 @@ data_csv['MassBudget_infadjusted'] = pd.read_csv('../docs/_data/MassBudget_envir
 data_csv['MassBudget_noinfadjusted'] = pd.read_csv('../docs/_data/MassBudget_environmental_noinfadjusted.csv')
 data_csv['MassBudget_summary'] = pd.read_csv('../docs/_data/MassBudget_environmental_summary.csv')
 data_csv['MADEP_staff_Comptroller'] = pd.read_csv('../docs/_data/MADEP_staff_SODA.csv')
+data_csv['Census_ACS'] = pd.read_csv('../docs/_data/Census_ACS_MA.csv')
 
 ## Temporary insertion for 2016 assuming no inflation
 data_csv['SSAWages'] = pd.read_csv('../docs/_data/SSAWages_2016-12-09.csv')

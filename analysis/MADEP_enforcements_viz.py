@@ -38,3 +38,23 @@ mychart.jekyll_write('../docs/_includes/charts/MADEP_enforcement_overall.html')
 
 
 
+#############################
+## Show total penalties per year
+#############################
+
+s_data_g = s_data.groupby(['Year']).sum()
+
+## Establish chart
+mychart = chartjs.chart("Overall DEP Enforcement Penalties ($M)", "Bar", 640, 480)
+mychart.set_labels(s_data_g.index.values.tolist())
+mychart.add_dataset((s_data_g.Fine/1e6).tolist(), 
+	"Reported penalties",
+	backgroundColor="'rgba(50,50,200,0.8)'",
+	stack="'annual'", yAxisID= "'y-axis-0'",)
+mychart.set_params(JSinline = 0, ylabel = 'Sum of reported penalties', xlabel='Year',
+	scaleBeginAtZero=1)
+
+mychart.jekyll_write('../docs/_includes/charts/MADEP_enforcement_fines_overall.html')
+
+
+
