@@ -21,18 +21,19 @@
 							yAxes: [{
 								display: true,
 								scaleLabel: {
-									
-display: true,									labelString: 'Total reported enforcement actions'
+									display: true,
+									labelString: 'Total reported enforcement actions'
 								},
 								ticks: {
 									beginAtZero: true
 								},
 								"id": "y-axis-0",
-								"position": "left"
+								"position": "left",
+								stacked: false
 							}, {
 								display: false,
 								scaleLabel: {
-											display: true,
+									display: true,
 									labelString: ''
 								},
 								ticks: {
@@ -45,11 +46,19 @@ display: true,									labelString: 'Total reported enforcement actions'
 								scaleLabel: {
 									display: true,
 									labelString: 'Year'
-								}
+								},
+								stacked: false
 							}]
-						}
-					}
+						},
+						legend: {
+							display: true
+							},
+						tooltips: {
+							display: true
+							}
+					},
 				}
+				
 			</script>
 			<script>
 				{{

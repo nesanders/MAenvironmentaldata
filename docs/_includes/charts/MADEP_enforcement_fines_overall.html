@@ -21,18 +21,19 @@
 							yAxes: [{
 								display: true,
 								scaleLabel: {
-									
-display: true,									labelString: 'Sum of reported penalties ($M)'
+									display: true,
+									labelString: 'Sum of reported penalties ($M)'
 								},
 								ticks: {
 									beginAtZero: true
 								},
 								"id": "y-axis-0",
-								"position": "left"
+								"position": "left",
+								stacked: false
 							}, {
 								display: false,
 								scaleLabel: {
-											display: true,
+									display: true,
 									labelString: ''
 								},
 								ticks: {
@@ -45,11 +46,19 @@ display: true,									labelString: 'Sum of reported penalties ($M)'
 								scaleLabel: {
 									display: true,
 									labelString: 'Year'
-								}
+								},
+								stacked: false
 							}]
-						}
-					}
+						},
+						legend: {
+							display: true
+							},
+						tooltips: {
+							display: true
+							}
+					},
 				}
+				
 			</script>
 			<script>
 				{{

@@ -37,7 +37,7 @@ class chart:
 		pointHighlightFill = None, pointHighlightStroke = None, 
 		JSinline = None, scaleBeginAtZero = None,
 		y2nd = None, y2nd_title = None,
-		xlabel = None, ylabel = None):
+		xlabel = None, ylabel = None, stacked=None, legend=None, tooltips=None):
 		
 		if fillColor:
 			self.fillColor = fillColor
@@ -74,6 +74,12 @@ class chart:
 			self.xlabel = xlabel
 		if ylabel != None:
 			self.ylabel = ylabel
+		if stacked != None:
+			self.stacked = 'true'
+		if legend == False:
+			self.legend = 'false'
+		if tooltips == False:
+			self.tooltips = 'false'
 
 	# Add a dataset to the chart
 	def add_dataset(self, data, dataset_label = '', **kwargs):
@@ -108,18 +114,19 @@ class chart:
 							yAxes: [{{
 								display: true,
 								scaleLabel: {{
-									
-display: true,									labelString: '{3}'
+									display: true,
+									labelString: '{3}'
 								}},
 								ticks: {{
 									beginAtZero: {5}
 								}},
 								"id": "y-axis-0",
-								"position": "left"
+								"position": "left",
+								stacked: {8}
 							}}, {{
 								display: {6},
 								scaleLabel: {{
-											display: true,
+									display: true,
 									labelString: '{7}'
 								}},
 								ticks: {{
@@ -132,18 +139,29 @@ display: true,									labelString: '{3}'
 								scaleLabel: {{
 									display: true,
 									labelString: '{4}'
-								}}
+								}},
+								stacked: {8}
 							}}]
-						}}
-					}}
-				}}""".format(
+						}},
+						legend: {{
+							display: {9}
+							}},
+						tooltips: {{
+							display: {10}
+							}}
+					}},
+				}}
+				""".format(
 					str(self.labels), 
 					'['+','.join([str(c) for c in self.data])+']', str(self.ctype).lower(), 
 					self.ylabel, 
 					self.xlabel,
 					self.scaleBeginAtZero,
 					self.y2nd,
-					self.y2nd_title,)
+					self.y2nd_title,
+					self.stacked,
+					self.legend,
+					self.tooltips)
 		else:
 			dataset = """
 			{0}
@@ -253,6 +271,9 @@ display: true,									labelString: '{3}'
 		self.y2nd_title = ""
 		self.xlabel = ''
 		self.ylabel = ''
+		self.stacked = 'false'
+		self.legend = 'true'
+		self.tooltips = 'true'
 
 # JavaScript (URL and inline)
 jsurl = "<script src='https://cdnjs.cloudflare.com/ajax/libs/Chart.js/2.5.0/Chart.bundle.min.js'></script>"

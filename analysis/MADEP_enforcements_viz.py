@@ -57,6 +57,31 @@ mychart.set_params(JSinline = 0, ylabel = 'Sum of reported penalties ($M)', xlab
 mychart.jekyll_write('../docs/_includes/charts/MADEP_enforcement_fines_overall.html')
 
 
+s_data_g_na = s_data.dropna().groupby(['Year']).Fine
+
+## Establish stacked chart
+mychart = chartjs.chart("Individual DEP Enforcement Penalties ($M)", "Bar", 640, 480)
+mychart.set_labels(s_data_g.index.values.tolist())
+## Output one series for each penalty
+max_counts = s_data.groupby(['Year']).count().Fine.max()
+rgba_list = [
+	'rgba(166,206,227)',
+	'rgba(31,120,180)',
+	'rgba(178,223,138)',
+	'rgba(51,160,44)'
+	]
+for i in range(max_counts):
+	get_sorted_i = lambda x: 0 if (i > len(x) - 1) else sorted(x.values)[::-1][i]
+	mychart.add_dataset((s_data_g_na.apply(get_sorted_i)/1e6).tolist(), 
+		"Rank among largest reported penalties of the year: "+str(i),
+		backgroundColor="'"+rgba_list[np.mod(i, len(rgba_list))]+"'",)
+mychart.set_params(JSinline = 0, ylabel = 'Sum of reported penalties ($M)', xlabel='Year',
+	scaleBeginAtZero=1, stacked=1, legend=0)
+
+mychart.jekyll_write('../docs/_includes/charts/MADEP_enforcement_fines_overall_stacked.html')
+
+
+
 
 
 #############################
