@@ -51,10 +51,34 @@ mychart.add_dataset((s_data_g.Fine/1e6).tolist(),
 	"Reported penalties",
 	backgroundColor="'rgba(50,50,200,0.8)'",
 	stack="'annual'", yAxisID= "'y-axis-0'",)
-mychart.set_params(JSinline = 0, ylabel = 'Sum of reported penalties', xlabel='Year',
+mychart.set_params(JSinline = 0, ylabel = 'Sum of reported penalties ($M)', xlabel='Year',
 	scaleBeginAtZero=1)
 
 mychart.jekyll_write('../docs/_includes/charts/MADEP_enforcement_fines_overall.html')
 
+
+
+
+#############################
+## Show enforcement fractions by topic per year
+#############################
+
+s_data_g = s_data.groupby(['Year'])
+topics = [d for d in s_data.columns if d.startswith('order_') or d.startswith('law_')]
+
+## Establish chart
+mychart = chartjs.chart("DEP Enforcements by Topic Per Year", "Line", 640, 480)
+mychart.set_labels(s_data_g.count().index.values.tolist())
+for i,topic in enumerate(topics):
+	mychart.add_dataset(
+		(s_data_g.sum()[topic] / s_data_g.count()[topic].astype(float)).tolist(), 
+		topic.split('_')[1].strip().title(),
+		backgroundColor="'"+(color_cycle*10)[i]+"'",
+		stack="'annual'", yAxisID= "'y-axis-0'", fill = "false",
+		hidden = 'false' if topic=='order_wetlands' else 'true')
+mychart.set_params(JSinline = 0, ylabel = 'Reported enforcement actions (% of annual total)', xlabel='Year',
+	scaleBeginAtZero=1)
+
+mychart.jekyll_write('../docs/_includes/charts/MADEP_enforcement_bytopic.html')
 
 

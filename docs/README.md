@@ -11,7 +11,17 @@ The {{ site.data.site_config.site_title }} ({{ site.data.site_config.site_abbrev
 
 ## Open access
 
-All data, code for data gathering and cleaning, code for analysis, and web development associated with {{ site.data.site_config.site_abbrev }} is completely open source and free to access from this site and our associated [GitHub repository]({{ site.data.site_config.github_link }}).
+All data, code for data gathering and cleaning, code for analysis, and web development associated with {{ site.data.site_config.site_abbrev }} is completely open source and free to access from this site and our associated [GitHub repository]({{ site.data.site_config.github_link }}).  The data is collected from official government and other public domain sources.
+
+## Datasets
+
+{{ site.data.site_config.site_abbrev }} includes a constantly-growing list of datasets such as:
+	
+* MA state budget information
+* MA Department of Environmental Protection (DEP) staffing records
+* MA DEP regulatory enforcement actions
+* Us Environmental Protection Agency (EPA) Region 1 NPDES permits
+* US Census and Social Security Administration population and wage data
 
 ## Analysis
 

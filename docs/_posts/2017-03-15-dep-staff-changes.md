@@ -9,7 +9,7 @@ A key element of the evolution of the role and effectiveness of environmental re
 
 ## Overall staffing levels
 
-As of 2017, overall DEP staffing levels have been reduced by about 20% overall from 2009 levels.  Starting in 2010, we can use the [Comptroller's staffing records]({{ site.url }}{{ site.baseurl }}/data/MADEP_staff.html) to further break down these positions by full time versus part time and contractor roles.  Full time staff have grown somewhat as a fraction of overall DEP employment since 2010.
+As of the end of 2016, overall DEP staffing levels have been reduced by about 20% overall from 2009 levels.  Starting in 2010, we can use the [Comptroller's staffing records]({{ site.url }}{{ site.baseurl }}/data/MADEP_staff.html) to further break down these positions by full time versus part time and contractor roles.  Full time staff have grown somewhat as a fraction of overall DEP employment since 2010.
 
 {% include charts/MADEP_staffing_overall.html %}
 

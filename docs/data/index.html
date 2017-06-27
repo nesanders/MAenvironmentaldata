@@ -8,11 +8,11 @@ author: NES
 
 <h2>{{ site.data.site_config.site_abbrev }} Database</h2>
 
-<p>The {{ site.data.site_config.site_title }} includes data from a variety of governmental and other public sources, unified in a freely distributed database.</p>
+<p>The {{ site.data.site_config.site_title }} includes data from a variety of governmental and other public sources, unified in a freely distributed database.  The tables from this database are also provided individually as csv files.</p>
 
-<p><b><a href="storage.googleapis.com/ns697-merdr/merdr.db">Download the {{ site.data.site_config.site_abbrev }} sqlite unified database</a>.</b></p>
+<p><b><a href="https://storage.googleapis.com/ns697-merdr/merdr.db">Download the {{ site.data.site_config.site_abbrev }} SQLite unified database</a>.</b>  SQLite databases are a simple and efficient format for distributing queryable datasets.  You can <a href="https://sqlite.org/quickstart.html">read more about sqlitehere</a> and <a href="https://www.r-bloggers.com/exchange-data-between-python-and-r-with-sqlite/">read about how to interact with SQLite databases in the R and python languages here</a>.</p>
 
-<p>Each individual constituent dataset in the {{ site.data.site_config.site_abbrev }} database is listed below.  Each dataset page describes the source of the data and uses visualizations or tables to illustrate its content.</p>
+<p>Each individual constituent dataset in the {{ site.data.site_config.site_abbrev }} database is listed below.  Each dataset page describes the source of the data, uses visualizations or tables to illustrate its content, and provides a download of a csv-formatted version of the dataset.</p>
 
 <h2>MA Environmental Datasets</h2>
 	{% for thepage in site.pages %}
