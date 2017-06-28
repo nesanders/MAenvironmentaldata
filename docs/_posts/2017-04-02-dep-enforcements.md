@@ -25,17 +25,32 @@ The rise and fall in enforcement levels over time has tracked closely with the [
 
 ## Fines
 
-While it's difficult to fully quantify the total impact of enforcement actions, the penalty assessed is a useful indicator of impact.  
+While it's difficult to fully quantify the total impact of enforcement actions, the penalty assessed is a useful indicator of impact.  The plot below shows each individual consent order, so the stacked bars represent the total amount of fines issues per year.  (Depending on your browser, you may need to mouse over the bars to see the individual penalties.)
 
 {% include /charts/MADEP_enforcement_fines_overall_stacked.html %}
+
+
+<!-- Number of enforcements carrying penalties -->
 
 ## Enforcement types
 
 {% include charts/MADEP_enforcement_bytopic.html %}
 
+We can draw several conclusions from this data.
+
+The dominant enforcement mechanism for MA DEP is the consent order, a type of no-trial settlement, which is used in {{ site.data.facts_DEPenforce.yearly_avg_consentorder }}% of actions.
+
+Only {{ site.data.facts_DEPenforce.yearly_2004_watersupply }}% of enforcement actions cited water supply issues in 2004.  This rate rose sharply over this period, to {{ site.data.facts_DEPenforce.yearly_2016_watersupply }}% in 2016, and has seemed to plateau near this heightened level since about 2013.  Water supply issues are now a significant fraction of all the agency's enforcement actions.
+
+Averaging across this period, enforcement actions specifically reference [MA Chapter 91 law](http://www.mass.gov/eea/agencies/massdep/water/watersheds/chapter-91-the-massachusetts-public-waterfront-act.html), the Public Waterfront Act which guarantees public access and trust to coastal and inland waterways, only {{ site.data.facts_DEPenforce.yearly_ch91 }}% of the time.  The [National Pollutant Discharge Elimination System](https://www.epa.gov/npdes) (NPDES), the regulatory program for much of the Clean Water Act, is typically referenced in only {{ site.data.facts_DEPenforce.yearly_npdes }}% of actions.
+
+Wetlands-related enforcement has declined from more than 16% at peak to only 8% in 2016, a decline of {{ site.data.facts_DEPenforce.yearly_avg_delta2016_wetlands }}%.
+
 <!-- ** See "Data Enforcement Facts" slide -->
 
 ## Distribution of enforcement penalties
+
+
 
 ## Variation by town & demographics
 

@@ -20,6 +20,10 @@ years = s_data.Year.unique()
 f_data = pd.read_sql_query('SELECT * FROM MassBudget_summary', disk_engine)
 f_data.index = f_data.Year
 
+## Establish file to export facts
+fact_file = '../docs/_data/facts_DEPenforce.yml'
+with open(fact_file, 'w') as f: f.write('')
+
 
 #############################
 ## Show total enforcements per year
@@ -111,7 +115,7 @@ mychart.jekyll_write('../docs/_includes/charts/MADEP_enforcement_vsbudget.html')
 
 ## Output correlation level
 pr = pearsonr(s_data_g.values, (f_data['DEPAdministration_inf_float'].ix[years]/1e6).values)
-with open('../docs/_data/facts_DEPenforce.yml', 'w') as f:
+with open(fact_file, 'a') as f:
 	f.write('cor_enforcement_funding: %0.0f'%(pr[0]*100)+'\n')
 
 
@@ -136,5 +140,22 @@ mychart.set_params(JSinline = 0, ylabel = 'Reported enforcement actions (% of an
 	scaleBeginAtZero=1)
 
 mychart.jekyll_write('../docs/_includes/charts/MADEP_enforcement_bytopic.html')
+
+
+## Export some facts.
+## Exclude most recent year from averages, as it will be partial.
+with open(fact_file, 'a') as f:
+	f.write('yearly_ch91: %0.1f'%(s_data_g.sum()['law_chapter 91'][:-1].mean())+'\n')
+	f.write('yearly_npdes: %0.1f'%(s_data_g.sum()['law_npdes'][:-1].mean())+'\n')
+	f.write('yearly_avg_consentorder: %0.0f'%(s_data_g.mean()['order_consent order'][:-1].mean() * 100)+'\n')
+	f.write('yearly_avg_delta2016_wetlands: %0.0f'%((1 - s_data_g.mean()['order_wetlands'].ix[2016] / s_data_g.mean()['order_wetlands'].max()) * 100)+'\n')
+	f.write('yearly_2004_watersupply: %0.1f'%(s_data_g.mean()['order_water supply'].ix[2004] * 100)+'\n')
+	f.write('yearly_2016_watersupply: %0.1f'%(s_data_g.mean()['order_water supply'].ix[2016] * 100)+'\n')
+	
+	#Water supply-related enforcement has grown from ~5% to ~25% of all enforcements since 2004
+	#Wetlands-related enforcement has declined from ~16% at peak to <10% in recent years.
+
+	
+
 
 
