@@ -12,10 +12,13 @@ color_cycle = [c['color'] for c in list(mpl.rcParams['axes.prop_cycle'])]
 disk_engine = create_engine('sqlite:///../get_data/MERDR.db')
 
 
-## Get MADep website data
+## Get MADEP website enforcement data
 s_data = pd.read_sql_query('SELECT * FROM MADEP_enforcement', disk_engine)
 years = s_data.Year.unique()
 
+## Get funding data
+f_data = pd.read_sql_query('SELECT * FROM MassBudget_summary', disk_engine)
+f_data.index = f_data.Year
 
 
 #############################
@@ -86,6 +89,30 @@ mychart.jekyll_write('../docs/_includes/charts/MADEP_enforcement_fines_overall_s
 ## Show enforcements per year versus budget
 #############################
 
+s_data_g = s_data.groupby(['Year']).count().ix[:,1]
+
+## Establish chart
+mychart = chartjs.chart("DEP Enforcements versus budget", "Line", 640, 480)
+mychart.set_labels(s_data_g.index.values.tolist())
+mychart.add_dataset(s_data_g.values.tolist(), "Number of enforcements",
+	backgroundColor="'rgba(50,50,50,0.5)'",
+	type="'line'", fill = "false",
+	borderWidth = 2,
+	stack="'annual'", yAxisID= "'y-axis-0'")
+mychart.add_dataset((f_data['DEPAdministration_inf_float'].ix[years]/1e6).values.tolist(), "DEP administrative budget",
+	borderColor = "'"+color_cycle[1]+"'", fill = "false",
+	borderWidth = 2,
+	stack="'annual'", type="'line'", yAxisID= "'y-axis-1'")
+mychart.set_params(JSinline = 0, ylabel = 'Number of enforcements', xlabel='Year',
+	y2nd = 1, y2nd_title = 'Funding level ($M, 2016 dollars)',
+	scaleBeginAtZero=0)
+
+mychart.jekyll_write('../docs/_includes/charts/MADEP_enforcement_vsbudget.html')
+
+## Output correlation level
+pr = pearsonr(s_data_g.values, (f_data['DEPAdministration_inf_float'].ix[years]/1e6).values)
+with open('../docs/_data/facts_DEPenforce.yml', 'w') as f:
+	f.write('cor_enforcement_funding: %0.0f'%(pr[0]*100)+'\n')
 
 
 #############################

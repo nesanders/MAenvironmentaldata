@@ -15,7 +15,7 @@ As of the end of 2016, overall DEP staffing levels have been reduced by about 20
 
 {% include charts/MADEP_staffing_overall.html %}
 
-Note that the overall DEP staffing level is of course directly related to [overall DEP administration funding levels]({{ site.url }}{{ site.baseurl }}/data/MADEP_staff.html).  We find these two quantities are correlated at a level of {{ site.data.facts_DEPstaff.cor_staff_funding }}%
+Note that the overall DEP staffing level is of course directly related to [overall DEP administration funding levels]({{ site.url }}{{ site.baseurl }}/data/MADEP_staff.html).  We find these two quantities are correlated at a level of {{ site.data.facts_DEPstaff.cor_staff_funding }}%.
 
 {% include charts/MADEP_staffing_overall_funding.html %}
 
