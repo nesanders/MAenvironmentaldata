@@ -18,7 +18,7 @@ def js_str(x):
 class chart:
 	# Set labels for all chart types
 	def set_labels(self, labels):
-		self.labels = labels
+		self.labels = [str(c) for c in labels] # convert from e.g. unicode type, which js will not recognize
 
 	# Set individual colors for pie, doughnut and polar charts
 	def set_colors(self, colors):

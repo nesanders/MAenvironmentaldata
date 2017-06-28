@@ -1,12 +1,24 @@
 import pandas as pd
 import chartjs
+from sqlalchemy import create_engine
 
 import matplotlib as mpl
 color_cycle = [c['color'] for c in list(mpl.rcParams['axes.prop_cycle'])]
 
-## Load dataset
-data_summary = pd.read_csv('../docs/data/MassBudget_environmental_summary.csv')
-data_summary.sort_values(by='Year', inplace=1)
+### Load dataset
+#data_summary = pd.read_csv('../docs/data/MassBudget_environmental_summary.csv')
+#data_summary.sort_values(by='Year', inplace=1)
+
+
+## Load database
+disk_engine = create_engine('sqlite:///../get_data/MERDR.db')
+
+
+## Get budget data
+data_summary = pd.read_sql_query('SELECT * FROM MassBudget_summary', disk_engine)
+data_summary.sort_values(by='Year', inplace=True)
+
+
 
 ## Establish chart
 mychart = chartjs.chart("DEP budget data", "Line", 640, 480)

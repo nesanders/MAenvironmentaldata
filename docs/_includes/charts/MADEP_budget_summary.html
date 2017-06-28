@@ -7,7 +7,7 @@
 	<body>
 		<div style="width: 640px; height: 480px; max-width: 99%" class="chartjs">
 
-			<canvas id="canvas" height="480" width="640"></canvas>
+			<canvas id="DEP budget data" height="480" width="640"></canvas>
 			<script>
 				var chart_data = {
 				
@@ -19,24 +19,50 @@
 					options: {
 						scales: {
 							yAxes: [{
+								display: true,
 								scaleLabel: {
 									display: true,
 									labelString: 'Total Budget ($M)'
-								}
+								},
+								ticks: {
+									beginAtZero: false
+								},
+								"id": "y-axis-0",
+								"position": "left",
+								stacked: false
+							}, {
+								display: false,
+								scaleLabel: {
+									display: true,
+									labelString: ''
+								},
+								ticks: {
+									beginAtZero: false
+								},
+								"id": "y-axis-1",
+								"position": "right"
 							}],
 							xAxes: [{
 								scaleLabel: {
 									display: true,
 									labelString: 'Fiscal Year'
-								}
+								},
+								stacked: false
 							}]
-						}
-					}
+						},
+						legend: {
+							display: true
+							},
+						tooltips: {
+							display: true
+							}
+					},
 				}
+				
 			</script>
 			<script>
 				{{
-					var ctx = document.getElementById("canvas").getContext("2d");
+					var ctx = document.getElementById("DEP budget data").getContext("2d");
 					var mychart = new Chart(ctx, chart_data);
 				}}
 			</script>
