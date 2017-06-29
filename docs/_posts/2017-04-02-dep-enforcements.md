@@ -25,12 +25,23 @@ The rise and fall in enforcement levels over time has tracked closely with the [
 
 ## Fines
 
-While it's difficult to fully quantify the total impact of enforcement actions, the penalty assessed is a useful indicator of impact.  The plot below shows each individual consent order, so the stacked bars represent the total amount of fines issues per year.  (Depending on your browser, you may need to mouse over the bars to see the individual penalties.)
+While it's difficult to fully quantify the total impact of enforcement actions, the penalty assessed is a useful indicator of impact.  
+
+<!-- Number of enforcements carrying penalties -->
+
+
+The plot below shows each individual consent order, so the stacked bars represent the total amount of fines issues per year.  (Depending on your browser, you may need to mouse over the bars to see the individual penalties.)
 
 {% include /charts/MADEP_enforcement_fines_overall_stacked.html %}
 
+We can further understand the impact of penalties on violators by looking at the distribution of fine amounts.  This plot shows that fines have been levied over a large range of amounts, from less than $1,000 to more than $20,000,000.  The plot below shows that the typical (mode) enforcement action is in the range of $10,000 - $30,000, with fines less than $800 or greater than $100,000 being rare.
 
-<!-- Number of enforcements carrying penalties -->
+{% include charts/MADEP_enforcement_fine_dist.html %}
+
+We can use a statistical test to see if the typical fine amount has increased or decreased with time.  The plot below uses [bootstrap resampling](https://en.wikipedia.org/wiki/Bootstrap_(statistics)) to estimate the median enforcement value per year, and the uncertainty in this value given the less-than-infinite number of enforcements we have to estimate the median (90% confidence interval).  The analysis shows that the median enforcement amount has varied by about 20% over this period, but these shifts are not very significant - they could be explained by randomness in what violations happened to come up in those years rather than systematic policy shifts.
+
+{% include charts/MADEP_enforcement_fine_avg_bootstrap.html %}
+
 
 ## Enforcement types
 
@@ -45,11 +56,6 @@ Only {{ site.data.facts_DEPenforce.yearly_2004_watersupply }}% of enforcement ac
 Averaging across this period, enforcement actions specifically reference [MA Chapter 91 law](http://www.mass.gov/eea/agencies/massdep/water/watersheds/chapter-91-the-massachusetts-public-waterfront-act.html), the Public Waterfront Act which guarantees public access and trust to coastal and inland waterways, only {{ site.data.facts_DEPenforce.yearly_ch91 }}% of the time.  The [National Pollutant Discharge Elimination System](https://www.epa.gov/npdes) (NPDES), the regulatory program for much of the Clean Water Act, is typically referenced in only {{ site.data.facts_DEPenforce.yearly_npdes }}% of actions.
 
 Wetlands-related enforcement has declined from more than 16% at peak to only 8% in 2016, a decline of {{ site.data.facts_DEPenforce.yearly_avg_delta2016_wetlands }}%.
-
-<!-- ** See "Data Enforcement Facts" slide -->
-
-## Distribution of enforcement penalties
-
 
 
 ## Variation by town & demographics

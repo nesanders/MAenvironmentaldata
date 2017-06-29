@@ -7,6 +7,8 @@ from scipy.stats import pearsonr
 import matplotlib as mpl
 color_cycle = [c['color'] for c in list(mpl.rcParams['axes.prop_cycle'])]
 
+import locale
+locale.setlocale(locale.LC_ALL, 'en_US.UTF-8')
  
 ## Load database
 disk_engine = create_engine('sqlite:///../get_data/MERDR.db')
@@ -157,5 +159,61 @@ with open(fact_file, 'a') as f:
 
 	
 
+#############################
+## Show distribution of penalties
+#############################
+
+#penalties_per_year = s_data_g.Fine.apply(lambda x: np.histogram(np.log10(x), bins=20, range=[2,7]))
+
+fine_bin_edges = 200*2**(np.arange(19more th))
+## Round down to 1 sig fig
+fine_bin_edges = [int('$%0.0f'%(c/10**np.floor(np.log10(c))))*10**np.floor(np.log10(c)) for c in fine_bin_edges]
+fine_dist, fine_bins = np.histogram(s_data.Fine.values, bins=fine_bin_edges, range=[2,7])
+fine_bins_fmt = [locale.format("%d", c, grouping=True) for c in fine_bins]
+
+## Establish chart
+mychart = chartjs.chart("Penalty distribution", "Bar", 640, 480)
+mychart.set_labels([fine_bins_fmt[i]+' - '+fine_bins_fmt[i+1] for i in range(len(fine_bins_fmt)-1)])
+mychart.add_dataset(fine_dist, 
+	"Number of enforcements",
+	backgroundColor="'rgba(50,100,100,0.8)'",
+	stack="'annual'", yAxisID= "'y-axis-0'",)
+mychart.set_params(JSinline = 0, ylabel = 'Number of enforcement actions since 2004', xlabel='Penalty amount ($, logarithmic spacing)',
+	scaleBeginAtZero=0)
+
+mychart.jekyll_write('../docs/_includes/charts/MADEP_enforcement_fine_dist.html')
 
 
+## Show evolution of median With bootstrap resampling
+
+## Bootstrap more appropriate here
+#def jackknife(x, func):
+	#n = len(x)
+	#idx = np.arange(n)
+	#return np.array([func(x[idx!=i]) for i in range(n)])
+
+def bootstrap(x, func, reps = 1000):
+	n = len(x)
+	return func(np.random.choice(x, (n, reps)), axis=0)
+
+s_meds = s_data_g.Fine.apply(lambda x: np.nanpercentile(bootstrap(x, np.nanmedian), [5,50,95], axis=0))
+## Exclude most recent partial year
+s_meds = s_meds[:-1]
+
+## Establish chart
+mychart = chartjs.chart("Penalty average", "Line", 640, 480)
+mychart.set_labels(s_meds.index.tolist())
+mychart.add_dataset(s_meds.apply(lambda x: x[1]).values.tolist(), 
+	"Best estimate",
+	backgroundColor="'rgba(50,100,100,0.8)'", yAxisID= "'y-axis-0'", borderWidth = 3, fill = 'false'  )
+mychart.add_dataset(s_meds.apply(lambda x: x[0]).values.tolist(), 
+	"Lower bound (5% limit)",
+	backgroundColor="'rgba(50,50,50,0.3)'", yAxisID= "'y-axis-0'", borderWidth = 1, 
+	fill = 'false', pointBackgroundColor="'rgba(0,0,0,0)'", pointBorderColor="'rgba(0,0,0,0)'")
+mychart.add_dataset(s_meds.apply(lambda x: x[2]).values.tolist(), 
+	"Upper bound (95% limit)",
+	backgroundColor="'rgba(50,50,50,0.3)'", yAxisID= "'y-axis-0'", borderWidth = 1, fill = "'1'", pointBackgroundColor="'rgba(0,0,0,0)'", pointBorderColor="'rgba(0,0,0,0)'")
+mychart.set_params(JSinline = 0, ylabel = 'Median penalty amount per year', xlabel='Year',
+	scaleBeginAtZero=0)
+
+mychart.jekyll_write('../docs/_includes/charts/MADEP_enforcement_fine_avg_bootstrap.html')
