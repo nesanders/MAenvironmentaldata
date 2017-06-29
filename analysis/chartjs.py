@@ -2,7 +2,7 @@
 # Python ChartJS - (C) 2015 Patrick Lambert - Provided under the MIT License - https://github.com/dendory/chartjs
 # Uses the ChartJS JavaScript implementation by Nick Downie
 #
-# Updated by nesanders to support chart.js 2.5
+# Updated by nesanders to support chart.js 2.6
 #
 import numpy as np
 
@@ -276,5 +276,5 @@ class chart:
 		self.tooltips = 'true'
 
 # JavaScript (URL and inline)
-jsurl = "<script src='https://cdnjs.cloudflare.com/ajax/libs/Chart.js/2.5.0/Chart.bundle.min.js'></script>"
+jsurl = "<script src='https://cdnjs.cloudflare.com/ajax/libs/Chart.js/2.6.0/Chart.bundle.min.js'></script>"
 jsinline = ''
