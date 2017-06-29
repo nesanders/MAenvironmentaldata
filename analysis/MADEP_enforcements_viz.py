@@ -165,15 +165,15 @@ with open(fact_file, 'a') as f:
 
 #penalties_per_year = s_data_g.Fine.apply(lambda x: np.histogram(np.log10(x), bins=20, range=[2,7]))
 
-fine_bin_edges = 200*2**(np.arange(19more th))
+fine_bin_edges = 200*2**(np.arange(19))
 ## Round down to 1 sig fig
-fine_bin_edges = [int('$%0.0f'%(c/10**np.floor(np.log10(c))))*10**np.floor(np.log10(c)) for c in fine_bin_edges]
+fine_bin_edges = [int('%0.0f'%(c/10**np.floor(np.log10(c))))*10**np.floor(np.log10(c)) for c in fine_bin_edges]
 fine_dist, fine_bins = np.histogram(s_data.Fine.values, bins=fine_bin_edges, range=[2,7])
 fine_bins_fmt = [locale.format("%d", c, grouping=True) for c in fine_bins]
 
 ## Establish chart
 mychart = chartjs.chart("Penalty distribution", "Bar", 640, 480)
-mychart.set_labels([fine_bins_fmt[i]+' - '+fine_bins_fmt[i+1] for i in range(len(fine_bins_fmt)-1)])
+mychart.set_labels(['$' + fine_bins_fmt[i]+' - '+fine_bins_fmt[i+1] for i in range(len(fine_bins_fmt)-1)])
 mychart.add_dataset(fine_dist, 
 	"Number of enforcements",
 	backgroundColor="'rgba(50,100,100,0.8)'",
@@ -217,3 +217,26 @@ mychart.set_params(JSinline = 0, ylabel = 'Median penalty amount per year', xlab
 	scaleBeginAtZero=0)
 
 mychart.jekyll_write('../docs/_includes/charts/MADEP_enforcement_fine_avg_bootstrap.html')
+
+
+#############################
+## Show change in ACOPs over time
+#############################
+
+s_data_g = s_data.groupby(['Year'])
+s_data_g_acop = s_data_g.apply(lambda x: np.mean((x['order_consent order']) & (x['Fine'] > 0)) / np.mean(x['order_consent order'])) * 100
+
+## Establish chart
+mychart = chartjs.chart("DEP ACOPs Per Year", "Line", 640, 480)
+mychart.set_labels(s_data_g_acop.index.values.tolist())
+mychart.add_dataset(
+	s_data_g_acop.values.tolist(), 
+	'Consent orders with penalties',
+	backgroundColor="'"+color_cycle[0]+"'",
+	stack="'annual'", yAxisID= "'y-axis-0'", fill = "false")
+mychart.set_params(JSinline = 0, ylabel = 'Enforcements with financial penalties (% of annual total consent orders)', xlabel='Year',
+	scaleBeginAtZero=0)
+
+mychart.jekyll_write('../docs/_includes/charts/MADEP_enforcement_ACOP_byyear.html')
+
+
