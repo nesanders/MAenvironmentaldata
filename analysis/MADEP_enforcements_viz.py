@@ -224,16 +224,31 @@ mychart.jekyll_write('../docs/_includes/charts/MADEP_enforcement_fine_avg_bootst
 #############################
 
 s_data_g = s_data.groupby(['Year'])
-s_data_g_acop = s_data_g.apply(lambda x: np.mean((x['order_consent order']) & (x['Fine'] > 0)) / np.mean(x['order_consent order'])) * 100
+#s_data_g_acop = s_data_g.apply(lambda x: np.mean((x['order_consent order']) & (x['Fine'] > 0)) / np.mean(x['order_consent order'])) * 100
+s_data_g_acop = s_data_g.apply(lambda x: 
+		np.percentile(
+			bootstrap(x.iloc[np.where(x['order_consent order'])]['Fine'].values > 0, np.mean)
+			, [5,50,95], axis=0)
+		) * 100
 
 ## Establish chart
 mychart = chartjs.chart("DEP ACOPs Per Year", "Line", 640, 480)
 mychart.set_labels(s_data_g_acop.index.values.tolist())
-mychart.add_dataset(
-	s_data_g_acop.values.tolist(), 
-	'Consent orders with penalties',
-	backgroundColor="'"+color_cycle[0]+"'",
-	stack="'annual'", yAxisID= "'y-axis-0'", fill = "false")
+#mychart.add_dataset(
+	#s_data_g_acop.values.tolist(), 
+	#'Consent orders with penalties',
+	#backgroundColor="'"+color_cycle[0]+"'",
+	#stack="'annual'", yAxisID= "'y-axis-0'", fill = "false")
+mychart.add_dataset(s_data_g_acop.apply(lambda x: x[1]).values.tolist(), 
+	"Best estimate",
+	backgroundColor="'rgba(50,100,100,0.8)'", yAxisID= "'y-axis-0'", borderWidth = 3, fill = 'false'  )
+mychart.add_dataset(s_data_g_acop.apply(lambda x: x[0]).values.tolist(), 
+	"Lower bound (5% limit)",
+	backgroundColor="'rgba(50,50,50,0.3)'", yAxisID= "'y-axis-0'", borderWidth = 1, 
+	fill = 'false', pointBackgroundColor="'rgba(0,0,0,0)'", pointBorderColor="'rgba(0,0,0,0)'")
+mychart.add_dataset(s_data_g_acop.apply(lambda x: x[2]).values.tolist(), 
+	"Upper bound (95% limit)",
+	backgroundColor="'rgba(50,50,50,0.3)'", yAxisID= "'y-axis-0'", borderWidth = 1, fill = "'1'", pointBackgroundColor="'rgba(0,0,0,0)'", pointBorderColor="'rgba(0,0,0,0)'")
 mychart.set_params(JSinline = 0, ylabel = 'Enforcements with financial penalties (% of annual total consent orders)', xlabel='Year',
 	scaleBeginAtZero=0)
 

@@ -42,10 +42,9 @@ Wetlands-related enforcement has declined from more than 16% at peak to only 8% 
 
 While it's difficult to fully quantify the total impact of enforcement actions, ~70% of consent orders have financial penalties associated with them.  (These are ACOPs, Administrative Consent Orders with Penalties.)  The penalty assessed is a useful indicator of impact.
 
-However, the fraction of consent orders with penalties has been steadily declining over time, from more than 80% in 2005 to about 65% in 2016.
+However, the fraction of consent orders with penalties has declined over time, from more than 80% in 2005 to about 65% in 2016.  We use a statistical test to evaluate how significant those changes over time truly are.  The plot below uses [bootstrap resampling](https://en.wikipedia.org/wiki/Bootstrap_(statistics)) to estimate the fraction of consent orders that carry penalties per year, and the uncertainty in this value given the less-than-infinite number of consent orders we have to estimate that fraction (the 90% confidence interval).  The results indicate that the changes over time are highly significant, shifting on a scale much larger than the 90% confidence interval.
 
-<!-- Number of enforcements carrying penalties -->
-
+{% include /charts/MADEP_enforcement_ACOP_byyear.html %}
 
 The plot below shows each individual consent order, so the stacked bars represent the total amount of fines issues per year.  (Depending on your browser, you may need to mouse over the bars to see the individual penalties.)
 
@@ -55,7 +54,7 @@ We can further understand the impact of penalties on violators by looking at the
 
 {% include charts/MADEP_enforcement_fine_dist.html %}
 
-We can use a statistical test to see if the typical fine amount has increased or decreased with time.  The plot below uses [bootstrap resampling](https://en.wikipedia.org/wiki/Bootstrap_(statistics)) to estimate the median enforcement value per year, and the uncertainty in this value given the less-than-infinite number of enforcements we have to estimate the median (90% confidence interval).  The analysis shows that the median enforcement amount has varied by about 20% over this period, but these shifts are not very significant - they could be explained by randomness in what violations happened to come up in those years rather than systematic policy shifts.
+The plot below uses [bootstrap resampling](https://en.wikipedia.org/wiki/Bootstrap_(statistics)) to estimate the median enforcement value per year (again, the 90% confidence interval is shown).  The analysis shows that the median enforcement amount has varied by about 20% over this period, but these shifts are not very significant - they could be explained by randomness in what violations happened to come up in those years rather than systematic policy shifts.
 
 {% include charts/MADEP_enforcement_fine_avg_bootstrap.html %}
 
