@@ -38,6 +38,8 @@ Averaging across this period, enforcement actions specifically reference [MA Cha
 
 Wetlands-related enforcement has declined from more than 16% at peak to only 8% in 2016, a decline of {{ site.data.facts_DEPenforce.yearly_avg_delta2016_wetlands }}%.
 
+Enforcements that reference [supplemental environmental projects](https://www.epa.gov/enforcement/supplemental-environmental-projects-seps) (SEPs), an environmentally beneficial project taken on voluntarily by a violator as partial mitigation for a financial penalty, have declined markedly and steadily.  SEPs were referenced in 1 out of every 17 enforcements in 2004, versus 1 in every 50 enforcements in 2016.
+
 ## Fines
 
 While it's difficult to fully quantify the total impact of enforcement actions, ~70% of consent orders have financial penalties associated with them.  (These are ACOPs, Administrative Consent Orders with Penalties.)  The penalty assessed is a useful indicator of impact.
