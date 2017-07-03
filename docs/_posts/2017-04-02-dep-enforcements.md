@@ -13,7 +13,7 @@ These enforcement actions are up to date as of **{{ site.data.ts_update_MADEP_en
 
 ## Enforcement activity
 
-The total number of individual enforcement actions reported by DEP over the past decade has not varied consistently.  It peaked in 2007 with nearly 500 enforcements.  In 2016, the total number of enforcements was less than half that.  The modern low was less than that, lower than 200 in 2012.
+The total number of individual enforcement actions reported by DEP over the past decade has not varied consistently.  It peaked in 2007 with nearly 500 enforcements.  In 2016, the total number of enforcements was less than half that.  The modern low was less than that, less than 200 in 2012.
 
 {% include /charts/MADEP_enforcement_overall.html %}
 
@@ -23,6 +23,7 @@ The rise and fall in enforcement levels over time has tracked closely with the [
 
 {% include /charts/MADEP_enforcement_vsbudget.html %}
 
+**DEP's level of enforcement activity has declined in near lockstep with the agency's funding levels.**
 
 ## Enforcement types
 
@@ -39,6 +40,11 @@ Averaging across this period, enforcement actions specifically reference [MA Cha
 Wetlands-related enforcement has declined from more than 16% at peak to only 8% in 2016, a decline of {{ site.data.facts_DEPenforce.yearly_avg_delta2016_wetlands }}%.
 
 Enforcements that reference [supplemental environmental projects](https://www.epa.gov/enforcement/supplemental-environmental-projects-seps) (SEPs), an environmentally beneficial project taken on voluntarily by a violator as partial mitigation for a financial penalty, have declined markedly and steadily.  SEPs were referenced in 1 out of every 17 enforcements in 2004, versus 1 in every 50 enforcements in 2016.
+
+Meanwhile, the use of unilateral orders has grown dramatically.  1 in 6 enforcements in 2016 involved a unilateral order, versus 1 in 67 in 2004.
+
+**The focus and methods of DEP's enforcement efforts have shifted over time, leading to less emphasis on topics like wetlands and a growing reliance on unilateral orders, among other changes.**
+
 
 ## Fines
 
