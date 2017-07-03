@@ -1,6 +1,6 @@
-# Massachusetts Environmental Regulatory Data Repository Site
+# Archive of Mass ENvironmental Data Site
 
-The Massachusetts Environmental Regulatory Data Repository is a project to assemble and analyze data related to environmental regulation, focused on water policy in Massachusetts.
+The Archive of Mass ENvironmental Data is a project to assemble and analyze data related to environmental regulation, focused on water policy in Massachusetts.
 
 The website for the project can be [viewed here](https://nesanders.github.io/MAenvironmentaldata/).
 
