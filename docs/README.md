@@ -1,7 +1,7 @@
 ![The Mystic River](assets/mystic.jpg)
 
 
-# {{ site.data.site_config.site_abbrev }}:
+# {{ site.data.site_config.site_abbrev }}: {{ site.data.site_config.site_title }}
 
 The {{ site.data.site_config.site_title }} ({{ site.data.site_config.site_abbrev }}) is a collection of environmental regulatory data and analysis focused on enhancing the use of evidence and accountability for water policy in Massachusetts.
 
@@ -20,7 +20,7 @@ All data, code for data gathering and cleaning, code for analysis, and web devel
 * MA state budget information
 * MA Department of Environmental Protection (DEP) staffing records
 * MA DEP regulatory enforcement actions
-* Us Environmental Protection Agency (EPA) Region 1 NPDES permits
+* US Environmental Protection Agency (EPA) Region 1 NPDES permits
 * US Census and Social Security Administration population and wage data
 
 ## Analysis
