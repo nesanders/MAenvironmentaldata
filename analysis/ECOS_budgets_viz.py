@@ -66,7 +66,7 @@ s_data_g = s_data[sel].groupby(['State'])
 states = sorted(s_data_g.groups.keys())
 
 ## Establish chart
-mychart = chartjs.chart("ECOS Budgets by State Per Year", "Line", 640, 480)
+mychart = chartjs.chart("ECOS Budgets by State Per Year", "Line", 640, 600)
 mychart.set_labels(ECOS_years)
 for i,state in enumerate(states):
 	vals = s_data_g.get_group(state).set_index('Year').ix[ECOS_years].value.astype(float) * inf_data_sel['correct'] / 1e6 
@@ -89,7 +89,7 @@ mychart.jekyll_write('../docs/_includes/charts/ECOS_budget_peryear_bystate.html'
 #############################
 
 ## Establish chart
-mychart = chartjs.chart("ECOS Budget per capita by State Per Year", "Line", 640, 480)
+mychart = chartjs.chart("ECOS Budget per capita by State Per Year", "Line", 640, 600)
 mychart.set_labels(ECOS_years)
 for i,state in enumerate(states):
 	statepop_data_sel = statepop_data[statepop_data['State']==state].T.ix[ECOS_years]
@@ -110,5 +110,26 @@ mychart.jekyll_write('../docs/_includes/charts/ECOS_budget_percap_peryear_bystat
 #############################
 ## Show federal contribution per year by state
 #############################
+
+
+sel = (s_data['BudgetDetail']=="Percent from Federal Government") & s_data.Year.isin(ECOS_years.astype(str))
+s_data_g_fed = s_data[sel].groupby(['State'])
+
+## Establish chart
+mychart = chartjs.chart("ECOS Federal Contribution by State Per Year", "Line", 640, 600)
+mychart.set_labels(ECOS_years)
+for i,state in enumerate(states):
+	vals = s_data_g_fed.get_group(state).set_index('Year').ix[ECOS_years].value.astype(float)
+	mychart.add_dataset(
+		vals, 
+		state,
+		backgroundColor="'"+(color_cycle*10)[i]+"'",
+		stack="'annual'", yAxisID= "'y-axis-0'", fill = "false",
+		hidden = 'false' if state in ['Massachusetts','New Hampshire','Vermont','Maine','Rhode Island'] else 'true')
+mychart.set_params(JSinline = 0, ylabel = 'Environmental Agency Budget % from Federal Government (ECOS)', xlabel='Year',
+	scaleBeginAtZero=1)
+
+mychart.jekyll_write('../docs/_includes/charts/ECOS_fedcont_peryear_bystate.html')
+
 
 

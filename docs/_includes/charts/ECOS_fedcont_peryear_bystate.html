@@ -1,0 +1,73 @@
+{% raw  %}
+<html>
+	<head>
+		<title>ECOS Federal Contribution by State Per Year</title>
+		<script src='https://cdnjs.cloudflare.com/ajax/libs/Chart.js/2.6.0/Chart.bundle.min.js'></script>
+	</head>
+	<body>
+		<div style="width: 640px; height: 600px; max-width: 99%" class="chartjs">
+
+			<canvas id="ECOS Federal Contribution by State Per Year" height="600" width="640"></canvas>
+			<script>
+				var chart_data = {
+				
+					data: {
+						labels: ['2009', '2010', '2011', '2012', '2013', '2014', '2015', '2016'],
+						datasets: [{'yAxisID': 'y-axis-0', 'label': 'Alabama', 'backgroundColor': '#1f77b4', 'hidden': true, 'data': ['null', 'null', 'null', 35.299999999999997, 34.200000000000003, 'null', 'null', 'null'], 'stack': 'annual', 'fill': false},{'yAxisID': 'y-axis-0', 'label': 'Alaska', 'backgroundColor': '#ff7f0e', 'hidden': true, 'data': ['null', 'null', 'null', 29.010000000000002, 29.0, 'null', 'null', 'null'], 'stack': 'annual', 'fill': false},{'yAxisID': 'y-axis-0', 'label': 'Arizona', 'backgroundColor': '#2ca02c', 'hidden': true, 'data': ['null', 'null', 'null', 5.8499999999999996, 5.8499999999999996, 'null', 'null', 'null'], 'stack': 'annual', 'fill': false},{'yAxisID': 'y-axis-0', 'label': 'Arkansas', 'backgroundColor': '#d62728', 'hidden': true, 'data': ['null', 'null', 'null', 18.899999999999999, 19.300000000000001, 'null', 'null', 'null'], 'stack': 'annual', 'fill': false},{'yAxisID': 'y-axis-0', 'label': 'California', 'backgroundColor': '#9467bd', 'hidden': true, 'data': ['null', 'null', 'null', 'null', 'null', 'null', 'null', 'null'], 'stack': 'annual', 'fill': false},{'yAxisID': 'y-axis-0', 'label': 'Colorado', 'backgroundColor': '#8c564b', 'hidden': true, 'data': [40.600000000000001, 32.600000000000001, 31.699999999999999, 38.399999999999999, 39.899999999999999, 'null', 'null', 'null'], 'stack': 'annual', 'fill': false},{'yAxisID': 'y-axis-0', 'label': 'Connecticut', 'backgroundColor': '#e377c2', 'hidden': true, 'data': ['null', 'null', 'null', 16.559999999999999, 17.620000000000001, 'null', 'null', 'null'], 'stack': 'annual', 'fill': false},{'yAxisID': 'y-axis-0', 'label': 'Delaware', 'backgroundColor': '#7f7f7f', 'hidden': true, 'data': ['null', 'null', 'null', 28.210000000000001, 26.390000000000001, 'null', 'null', 'null'], 'stack': 'annual', 'fill': false},{'yAxisID': 'y-axis-0', 'label': 'District of Columbia', 'backgroundColor': '#bcbd22', 'hidden': true, 'data': ['null', 'null', 'null', 40.049999999999997, 28.969999999999999, 'null', 'null', 'null'], 'stack': 'annual', 'fill': false},{'yAxisID': 'y-axis-0', 'label': 'Florida', 'backgroundColor': '#17becf', 'hidden': true, 'data': [7.5999999999999996, 18.199999999999999, 9.5999999999999996, 'null', 'null', 'null', 'null', 'null'], 'stack': 'annual', 'fill': false},{'yAxisID': 'y-axis-0', 'label': 'Georgia', 'backgroundColor': '#1f77b4', 'hidden': true, 'data': ['null', 'null', 'null', 28.489999999999998, 27.129999999999999, 'null', 'null', 'null'], 'stack': 'annual', 'fill': false},{'yAxisID': 'y-axis-0', 'label': 'Hawaii', 'backgroundColor': '#ff7f0e', 'hidden': true, 'data': ['null', 'null', 'null', 67.659999999999997, 67.659999999999997, 'null', 'null', 'null'], 'stack': 'annual', 'fill': false},{'yAxisID': 'y-axis-0', 'label': 'Idaho', 'backgroundColor': '#2ca02c', 'hidden': true, 'data': [60.0, 65.0, 60.0, 57.450000000000003, 58.189999999999998, 'null', 'null', 'null'], 'stack': 'annual', 'fill': false},{'yAxisID': 'y-axis-0', 'label': 'Illinois', 'backgroundColor': '#d62728', 'hidden': true, 'data': [20.52, 26.260000000000002, 24.91, 24.359999999999999, 22.75, 'null', 'null', 'null'], 'stack': 'annual', 'fill': false},{'yAxisID': 'y-axis-0', 'label': 'Indiana', 'backgroundColor': '#9467bd', 'hidden': true, 'data': [19.0, 19.0, 21.5, 17.800000000000001, 17.800000000000001, 'null', 'null', 'null'], 'stack': 'annual', 'fill': false},{'yAxisID': 'y-axis-0', 'label': 'Iowa', 'backgroundColor': '#8c564b', 'hidden': true, 'data': [36.0, 39.0, 41.0, 'null', 'null', 'null', 'null', 'null'], 'stack': 'annual', 'fill': false},{'yAxisID': 'y-axis-0', 'label': 'Kansas', 'backgroundColor': '#e377c2', 'hidden': true, 'data': ['null', 'null', 'null', 39.0, 38.0, 'null', 'null', 'null'], 'stack': 'annual', 'fill': false},{'yAxisID': 'y-axis-0', 'label': 'Kentucky', 'backgroundColor': '#7f7f7f', 'hidden': true, 'data': [30.0, 29.0, 28.0, 22.809999999999999, 20.940000000000001, 'null', 'null', 'null'], 'stack': 'annual', 'fill': false},{'yAxisID': 'y-axis-0', 'label': 'Louisiana', 'backgroundColor': '#bcbd22', 'hidden': true, 'data': ['null', 'null', 'null', 19.329999999999998, 19.190000000000001, 'null', 'null', 'null'], 'stack': 'annual', 'fill': false},{'yAxisID': 'y-axis-0', 'label': 'Maine', 'backgroundColor': '#17becf', 'hidden': false, 'data': [22.300000000000001, 20.5, 20.5, 23.300000000000001, 23.5, 'null', 'null', 'null'], 'stack': 'annual', 'fill': false},{'yAxisID': 'y-axis-0', 'label': 'Maryland', 'backgroundColor': '#1f77b4', 'hidden': true, 'data': [23.0, 17.0, 20.0, 31.859999999999999, 16.489999999999998, 'null', 'null', 'null'], 'stack': 'annual', 'fill': false},{'yAxisID': 'y-axis-0', 'label': 'Massachusetts', 'backgroundColor': '#ff7f0e', 'hidden': false, 'data': [28.399999999999999, 38.299999999999997, 34.899999999999999, 27.280000000000001, 25.059999999999999, 'null', 'null', 'null'], 'stack': 'annual', 'fill': false},{'yAxisID': 'y-axis-0', 'label': 'Michigan', 'backgroundColor': '#2ca02c', 'hidden': true, 'data': ['null', 'null', 'null', 37.5, 37.5, 'null', 'null', 'null'], 'stack': 'annual', 'fill': false},{'yAxisID': 'y-axis-0', 'label': 'Minnesota', 'backgroundColor': '#d62728', 'hidden': true, 'data': ['null', 'null', 'null', 16.629999999999999, 12.5, 'null', 'null', 'null'], 'stack': 'annual', 'fill': false},{'yAxisID': 'y-axis-0', 'label': 'Mississippi', 'backgroundColor': '#9467bd', 'hidden': true, 'data': ['null', 'null', 'null', 64.709999999999994, 'null', 'null', 'null', 'null'], 'stack': 'annual', 'fill': false},{'yAxisID': 'y-axis-0', 'label': 'Missouri', 'backgroundColor': '#8c564b', 'hidden': true, 'data': ['null', 'null', 'null', 18.190000000000001, 10.140000000000001, 'null', 'null', 'null'], 'stack': 'annual', 'fill': false},{'yAxisID': 'y-axis-0', 'label': 'Montana', 'backgroundColor': '#e377c2', 'hidden': true, 'data': ['null', 'null', 'null', 37.140000000000001, 37.119999999999997, 'null', 'null', 'null'], 'stack': 'annual', 'fill': false},{'yAxisID': 'y-axis-0', 'label': 'Nebraska', 'backgroundColor': '#7f7f7f', 'hidden': true, 'data': ['null', 'null', 'null', 42.380000000000003, 43.539999999999999, 'null', 'null', 'null'], 'stack': 'annual', 'fill': false},{'yAxisID': 'y-axis-0', 'label': 'Nevada', 'backgroundColor': '#bcbd22', 'hidden': true, 'data': [37.0, 37.0, 37.0, 46.0, 36.0, 'null', 'null', 'null'], 'stack': 'annual', 'fill': false},{'yAxisID': 'y-axis-0', 'label': 'New Hampshire', 'backgroundColor': '#17becf', 'hidden': false, 'data': ['null', 'null', 'null', 36.740000000000002, 37.799999999999997, 'null', 'null', 'null'], 'stack': 'annual', 'fill': false},{'yAxisID': 'y-axis-0', 'label': 'New Jersey', 'backgroundColor': '#1f77b4', 'hidden': true, 'data': ['null', 'null', 'null', 32.210000000000001, 32.539999999999999, 'null', 'null', 'null'], 'stack': 'annual', 'fill': false},{'yAxisID': 'y-axis-0', 'label': 'New York', 'backgroundColor': '#ff7f0e', 'hidden': true, 'data': ['null', 'null', 'null', 17.0, 15.0, 'null', 'null', 'null'], 'stack': 'annual', 'fill': false},{'yAxisID': 'y-axis-0', 'label': 'North Carolina', 'backgroundColor': '#2ca02c', 'hidden': true, 'data': [29.0, 31.800000000000001, 30.199999999999999, 36.450000000000003, 36.890000000000001, 'null', 'null', 'null'], 'stack': 'annual', 'fill': false},{'yAxisID': 'y-axis-0', 'label': 'North Dakota', 'backgroundColor': '#d62728', 'hidden': true, 'data': ['null', 'null', 'null', 72.370000000000005, 72.370000000000005, 'null', 'null', 'null'], 'stack': 'annual', 'fill': false},{'yAxisID': 'y-axis-0', 'label': 'Ohio', 'backgroundColor': '#9467bd', 'hidden': true, 'data': [18.0, 18.0, 16.0, 18.75, 18.370000000000001, 'null', 'null', 'null'], 'stack': 'annual', 'fill': false},{'yAxisID': 'y-axis-0', 'label': 'Oklahoma', 'backgroundColor': '#8c564b', 'hidden': true, 'data': [25.0, 35.32, 39.0, 30.379999999999999, 'null', 'null', 'null', 'null'], 'stack': 'annual', 'fill': false},{'yAxisID': 'y-axis-0', 'label': 'Oregon', 'backgroundColor': '#e377c2', 'hidden': true, 'data': [13.5, 17.399999999999999, 17.600000000000001, 15.92, 15.92, 'null', 'null', 'null'], 'stack': 'annual', 'fill': false},{'yAxisID': 'y-axis-0', 'label': 'Pennsylvania', 'backgroundColor': '#7f7f7f', 'hidden': true, 'data': ['null', 'null', 'null', 39.579999999999998, 36.840000000000003, 'null', 'null', 'null'], 'stack': 'annual', 'fill': false},{'yAxisID': 'y-axis-0', 'label': 'Puerto Rico', 'backgroundColor': '#bcbd22', 'hidden': true, 'data': ['null', 'null', 'null', 61.130000000000003, 54.289999999999999, 'null', 'null', 'null'], 'stack': 'annual', 'fill': false},{'yAxisID': 'y-axis-0', 'label': 'Rhode Island', 'backgroundColor': '#17becf', 'hidden': false, 'data': [23.399999999999999, 32.600000000000001, 30.199999999999999, 41.5, 39.600000000000001, 'null', 'null', 'null'], 'stack': 'annual', 'fill': false},{'yAxisID': 'y-axis-0', 'label': 'South Carolina', 'backgroundColor': '#1f77b4', 'hidden': true, 'data': ['null', 'null', 'null', 42.689999999999998, 36.740000000000002, 'null', 'null', 'null'], 'stack': 'annual', 'fill': false},{'yAxisID': 'y-axis-0', 'label': 'South Dakota', 'backgroundColor': '#ff7f0e', 'hidden': true, 'data': [40.399999999999999, 42.299999999999997, 42.200000000000003, 58.789999999999999, 33.719999999999999, 'null', 'null', 'null'], 'stack': 'annual', 'fill': false},{'yAxisID': 'y-axis-0', 'label': 'Tennessee', 'backgroundColor': '#2ca02c', 'hidden': true, 'data': [11.1, 15.300000000000001, 12.300000000000001, 16.870000000000001, 15.539999999999999, 'null', 'null', 'null'], 'stack': 'annual', 'fill': false},{'yAxisID': 'y-axis-0', 'label': 'Texas', 'backgroundColor': '#d62728', 'hidden': true, 'data': ['null', 'null', 'null', 12.43, 12.1, 'null', 'null', 'null'], 'stack': 'annual', 'fill': false},{'yAxisID': 'y-axis-0', 'label': 'Utah', 'backgroundColor': '#9467bd', 'hidden': true, 'data': [34.630000000000003, 43.920000000000002, 40.030000000000001, 39.289999999999999, 38.020000000000003, 'null', 'null', 'null'], 'stack': 'annual', 'fill': false},{'yAxisID': 'y-axis-0', 'label': 'Vermont', 'backgroundColor': '#8c564b', 'hidden': false, 'data': ['null', 'null', 'null', 49.299999999999997, 27.0, 'null', 'null', 'null'], 'stack': 'annual', 'fill': false},{'yAxisID': 'y-axis-0', 'label': 'Virginia', 'backgroundColor': '#e377c2', 'hidden': true, 'data': [6.0, 7.0, 16.0, 29.649999999999999, 25.219999999999999, 'null', 'null', 'null'], 'stack': 'annual', 'fill': false},{'yAxisID': 'y-axis-0', 'label': 'Washington', 'backgroundColor': '#7f7f7f', 'hidden': true, 'data': [0.14000000000000001, 0.17999999999999999, 0.17999999999999999, 21.489999999999998, 24.899999999999999, 'null', 'null', 'null'], 'stack': 'annual', 'fill': false},{'yAxisID': 'y-axis-0', 'label': 'West Virginia', 'backgroundColor': '#bcbd22', 'hidden': true, 'data': ['null', 'null', 'null', 47.960000000000001, 40.810000000000002, 'null', 'null', 'null'], 'stack': 'annual', 'fill': false},{'yAxisID': 'y-axis-0', 'label': 'Wisconsin', 'backgroundColor': '#17becf', 'hidden': true, 'data': [13.0, 13.0, 13.0, 16.0, 16.0, 'null', 'null', 'null'], 'stack': 'annual', 'fill': false},{'yAxisID': 'y-axis-0', 'label': 'Wyoming', 'backgroundColor': '#1f77b4', 'hidden': true, 'data': [28.0, 27.0, 27.0, 27.0, 26.0, 'null', 'null', 'null'], 'stack': 'annual', 'fill': false}]
+					},
+					type: 'line',
+					options: {
+						scales: {
+							yAxes: [{
+								display: true,
+								scaleLabel: {
+									display: true,
+									labelString: 'Environmental Agency Budget % from Federal Government (ECOS)'
+								},
+								ticks: {
+									beginAtZero: true
+								},
+								"id": "y-axis-0",
+								"position": "left",
+								stacked: false
+							}, {
+								display: false,
+								scaleLabel: {
+									display: true,
+									labelString: ''
+								},
+								ticks: {
+									beginAtZero: true
+								},
+								"id": "y-axis-1",
+								"position": "right"
+							}],
+							xAxes: [{
+								scaleLabel: {
+									display: true,
+									labelString: 'Year'
+								},
+								stacked: false
+							}]
+						},
+						legend: {
+							display: true
+							},
+						tooltips: {
+							display: true
+							}
+					},
+				}
+				
+			</script>
+			<script>
+				{{
+					var ctx = document.getElementById("ECOS Federal Contribution by State Per Year").getContext("2d");
+					var mychart = new Chart(ctx, chart_data);
+				}}
+			</script>
+
+		</div>
+	</body>
+</html>
+{% endraw  %}

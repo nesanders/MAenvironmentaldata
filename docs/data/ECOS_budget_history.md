@@ -43,6 +43,10 @@ The fiscal data in these visualizations has been corrected for inflation to 2016
 
 {% include /charts/ECOS_budget_percap_peryear_bystate.html %}
 
+### State agency budget from federal government comparison by year:
+
+{% include /charts/ECOS_fedcont_peryear_bystate.html %}
+
 
 ## Data table
 
