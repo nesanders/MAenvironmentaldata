@@ -2,7 +2,7 @@
 <html>
 	<head>
 		<title>Overall DEP Staffing vs Funding</title>
-		<script src='https://cdnjs.cloudflare.com/ajax/libs/Chart.js/2.5.0/Chart.bundle.min.js'></script>
+		<script src='https://cdnjs.cloudflare.com/ajax/libs/Chart.js/2.6.0/Chart.bundle.min.js'></script>
 	</head>
 	<body>
 		<div style="width: 640px; height: 480px; max-width: 99%" class="chartjs">
@@ -12,7 +12,7 @@
 				var chart_data = {
 				
 					data: {
-						labels: [2004, 2005, 2006, 2007, 2008, 2009, 2010, 2011, 2012, 2013, 2014, 2015, 2016],
+						labels: ['2004', '2005', '2006', '2007', '2008', '2009', '2010', '2011', '2012', '2013', '2014', '2015', '2016'],
 						datasets: [{'data': [967, 946, 966, 1010, 1014, 1032, 953, 853, 834, 870, 857, 839, 830], 'yAxisID': 'y-axis-0', 'label': 'Total DEP employment', 'borderWidth': 2, 'backgroundColor': 'rgba(50,50,50,0.5)', 'type': 'line', 'stack': 'annual', 'fill': false},{'borderColor': '#ff7f0e', 'data': [37.529802, 37.90292, 37.627992, 41.686406, 40.793654, 38.965203, 32.469083, 28.871887, 26.920129, 27.488026, 28.925666, 30.453795, 30.711019], 'yAxisID': 'y-axis-1', 'label': 'DEP administrative budget', 'borderWidth': 2, 'type': 'line', 'stack': 'annual', 'fill': false}]
 					},
 					type: 'bar',
@@ -21,18 +21,19 @@
 							yAxes: [{
 								display: true,
 								scaleLabel: {
-									
-display: true,									labelString: 'Total employment'
+									display: true,
+									labelString: 'Total employment'
 								},
 								ticks: {
 									beginAtZero: false
 								},
 								"id": "y-axis-0",
-								"position": "left"
+								"position": "left",
+								stacked: false
 							}, {
 								display: true,
 								scaleLabel: {
-											display: true,
+									display: true,
 									labelString: 'Funding level ($M, 2016 dollars)'
 								},
 								ticks: {
@@ -45,11 +46,19 @@ display: true,									labelString: 'Total employment'
 								scaleLabel: {
 									display: true,
 									labelString: 'Year'
-								}
+								},
+								stacked: false
 							}]
-						}
-					}
+						},
+						legend: {
+							display: true
+							},
+						tooltips: {
+							display: true
+							}
+					},
 				}
+				
 			</script>
 			<script>
 				{{

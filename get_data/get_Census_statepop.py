@@ -11,7 +11,7 @@ data_2000 = pd.read_csv('st-est00int-01.csv', skiprows=3)
 data_2010 = pd.read_excel('nst-est2016-01.xlsx', skiprows=3)
 
 ## Clean files
-data_2000_c = data_2000[np.arange(2000,2010).astype(str)].set_index(data_2000.iloc[:,0].str.replace('.','')).dropna()
+data_2000_c = data_2000[np.arange(2000,2010).astype(str)].set_index(data_2000.iloc[:,0].str.replace('.','')).dropna().apply(lambda x: x.apply(lambda y: y.replace(',',''))).astype(float)
 
 data_2010_c = data_2010[np.arange(2010,2017)].set_index(data_2010.iloc[:,0].str.replace('.','')).dropna()
 

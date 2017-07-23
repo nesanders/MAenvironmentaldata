@@ -33,9 +33,15 @@ We provide our archive of this data in [CSV format](ECOS_budget_history.csv).
 
 *Right click and save image to export the figure.*
 
+The fiscal data in these visualizations has been corrected for inflation to 2016 dollars using the [SSA wage data](SSA_wages.html).
+
 ### State agency budgets comparison by year:
 
 {% include /charts/ECOS_budget_peryear_bystate.html %}
+
+### State agency budget per capita comparison by year:
+
+{% include /charts/ECOS_budget_percap_peryear_bystate.html %}
 
 
 ## Data table
