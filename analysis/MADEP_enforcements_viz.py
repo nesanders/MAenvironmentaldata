@@ -11,7 +11,7 @@ import locale
 locale.setlocale(locale.LC_ALL, 'en_US.UTF-8')
  
 ## Load database
-disk_engine = create_engine('sqlite:///../get_data/MERDR.db')
+disk_engine = create_engine('sqlite:///../get_data/AMEND.db')
 
 
 ## Get MADEP website enforcement data

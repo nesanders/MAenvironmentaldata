@@ -12,7 +12,7 @@ color_cycle = [c['color'] for c in list(mpl.rcParams['axes.prop_cycle'])]
 
 
 ## Load database
-disk_engine = create_engine('sqlite:///../get_data/MERDR.db')
+disk_engine = create_engine('sqlite:///../get_data/AMEND.db')
 
 ## Get VisibleGovernment data
 s_data = pd.read_sql_query('SELECT * FROM MADEP_staff', disk_engine)
