@@ -12,6 +12,7 @@ python get_data/get_MassBudget_environmental.py
 python get_data/get_DEP_staff_SODA.py
 python get_data/get_DEP_staff.py
 python get_data/get_Census_ACS.py
+python get_data/get_Census_statepop.py
 python get_data/get_DEP_enforcement_actions.py
 
 ## Transformations
@@ -28,4 +29,5 @@ python analysis/SSA_wages_viz.py
 python analysis/MADEP_staff.py
 python analysis/MADEP_budget_viz.py
 python analysis/MADEP_enforcements_viz.py
+python analysis/ECOS_budgets_viz.py
 
