@@ -1,3 +1,4 @@
+// Based on demo at https://kripken.github.io/sql.js/GUI/
 // This prevents pollution of the global namespace
 var SQL = (function () {
 var f;f||(f=eval("(function() { try { return Module || {} } catch(e) { return {} } })()"));var aa={},ba;for(ba in f)f.hasOwnProperty(ba)&&(aa[ba]=f[ba]);var ca="object"===typeof window,da="function"===typeof importScripts,ea="object"===typeof process&&"function"===typeof require&&!ca&&!da,fa=!ca&&!ea&&!da;

@@ -6,38 +6,104 @@ author: NES
 
 <h1>{{ site.data.site_config.site_abbrev }} {{ page.title }}</h1>
 <ul class="posts">
-
-<h2>{{ site.data.site_config.site_abbrev }} Database Demo</h2>
-
-<p>This page provides an interactive, browser-based demonstration of the <a href="index.html">{{ site.data.site_config.site_title }} SQLite database</a>. Use the </p>
+<link rel="stylesheet" href="../assets/codemirror.css">
+<script src="../assets/codemirror.js"></script>
 
 
-<main>
-    <label for='commands'>Enter some SQL</label>
-    <br>
+<p>This page provides an interactive, browser-based demonstration of the <a href="index.html">{{ site.data.site_config.site_title }} SQLite database</a>. Use the form below to test out a <a href="https://en.wikipedia.org/wiki/Sql">SQL query</a> and view results.</p>
 
-    <textarea rows=25 columns=75 id="commands">SELECT `name`, `sql`
-  FROM `sqlite_master`
-  WHERE type='table';</textarea>
+<div style="width: 100%; overflow: hidden;">
+    <div style="width: 350px; float: left;"> 
+    
+		<h2>{{ site.data.site_config.site_abbrev }} Database Demo</h2>
+		
+		<h3>Step 1: Load database</h3>
+		
+			<p>Database location: <br> <input type='text' style='width:100%' value='https://storage.googleapis.com/ns697-amend/amend.db' id='dbfile' readonly></p>
+			
+			<p>Note: The AMEND database is about 10 MB in size and may take a minute to download.</p>
+			
+			<button id="downloaddb" class="button">Load database</button>
+    
+		<h3>Step 2: Write query</h3>
+			
+			<label for='commands'>Enter some SQL</label>
+			<br>
 
-<button id="execute" class="button">Execute</button>
-<button id='savedb'  class="button">Save the db</button>
-<div id="error" class="error"></div>
+			<textarea rows=25 columns=75 id="commands">SELECT name, sql
+FROM 'sqlite_master'
+WHERE type='table';</textarea>
+		
+		<h3>Step 3: Execute query</h3>
+		
+			<p>Make sure you have loaded the database (Step 1) and written a SQL query (Step 2).</p>
+		
+			<button id="execute" class="button">Execute</button>
+			<!-- <button id='savedb'  class="button">Save the db</button> -->
+			<div id="error" class="error"></div>
 
-<pre id="output">Results will be displayed here</pre>
-</main>
+			<pre id="output">Results will be displayed here</pre>
+	
+	</div>
+    <div style="margin-left: 370px; padding: 10px; background-color: rgba(67, 141, 88, 0.54);"> 
+		 
+		 <h2>Example SQL queries</h2>
+		 
+		<p>Copy and paste each of the below tables into the demo at left to test out the query.</p>
+		
+		<p><em>List tables in database:</em></p>
+		
+		<p style="background:#F8F8FF; border:black dashed 1px; padding:6px">SELECT name, sql<br>
+FROM 'sqlite_master'<br>
+WHERE type='table';</p>
+		
+		<p><em>Print MA DEP budget table:</em></p>
+		
+		<p style="background:#F8F8FF; border:black dashed 1px; padding:6px">SELECT * 
+		FROM MassBudget_summary</p>
+		
+		<p><em>Calculate total number of MA DEP enforcements per year:</em></p>
+		
+		<p style="background:#F8F8FF; border:black dashed 1px; padding:6px">SELECT year, count(*)<br>
+FROM MADEP_enforcement<br>
+GROUP BY year;</p>
+		
+		<p><em>Calculate total number of MA DEP enforcements per year and join with DEP staff per year:</em></p>
+		 
+		<p style="background:#F8F8FF; border:black dashed 1px; padding:6px">SELECT staff.year, count_enforcement, count_staff FROM<br>
+&nbsp&nbsp(SELECT year, count(*) AS count_enforcement <br>
+&nbsp&nbspFROM MADEP_enforcement <br>
+&nbsp&nbspGROUP BY year) enf <br>
+JOIN <br>
+&nbsp&nbsp(SELECT <br>
+&nbsp&nbsp&nbsp&nbspCalendarYear AS year, <br>
+&nbsp&nbsp&nbsp&nbspcount(*) AS count_staff<br>
+&nbsp&nbspFROM MADEP_staff<br>
+&nbsp&nbspGROUP BY year) staff <br>
+ON staff.year=enf.year;<br>
+		</p>
+		
+	</div>
 
-<script src="{{ site.url }}{{ site.baseurl }}/assets/sql.js"></script>
-<script>
+</div>
+
+<!-- Not needed if web worker is being used -->
+<!-- <script src="{{ site.url }}{{ site.baseurl }}/assets/sql.js"></script> -->
+
+<script type="text/javascript" src="{{ site.url }}{{ site.baseurl }}/assets/gui.js"></script>
+
+<!--<script>
 var xhr = new XMLHttpRequest();
-xhr.open('GET', 'https://storage.googleapis.com/ns697-merdr/merdr.db', true);
+xhr.open('GET', 'https://storage.googleapis.com/ns697-amend/amend.db', true);
+// Note: CORS needs to be enabled on the target bucket as in https://cloud.google.com/storage/docs/cross-origin
 xhr.responseType = 'arraybuffer';
 
 xhr.onload = function(e) {
   var uInt8Array = new Uint8Array(this.response);
   var db = new SQL.Database(uInt8Array);
-  var contents = db.exec("SELECT * FROM my_table");
+  var contents = db.exec("SELECT * FROM MassBudget_summary");
   // contents is now [{columns:['col1','col2',...], values:[[first row], [second row], ...]}]
 };
 xhr.send();
-</script>
+</script>-->
+
