@@ -7,7 +7,7 @@ The {{ site.data.site_config.site_title }} ({{ site.data.site_config.site_abbrev
 
 ## Integrated
 
-{{ site.data.site_config.site_abbrev }} unifies information from a variety of governmental and public sources into an [integrated database]({{ site.url }}{{ site.baseurl }}/data/index.html) that is permanently archived at this site.
+{{ site.data.site_config.site_abbrev }} unifies information from a variety of governmental and public sources into an [integrated database]({{ site.url }}{{ site.baseurl }}/data/index.html) that is permanently archived at this site.  You can even <a href="data/sql_demo.html">query the database</a> directly in your browser.
 
 ## Open access
 
