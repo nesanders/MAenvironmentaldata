@@ -21,11 +21,10 @@ data_merge['State'] = data_merge.index
 
 ## Write out
 data_merge.to_csv('../docs/data/Census_statepop.csv', index=0)
-os.system('cp ../docs/data/Census_statepop.csv ../docs/_data/Census_statepop.csv')
 
 
 ## Report last update
-with open('../docs/_data/ts_update_statepop.yml', 'w') as f:
+with open('../docs/data/ts_update_statepop.yml', 'w') as f:
 	f.write('updated: '+str(datetime.datetime.now()).split('.')[0]+'\n' )
 
 

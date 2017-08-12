@@ -159,10 +159,9 @@ os.system('gsutil rsync -r '+permit_dir.split('/{}/')[0]+' gs://ns697-merdr/'+pe
 permit_df.to_pickle('EPARegion1_NPDES_permit_data.p')
 permit_df.rename(columns = {c:c.replace(' ','_') for c in permit_df.columns}, inplace=1)
 permit_df.to_csv('../docs/data/EPARegion1_NPDES_permit_data.csv', index=0, encoding='ascii') #UTF8 outputs break tables in jekyll!  http://support.markedapp.com/discussions/problems/18583-rendering-tables-with-kramdown
-os.system('cp ../docs/data/EPARegion1_NPDES_permit_data.csv ../docs/_data/EPARegion1_NPDES_permit_data.csv')
 
 
 ## Report last update
-with open('../docs/_data/ts_update_EPARegion1_NPDES_permit.yml', 'w') as f:
+with open('../docs/data/ts_update_EPARegion1_NPDES_permit.yml', 'w') as f:
 	f.write('updated: '+str(datetime.datetime.now()).split('.')[0]+'\n')
 

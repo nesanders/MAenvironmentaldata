@@ -100,7 +100,7 @@ def get_dollars(x):
 DEP_df['Fine'] = DEP_df.Text.apply(get_dollars)
 
 ## Annotate towns
-pop_inc_data = pd.read_csv('../docs/_data/Census_ACS_MA.csv')
+pop_inc_data = pd.read_csv('../docs/data/Census_ACS_MA.csv')
 pop_inc_data.index = pop_inc_data['Subdivision']
 DEP_df['municipality'] = DEP_df.Text.apply(extract_proper_nouns).apply(lambda x: [town for town in pop_inc_data['Subdivision'] if town in x])
 
@@ -114,10 +114,9 @@ def pop_inc_data_avg(towns, col):
 
 ## Output dataframe
 DEP_df.to_csv('../docs/data/MADEP_enforcement_actions.csv', index=False)
-os.system('cp ../docs/data/MADEP_enforcement_actions.csv ../docs/_data/MADEP_enforcement_actions.csv')
 
 ## Report last update
-with open('../docs/_data/ts_update_MADEP_enforcement_actions.yml', 'w') as f:
+with open('../docs/data/ts_update_MADEP_enforcement_actions.yml', 'w') as f:
 	f.write('updated: '+str(datetime.datetime.now()).split('.')[0]+'\n')
 
 

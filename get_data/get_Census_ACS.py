@@ -50,11 +50,10 @@ df['Subdivision'] = df.index
 
 
 df.to_csv('../docs/data/Census_ACS_MA.csv', index=0)
-os.system('cp ../docs/data/Census_ACS_MA.csv ../docs/_data/Census_ACS_MA.csv')
 
 
 ## Report last update
-with open('../docs/_data/ts_update_census_acs.yml', 'w') as f:
+with open('../docs/data/ts_update_census_acs.yml', 'w') as f:
 	f.write('updated: '+str(datetime.datetime.now()).split('.')[0]+'\n'\
 		 +'census_year: '+str(census_year)+'\n'
 	)

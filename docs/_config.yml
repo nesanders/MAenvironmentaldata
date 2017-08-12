@@ -1,3 +1,4 @@
 theme: jekyll-theme-dinky
 google_analytics: UA-93678934-1
 baseurl: /MAenvironmentaldata
+data_source: data

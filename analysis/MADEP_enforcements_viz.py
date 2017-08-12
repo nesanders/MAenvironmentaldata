@@ -23,7 +23,7 @@ f_data = pd.read_sql_query('SELECT * FROM MassBudget_summary', disk_engine)
 f_data.index = f_data.Year
 
 ## Establish file to export facts
-fact_file = '../docs/_data/facts_DEPenforce.yml'
+fact_file = '../docs/data/facts_DEPenforce.yml'
 with open(fact_file, 'w') as f: f.write('')
 
 

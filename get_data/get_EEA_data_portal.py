@@ -74,28 +74,22 @@ def query_iterate(table_name, req_size = 100000, verbose = True):
 table_data = {}
 for tab in API_tables:
 	table_data[tab] = query_iterate(tab)
-	table_data[tab].to_csv('../docs/data/EEADP_' + tab + '.csv', index=0)
-
-
-## Copy to _data, but treat large tables separately
-## Only one table (drinkingWater) is >10MB as of 08/2017, so we handle this as a special case.
-## Could also use `size_MB = os.path.getsize('../docs/data/EEADP_' + tab + '.csv')/1024/1024` to get file size
-for tab in API_tables:
-	if tab != 'drinkingWater':
-		os.system('cp ../docs/data/EEADP_' + tab + '.csv ../docs/_data/EEADP_' + tab + '.csv')
 	
-	## Treat drinkingWater separately because the table is so large
+	## Write out, but treat large tables separately
+	## Only one table (drinkingWater) is >10MB as of 08/2017, so we handle this as a special case.
+	## Could also use `size_MB = os.path.getsize('../docs/data/EEADP_' + tab + '.csv')/1024/1024` to get file size
+	if tab != 'drinkingWater': 
+		table_data[tab].to_csv('../docs/data/EEADP_' + tab + '.csv', index=0)
 	else:
 		## Send to Google object store
-		os.system('gsutil cp ../docs/data/EEADP_' + tab + '.csv gs://ns697-amend/EEADP_' + tab + '.csv')
+		table_data[tab].to_csv('EEADP_' + tab + '.csv', index=0)
+		os.system('gsutil cp EEADP_' + tab + '.csv gs://ns697-amend/EEADP_' + tab + '.csv')
 		
 		## Print the header of the file as an example
 		table_data[tab].head(100).to_csv('../docs/data/EEADP_' + tab + '_head.csv', index=0)
-		os.system('cp ../docs/data/EEADP_' + tab + '_head.csv ../docs/_data/EEADP_' + tab + '_head.csv')
 		
 		## Include some special summary statistics tables
-		
-
+		## ---		
 		## Most recent report for each chemical for each site
 		## This still ends up being ~20% of the original size, so larger than desired
 		#table_data[tab].sort_values('CollectedDate', inplace=True)
@@ -107,7 +101,6 @@ for tab in API_tables:
 		table_data[tab]['Year'] = table_data[tab]['CollectedDate'].apply(lambda x: x.year)
 		df_dw_annual_group = table_data[tab].groupby(['Year','PWSName', 'ContaminantGroup','RaworFinished']).agg({'Result': pd.Series.count})
 		df_dw_annual_group.to_csv('../docs/data/EEADP_' + tab + '_annual.csv', index=0)
-		os.system('cp ../docs/data/EEADP_' + tab + '_annual.csv ../docs/_data/EEADP_' + tab + '_annual.csv')
 
 		## Tests per year per PWS per chemical per raw/finished
 		### This still ends up being ~40% of the original size, so larger than desired
@@ -120,6 +113,6 @@ for tab in API_tables:
 ## Report last update
 ##########################
 
-with open('../docs/_data/ts_update_EEADP.yml', 'w') as f:
+with open('../docs/data/ts_update_EEADP.yml', 'w') as f:
 	f.write('updated: '+str(datetime.datetime.now()).split('.')[0]+'\n')
 

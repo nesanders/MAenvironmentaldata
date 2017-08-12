@@ -256,4 +256,3 @@ state_df_merge_pivot_stand = state_df_merge_pivot.groupby(['State','Year']).appl
 ## Note: jeykll table display on website will not work if there are linebreaks within table cells
 state_df_merge_pivot_stand.value = state_df_merge_pivot_stand.value.str.replace('\\n',' ')
 state_df_merge_pivot_stand.sort_values(['State','BudgetDetail','Year']).fillna('').to_csv('../docs/data/ECOS_budget_history.csv', index=0, encoding='ascii')
-os.system('cp ../docs/data/ECOS_budget_history.csv ../docs/_data/ECOS_budget_history.csv')

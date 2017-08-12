@@ -67,11 +67,10 @@ s_data.sort(['Calendar Year','JobType','JobLevel'], inplace=1)
 ## Export
 e_cols = [u'Calendar Year', u'Employee Name', u'Job Title', u'Earnings', u'JobType', u'JobLevel', u'Seniority', u'name_first', u'name_middleI', u'name_last']
 s_data[e_cols].rename(columns = {d:d.replace(' ','') for d in e_cols}).to_csv('../docs/data/MADEP_staff.csv', index=0)
-os.system('cp ../docs/data/MADEP_staff.csv ../docs/_data/MADEP_staff.csv')
 
 
 ## Report last update
-with open('../docs/_data/ts_update_MADEP_staff.yml', 'w') as f:
+with open('../docs/data/ts_update_MADEP_staff.yml', 'w') as f:
 	f.write('updated: '+str(datetime.datetime.now()).split('.')[0]+'\n')
 
 

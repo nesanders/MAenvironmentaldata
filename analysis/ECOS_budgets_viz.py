@@ -48,7 +48,7 @@ inf_data_sel = inf_data.ix[ECOS_years]
 inf_data_sel['correct'] = inf_data_sel['AWI'].ix[inf_target] / inf_data_sel['AWI']
 
 ## Establish file to export facts
-fact_file = '../docs/_data/facts_ECOSbudgets.yml'
+fact_file = '../docs/data/facts_ECOSbudgets.yml'
 with open(fact_file, 'w') as f: f.write('')
 
 

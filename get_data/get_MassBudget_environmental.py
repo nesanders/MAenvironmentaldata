@@ -70,19 +70,16 @@ df_summary['DEPAdministration_noinf'] = df_noinf[df_noinf.LineItemName=='Departm
 
 fix_commas(df_summary)
 df_summary.to_csv('../docs/data/MassBudget_environmental_summary.csv', index=0, encoding='ascii')
-os.system('cp ../docs/data/MassBudget_environmental_summary.csv ../docs/_data/MassBudget_environmental_summary.csv')
 
 fix_commas(df_inf)
 df_inf.to_csv('../docs/data/MassBudget_environmental_infadjusted.csv', index=0, encoding='ascii')
-os.system('cp ../docs/data/MassBudget_environmental_infadjusted.csv ../docs/_data/MassBudget_environmental_infadjusted.csv')
 
 fix_commas(df_noinf)
 df_noinf.to_csv('../docs/data/MassBudget_environmental_noinfadjusted.csv', index=0, encoding='ascii')
-os.system('cp ../docs/data/MassBudget_environmental_noinfadjusted.csv ../docs/_data/MassBudget_environmental_noinfadjusted.csv')
 
 
 
 ## Report last update
-with open('../docs/_data/ts_update_MassBudget_environmental.yml', 'w') as f:
+with open('../docs/data/ts_update_MassBudget_environmental.yml', 'w') as f:
 	f.write('updated: '+str(datetime.datetime.now()).split('.')[0]+'\n')
 

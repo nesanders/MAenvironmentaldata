@@ -87,7 +87,7 @@ mychart.jekyll_write('../docs/_includes/charts/MADEP_staffing_overall_funding.ht
 
 
 pr = pearsonr(s_data_g.values, (f_data['DEPAdministration_inf_float'].ix[years]/1e6).values)
-with open('../docs/_data/facts_DEPstaff.yml', 'w') as f:
+with open('../docs/data/facts_DEPstaff.yml', 'w') as f:
 	f.write('cor_staff_funding: %0.0f'%(pr[0]*100)+'\n')
 
 

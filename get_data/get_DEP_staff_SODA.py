@@ -58,11 +58,10 @@ for f in fields: df[f] = df[f].astype(fields[f])
 
 ## Write out
 df.to_csv('../docs/data/MADEP_staff_SODA.csv', index=0)
-os.system('cp ../docs/data/MADEP_staff_SODA.csv ../docs/_data/MADEP_staff_SODA.csv')
 
 
 ## Report last update
-with open('../docs/_data/ts_update_MADEP_staff_SODA.yml', 'w') as f:
+with open('../docs/data/ts_update_MADEP_staff_SODA.yml', 'w') as f:
 	f.write('updated: '+str(datetime.datetime.now()).split('.')[0]+'\n')
 
 
