@@ -2,7 +2,7 @@ from bs4 import BeautifulSoup
 import urllib2
 import pickle
 import pandas as pd
-from unidecode import unidecode
+from unidecode import unidecode,unidecode_expect_nonascii
 import re
 import os
 import datetime
@@ -36,10 +36,21 @@ for ci, content in enumerate(all_content):
 		
 	## ajax/json table
 	if "'ajax': jsonURL" in content:
-		jsonfn = content.split("jsonURL = '")[1].split("';")[0]
+		
+		## Construct URL
+		jsonfn = content.split("jsonURL = '")[1].split("';")[0].split("?\'")[0]
 		jsonURL = '/'.join(all_urls[ci].split('/')[:-1]) + '/' + jsonfn
-		jsoncontent = unidecode(opener.open(urllib2.Request(jsonURL)).read())
+		
+		## Request content
+		json_raw = opener.open(urllib2.Request(jsonURL)).read()
+		
+		## Decode content
+		jsoncontent = unidecode_expect_nonascii(json_raw)
+		
+		## Convert to dataframe
 		pdf = pd.read_json(jsoncontent, orient='split')
+		
+		## Clean up dataframe content
 		pdf['City/Town'] = pdf['City / Town (Watershed)'].apply(lambda x: x.split(' (')[0].strip())
 		pdf['Facility_name_clean'] = pdf['Facility Name'].apply(lambda x: BeautifulSoup(x).text.split(' (PDF')[0].split('\n')[0].split("in new window.'>")[-1])
 		pdf['Permit_URL'] = pdf['Facility Name'].apply(lambda x: [
@@ -157,7 +168,7 @@ os.system('gsutil rsync -r '+permit_dir.split('/{}/')[0]+' gs://ns697-merdr/'+pe
 
 ## Write out data
 permit_df.to_pickle('EPARegion1_NPDES_permit_data.p')
-permit_df.rename(columns = {c:c.replace(' ','_') for c in permit_df.columns}, inplace=1)
+permit_df.rename(columns = {c:c.replace(' ','_') for c in permit_df.columns}, inplace=True)
 permit_df.to_csv('../docs/data/EPARegion1_NPDES_permit_data.csv', index=0, encoding='ascii') #UTF8 outputs break tables in jekyll!  http://support.markedapp.com/discussions/problems/18583-rendering-tables-with-kramdown
 
 

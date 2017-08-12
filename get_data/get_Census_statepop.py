@@ -3,7 +3,9 @@ import pandas as pd
 import os, datetime
 
 ## Download data files
+os.system('rm st-est00int-01.csv')
 os.system('wget https://www2.census.gov/programs-surveys/popest/tables/2000-2010/intercensal/state/st-est00int-01.csv')
+os.system('rm nst-est2016-01.xlsx')
 os.system('wget https://www2.census.gov/programs-surveys/popest/tables/2010-2016/state/totals/nst-est2016-01.xlsx')
 
 ## Read in files

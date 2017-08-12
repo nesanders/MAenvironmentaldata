@@ -12,7 +12,7 @@ import os
 import datetime
 
 s_data = pd.read_excel('DEP_staff_data_2017-03-14.xls')
-s_data = s_data.sort('Calendar Year')
+s_data = s_data.sort_values('Calendar Year')
 s_data.groupby('Employee Name')['Calendar Year'].apply(lambda x: np.arange(len(x)))
 s_data['Seniority'] = s_data.groupby('Employee Name').cumcount()
 
@@ -62,7 +62,7 @@ s_data['name_middleI'] = s_data['Employee Name'].apply(get_middle_initial)
 s_data['name_last'] = s_data['Employee Name'].apply(lambda x: x.split(', ')[0])
 
 ## Sort in a reasonable way
-s_data.sort(['Calendar Year','JobType','JobLevel'], inplace=1)
+s_data.sort_values(['Calendar Year','JobType','JobLevel'], inplace=True)
 
 ## Export
 e_cols = [u'Calendar Year', u'Employee Name', u'Job Title', u'Earnings', u'JobType', u'JobLevel', u'Seniority', u'name_first', u'name_middleI', u'name_last']
