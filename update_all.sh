@@ -31,3 +31,5 @@ python analysis/MADEP_budget_viz.py
 python analysis/MADEP_enforcements_viz.py
 python analysis/ECOS_budgets_viz.py
 
+## Exclude large files from git repository
+sh ignore_large_files.sh
