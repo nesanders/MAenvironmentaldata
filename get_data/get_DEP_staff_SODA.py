@@ -56,6 +56,7 @@ df = pd.concat([pd.DataFrame(d) for d in df_d])
 
 for f in fields: df[f] = df[f].astype(fields[f])
 
+## Write out
 df.to_csv('../docs/data/MADEP_staff_SODA.csv', index=0)
 os.system('cp ../docs/data/MADEP_staff_SODA.csv ../docs/_data/MADEP_staff_SODA.csv')
 
