@@ -31,9 +31,11 @@ Several python packages are required to execute the scripts needed to generate t
 
 ## Other tools used
 
-* [http://www.chartjs.org/](chart.js) was used to generate interactive charts for the website.
+* [chart.js](http://www.chartjs.org/) was used to generate interactive charts for the website.
 
-* [MapShaper](http://mapshaper.org/) was used to convert the MA Executive Office for Administration and Finance's MassGIS shapefiles ([Towns](http://www.mass.gov/anf/research-and-tech/it-serv-and-support/application-serv/office-of-geographic-information-massgis/datalayers/townsurvey.html), [Watersheds](http://www.mass.gov/anf/research-and-tech/it-serv-and-support/application-serv/office-of-geographic-information-massgis/datalayers/watrshds.html)) into a simplified geo-json format for web display.
+* [Leaflet](http://leafletjs.com) for interactive map display.
+
+* [MapShaper](http://mapshaper.org/) was used to convert MA's Office of Geographic Information (MassGIS) shapefiles ([Towns](http://www.mass.gov/anf/research-and-tech/it-serv-and-support/application-serv/office-of-geographic-information-massgis/datalayers/townsurvey.html), [Watersheds](http://www.mass.gov/anf/research-and-tech/it-serv-and-support/application-serv/office-of-geographic-information-massgis/datalayers/watrshds.html)) into a simplified geo-json format for web display.
 
 * [sql.js](https://github.com/kripken/sql.js/blob/master/README.md) is used to enable interactive querying of the site's integrated database.
 

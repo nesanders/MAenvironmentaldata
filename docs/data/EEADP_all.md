@@ -30,6 +30,12 @@ In addition to including them in them in the integrated {{ site.data.site_config
 * [Complete drinking water quality measurement (>200 MB, not included in database)](https://storage.googleapis.com/ns697-amend/EEADP_drinkingWater.csv)
 * [Annualized drinking water quality measurement counts](EEADP_drinkingWater_annual.csv)
 
+## Data visualization
+
+{% raw %}
+<iframe frameborder="no" border="0" marginwidth="0" marginheight="0" width="700" height="400" src="../assets/maps/EEADP_ins_map_total.html"></iframe>
+{% endraw %}
+
 ## Data tables
 
 <!-- *Click on the table headers to re-sort by that field.* -->
