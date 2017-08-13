@@ -32,7 +32,7 @@ These permits have been archived on this site, last updated on **{{ site.data.ts
 
 ## Download archive
 
-We provide our archive of this data in [CSV format](EPARegion1_NPDES_permit_data.csv).
+In addition to including it in the integrated {{ site.data.site_config.site_abbrev }} Database, we provide our archive of this data in [CSV format](EPARegion1_NPDES_permit_data.csv).
 
 ## Data table
 

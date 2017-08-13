@@ -13,6 +13,8 @@ Additionally, the [MA office of the Comptroller of the Commonwealth](https://cth
 
 ## Download archive
 
+In addition to including this data in the integrated {{ site.data.site_config.site_abbrev }} Database, we provide them in CSV format below.
+
 * VisibleGovernment data in [CSV format](MADEP_staff.csv)
 * Comptroller's data in [CSV format](MADEP_staff_SODA.csv)
 

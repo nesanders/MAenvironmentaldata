@@ -27,7 +27,7 @@ See [https://ballotpedia.org/Environmental_spending_in_the_50_states](Ballotpedi
 
 ## Download archive
 
-We provide our archive of this data in [CSV format](ECOS_budget_history.csv).
+In addition to including it in the integrated {{ site.data.site_config.site_abbrev }} Database, we provide our archive of this data in [CSV format](ECOS_budget_history.csv).
 
 ## Data visualization
 

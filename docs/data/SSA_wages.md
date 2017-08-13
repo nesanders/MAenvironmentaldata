@@ -12,7 +12,7 @@ The Social Security Administration publishes an [Average Wage Index (AWI)](https
 
 ## Download archive
 
-We provide our archive of this data in [CSV format](SSAWages_2016-12-09.csv).
+In addition to including it in the integrated {{ site.data.site_config.site_abbrev }} Database, we provide our archive of this data in [CSV format](SSAWages_2016-12-09.csv).
 
 ## Data visualization
 

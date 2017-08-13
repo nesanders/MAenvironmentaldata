@@ -13,7 +13,7 @@ These records have been archived on this site, last updated on **{{ site.data.ts
 
 ## Download archive
 
-We provide our archive of three tables from this source:
+In addition to including it in the integrated {{ site.data.site_config.site_abbrev }} Database, we provide our archive of three tables from this source:
 	
 * [DEP global budget summary (CSV format)](MassBudget_environmental_summary.csv).
 * [DEP line-item level budget (inflation adjusted; CSV format)](MassBudget_environmental_infadjusted.csv).

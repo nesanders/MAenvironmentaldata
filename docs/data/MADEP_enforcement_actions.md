@@ -13,7 +13,7 @@ These enforcement actions have been archived on this site, last updated on **{{ 
 
 ## Download archive
 
-We provide our archive of this data in [CSV format](MADEP_enforcement_actions.csv).
+In addition to including it in the integrated {{ site.data.site_config.site_abbrev }} Database, we provide our archive of this data in [CSV format](MADEP_enforcement_actions.csv).
 
 ## Data visualization
 

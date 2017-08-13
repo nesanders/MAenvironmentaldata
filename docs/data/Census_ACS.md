@@ -11,7 +11,7 @@ The US Census Bureau publishes results from its [American Community Survey (ACS)
 
 ## Download archive
 
-We provide our archive of this data in [CSV format](Census_ACS_MA.csv).
+In addition to including it in the integrated {{ site.data.site_config.site_abbrev }} Database, we provide our archive of this data in [CSV format](Census_ACS_MA.csv).
 
 ## Data table
 

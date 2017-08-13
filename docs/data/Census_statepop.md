@@ -13,7 +13,7 @@ In addition to the state-level data, the table includes estimates for the nation
 
 ## Download archive
 
-We provide our archive of this data in [CSV format](Census_statepop.csv).
+In addition to including it in the integrated {{ site.data.site_config.site_abbrev }} Database, we provide our archive of this data in [CSV format](Census_statepop.csv).
 
 ## Data table
 
