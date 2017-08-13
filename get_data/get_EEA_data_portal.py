@@ -78,15 +78,16 @@ for tab in API_tables:
 	## Write out, but treat large tables separately
 	## Only one table (drinkingWater) is >10MB as of 08/2017, so we handle this as a special case.
 	## Could also use `size_MB = os.path.getsize('../docs/data/EEADP_' + tab + '.csv')/1024/1024` to get file size
+	
+	## Print the header of the file as an example
+	table_data[tab].sample(n=10).to_csv('../docs/data/EEADP_' + tab + '_sample.csv', index=0)
+	
 	if tab != 'drinkingWater': 
 		table_data[tab].to_csv('../docs/data/EEADP_' + tab + '.csv', index=0)
 	else:
 		## Send to Google object store
 		table_data[tab].to_csv('EEADP_' + tab + '.csv', index=0)
 		os.system('gsutil cp EEADP_' + tab + '.csv gs://ns697-amend/EEADP_' + tab + '.csv')
-		
-		## Print the header of the file as an example
-		table_data[tab].head(100).to_csv('../docs/data/EEADP_' + tab + '_head.csv', index=0)
 		
 		## Include some special summary statistics tables
 		## ---		
@@ -100,7 +101,10 @@ for tab in API_tables:
 		table_data[tab]['CollectedDate'] = pd.to_datetime(table_data[tab]['CollectedDate'], errors='coerce')
 		table_data[tab]['Year'] = table_data[tab]['CollectedDate'].apply(lambda x: x.year)
 		df_dw_annual_group = table_data[tab].groupby(['Year','PWSName', 'ContaminantGroup','RaworFinished']).agg({'Result': pd.Series.count})
-		df_dw_annual_group.to_csv('../docs/data/EEADP_' + tab + '_annual.csv', index=0)
+		df_dw_annual_group.to_csv('../docs/data/EEADP_' + tab + '_annual.csv', index=1)
+		## Print the header of the file as an example
+		df_dw_annual_group.sample(n=10).to_csv('../docs/data/EEADP_' + tab + '_annual_sample.csv', index=1)
+		
 
 		## Tests per year per PWS per chemical per raw/finished
 		### This still ends up being ~40% of the original size, so larger than desired
