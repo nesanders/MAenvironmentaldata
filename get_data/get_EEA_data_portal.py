@@ -79,7 +79,7 @@ for tab in API_tables:
 	## Only one table (drinkingWater) is >10MB as of 08/2017, so we handle this as a special case.
 	## Could also use `size_MB = os.path.getsize('../docs/data/EEADP_' + tab + '.csv')/1024/1024` to get file size
 	
-	## Print the header of the file as an example
+	## Print a sample of the file as an example
 	table_data[tab].sample(n=10).to_csv('../docs/data/EEADP_' + tab + '_sample.csv', index=0)
 	
 	if tab != 'drinkingWater': 
@@ -102,7 +102,7 @@ for tab in API_tables:
 		table_data[tab]['Year'] = table_data[tab]['CollectedDate'].apply(lambda x: x.year)
 		df_dw_annual_group = table_data[tab].groupby(['Year','PWSName', 'ContaminantGroup','RaworFinished']).agg({'Result': pd.Series.count})
 		df_dw_annual_group.to_csv('../docs/data/EEADP_' + tab + '_annual.csv', index=1)
-		## Print the header of the file as an example
+		## Print a sample of the file as an example
 		df_dw_annual_group.sample(n=10).to_csv('../docs/data/EEADP_' + tab + '_annual_sample.csv', index=1)
 		
 

@@ -66,8 +66,11 @@ s_data.sort_values(['Calendar Year','JobType','JobLevel'], inplace=True)
 
 ## Export
 e_cols = [u'Calendar Year', u'Employee Name', u'Job Title', u'Earnings', u'JobType', u'JobLevel', u'Seniority', u'name_first', u'name_middleI', u'name_last']
-s_data[e_cols].rename(columns = {d:d.replace(' ','') for d in e_cols}).to_csv('../docs/data/MADEP_staff.csv', index=0)
+s_dat_export = s_data[e_cols].rename(columns = {d:d.replace(' ','') for d in e_cols})
+s_dat_export.to_csv('../docs/data/MADEP_staff.csv', index=0)
 
+## Print a sample of the file as an example
+s_dat_export.sample(n=10).to_csv('../docs/data/MADEP_staff_sample.csv', index=0)
 
 ## Report last update
 with open('../docs/data/ts_update_MADEP_staff.yml', 'w') as f:

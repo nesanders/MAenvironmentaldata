@@ -26,13 +26,12 @@ In addition to including it in the integrated {{ site.data.site_config.site_abbr
 
 ## Data table
 
-*Click on the table headers to re-sort by that field.*
-
+For brevity,  a random sample of 10 rows from the enforcement table is shown below for illustration as to the table's form and content.
 
 <!-- Note: need to have the for loop markup on the same line as the table rows as described here: http://stackoverflow.com/questions/35642820/jekyll-how-to-use-for-loop-to-generate-table-row-within-the-same-table-inside-m -->
 
 | Year | Date | Description | Penalty amount | Municipalities | 
-| --- | --- | --- | --- |{% for row in site.data.MADEP_enforcement_actions %}
+| --- | --- | --- | --- |{% for row in site.data.MADEP_enforcement_actions_sample %}
 | {{ row.Year }} | {{ row.Date }} | {{ row.Text }} | {{ row.Fine }} | {{ row.municipality }} |{% endfor %}
 {: .sortable}
 
