@@ -20,6 +20,13 @@ data_csv['Census_ACS'] = pd.read_csv('../docs/data/Census_ACS_MA.csv')
 data_csv['Census_statepop'] = pd.read_csv('../docs/data/Census_statepop.csv')
 data_csv['ECOS_budgets'] = pd.read_csv('../docs/data/ECOS_budget_history.csv')
 
+data_csv['MAEEADP_DrinkingWater'] = pd.read_csv('../docs/data/EEADP_drinkingWater_annual.csv')
+#../docs/data/EEADP_drinkingWater_head.csv ## Don't include Drinking Water head file
+data_csv['MAEEADP_Enforcement'] = pd.read_csv('../docs/data/EEADP_enforcement.csv')
+data_csv['MAEEADP_Facility'] = pd.read_csv('../docs/data/EEADP_facility.csv')
+data_csv['MAEEADP_Inspection'] = pd.read_csv('../docs/data/EEADP_inspection.csv')
+data_csv['MAEEADP_Permit'] = pd.read_csv('../docs/data/EEADP_permit.csv')
+
 ## Temporary insertion for 2016 assuming no inflation
 data_csv['SSAWages'] = pd.read_csv('../docs/data/SSAWages_2016-12-09.csv')
 data_csv['SSAWages'] = data_csv['SSAWages'].append(data_csv['SSAWages'].iloc[-1])

@@ -108,6 +108,15 @@ for tab in API_tables:
 		
 
 
+##########################
+## Archive PDF help files
+##########################
+
+os.system('wget http://eeaonline.eea.state.ma.us/Portal/documents/General%20Query%20Search%20FAQs.pdf')
+os.system('mv "General Query Search FAQs.pdf" ../docs/assets/PDFs/EEADP_FAQ.pdf')
+os.system('wget http://eeaonline.eea.state.ma.us/Portal/documents/Terms%20and%20Definitions%20for%20EEA.pdf')
+os.system('mv "Terms and Definitions for EEA.pdf" ../docs/assets/PDFs/EEADP_Definitions.pdf')
+
 
 ##########################
 ## Report last update
