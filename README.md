@@ -1,6 +1,6 @@
 # Archive of Mass ENvironmental Data Site
 
-The Archive of Mass ENvironmental Data is a project to assemble and analyze data related to environmental regulation, focused on water policy in Massachusetts.
+The Archive of Mass ENvironmental Data (AMEND) is a project to assemble and analyze data related to environmental regulation, focused on water policy in Massachusetts.
 
 The website for the project can be [viewed here](https://nesanders.github.io/MAenvironmentaldata/).
 
@@ -28,3 +28,14 @@ Several python packages are required to execute the scripts needed to generate t
 * unidecode 2.7.12
 * requests 2.12.1
 * sodapy 1.4.3
+
+## Other tools used
+
+* [http://www.chartjs.org/](chart.js) was used to generate interactive charts for the website.
+
+* [MapShaper](http://mapshaper.org/) was used to convert the MA Executive Office for Administration and Finance's MassGIS shapefiles ([Towns](http://www.mass.gov/anf/research-and-tech/it-serv-and-support/application-serv/office-of-geographic-information-massgis/datalayers/townsurvey.html), [Watersheds](http://www.mass.gov/anf/research-and-tech/it-serv-and-support/application-serv/office-of-geographic-information-massgis/datalayers/watrshds.html)) into a simplified geo-json format for web display.
+
+* [sql.js](https://github.com/kripken/sql.js/blob/master/README.md) is used to enable interactive querying of the site's integrated database.
+
+* [Tabule](http://tabula.technology/) was used to extract tables from PDF files. 
+
