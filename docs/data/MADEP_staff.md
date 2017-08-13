@@ -20,12 +20,11 @@ In addition to including this data in the integrated {{ site.data.site_config.si
 
 ## Data table: VisibleGovernment
 
-*Click on the table headers to re-sort by that field.*
-
+For brevity,  a random sample of 10 rows from the enforcement table is shown below for illustration as to the table's form and content.
 
 <!-- Note: need to have the for loop markup on the same line as the table rows as described here: http://stackoverflow.com/questions/35642820/jekyll-how-to-use-for-loop-to-generate-table-row-within-the-same-table-inside-m -->
 
 | Calendar Year | Employee Name | Job Title | Earnings ($) | Seniority (yrs since 2004)|
-| --- | --- | --- |{% for row in site.data.MADEP_staff %}
+| --- | --- | --- |{% for row in site.data.MADEP_staff_sample %}
 | {{ row.CalendarYear }} | {{ row.EmployeeName }} | {{ row.JobTitle }} | {{ row.Earnings }} | {{ row.Seniority }} |{% endfor %}
 {: .sortable}

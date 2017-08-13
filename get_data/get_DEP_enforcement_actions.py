@@ -115,6 +115,9 @@ def pop_inc_data_avg(towns, col):
 ## Output dataframe
 DEP_df.to_csv('../docs/data/MADEP_enforcement_actions.csv', index=False)
 
+## Print a sample of the file as an example
+DEP_df.sample(n=10).to_csv('../docs/data/MADEP_enforcement_actions_sample.csv', index=False)
+
 ## Report last update
 with open('../docs/data/ts_update_MADEP_enforcement_actions.yml', 'w') as f:
 	f.write('updated: '+str(datetime.datetime.now()).split('.')[0]+'\n')
