@@ -39,5 +39,5 @@ Several python packages are required to execute the scripts needed to generate t
 
 * [sql.js](https://github.com/kripken/sql.js/blob/master/README.md) is used to enable interactive querying of the site's integrated database.
 
-* [Tabule](http://tabula.technology/) was used to extract tables from PDF files. 
+* [Tabula](http://tabula.technology/) was used to extract tables from PDF files. 
 
