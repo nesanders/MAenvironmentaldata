@@ -5,9 +5,9 @@ title: Changes in Enforcement by MA Department of Environmental Protection Over 
 
 While a coalition of local, state, and federal agencies are responsible for enforcing environmental regulations, the MA Department of Environmental Protection (DEP) has a pivotal role in environmental law enforcement in the Commonwealth. The analysis presented below draws from the [MA DEP enforcement data]({{ site.url }}{{ site.baseurl }}/data/MADEP_enforcement_actions.html) in the [{{ site.data.site_config.site_abbrev }} database]({{ site.url }}{{ site.baseurl }}/data/index.html), which has been collected by scraping the public reports listed on DEP's website.
 
-This analysis does not address enforcement actions taken by municipalities, the MA Attorney General, or US Environmental Protection Agency (EPA).
+Recently, DEP has also made separate data on their enforcement activities public via two other sources.  The [MA Executive Office of Energy and Environmental Affairs Data Portal](../data/EEADP_all.html) has published a listing of enforcement actions, and an annualized tally of enforcements was [provided to The Boston Globe](https://www.bostonglobe.com/metro/2017/03/08/amid-cuts-steep-drop-enforcement-environmental-rules/YYgddkmijr5PC4U7WBmS0H/story.html) in response to a Freedom of Information Act request.  The total number of enforcements per year identified by each of these sources conflict significantly.  This analysis focused on the published reports on the DEP website specified above.  This analysis also does not address enforcement actions taken by municipalities, the MA Attorney General, or US Environmental Protection Agency (EPA).
 
-These enforcement actions are up to date as of **{{ site.data.ts_update_MADEP_enforcement_actions.updated | date: "%-d %B %Y %I:%M %P" }}**.
+The reported enforcement actions used in this analysis are up to date as of **{{ site.data.ts_update_MADEP_enforcement_actions.updated | date: "%-d %B %Y %I:%M %P" }}**.
 
 *[The code needed to reproduce this analysis using {{ site.data.site_config.site_abbrev }} data can be viewed and downloaded here](https://github.com/nesanders/MAenvironmentaldata/blob/master/analysis/MADEP_enforcements_viz.py)*
 
