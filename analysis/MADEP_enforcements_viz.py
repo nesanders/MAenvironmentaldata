@@ -133,7 +133,7 @@ mychart = chartjs.chart("DEP Enforcements by Topic Per Year", "Line", 640, 480)
 mychart.set_labels(s_data_g.count().index.values.tolist())
 for i,topic in enumerate(topics):
 	mychart.add_dataset(
-		(s_data_g.sum()[topic] / s_data_g.count()[topic].astype(float)).tolist(), 
+		(s_data_g.sum()[topic] / s_data_g.count()[topic].astype(float) * 100).tolist(), 
 		topic.split('_')[1].strip().title(),
 		backgroundColor="'"+(color_cycle*10)[i]+"'",
 		stack="'annual'", yAxisID= "'y-axis-0'", fill = "false",
