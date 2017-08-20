@@ -90,9 +90,10 @@ class chart:
 
 	# Add a dataset to the chart
 	def add_dataset(self, data, dataset_label = '', **kwargs):
-		#data = ['null' if np.isnan(d) else d for d in data]
-		data = np.array(data).astype(str)
-		data[data == 'nan'] = 'null'
+		
+		## Other data types expect data as list scatter expects array and is handled separately below
+		if self.ctype != 'Scatter': data = ['null' if np.isnan(d) else d for d in data]
+		
 		if self.ctype in ["Bar","Radar","Line"]: # Line, radar or bar charts
 			if len(data) != len(self.labels):
 				raise ValueError("Data must be the same size as labels.")
@@ -110,6 +111,8 @@ class chart:
 				self.data.append({'value': int(d), 'color': str(self.colors[i]), 'highlight': str(self.highlights[i]), 'label': str(self.labels[i])})
 		
 		elif self.ctype == 'Scatter':
+			data = np.array(data).astype(str)
+			data[data == 'nan'] = 'null'
 			if len(np.shape(data)) == 2 and np.shape(data)[1] != 2:
 				raise ValueError("Data must be two-dimensional for Scatter charts.")
 			appendargs = {
