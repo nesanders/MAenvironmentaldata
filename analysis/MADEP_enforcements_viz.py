@@ -2,7 +2,11 @@ import pandas as pd
 import numpy as np
 from sqlalchemy import create_engine
 import chartjs
+import json
+import ast
+import folium
 from scipy.stats import pearsonr
+from statsmodels.nonparametric.smoothers_lowess import lowess
 
 import matplotlib as mpl
 color_cycle = [c['color'] for c in list(mpl.rcParams['axes.prop_cycle'])]
@@ -17,14 +21,26 @@ disk_engine = create_engine('sqlite:///../get_data/AMEND.db')
 ## Get MADEP website enforcement data
 s_data = pd.read_sql_query('SELECT * FROM MADEP_enforcement', disk_engine)
 years = s_data.Year.unique()
+s_data['municipality'] = s_data.municipality.apply(lambda x: [t.upper() for t in ast.literal_eval(x)])
 
 ## Get funding data
 f_data = pd.read_sql_query('SELECT * FROM MassBudget_summary', disk_engine)
 f_data.index = f_data.Year
 
+## Get Census data
+c_data = pd.read_sql_query('SELECT * FROM Census_ACS', disk_engine)
+c_data.index = c_data.Subdivision.str.upper()
+
 ## Establish file to export facts
 fact_file = '../docs/data/facts_DEPenforce.yml'
 with open(fact_file, 'w') as f: f.write('')
+
+## Geo data
+geo_path = '../docs/assets/geo_json/'
+geo_towns = geo_path+'TOWNSSURVEY_POLYM_geojson_simple.json'
+geo_towns_dict = json.load(open(geo_towns))['features']
+geo_out_path = '../docs/assets/maps/'
+
 
 
 #############################
@@ -253,5 +269,122 @@ mychart.set_params(JSinline = 0, ylabel = 'Enforcements with financial penalties
 	scaleBeginAtZero=0)
 
 mychart.jekyll_write('../docs/_includes/charts/MADEP_enforcement_ACOP_byyear.html')
+
+
+#############################
+## Show variation by town
+#############################
+
+## Count enforcements per town
+towns = sorted([geo_towns_dict[i]['properties']['TOWN'] for i in range(len(geo_towns_dict))])
+town_count = {}
+town_fines = {}
+for town in towns:
+	## Check if town appears in each row
+	count = s_data.municipality.apply(lambda x: town in x)
+	town_count[town] = count.sum()
+	## tally enforcement penalties
+	fines = s_data.apply(lambda x: x.Fine if town in x.municipality else 0, axis=1)
+	town_fines[town] = fines.sum()
+
+town_count = pd.Series(town_count)
+town_fines = pd.Series(town_fines)
+
+merge_census_df = pd.DataFrame(data={
+	'Population': c_data['population_acs52014'].ix[towns].values,
+	'Per capita income ($k)': c_data['per_capita_income_acs52014'].ix[towns].values / 1000,
+	'DEP enforcements': town_count.ix[towns].values,
+	'DEP penalties ($1,000)': town_fines.ix[towns].values / 1000,
+	}, index=towns)
+
+
+## Map total inspections
+map_bytown = folium.Map(
+	location=[42.29, -71.74], 
+	zoom_start=8.2,
+	tiles='cartodbpositron',
+	)
+
+## Draw choropleth
+map_bytown.choropleth(
+	geo_path=geo_towns, 
+	data_out=geo_out_path+'EEADP_ins_data_total.json', 
+	data=town_count,
+	key_on='feature.properties.TOWN',
+	legend_name='Total # of MA DEP enforcements reported',
+	threshold_scale = list(np.percentile(town_count, [0,50,90,95, 100])),
+	fill_color='PuBu', fill_opacity=0.7, line_opacity=0.3, highlight=True,
+	)
+
+## Add statistics and top enforcement actions to each city
+for i in range(len(geo_towns_dict)):
+	town = geo_towns_dict[i]['properties']['TOWN']
+	if town in towns:
+		## Gather town data
+		enforcements = merge_census_df['DEP enforcements'].ix[town]
+		pop14 = merge_census_df['Population'].ix[town]
+		top_enforcements = s_data[s_data.municipality.apply(lambda x: town in x)].sort_values('Fine', ascending=False)[['Date','Fine','Text']].values[:3]
+		enforcement_summary = '<br>'.join(['<b>'+c[0]+', $%0.0f'%c[1]+'</b>: '+c[2] for c in top_enforcements])
+		## Take average position of polygon points for marker center
+		raw_coords = geo_towns_dict[i]['geometry']['coordinates']
+		if np.ndim(raw_coords) == 2: # Take most complicated polygon if multiple are provided
+			j = np.argmax([np.shape(raw_coords[i][0])[0] for i in range(len(raw_coords))])
+			coords = raw_coords[j]
+		elif np.ndim(raw_coords) == 3:
+			coords = raw_coords
+		else: 
+			raise
+		mean_pos = list(np.mean(coords, axis=1)[0])[::-1]
+		## Add marker
+		html="""
+		<h1>{town}</h1>
+		<p>Population (2014): {pop}<br>
+		Total MA DEP enforcements reported since {enforcement_start}: {enforcements}</p>
+		
+		<p>Largest enforcements reported (by penalty):</p>
+		<p>{enforcement_summary}</p>
+		""".format(town=town, pop=pop14, enforcements=enforcements, enforcement_summary=enforcement_summary, enforcement_start=s_data.Year.min())
+		iframe = folium.IFrame(html=html, width=500, height=300)
+		popup = folium.Popup(iframe, max_width=600)
+		folium.Marker(mean_pos, popup=popup).add_to(map_bytown)
+
+## Save to html
+map_bytown.save(geo_out_path+'MADEP_enforcements_town_total.html')
+
+
+#############################
+## Compare census data to town characteristics
+#############################
+
+## counts
+x = merge_census_df['Per capita income ($k)']
+y = merge_census_df['DEP enforcements']/merge_census_df['Population'] * 1e5
+pxy = lowess(np.log10(y), x, frac=0.2)
+
+plt.figure()
+plt.plot(x, y, '.')
+plt.semilogy()
+plt.plot(pxy[:,0], 10**pxy[:,1], lw=3)
+plt.xlabel('Per Capita Income ($1,000)')
+plt.ylabel('Per Capita Enforcements (per 100,000)')
+
+## penalties
+x = merge_census_df['Per capita income ($k)']
+y = (merge_census_df['DEP penalties ($1,000)']) / (merge_census_df['Population']/1e5)
+pxy = lowess(np.log10(y), x, frac=0.2)
+
+plt.figure()
+plt.plot(x, y, '.')
+plt.semilogy()
+plt.plot(pxy[:,0], 10**pxy[:,1], lw=3)
+plt.xlabel('Per Capita Income ($1,000)')
+plt.ylabel('Per Capita Enforcement Penalties ($1,000 per 100,000)')
+
+## Top cities
+merge_census_df['Enforcements per capita (per 100,000 people)'] = merge_census_df['DEP enforcements']/merge_census_df['Population'] * 1e5
+merge_census_df['Penalties per capita ($1M per 100,000 people)'] = (merge_census_df['DEP penalties ($1,000)'] / 1000) / (merge_census_df['Population']/1e5)
+
+merge_census_df[merge_census_df.Population>25000].sort_values('Enforcements per capita (per 100,000 people)').dropna().tail()
+merge_census_df[merge_census_df.Population>25000].sort_values('Penalties per capita ($1M per 100,000 people)').dropna().tail()
 
 

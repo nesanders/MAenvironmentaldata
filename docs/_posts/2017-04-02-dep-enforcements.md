@@ -23,7 +23,7 @@ The rise and fall in enforcement levels over time has tracked closely with the [
 
 {% include /charts/MADEP_enforcement_vsbudget.html %}
 
-**DEP's level of enforcement activity has declined in near lockstep with the agency's funding levels.**
+**DEP's level of reported enforcement activity has declined in near lockstep with the agency's funding levels.**
 
 ## Enforcement types
 
@@ -43,7 +43,7 @@ Enforcements that reference [supplemental environmental projects](https://www.ep
 
 Meanwhile, the use of unilateral orders has grown dramatically.  1 in 6 enforcements in 2016 involved a unilateral order, versus 1 in 67 in 2004.
 
-**The focus and methods of DEP's enforcement efforts have shifted over time, leading to less emphasis on topics like wetlands and a growing reliance on unilateral orders, among other changes.**
+**The focus and methods of DEP's reported enforcement efforts have shifted over time, leading to less emphasis on topics like wetlands and a growing reliance on unilateral orders, among other changes.**
 
 
 ## Fines
@@ -69,6 +69,12 @@ The plot below uses [bootstrap resampling](https://en.wikipedia.org/wiki/Bootstr
 
 
 ## Variation by town & demographics
+
+
+{% raw %}
+<iframe frameborder="no" border="0" marginwidth="0" marginheight="0" width="700" height="400" src="../../../assets/maps/MADEP_enforcements_town_total.html"></iframe>
+{% endraw %}
+
 
 ## Discrepancy from FOIAed records
 
