@@ -410,24 +410,47 @@ plt.ylabel('Per Capita Enforcement Penalties ($1,000 per 100,000)')
 #############################
 
 ## Lookup base values
+pop_sel = merge_census_df['Population'] >= 25e3
 x = merge_census_df['Per capita income ($k)'].values
 y = merge_census_df['DEP enforcements'].values / merge_census_df['Population'].values * 1e5
+pop = merge_census_df['Population'].values
 l = merge_census_df.index.values
 
+## Boostrapped weighted mean function
+def weight_mean(x, weights, N=1000):
+	avgs = np.zeros(N)
+	nonan_sel = (np.isnan(x) == 0) & (np.isnan(weights) == 0)
+	x = x[nonan_sel]
+	weights = weights[nonan_sel]
+	for i in range(N):
+		sel = np.random.randint(len(x), size=len(x))
+		avgs[i] = np.average(x[sel], weights=weights[sel])
+	return np.mean(avgs), np.std(avgs)
+
 ## Calculate binned values
-x_bins = np.nanpercentile(x, list(np.linspace(0,100,8)))
+x_bins = np.nanpercentile(x, list(np.linspace(0,100,12)))
 x_bin_cent = [np.mean([x_bins[i], x_bins[i+1]]) for i in range(len(x_bins) - 1)]
 x_bin_id = pd.cut(x, x_bins, labels=False)
-y_bin = np.array([np.mean((y)[x_bin_id == i]) for i in range(len(x_bins) - 1)])
-dy_bin = np.array([np.std((y)[x_bin_id == i]) / np.sqrt(sum(x_bin_id == i)) for i in range(len(x_bins) - 1)])
+y_bin = np.array([
+	weight_mean(y[x_bin_id == i], pop[x_bin_id == i])
+	for i in range(len(x_bins) - 1)]).T
 
 ## Establish chart
 mychart = chartjs.chart("DEP Enforcements per capita versus town income", "Scatter", 640, 480)
 
 ## Add individual town dataset
 mychart.add_dataset(
-	np.array([x, y]).T, 
-	dataset_label="Individual towns",
+	np.array([x[~pop_sel], y[~pop_sel]]).T, 
+	dataset_label="Individual towns (population < 25,000)",
+	backgroundColor="'rgba(50,50,50,0.125)'",
+	showLine = "false",
+	yAxisID= "'y-axis-0'",
+	fill="'false'",
+	hidden="'true'"
+	)
+mychart.add_dataset(
+	np.array([x[pop_sel], y[pop_sel]]).T, 
+	dataset_label="Individual towns (population >= 25,000)",
 	backgroundColor="'rgba(50,50,50,0.5)'",
 	showLine = "false",
 	yAxisID= "'y-axis-0'",
@@ -436,7 +459,7 @@ mychart.add_dataset(
 	)
 ## Add binned dataset
 mychart.add_dataset(
-	np.array([x_bin_cent, y_bin]).T, 
+	np.array([x_bin_cent, y_bin[0]]).T, 
 	dataset_label="Average (binned)",
 	backgroundColor="'rgba(50,50,200,1)'",
 	showLine = "true",
@@ -447,13 +470,13 @@ mychart.add_dataset(
 	pointRadius=6,
 	)
 ## Add uncertainty contour
-mychart.add_dataset(np.array([x_bin_cent, y_bin - 1.65 * dy_bin]).T, 
+mychart.add_dataset(np.array([x_bin_cent, y_bin[0] - 1.65 * y_bin[1]]).T, 
 	"Average lower bound (5% limit)",
 	backgroundColor="'rgba(50,50,200,0.3)'", yAxisID= "'y-axis-0'", borderWidth = 1, 
 	fill = 'false', pointBackgroundColor="'rgba(50,50,200,0.3)'", pointBorderColor="'rgba(50,50,200,0.3)'")
-mychart.add_dataset(np.array([x_bin_cent, y_bin + 1.65 * dy_bin]).T, 
+mychart.add_dataset(np.array([x_bin_cent, y_bin[0] + 1.65 * y_bin[1]]).T, 
 	"Average upper bound (95% limit)",
-	backgroundColor="'rgba(50,50,200,0.3)'", yAxisID= "'y-axis-0'", borderWidth = 1, fill = "'2'", pointBackgroundColor="'rgba(50,50,200,0.3)'", pointBorderColor="'rgba(50,50,200,0.3)'")
+	backgroundColor="'rgba(50,50,200,0.3)'", yAxisID= "'y-axis-0'", borderWidth = 1, fill = "'3'", pointBackgroundColor="'rgba(50,50,200,0.3)'", pointBorderColor="'rgba(50,50,200,0.3)'")
 ## Set overall chart parameters
 mychart.set_params(
 	JSinline = 0, 
@@ -466,10 +489,14 @@ mychart.set_params(
                 mode: 'single',
                 callbacks: {
                     label: function(tooltipItems, data) { 
-						var town = ma_towns[tooltipItems.index];
+						var title = '';
+						
 						if (tooltipItems.datasetIndex == 0) {
-							return [town,'Enforcements per 100,000 residents: ' + tooltipItems.yLabel,'Per capita income ($k): ' + tooltipItems.xLabel];
-						};
+							title = ma_towns[tooltipItems.index];
+						} else {
+							title = data.datasets[tooltipItems.datasetIndex].label;
+						}
+						return [title, 'Enforcements per 100,000 residents: ' + tooltipItems.yLabel, 'Per capita income ($k): ' + tooltipItems.xLabel];
                     }
 				}
 """
@@ -502,7 +529,9 @@ mychart.jekyll_write('../docs/_includes/charts/MADEP_enforcement_bytown_income.h
 merge_census_df['Enforcements per capita (per 100,000 people)'] = merge_census_df['DEP enforcements']/merge_census_df['Population'] * 1e5
 merge_census_df['Penalties per capita ($1M per 100,000 people)'] = (merge_census_df['DEP penalties ($1,000)'] / 1000) / (merge_census_df['Population']/1e5)
 
-merge_census_df[merge_census_df.Population>25000].sort_values('Enforcements per capita (per 100,000 people)').dropna().tail()
-merge_census_df[merge_census_df.Population>25000].sort_values('Penalties per capita ($1M per 100,000 people)').dropna().tail()
+## Export tables
+merge_census_df.index.name='Town'
+merge_census_df[merge_census_df.Population>25000].sort_values('Enforcements per capita (per 100,000 people)', ascending=False).dropna().head().to_csv('../docs/data/table_MADEP_enforcement_topcities_enforcements.csv')
+merge_census_df[merge_census_df.Population>25000].sort_values('Penalties per capita ($1M per 100,000 people)', ascending=False).dropna().head().to_csv('../docs/data/table_MADEP_enforcement_topcities_penalties.csv')
 
 

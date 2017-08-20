@@ -68,14 +68,40 @@ The plot below uses [bootstrap resampling](https://en.wikipedia.org/wiki/Bootstr
 
 
 
-## Variation by town & demographics
+## Variation by municipality & demographics
 
+Below, we explore the municipality-by-municipality variation of historical enforcement.  The map below illustrates the total number of enforcements recorded in each town since the start of reporting in 2004.  Zoom in and click on an individual city or town to see the total count of enforcements and a listing of the enforcements that have carried the highest penalties.
 
 {% raw %}
 <iframe frameborder="no" border="0" marginwidth="0" marginheight="0" width="700" height="400" src="../../../assets/maps/MADEP_enforcements_town_total.html"></iframe>
 <p><em><a target="_blank" href="../../../assets/maps/MADEP_enforcements_town_total.html">Click here to view map in a separate page</a></em></p>
 {% endraw %}
 
+While the strongest predictor of total enforcement actions by municipality is the population of the town or city, other factors also correlate with total enforcements.  The chart below illustrates a subtle correlation between the average per capita enforcement rate and the median income in the town, based on [2014 US Census American Community Survey data](../data/Census_ACS.html).  The trend shown below is based on a population-weighted average over all towns and cities, and the uncertainty contour is estimated via bootstrap resampling.  The trend is calculated based on equal-sized bins of municipalities.  You can click on the legend titles in the plot to overlay points representing each individual town and city, including towns above or below 25,000 residents in size.
 
-## Discrepancy from FOIAed records
+While there is substantial variation across municipalities, the weighted-average trend illustrates a declining relationship from about 130 enforcements per 100,000 residents among municipalities with median income of about $30,000 per year to only about 40 enforcements per 100,000 residents among municipalities with the highest incomes (median much greater than $50,000 per year).
 
+{% include charts/MADEP_enforcement_bytown_income.html %}
+
+Note that the penalties inferred from the textual descriptions of the enforcement actions posted on the MA DEP website, used in this analysis, may refer to Administrative Consent Orders with Penalties from MA DEP, civil penalties assessed by the Attorney General, or indirect penalties such as the estimated costs of demanded compliance.
+
+**The trend of increasing enforcement activity among towns with lower income levels may reflect the history of industrial activity, decaying infrastructure, and other burdens within low-income communities in Massachusetts.**
+
+
+## Municipalities with highest level of historical enforcement.
+
+Finally, we present tables of the cities and towns (with population  greater than 25,000) that have had the highest historical level of enforcement activity or penalties per capita.
+
+### Cities and towns (population > 25,000) with highest per capita rate of reported enforcement actions
+
+| Municipality | DEP enforcements | DEP penalties ($1,000) | Per capita income ($k) | Population | Enforcements per capita (per 100,000 residents) | Penalties per capita ($1M per 100,000 people) | 
+| --- | --- | --- | --- |{% for row in site.data.table_MADEP_enforcement_topcities_enforcements %}
+{% for col in row %} {{ col[1] }} | {% endfor %} {% endfor %}
+{: .sortable}
+
+### Cities and towns (population > 25,000) with highest per capita rate of reported enforcement penalties
+
+| Municipality | DEP enforcements | DEP penalties ($1,000) | Per capita income ($k) | Population | Enforcements per capita (per 100,000 residents) | Penalties per capita ($1M per 100,000 people) | 
+| --- | --- | --- | --- |{% for row in site.data.table_MADEP_enforcement_topcities_penalties %}
+{% for col in row %} {{ col[1] }} | {% endfor %} {% endfor %}
+{: .sortable}
