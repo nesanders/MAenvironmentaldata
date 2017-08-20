@@ -49,7 +49,7 @@ df = pd.DataFrame(d_s).T
 df['Subdivision'] = df.index
 
 
-df.to_csv('../docs/data/Census_ACS_MA.csv', index=0)
+df.to_csv('../docs/data/Census_ACS_MA.csv', index=False)
 
 
 ## Report last update

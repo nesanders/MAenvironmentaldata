@@ -2,7 +2,7 @@
 title: The Environmental Council of States state environmental budget data
 author: NES
 layout: data_listing
-ancillary: 0
+ancillary: 1
 ---
 
 ## Data source
