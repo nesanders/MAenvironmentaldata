@@ -2,11 +2,11 @@
 # Python ChartJS - (C) 2015 Patrick Lambert - Provided under the MIT License - https://github.com/dendory/chartjs
 # Uses the ChartJS JavaScript implementation by Nick Downie
 #
-# Updated by nesanders to support chart.js 2.6
+# Updated by nesanders to support chart.js 2.6 features
 #
 import numpy as np
 
-ctypes = ["Bar", "Pie", "Doughnut", "PolarArea", "Radar", "Line"]
+ctypes = ["Bar", "Pie", "Doughnut", "PolarArea", "Radar", "Line", "Scatter"]
 
 def js_str(x):
 	out = '{'
@@ -37,7 +37,8 @@ class chart:
 		pointHighlightFill = None, pointHighlightStroke = None, 
 		JSinline = None, scaleBeginAtZero = None,
 		y2nd = None, y2nd_title = None,
-		xlabel = None, ylabel = None, stacked=None, legend=None, tooltips=None):
+		xlabel = None, ylabel = None, stacked=None, 
+		legend=None, tooltips=None, custom_tooltips=None, yaxis_type=None):
 		
 		if fillColor:
 			self.fillColor = fillColor
@@ -80,11 +81,19 @@ class chart:
 			self.legend = 'false'
 		if tooltips == False:
 			self.tooltips = 'false'
+		if custom_tooltips == None:
+			self.custom_tooltips = ''
+		else:
+			self.custom_tooltips = ", "+custom_tooltips
+		if yaxis_type != None:
+			self.yaxis_type = yaxis_type
 
 	# Add a dataset to the chart
 	def add_dataset(self, data, dataset_label = '', **kwargs):
-		data = ['null' if np.isnan(d) else d for d in data]
-		if self.ctype == "Bar" or self.ctype == "Radar" or self.ctype == "Line": # Line, radar or bar charts
+		#data = ['null' if np.isnan(d) else d for d in data]
+		data = np.array(data).astype(str)
+		data[data == 'nan'] = 'null'
+		if self.ctype in ["Bar","Radar","Line"]: # Line, radar or bar charts
 			if len(data) != len(self.labels):
 				raise ValueError("Data must be the same size as labels.")
 			
@@ -92,16 +101,27 @@ class chart:
 			appendargs.update(kwargs.iteritems())
 			
 			self.data.append(js_str(appendargs))
-		else: # Pie, doughnut or polar charts
+			
+		elif self.ctype in ["Pie","Doughnut","Polar"]: # Pie, doughnut or polar charts
 			if len(data) != len(self.labels) or len(data) != len(self.highlights) or len(data) != len(self.colors):
 				raise ValueError("Data, labels, colors and highlights should all have the same number of values for Pie, Doughnut and PolarArea charts.")
 			self.data = [] # Only one dataset can be present for these charts
 			for i, d in enumerate(data):
 				self.data.append({'value': int(d), 'color': str(self.colors[i]), 'highlight': str(self.highlights[i]), 'label': str(self.labels[i])})
+		
+		elif self.ctype == 'Scatter':
+			if len(np.shape(data)) == 2 and np.shape(data)[1] != 2:
+				raise ValueError("Data must be two-dimensional for Scatter charts.")
+			appendargs = {
+				'data':'['+', '.join(['{x: '+str(data[i,0])+', y: '+str(data[i,1])+'}' for i in range(len(data))])+']', 
+				'label':"'"+dataset_label+"'"}
+			appendargs.update(kwargs.iteritems())
+			
+			self.data.append(js_str(appendargs))
 
 	# Make a chart canvas part
 	def make_chart_canvas(self):
-		if self.ctype == "Bar" or self.ctype == "Radar" or self.ctype == "Line":  
+		if self.ctype in ["Bar", "Radar", "Line", "Scatter"]:  
 			dataset = """{{
 				
 					data: {{
@@ -122,7 +142,7 @@ class chart:
 								}},
 								"id": "y-axis-0",
 								"position": "left",
-								stacked: {8}
+								stacked: {8}{11}
 							}}, {{
 								display: {6},
 								scaleLabel: {{
@@ -147,13 +167,14 @@ class chart:
 							display: {9}
 							}},
 						tooltips: {{
-							display: {10}
+							display: {10}{12}
 							}}
 					}},
 				}}
 				""".format(
 					str(self.labels), 
-					'['+','.join([str(c) for c in self.data])+']', str(self.ctype).lower(), 
+					'['+','.join([str(c) for c in self.data])+']', 
+					str(self.ctype).lower(), 
 					self.ylabel, 
 					self.xlabel,
 					self.scaleBeginAtZero,
@@ -161,7 +182,10 @@ class chart:
 					self.y2nd_title,
 					self.stacked,
 					self.legend,
-					self.tooltips)
+					self.tooltips,
+					'' if self.yaxis_type is None else ',\ntype: "'+self.yaxis_type+'"',
+					self.custom_tooltips,
+					)
 		else:
 			dataset = """
 			{0}
@@ -170,8 +194,10 @@ class chart:
 			<canvas id="{0}" height="{1}" width="{2}"></canvas>
 			<script>
 				var chart_data = {3}
+				
+				{4}
 			</script>
-""".format(str(self.canvas), str(self.height), str(self.width), dataset)
+""".format(str(self.canvas), str(self.height), str(self.width), dataset, self.extra_code)
 		return output
 
 	# Make onload function
@@ -241,6 +267,12 @@ class chart:
 			f.write(out)
 			f.write("{% endraw  %}\n")
 
+	def add_extra_code(self, code):
+		"""
+		Add extra code to the end of the script when writing out, e.g. to update defaults
+		"""
+		self.extra_code += '\n\n' + code
+	
 	# Initialize default values
 	def __init__(self, title = "Untitled chart", ctype = "Bar", width = 640, height = 480):
 		if ctype not in ctypes:
@@ -274,6 +306,9 @@ class chart:
 		self.stacked = 'false'
 		self.legend = 'true'
 		self.tooltips = 'true'
+		self.custom_tooltips = ''
+		self.yaxis_type = None
+		self.extra_code = ''
 
 # JavaScript (URL and inline)
 jsurl = "<script src='https://cdnjs.cloudflare.com/ajax/libs/Chart.js/2.6.0/Chart.bundle.min.js'></script>"

@@ -6,7 +6,6 @@ import json
 import ast
 import folium
 from scipy.stats import pearsonr
-from statsmodels.nonparametric.smoothers_lowess import lowess
 
 import matplotlib as mpl
 color_cycle = [c['color'] for c in list(mpl.rcParams['axes.prop_cycle'])]
@@ -369,15 +368,27 @@ map_bytown.save(geo_out_path+'MADEP_enforcements_town_total.html')
 ## Compare census data to town characteristics
 #############################
 
+"""
+## Matplotlib plots for testing purposes
+from matplotlib import pyplot as plt
+from statsmodels.nonparametric.smoothers_lowess import lowess
+
 ## counts
-x = merge_census_df['Per capita income ($k)']
-y = merge_census_df['DEP enforcements']/merge_census_df['Population'] * 1e5
+x = merge_census_df['Per capita income ($k)'].values
+y = merge_census_df['DEP enforcements'].values / merge_census_df['Population'].values * 1e5
 pxy = lowess(np.log10(y), x, frac=0.2)
+
+#x_bins = np.linspace(min(x), max(x), 10)
+x_bins = np.nanpercentile(x, list(np.linspace(0,100,11)))
+x_bin_id = pd.cut(x, x_bins, labels=False)
+y_bin = [np.mean((y)[x_bin_id == i]) for i in range(len(x_bins) - 1)]
+dy_bin = [np.std((y)[x_bin_id == i]) / np.sqrt(sum(x_bin_id == i)) for i in range(len(x_bins) - 1)]
 
 plt.figure()
 plt.plot(x, y, '.')
 plt.semilogy()
 plt.plot(pxy[:,0], 10**pxy[:,1], lw=3)
+plt.errorbar([np.mean([x_bins[i], x_bins[i+1]]) for i in range(len(x_bins) - 1)], y_bin, yerr = dy_bin, marker='o')
 plt.xlabel('Per Capita Income ($1,000)')
 plt.ylabel('Per Capita Enforcements (per 100,000)')
 
@@ -392,6 +403,100 @@ plt.semilogy()
 plt.plot(pxy[:,0], 10**pxy[:,1], lw=3)
 plt.xlabel('Per Capita Income ($1,000)')
 plt.ylabel('Per Capita Enforcement Penalties ($1,000 per 100,000)')
+"""
+
+#############################
+## Enforcement count per capita by town income
+#############################
+
+## Lookup base values
+x = merge_census_df['Per capita income ($k)'].values
+y = merge_census_df['DEP enforcements'].values / merge_census_df['Population'].values * 1e5
+l = merge_census_df.index.values
+
+## Calculate binned values
+x_bins = np.nanpercentile(x, list(np.linspace(0,100,8)))
+x_bin_cent = [np.mean([x_bins[i], x_bins[i+1]]) for i in range(len(x_bins) - 1)]
+x_bin_id = pd.cut(x, x_bins, labels=False)
+y_bin = np.array([np.mean((y)[x_bin_id == i]) for i in range(len(x_bins) - 1)])
+dy_bin = np.array([np.std((y)[x_bin_id == i]) / np.sqrt(sum(x_bin_id == i)) for i in range(len(x_bins) - 1)])
+
+## Establish chart
+mychart = chartjs.chart("DEP Enforcements per capita versus town income", "Scatter", 640, 480)
+
+## Add individual town dataset
+mychart.add_dataset(
+	np.array([x, y]).T, 
+	dataset_label="Individual towns",
+	backgroundColor="'rgba(50,50,50,0.5)'",
+	showLine = "false",
+	yAxisID= "'y-axis-0'",
+	fill="'false'",
+	hidden="'true'"
+	)
+## Add binned dataset
+mychart.add_dataset(
+	np.array([x_bin_cent, y_bin]).T, 
+	dataset_label="Average (binned)",
+	backgroundColor="'rgba(50,50,200,1)'",
+	showLine = "true",
+	borderColor="'rgba(50,50,200,1)'",
+	borderWidth=3,
+	yAxisID= "'y-axis-0'",
+	fill="'false'",
+	pointRadius=6,
+	)
+## Add uncertainty contour
+mychart.add_dataset(np.array([x_bin_cent, y_bin - 1.65 * dy_bin]).T, 
+	"Average lower bound (5% limit)",
+	backgroundColor="'rgba(50,50,200,0.3)'", yAxisID= "'y-axis-0'", borderWidth = 1, 
+	fill = 'false', pointBackgroundColor="'rgba(50,50,200,0.3)'", pointBorderColor="'rgba(50,50,200,0.3)'")
+mychart.add_dataset(np.array([x_bin_cent, y_bin + 1.65 * dy_bin]).T, 
+	"Average upper bound (95% limit)",
+	backgroundColor="'rgba(50,50,200,0.3)'", yAxisID= "'y-axis-0'", borderWidth = 1, fill = "'2'", pointBackgroundColor="'rgba(50,50,200,0.3)'", pointBorderColor="'rgba(50,50,200,0.3)'")
+## Set overall chart parameters
+mychart.set_params(
+	JSinline = 0, 
+	ylabel = 'MA DEP enforcements per 100,000 residents', 
+	xlabel='Per capita income ($k)',
+	yaxis_type='logarithmic',	
+	y2nd = 0,
+	scaleBeginAtZero=0,
+	custom_tooltips = """
+                mode: 'single',
+                callbacks: {
+                    label: function(tooltipItems, data) { 
+						var town = ma_towns[tooltipItems.index];
+						if (tooltipItems.datasetIndex == 0) {
+							return [town,'Enforcements per 100,000 residents: ' + tooltipItems.yLabel,'Per capita income ($k): ' + tooltipItems.xLabel];
+						};
+                    }
+				}
+"""
+	) 
+## Update logarithm tick format as in https://github.com/chartjs/Chart.js/issues/3121
+mychart.add_extra_code(
+"""
+Chart.scaleService.updateScaleDefaults('logarithmic', {
+  ticks: {
+	autoSkip: true,
+	autoSkipPadding: 100,
+	callback: function(tick, index, ticks) {
+      return tick.toLocaleString()
+    }
+  }
+});
+""")
+## Add town dataset
+mychart.add_extra_code(
+	'var ma_towns = ["' + '","'.join(l) + '"];')
+
+mychart.jekyll_write('../docs/_includes/charts/MADEP_enforcement_bytown_income.html')
+
+
+#############################
+## Enforcements per capita - extreme value tables
+#############################
 
 ## Top cities
 merge_census_df['Enforcements per capita (per 100,000 people)'] = merge_census_df['DEP enforcements']/merge_census_df['Population'] * 1e5
