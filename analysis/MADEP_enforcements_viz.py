@@ -275,6 +275,88 @@ mychart.jekyll_write('../docs/_includes/charts/MADEP_enforcement_ACOP_byyear.htm
 ## Show variation by town
 #############################
 
+### Count enforcements per town
+#towns = sorted([geo_towns_dict[i]['properties']['TOWN'] for i in range(len(geo_towns_dict))])
+#town_count = {}
+#town_fines = {}
+#for town in towns:
+	### Check if town appears in each row
+	#count = s_data.municipality.apply(lambda x: town in x)
+	#town_count[town] = count.sum()
+	### tally enforcement penalties
+	#fines = s_data.apply(lambda x: x.Fine if town in x.municipality else 0, axis=1)
+	#town_fines[town] = fines.sum()
+
+#town_count = pd.Series(town_count)
+#town_fines = pd.Series(town_fines)
+
+#merge_census_df = pd.DataFrame(data={
+	#'Population': c_data['population_acs52014'].ix[towns].values,
+	#'Per capita income ($k)': c_data['per_capita_income_acs52014'].ix[towns].values / 1000,
+	#'DEP enforcements': town_count.ix[towns].values,
+	#'DEP penalties ($1,000)': town_fines.ix[towns].values / 1000,
+	#}, index=towns)
+
+
+### Map total inspections
+#map_bytown = folium.Map(
+	#location=[42.29, -71.74], 
+	#zoom_start=8.2,
+	#tiles='cartodbpositron',
+	#)
+
+### Draw choropleth
+#map_bytown.choropleth(
+	#geo_path=geo_towns, 
+	#data_out=geo_out_path+'EEADP_ins_data_total.json', 
+	#data=town_count,
+	#key_on='feature.properties.TOWN',
+	#legend_name='Total # of MA DEP enforcements reported',
+	#threshold_scale = list(np.percentile(town_count, [0,50,90,95, 100])),
+	#fill_color='PuBu', fill_opacity=0.7, line_opacity=0.3, highlight=True,
+	#)
+
+### Add statistics and top enforcement actions to each city
+#for i in range(len(geo_towns_dict)):
+	#town = geo_towns_dict[i]['properties']['TOWN']
+	#if town in towns:
+		### Gather town data
+		#enforcements = merge_census_df['DEP enforcements'].ix[town]
+		#pop14 = merge_census_df['Population'].ix[town]
+		#top_enforcements = s_data[s_data.municipality.apply(lambda x: town in x)].sort_values('Fine', ascending=False)[['Date','Fine','Text']].values[:3]
+		#enforcement_summary = '<br>'.join(['<b>'+c[0]+', $%0.0f'%c[1]+'</b>: '+c[2] for c in top_enforcements])
+		### Take average position of polygon points for marker center
+		#raw_coords = geo_towns_dict[i]['geometry']['coordinates']
+		#if np.ndim(raw_coords) == 2: # Take most complicated polygon if multiple are provided
+			#j = np.argmax([np.shape(raw_coords[i][0])[0] for i in range(len(raw_coords))])
+			#coords = raw_coords[j]
+		#elif np.ndim(raw_coords) == 3:
+			#coords = raw_coords
+		#else: 
+			#raise
+		#mean_pos = list(np.mean(coords, axis=1)[0])[::-1]
+		### Add marker
+		#html="""
+		#<h1>{town}</h1>
+		#<p>Population (2014): {pop}<br>
+		#Total MA DEP enforcements reported since {enforcement_start}: {enforcements}</p>
+		
+		#<p>Largest enforcements reported (by penalty):</p>
+		#<p>{enforcement_summary}</p>
+		#""".format(town=town, pop=pop14, enforcements=enforcements, enforcement_summary=enforcement_summary, enforcement_start=s_data.Year.min())
+		#iframe = folium.IFrame(html=html, width=500, height=300)
+		#popup = folium.Popup(iframe, max_width=600)
+		#folium.Marker(mean_pos, popup=popup).add_to(map_bytown)
+
+### Save to html
+#map_bytown.save(geo_out_path+'MADEP_enforcements_town_total.html')
+
+
+#############################
+## Show variation by town
+#############################
+
+
 ## Count enforcements per town
 towns = sorted([geo_towns_dict[i]['properties']['TOWN'] for i in range(len(geo_towns_dict))])
 town_count = {}
@@ -305,18 +387,10 @@ map_bytown = folium.Map(
 	tiles='cartodbpositron',
 	)
 
-## Draw choropleth
-map_bytown.choropleth(
-	geo_path=geo_towns, 
-	data_out=geo_out_path+'EEADP_ins_data_total.json', 
-	data=town_count,
-	key_on='feature.properties.TOWN',
-	legend_name='Total # of MA DEP enforcements reported',
-	threshold_scale = list(np.percentile(town_count, [0,50,90,95, 100])),
-	fill_color='PuBu', fill_opacity=0.7, line_opacity=0.3, highlight=True,
-	)
-
-## Add statistics and top enforcement actions to each city
+## Draw choropleth with popups using workaround for https://nbviewer.jupyter.org/gist/BibMartin/4b9784461d2fa0d89353
+execfile('folium_choropleth_popups.py')
+fg = folium.map.FeatureGroup().add_to(map_bytown)
+choro_bins = np.percentile(town_count, [0,50,90,95, 100])
 for i in range(len(geo_towns_dict)):
 	town = geo_towns_dict[i]['properties']['TOWN']
 	if town in towns:
@@ -325,17 +399,7 @@ for i in range(len(geo_towns_dict)):
 		pop14 = merge_census_df['Population'].ix[town]
 		top_enforcements = s_data[s_data.municipality.apply(lambda x: town in x)].sort_values('Fine', ascending=False)[['Date','Fine','Text']].values[:3]
 		enforcement_summary = '<br>'.join(['<b>'+c[0]+', $%0.0f'%c[1]+'</b>: '+c[2] for c in top_enforcements])
-		## Take average position of polygon points for marker center
-		raw_coords = geo_towns_dict[i]['geometry']['coordinates']
-		if np.ndim(raw_coords) == 2: # Take most complicated polygon if multiple are provided
-			j = np.argmax([np.shape(raw_coords[i][0])[0] for i in range(len(raw_coords))])
-			coords = raw_coords[j]
-		elif np.ndim(raw_coords) == 3:
-			coords = raw_coords
-		else: 
-			raise
-		mean_pos = list(np.mean(coords, axis=1)[0])[::-1]
-		## Add marker
+		## Construct popup
 		html="""
 		<h1>{town}</h1>
 		<p>Population (2014): {pop}<br>
@@ -346,7 +410,13 @@ for i in range(len(geo_towns_dict)):
 		""".format(town=town, pop=pop14, enforcements=enforcements, enforcement_summary=enforcement_summary, enforcement_start=s_data.Year.min())
 		iframe = folium.IFrame(html=html, width=500, height=300)
 		popup = folium.Popup(iframe, max_width=600)
-		folium.Marker(mean_pos, popup=popup).add_to(map_bytown)
+		## Add polygon
+		fg.add_child(MultiPolygon(
+			_locations_mirror(geo_towns_dict[i]['geometry']['coordinates']), # 
+			color = 'green',#rgb2hex(cm.RdGy((choro_bins > enforcements).sum() / float(len(choro_bins)))),
+			weight=2,
+			popup = popup,
+			))
 
 ## Save to html
 map_bytown.save(geo_out_path+'MADEP_enforcements_town_total.html')
