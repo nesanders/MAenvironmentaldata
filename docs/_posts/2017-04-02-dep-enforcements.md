@@ -17,7 +17,7 @@ The total number of individual enforcement actions reported by DEP over the past
 
 {% include /charts/MADEP_enforcement_overall.html %}
 
-In just the past few years, the decline has been more steady, falling about 15% annually since 2014.  Only 61 enforcements were reported through the end of May, 2016.  This acute decline coincides with the dramatic rise in staff buyouts since 2015, as described in our [MA DEP staffing analysis]({{ site.url }}{{ site.baseurl }}/2017/03/15/dep-staff-changes.html).
+In just the past few years, the decline has been more steady, falling about 15% annually since 2014.  This acute decline coincides with the dramatic rise in staff buyouts since 2015, as described in our [MA DEP staffing analysis]({{ site.url }}{{ site.baseurl }}/2017/03/15/dep-staff-changes.html).
 
 The rise and fall in enforcement levels over time has tracked closely with the [changes in MA DEP budgets]({{ site.url }}{{ site.baseurl }}/2017/03/15/dep-staff-changes.html).  There is a {{ site.data.facts_DEPenforce.cor_enforcement_funding }}% correlation between the annual agency budget and the number of enforcement actions reported.  Recent history indicates that when more resources allocated to MA DEP, the agency is a more active enforcer of environmental law.
 
@@ -29,7 +29,7 @@ The rise and fall in enforcement levels over time has tracked closely with the [
 
 {% include charts/MADEP_enforcement_bytopic.html %}
 
-We can draw several conclusions from this data.
+The chart above shows the variation of DEP enforcement levels on a variety of topics over time.  The topics were extracted from the textual descriptions of the reported enforcements by simple keyword matching.  We can draw several conclusions from this data.
 
 The dominant enforcement mechanism for MA DEP is the consent order, a type of no-trial settlement, which is used in {{ site.data.facts_DEPenforce.yearly_avg_consentorder }}% of actions.
 
@@ -66,6 +66,7 @@ The plot below uses [bootstrap resampling](https://en.wikipedia.org/wiki/Bootstr
 
 {% include charts/MADEP_enforcement_fine_avg_bootstrap.html %}
 
+**The fraction of DEP consent orders carrying financial penalties has declined over time.  The distribution of penalty amounts, which are typically $10,000 to $30,000, has not changed significantly.**
 
 
 ## Variation by municipality & demographics
