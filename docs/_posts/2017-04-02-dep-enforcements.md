@@ -73,6 +73,7 @@ The plot below uses [bootstrap resampling](https://en.wikipedia.org/wiki/Bootstr
 
 {% raw %}
 <iframe frameborder="no" border="0" marginwidth="0" marginheight="0" width="700" height="400" src="../../../assets/maps/MADEP_enforcements_town_total.html"></iframe>
+<p><em><a target="_blank" href="../../../assets/maps/MADEP_enforcements_town_total.html">Click here to view map in a separate page</a></em></p>
 {% endraw %}
 
 
