@@ -74,11 +74,12 @@ def query_iterate(table_name, req_size = 100000, verbose = True):
 table_data = {}
 for tab in API_tables:
 	table_data[tab] = query_iterate(tab)
-	
-	## Write out, but treat large tables separately
-	## Only one table (drinkingWater) is >10MB as of 08/2017, so we handle this as a special case.
-	## Could also use `size_MB = os.path.getsize('../docs/data/EEADP_' + tab + '.csv')/1024/1024` to get file size
-	
+
+
+## Write out, but treat large tables separately
+## Only one table (drinkingWater) is >10MB as of 08/2017, so we handle this as a special case.
+## Could also use `size_MB = os.path.getsize('../docs/data/EEADP_' + tab + '.csv')/1024/1024` to get file size
+for tab in API_tables:
 	## Print a sample of the file as an example
 	table_data[tab].sample(n=10).to_csv('../docs/data/EEADP_' + tab + '_sample.csv', index=0)
 	
@@ -86,7 +87,7 @@ for tab in API_tables:
 		table_data[tab].to_csv('../docs/data/EEADP_' + tab + '.csv', index=0)
 	else:
 		## Send to Google object store
-		table_data[tab].to_csv('EEADP_' + tab + '.csv', index=0)
+		table_data[tab].to_csv('EEADP_' + tab + '.csv', encoding='utf-8', index=0)
 		os.system('gsutil cp EEADP_' + tab + '.csv gs://ns697-amend/EEADP_' + tab + '.csv')
 		
 		## Include some special summary statistics tables
@@ -109,7 +110,7 @@ for tab in API_tables:
 		## Tests per year per PWS per chemical per raw/finished
 		### This still ends up being ~40% of the original size, so larger than desired
 		#df_dw_annual = table_data[tab].groupby(['Year','PWSName', 'ChemicalName','RaworFinished']).agg({'ContaminantGroup': lambda x: x.iloc[0], 'Result': pd.Series.count})
-		
+
 
 
 ##########################

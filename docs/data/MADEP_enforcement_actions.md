@@ -7,9 +7,11 @@ ancillary: 0
 
 ## Data source
 
-MA Department of Environmental Protection enforcement actions are reported on the [MA DEP website](http://www.mass.gov/eea/agencies/massdep/service/enforcement/enforcement-actions-2017.html).  We infer the value of penalties associated with each enforcement by automated searching of the description string; this results in some errors when e.g. the penalty is extended across multiple years ("fees of $1000 for each of these three years").
+**Note: This data source is no longer actively scraped and has been replaced by the enforcement data from the  [EEA data portal](EEADP_all.html).**
 
-These enforcement actions have been archived on this site, last updated on **{{ site.data.ts_update_MADEP_enforcement_actions.updated | date: "%-d %B %Y %I:%M %P" }}**.
+MA Department of Environmental Protection enforcement actions were previously reported on HTML pages on the [MA DEP website](http://www.mass.gov/eea/agencies/massdep/service/enforcement/enforcement-actions-2017.html).  We previously inferred the value of penalties associated with each enforcement by automated searching of the description string; this results in some errors when e.g. the penalty is extended across multiple years ("fees of $1000 for each of these three years").
+
+The enforcement actions from this source were last archived on this site on **{{ site.data.ts_update_MADEP_enforcement_actions.updated | date: "%-d %B %Y %I:%M %P" }}**.  Some [PDF enforcement log documents](https://www.mass.gov/lists/massdep-enforcement-updates-yearmonth) are still made available on the EEA website, but only summaries back to 2013 are posted there.
 
 ## Download archive
 

@@ -13,7 +13,8 @@ python get_DEP_staff_SODA.py
 python get_DEP_staff.py
 python get_Census_ACS.py
 python get_Census_statepop.py
-python get_DEP_enforcement_actions.py
+# python get_DEP_enforcement_actions.py # Deprecated
+python get_EEA_data_portal.py
 
 ## Transformations
 python transform_ECOS_data.py
