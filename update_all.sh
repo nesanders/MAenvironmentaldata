@@ -18,6 +18,7 @@ python get_EEA_data_portal.py
 
 ## Transformations - only need to be run once
 # python transform_ECOS_data.py
+# python transform_NECIR_CSO_data.py
 
 ## Assemble DB
 python assemble_db.py

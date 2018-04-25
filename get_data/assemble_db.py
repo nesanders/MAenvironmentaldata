@@ -19,6 +19,7 @@ data_csv['MADEP_staff_Comptroller'] = pd.read_csv('../docs/data/MADEP_staff_SODA
 data_csv['Census_ACS'] = pd.read_csv('../docs/data/Census_ACS_MA.csv')
 data_csv['Census_statepop'] = pd.read_csv('../docs/data/Census_statepop.csv')
 data_csv['ECOS_budgets'] = pd.read_csv('../docs/data/ECOS_budget_history.csv')
+data_csv['NECIR_CSO_2011'] = pd.read_csv('../docs/data/NECIR_CSO_2011.csv')
 
 data_csv['MAEEADP_DrinkingWater'] = pd.read_csv('../docs/data/EEADP_drinkingWater_annual.csv')
 #../docs/data/EEADP_drinkingWater_head.csv ## Don't include Drinking Water head file
