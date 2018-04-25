@@ -1,11 +1,11 @@
-Nearest_Pipe_Address,Municipality,DischargesBody,2011_Discharges_MGal,2011_Discharge_N,Location,Notes
-Cove & Bonney,New Bedford,Clark's Cove,83,20,"41.613646,-70.926754",based on model of annual disch.
-Allen and Oakland St.,Springfield,Mill River,0.44,18,"42.09682929150,-72.56386481740",only 2010 avail.
-Merrimack Station,Lowell,Merrimack River,109.40,37,"42.64863160590, -71.29092773700",loc. from DES draft data
-Jackson St.,Holyoke,Connecticut River,10.19,57,"42.1932210058,-72.60611608720",only 2010 avail.; loc. from DES draft data
-E. Main St.,Gloucester,Inner Harbor,0.86,14,"42.6140265685,-70.64853691980",loc. from DES draft data
-Mass Ave. & Alewife,Cambridge,Alewife Brook,0.13,2,"42.401130572,-71.13608329000",source: MWRA
-Cove St.,Fall River,Taunton River,50,40,"41.726663,-71.148975",based on model of annual disch.
-Springdale,Holyoke,Connecticut River,27.96,50,"42.1881515217,72.61821951280",only 2010 avail.; loc. from DES draft data
-Aquidneck & RFB,New Bedford,New Bed. Outer Hrbr,0,1,"41.6041,-70.902427",based on model of annual disch.
-City Pier,Fall River,Taunton,185,52,"41.712056,-71.158492",based on model of annual disch.
+Latitude,Longitude,Nearest_Pipe_Address,Municipality,DischargesBody,2011_Discharges_MGal,2011_Discharge_N,Notes
+42.1604177925,-72.5097594166,Main St. and Indian Orchard,Springfield,Chicopee River,0.74,10,only 2010 avail.
+42.6486316059,-71.290927737,Merrimack Station,Lowell,Merrimack River,109.40,37,loc. from DES draft data
+41.700338,-71.154361,Third St.,Fall River,Quequechan River,1,4,based on model of annual disch.
+42.1010305739,-72.5948141047,Bridge St.,Springfield,Connecticut River,51.65,39,only 2010 avail.; loc. from DES draft data
+42.159535409499995,-72.58180982,Church and Walnut,Chicopee,Chicopee River,0.04,40,"approx., loc n/a; 2010 data"
+42.777685,-71.086822,Winter & Hale St.,Haverhill,Merrimack River,0.09,1,approx.; loc n/a.
+42.6108369508,-70.6636286313,off Fishermans Wharf,Gloucester,Harbor Cove,0.04,1,loc. from DES draft data
+42.14962,-72.59815,River View West,Chicopee,Chicopee River,0.02,6,loc n/a; 210 data
+42.203667323400005,-72.6077878335,Front and Appleton St.,Holyoke,First Level Canal,0.86,12,only 2010 avail.; loc. from DES draft data
+42.6096821712,-70.6696989748,Mansfield St.,Gloucester,Gloucester Harbor,0.18,3,loc. from DES draft data

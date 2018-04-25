@@ -23,8 +23,8 @@ In addition to including this data in the integrated {{ site.data.site_config.si
 
 <!-- Note: need to have the for loop markup on the same line as the table rows as described here: http://stackoverflow.com/questions/35642820/jekyll-how-to-use-for-loop-to-generate-table-row-within-the-same-table-inside-m -->
 
-| Nearest Pipe Address | Municipality | Discharge Body | 2011 Discharges in Millions of Gallons | 2011 Discharge Count | Location | Notes|
+| Nearest Pipe Address | Municipality | Discharge Body | 2011 Discharges in Millions of Gallons | 2011 Discharge Count | Latitude | Longitude | Notes|
 | --- | --- | --- |{% for row in site.data.NECIR_CSO_2011 %}
-| {{ row.Nearest_Pipe_Address }} | {{ row.Municipality }} | {{ row.DischargesBody }} | {{ row.2011_Discharges_MGal }} | {{ row.2011_Discharge_N }} | {{ row.Location }} | {{ row.Notes }}|{% endfor %}
+| {{ row.Nearest_Pipe_Address }} | {{ row.Municipality }} | {{ row.DischargesBody }} | {{ row.2011_Discharges_MGal }} | {{ row.2011_Discharge_N }} | {{ row.Latitude }} | {{ row.Longitude }} | {{ row.Notes }}|{% endfor %}
 {: .sortable}
 
