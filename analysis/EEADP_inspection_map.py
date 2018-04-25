@@ -42,8 +42,7 @@ map_1 = folium.Map(
 
 ## Draw choropleth
 map_1.choropleth(
-	geo_path=geo_towns, 
-	data_out=out_path+'EEADP_ins_data_total.json', 
+	geo_data=geo_towns, 
 	data=data_ins_g_t,
 	key_on='feature.properties.TOWN',
 	legend_name='Total # of inspections recorded',

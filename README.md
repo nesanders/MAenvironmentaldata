@@ -20,7 +20,7 @@ Several python packages are required to execute the scripts needed to generate t
 * matplotlib 2.0.0
 * scipy 0.19.0
 * pandas 0.20.0
-* folium 0.3.0
+* folium 0.5.0
 * sqlalchemy 1.1.6
 * census 0.8.1
 * urllib2 2.7

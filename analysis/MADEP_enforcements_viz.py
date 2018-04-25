@@ -306,8 +306,7 @@ map_bytown = folium.Map(
 
 ## Draw choropleth
 map_bytown.choropleth(
-	geo_path=geo_towns, 
-	data_out=geo_out_path+'EEADP_ins_data_total.json', 
+	geo_data=geo_towns, 
 	data=town_count,
 	key_on='feature.properties.TOWN',
 	legend_name='Total # of MA DEP enforcements reported',
