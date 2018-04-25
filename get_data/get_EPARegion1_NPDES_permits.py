@@ -9,10 +9,10 @@ import datetime
 import numpy as np
  
 URL_permit = {}
-URL_permit['final'] = "https://www3.epa.gov/region1/npdes/permits_listing_{}.html"
-URL_permit['draft'] = "https://www3.epa.gov/region1/npdes/draft_permits_listing_{}.html"
+URL_permit['final'] = "https://www.epa.gov/npdes-permits/{}-final-individual-npdes-permits"
+URL_permit['draft'] = "https://www.epa.gov/npdes-permits/{}-draft-individual-npdes-permits"
 
-all_states = ['ct','me','nh','ma','ri','vt']
+all_states = {'ct':'connecticut','me':'maine','nh':'new-hampshire','ma':'massachusetts','ri':'rhode-island','vt':'vermont'}
 
 all_urls = []
 all_url_stages = []
@@ -20,7 +20,7 @@ all_url_states = []
 
 for state in all_states:
 	for stage in URL_permit:
-		all_urls += [URL_permit[stage].format(state)]
+		all_urls += [URL_permit[stage].format(all_states[state])]
 		all_url_states += [state]
 		all_url_stages += [stage]
 
@@ -39,7 +39,7 @@ for ci, content in enumerate(all_content):
 		
 		## Construct URL
 		jsonfn = content.split("jsonURL = '")[1].split("';")[0].split("?\'")[0]
-		jsonURL = '/'.join(all_urls[ci].split('/')[:-1]) + '/' + jsonfn
+		jsonURL = '/'.join(all_urls[ci].split('/')[:-2]) + '/' + jsonfn
 		
 		## Request content
 		json_raw = opener.open(urllib2.Request(jsonURL)).read()

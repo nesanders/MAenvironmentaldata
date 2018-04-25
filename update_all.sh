@@ -16,8 +16,8 @@ python get_Census_statepop.py
 # python get_DEP_enforcement_actions.py # Deprecated
 python get_EEA_data_portal.py
 
-## Transformations
-python transform_ECOS_data.py
+## Transformations - only need to be run once
+# python transform_ECOS_data.py
 
 ## Assemble DB
 python assemble_db.py
