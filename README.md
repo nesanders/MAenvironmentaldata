@@ -28,6 +28,7 @@ Several python packages are required to execute the scripts needed to generate t
 * unidecode 2.7.12
 * requests 2.12.1
 * sodapy 1.4.3
+* shapely 1.6.4.post1
 
 ## Other tools used
 
