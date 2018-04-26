@@ -394,106 +394,112 @@ mychart.jekyll_write('../docs/_includes/charts/EJSCREEN_demographics_municipalit
 #x = df_town_level['LINGISOPCT'].loc[l].values
 #y = data_ins_g_muni_j['2011_Discharges_MGal'].loc[l].values
 
-## Lookup base values - Census group block level
-l = data_egs_merge.Watershed.unique()
-l = l[pd.isnull(l) == 0]
-pop = data_egs_merge.groupby('Watershed')['ACSTOTPOP'].sum().loc[l].values
-x = df_watershed_level['LINGISOPCT'].loc[l].values
-y = data_ins_g_ws_j['2011_Discharges_MGal'].loc[l].values
+	
+for i, col, col_label in (
+	(0, 'MINORPCT', 'Fraction of population identifying as non-white'),
+	(1, 'LOWINCPCT', 'Fraction of population with income less than twice the Federal poverty limit'),
+	(2, 'LINGISOPCT', 'Fraction of population in households whose adults speak English less than "very well"'),
+	):
+	## Lookup base values - Census group block level
+	l = data_egs_merge.Watershed.unique()
+	l = l[pd.isnull(l) == 0]
+	pop = data_egs_merge.groupby('Watershed')['ACSTOTPOP'].sum().loc[l].values
+	x = df_watershed_level[col].loc[l].values
+	y = data_ins_g_ws_j['2011_Discharges_MGal'].loc[l].values
 
-## Boostrapped weighted mean function
-def weight_mean(x, weights, N=1000):
-	avgs = np.zeros(N)
-	nonan_sel = (np.isnan(x) == 0) & (np.isnan(weights) == 0)
-	x = x[nonan_sel]
-	weights = weights[nonan_sel]
-	for i in range(N):
-		sel = np.random.randint(len(x), size=len(x))
-		avgs[i] = np.average(x[sel], weights=weights[sel])
-	return np.mean(avgs), np.std(avgs)
+	## Boostrapped weighted mean function
+	def weight_mean(x, weights, N=1000):
+		avgs = np.zeros(N)
+		nonan_sel = (np.isnan(x) == 0) & (np.isnan(weights) == 0)
+		x = x[nonan_sel]
+		weights = weights[nonan_sel]
+		for i in range(N):
+			sel = np.random.randint(len(x), size=len(x))
+			avgs[i] = np.average(x[sel], weights=weights[sel])
+		return np.mean(avgs), np.std(avgs)
 
-## Calculate binned values
-x_bins = np.nanpercentile(x, list(np.linspace(0,100,5)))
-x_bin_cent = [np.mean([x_bins[i], x_bins[i+1]]) for i in range(len(x_bins) - 1)]
-x_bin_id = pd.cut(x, x_bins, labels=False)
-y_bin = np.array([
-	weight_mean(y[x_bin_id == i], pop[x_bin_id == i])
-	for i in range(len(x_bins) - 1)]).T
+	## Calculate binned values
+	x_bins = np.nanpercentile(x, list(np.linspace(0,100,5)))
+	x_bin_cent = [np.mean([x_bins[i], x_bins[i+1]]) for i in range(len(x_bins) - 1)]
+	x_bin_id = pd.cut(x, x_bins, labels=False)
+	y_bin = np.array([
+		weight_mean(y[x_bin_id == i], pop[x_bin_id == i])
+		for i in range(len(x_bins) - 1)]).T
 
-## Establish chart
-mychart = chartjs.chart("CSO discharge volume vs EJ characterics by watershed", "Scatter", 640, 480)
+	## Establish chart
+	mychart = chartjs.chart("CSO discharge volume vs EJ characteristics by watershed: "+col, "Scatter", 640, 480)
 
-## Add individual-level dataset
-mychart.add_dataset(
-	np.array([x, y]).T, 
-	dataset_label="Individual watersheds",
-	backgroundColor="'rgba(50,50,50,0.125)'",
-	showLine = "false",
-	yAxisID= "'y-axis-0'",
-	fill="'false'",
-	hidden="'true'"
-	)
-## Add binned dataset
-mychart.add_dataset(
-	np.array([x_bin_cent, y_bin[0]]).T, 
-	dataset_label="Average (binned)",
-	backgroundColor="'rgba(50,50,200,1)'",
-	showLine = "true",
-	borderColor="'rgba(50,50,200,1)'",
-	borderWidth=3,
-	yAxisID= "'y-axis-0'",
-	fill="'false'",
-	pointRadius=6,
-	)
-## Add uncertainty contour
-mychart.add_dataset(np.array([x_bin_cent, y_bin[0] - 1.65 * y_bin[1]]).T, 
-	"Average lower bound (5% limit)",
-	backgroundColor="'rgba(50,50,200,0.3)'", yAxisID= "'y-axis-0'", borderWidth = 1, 
-	fill = 'false', pointBackgroundColor="'rgba(50,50,200,0.3)'", pointBorderColor="'rgba(50,50,200,0.3)'")
-mychart.add_dataset(np.array([x_bin_cent, y_bin[0] + 1.65 * y_bin[1]]).T, 
-	"Average upper bound (95% limit)",
-	backgroundColor="'rgba(50,50,200,0.3)'", yAxisID= "'y-axis-0'", borderWidth = 1, fill = "'3'", pointBackgroundColor="'rgba(50,50,200,0.3)'", pointBorderColor="'rgba(50,50,200,0.3)'")
+	## Add individual-level dataset
+	mychart.add_dataset(
+		np.array([x, y]).T, 
+		dataset_label="Individual watersheds",
+		backgroundColor="'rgba(50,50,50,0.125)'",
+		showLine = "false",
+		yAxisID= "'y-axis-0'",
+		fill="'false'",
+		hidden="'true'"
+		)
+	## Add binned dataset
+	mychart.add_dataset(
+		np.array([x_bin_cent, y_bin[0]]).T, 
+		dataset_label="Average (binned)",
+		backgroundColor="'rgba(50,50,200,1)'",
+		showLine = "true",
+		borderColor="'rgba(50,50,200,1)'",
+		borderWidth=3,
+		yAxisID= "'y-axis-0'",
+		fill="'false'",
+		pointRadius=6,
+		)
+	## Add uncertainty contour
+	mychart.add_dataset(np.array([x_bin_cent, y_bin[0] - 1.65 * y_bin[1]]).T, 
+		"Average lower bound (5% limit)",
+		backgroundColor="'rgba(50,50,200,0.3)'", yAxisID= "'y-axis-0'", borderWidth = 1, 
+		fill = 'false', pointBackgroundColor="'rgba(50,50,200,0.3)'", pointBorderColor="'rgba(50,50,200,0.3)'")
+	mychart.add_dataset(np.array([x_bin_cent, y_bin[0] + 1.65 * y_bin[1]]).T, 
+		"Average upper bound (95% limit)",
+		backgroundColor="'rgba(50,50,200,0.3)'", yAxisID= "'y-axis-0'", borderWidth = 1, fill = "'3'", pointBackgroundColor="'rgba(50,50,200,0.3)'", pointBorderColor="'rgba(50,50,200,0.3)'")
 
-## Set overall chart parameters
-mychart.set_params(
-	JSinline = 0, 
-	ylabel = 'Total volume of discharge (2011; Millions of gallons)', 
-	xlabel='Linguistic isolation (fractions of households)',
-	yaxis_type='linear',	
-	y2nd = 0,
-	scaleBeginAtZero=0,
-	custom_tooltips = """
-                mode: 'single',
-                callbacks: {
-                    label: function(tooltipItems, data) { 
-						var title = '';
-						
-						if (tooltipItems.datasetIndex == 0) {
-							title = ma_towns[tooltipItems.index];
-						} else {
-							title = data.datasets[tooltipItems.datasetIndex].label;
+	## Set overall chart parameters
+	mychart.set_params(
+		JSinline = 0, 
+		ylabel = 'Total volume of discharge (2011; Millions of gallons)', 
+		xlabel=col_label,
+		yaxis_type='linear',	
+		y2nd = 0,
+		scaleBeginAtZero=0,
+		custom_tooltips = """
+					mode: 'single',
+					callbacks: {
+						label: function(tooltipItems, data) { 
+							var title = '';
+							
+							if (tooltipItems.datasetIndex == 0) {
+								title = ma_towns[tooltipItems.index];
+							} else {
+								title = data.datasets[tooltipItems.datasetIndex].label;
+							}
+							return [title, 'Total volume of discharge: ' + tooltipItems.yLabel, 'Linguistic isoluation: ' + tooltipItems.xLabel];
 						}
-						return [title, 'Total volume of discharge: ' + tooltipItems.yLabel, 'Linguistic isoluation: ' + tooltipItems.xLabel];
-                    }
-				}
-"""
-	) 
-## Update logarithm tick format as in https://github.com/chartjs/Chart.js/issues/3121
-mychart.add_extra_code(
-"""
-Chart.scaleService.updateScaleDefaults('linear', {
-  ticks: {
-	autoSkip: true,
-	autoSkipPadding: 100,
-	callback: function(tick, index, ticks) {
-      return tick.toLocaleString()
-    }
-  }
-});
-""")
-## Add watershed dataset
-mychart.add_extra_code(
-	'var ma_towns = ["' + '","'.join(l) + '"];')
+					}
+	"""
+		) 
+	## Update logarithm tick format as in https://github.com/chartjs/Chart.js/issues/3121
+	mychart.add_extra_code(
+	"""
+	Chart.scaleService.updateScaleDefaults('linear', {
+	ticks: {
+		autoSkip: true,
+		autoSkipPadding: 100,
+		callback: function(tick, index, ticks) {
+		return tick.toLocaleString()
+		}
+	}
+	});
+	""")
+	## Add watershed dataset
+	mychart.add_extra_code(
+		'var ma_towns = ["' + '","'.join(l) + '"];')
 
-mychart.jekyll_write('../docs/_includes/charts/NECIR_EJSCREEN_correlation_bywatershed_LINGISO.html')
+	mychart.jekyll_write('../docs/_includes/charts/NECIR_EJSCREEN_correlation_bywatershed_'+col+'.html')
 

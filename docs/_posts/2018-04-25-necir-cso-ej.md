@@ -91,8 +91,26 @@ We explore the relationship between CSO discharge volumes within different geogr
 
 The plot below uses [bootstrap resampling](https://en.wikipedia.org/wiki/Bootstrap_(statistics)) to estimate the average volume of CSO discharge as a function of linguistic isolation, and the uncertainty in this value given the less-than-infinite number of observed discharges we have to estimate that (the 90% confidence interval).  Linguistic isolation is defined as the fraction of households with no adult who is a "very good" or better English speaker.  Click on the label in the plot legend to toggle display of the individual watershed points, which display detailed annotation when hovering your cursor.
 
-{% include /charts/NECIR_EJSCREEN_correlation_bywatershed_LINGISO.html %}
+{% include /charts/NECIR_EJSCREEN_correlation_bywatershed_LINGISOPCT.html %}
 
 While the total number of watersheds within MA to measure this relationship is small, the results suggest a statistically significant and strong relationship between CSO discharge volumes and linguistic isolation.  More linguistically isolated communities, like the Mystic River watershed, have much higher CSO discharge volumes on average.  On average, watersheds that have twice the level of linguistic isolation tend to have three times the level of CSO discharge.
+
+
+### Relationship with racial minority demographics
+
+The plot below is similar to the one above for linguistic isolation, except the x-axis reflects the fraction of the population identifying as non-white.
+
+{% include /charts/NECIR_EJSCREEN_correlation_bywatershed_MINORPCT.html %}
+
+Similar to the linguistic isolation trend, communities that are less predominantly white have much higher CSO discharge volumes on average.
+
+
+### Relationship with income
+
+The plot below is similar to the one above for linguistic isolation, except the x-axis reflects the fraction of the population with an income level less than twice the federal poverty limit.
+
+{% include /charts/NECIR_EJSCREEN_correlation_bywatershed_LOWINCPCT.html %}
+
+Similar to the linguistic isolation trend, communities that are less predominantly white have much higher CSO discharge volumes on average.
 
 
