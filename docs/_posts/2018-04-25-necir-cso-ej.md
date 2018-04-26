@@ -34,5 +34,65 @@ You can click on each CSO outfall point to report information about its location
 
 Additional mapping tools are available at [MassGIS](http://maps.massgis.state.ma.us/map_ol/ej.php) and [EJSCREEN](https://www.epa.gov/ejscreen/what-ejscreen).
 
+
+## Environmental Justice community characteristics
+
+The following maps visualize major EJ population characteristics by similar watershed, municipality, and Census block group levels as the previous map.  Refer to the [EJSCREEN data page]({{ site.url }}{{ site.baseurl }}/data/EPA_EJSCREEN.html) and links therein for more information about the definition of each demographic metric.  The watershed and municipal-level characteristics are calculated based on a population-weighted average over the Census block group-level data.
+
+### Minority Racial Demographics
+
+{% raw %}
+<iframe frameborder="no" border="0" marginwidth="0" marginheight="0" width="700" height="400" src="../../../assets/maps/NECIR_CSO_map_EJ_MINORPCT.html"></iframe>
+<p><em><a target="_blank" href="../../../assets/maps/NECIR_CSO_map_EJ_MINORPCT.html">Click here to view map in a separate page</a></em></p>
+{% endraw %}
+
+
+
+### Linguistic Isolation
+
+{% raw %}
+<iframe frameborder="no" border="0" marginwidth="0" marginheight="0" width="700" height="400" src="../../../assets/maps/NECIR_CSO_map_EJ_LINGISOPCT.html"></iframe>
+<p><em><a target="_blank" href="../../../assets/maps/NECIR_CSO_map_EJ_LINGISOPCT.html">Click here to view map in a separate page</a></em></p>
+{% endraw %}
+
+
+
+### Low Income Status
+
+{% raw %}
+<iframe frameborder="no" border="0" marginwidth="0" marginheight="0" width="700" height="400" src="../../../assets/maps/NECIR_CSO_map_EJ_LOWINCPCT.html"></iframe>
+<p><em><a target="_blank" href="../../../assets/maps/NECIR_CSO_map_EJ_LOWINCPCT.html">Click here to view map in a separate page</a></em></p>
+{% endraw %}
+
+
+
+## Aggregate level EJ population statistics
+
+We aggregate the Census block group level EJSCREEN data to the watershed and municipality level to understand how these geographic areas vary in their EJ populations.  
+
+## By watershed
+
+{% include /charts/EJSCREEN_demographics_watershed.html %}
+
+
+## By municipality
+
+{% include /charts/EJSCREEN_demographics_municipality.html %}
+
+
+
+
 ## Correlation between CSO discharge and EJ factors
+
+We explore the relationship between CSO discharge volumes within different geographic areas and their EJ population characteristics.
+
+
+### Relationship with linguistic isolation
+
+The plot below uses [bootstrap resampling](https://en.wikipedia.org/wiki/Bootstrap_(statistics)) to estimate the average volume of CSO discharge as a function of linguistic isolation, and the uncertainty in this value given the less-than-infinite number of observed discharges we have to estimate that (the 90% confidence interval).  Linguistic isolation is defined as the fraction of households with no adult who is a "very good" or better English speaker.  
+
+{% include /charts/NECIR_EJSCREEN_correlation_bywatershed_LINGISO.html %}
+
+While the total number of watersheds within MA to measure this relationship is small, the results suggest a statistically significant and strong relationship between CSO discharge volumes and linguistic isolation.  More linguistically isolated communities, like the Mystic River watershed, have much higher CSO discharge volumes on average.  On average, watersheds that have twice the level of linguistic isolation tend to have three times the level of CSO discharge.
+
 

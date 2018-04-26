@@ -1,0 +1,104 @@
+{% raw  %}
+<html>
+	<head>
+		<title>CSO discharge volume vs EJ characterics by watershed</title>
+		<script src='https://cdnjs.cloudflare.com/ajax/libs/Chart.js/2.6.0/Chart.bundle.min.js'></script>
+	</head>
+	<body>
+		<div style="width: 640px; height: 480px; max-width: 99%" class="chartjs">
+
+			<canvas id="CSO discharge volume vs EJ characterics by watershed" height="480" width="640"></canvas>
+			<script>
+				var chart_data = {
+				
+					data: {
+						labels: [],
+						datasets: [{'yAxisID': 'y-axis-0', 'label': 'Individual watersheds', 'backgroundColor': 'rgba(50,50,50,0.125)', 'showLine': false, 'hidden': 'true', 'data': [{x: 0.0384395854983068, y: 379.65999999999997}, {x: 0.08427088897358122, y: 124.0}, {x: 0.06456768322028297, y: 255.0}, {x: 0.06139906047345982, y: 48.52}, {x: 0.08654439189129157, y: 360.87}, {x: 0.0350338211698844, y: 7.69}, {x: 0.06386044911071194, y: 622.3199999999998}, {x: 0.029350409850168246, y: 132.02999999999997}, {x: 0.11039553882065162, y: 149.10000000000002}, {x: 0.07076395197936278, y: 525.74}, {x: 0.026332664150202897, y: 29.37}, {x: 0.07242749069435037, y: 0.0}, {x: 0.01428326186404296, y: 0.0}, {x: 0.008354988729856376, y: 0.0}, {x: 0.018861682089247944, y: 0.0}, {x: 0.015795413756141977, y: 0.0}, {x: 0.01227038743053716, y: 0.0}, {x: 0.019846128483259385, y: 0.0}, {x: 0.0024822343013283176, y: 0.0}, {x: 0.0, y: 0.0}, {x: 0.02699780666477304, y: 0.0}, {x: 0.012110582063411379, y: 0.0}, {x: 0.02866378025086171, y: 0.0}, {x: 0.01102748128965123, y: 0.0}, {x: 0.005283633615705791, y: 0.0}, {x: 0.006870756454214815, y: 0.0}, {x: 0.042445984262365136, y: 0.0}, {x: 0.05399011827742844, y: 0.0}, {x: 0.0656465677750403, y: 0.0}, {x: 0.04980848796571441, y: 0.0}, {x: 0.025766268735952016, y: 0.0}], 'fill': 'false'},{'borderColor': 'rgba(50,50,200,1)', 'yAxisID': 'y-axis-0', 'label': 'Average (binned)', 'borderWidth': 3, 'backgroundColor': 'rgba(50,50,200,1)', 'pointRadius': 6, 'showLine': true, 'data': [{x: 0.006638412323645031, y: 0.0}, {x: 0.020970302449075884, y: 7.319132303885398}, {x: 0.04564676752147379, y: 110.13804523225892}, {x: 0.08651264680636875, y: 317.28831471747975}], 'fill': 'false'},{'pointBorderColor': 'rgba(50,50,200,0.3)', 'yAxisID': 'y-axis-0', 'pointBackgroundColor': 'rgba(50,50,200,0.3)', 'borderWidth': 1, 'backgroundColor': 'rgba(50,50,200,0.3)', 'label': 'Average lower bound (5% limit)', 'data': [{x: 0.006638412323645031, y: 0.0}, {x: 0.020970302449075884, y: -2.7363008214161777}, {x: 0.04564676752147379, y: -6.981799015475403}, {x: 0.08651264680636875, y: 165.42563635856655}], 'fill': false},{'pointBorderColor': 'rgba(50,50,200,0.3)', 'yAxisID': 'y-axis-0', 'pointBackgroundColor': 'rgba(50,50,200,0.3)', 'borderWidth': 1, 'backgroundColor': 'rgba(50,50,200,0.3)', 'label': 'Average upper bound (95% limit)', 'data': [{x: 0.006638412323645031, y: 0.0}, {x: 0.020970302449075884, y: 17.374565429186973}, {x: 0.04564676752147379, y: 227.25788947999325}, {x: 0.08651264680636875, y: 469.150993076393}], 'fill': '3'}]
+					},
+					type: 'scatter',
+					options: {
+						scales: {
+							yAxes: [{
+								display: true,
+								scaleLabel: {
+									display: true,
+									labelString: 'Total volume of discharge (2011; Millions of gallons)'
+								},
+								ticks: {
+									beginAtZero: false
+								},
+								"id": "y-axis-0",
+								"position": "left",
+								stacked: false,
+type: "linear"
+							}, {
+								display: false,
+								scaleLabel: {
+									display: true,
+									labelString: ''
+								},
+								ticks: {
+									beginAtZero: false
+								},
+								"id": "y-axis-1",
+								"position": "right"
+							}],
+							xAxes: [{
+								scaleLabel: {
+									display: true,
+									labelString: 'Linguistic isolation (fractions of households)'
+								},
+								stacked: false
+							}]
+						},
+						legend: {
+							display: true
+							},
+						tooltips: {
+							display: true, 
+                mode: 'single',
+                callbacks: {
+                    label: function(tooltipItems, data) { 
+						var title = '';
+						
+						if (tooltipItems.datasetIndex == 0) {
+							title = ma_towns[tooltipItems.index];
+						} else {
+							title = data.datasets[tooltipItems.datasetIndex].label;
+						}
+						return [title, 'Total volume of discharge: ' + tooltipItems.yLabel, 'Linguistic isoluation: ' + tooltipItems.xLabel];
+                    }
+				}
+
+							}
+					},
+				}
+				
+				
+				
+
+
+Chart.scaleService.updateScaleDefaults('linear', {
+  ticks: {
+	autoSkip: true,
+	autoSkipPadding: 100,
+	callback: function(tick, index, ticks) {
+      return tick.toLocaleString()
+    }
+  }
+});
+
+
+var ma_towns = ["TAUNTON","MT HOPE BAY","BUZZARDS BAY","NORTH COAST","MERRIMACK","SHAWSHEEN","CONNECTICUT","CHICOPEE","MYSTIC","CHARLES","NASHUA","BLACKSTONE","CAPE COD","SOUTH COASTAL","HOUSATONIC","HOOSIC","DEERFIELD","WESTFIELD","FARMINGTON","KINDERHOOK","TEN MILE","NARRAGANSETT BAY","ISLANDS","IPSWICH","PARKER","MILLERS","QUINEBAUG","CONCORD","NEPONSET","WEIR","FRENCH"];
+			</script>
+			<script>
+				{{
+					var ctx = document.getElementById("CSO discharge volume vs EJ characterics by watershed").getContext("2d");
+					var mychart = new Chart(ctx, chart_data);
+				}}
+			</script>
+
+		</div>
+	</body>
+</html>
+{% endraw  %}
