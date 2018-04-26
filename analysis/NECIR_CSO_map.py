@@ -93,49 +93,10 @@ for feature in geo_blockgroups_dict:
 data_ejs = pd.merge(data_ejs, bg_mapping, left_on = 'ID', right_index=True, how='left')
 
 
-##########################
-## Generate map - total gallons by Census block group
-##########################
+#############################
+## Calculate population weighted averages for EJ characteristics
+#############################
 
-## Get counts by block group
-data_ins_g_bg = data_cso.groupby('BlockGroup').sum()[['2011_Discharges_MGal', '2011_Discharge_N']]
-data_ins_g_bg_j = pd.merge(data_ins_g_bg, data_ejs, left_index=True, right_on ='ID', how='left')
-
-## Map total discharge volume
-map_1 = folium.Map(
-	location=[42.29, -71.74], 
-	zoom_start=8.2,
-	tiles='Stamen Terrain',
-	)
-
-## Draw choropleth
-map_1.choropleth(
-	geo_data=geo_blockgroups, 
-	data=data_ins_g_bg['2011_Discharges_MGal'],
-	key_on='feature.properties.GEOID',
-	legend_name='Total volume of discharge (2011; Millions of gallons)',
-	threshold_scale = list(np.nanpercentile(data_ins_g_bg, [0,50,90,100])),  ## NOTE Do I need to index these in order??
-	fill_color='PuBu', fill_opacity=0.4, line_opacity=0.3, highlight=True,
-	)
-## Save to html
-map_1.save(out_path+'NECIR_CSO_map_total.html')
-
-
-
-
-##Scratch
-#from matplotlib import pyplot as plt
-#plt.ion()
-
-#plt.figure()
-#plt.scatter(data_ins_g_bg_j['VULSVI6PCT'], data_ins_g_bg_j['2011_Discharge_N'], c=data_ins_g_bg_j['ACSTOTPOP'])
-#plt.colorbar(label='Total Population')
-#plt.xlabel('VULSVI6PCT (EJ Demographic Index combining racial, income, language, education, and age characteristics)')
-#plt.ylabel('Count of CSO discharges (2011)')
-#plt.title('MA Census Block Groups')
-
-
-## Do a pop-weighted average... since these are block groups, pop is similar anyway
 data_egs_merge = pd.merge(
 	data_ins_g_bg_j.groupby('ID')[['2011_Discharge_N', '2011_Discharges_MGal']].sum(),
 	data_ejs, left_index = True, right_on='ID')
@@ -155,8 +116,108 @@ df_town_level = data_egs_merge.groupby('Town').apply(lambda x: pop_weighted_aver
 
 
 #############################
-## Show layers for watershed, town, and census block group with CSO points
+## Map with layers for watershed, town, and census block group with CSO points
 #############################
 
+## Get counts by block group
+data_ins_g_bg = data_cso.groupby('BlockGroup').sum()[['2011_Discharges_MGal', '2011_Discharge_N']]
+data_ins_g_bg_j = pd.merge(data_ins_g_bg, data_ejs, left_index=True, right_on ='ID', how='left')
 
-folium.LayerControl().add_to(m)
+## Get counts by municipality
+data_ins_g_muni_j = pd.merge(data_cso, data_ejs, left_on='BlockGroup', right_on='ID', how='outer')\
+					.groupby('Town').sum()[['2011_Discharges_MGal', '2011_Discharge_N']].fillna(0)
+
+## Get counts by watershed
+data_ins_g_ws_j = pd.merge(data_cso, data_ejs, left_on='BlockGroup', right_on='ID', how='outer')\
+					.groupby('Watershed').sum()[['2011_Discharges_MGal', '2011_Discharge_N']].fillna(0)
+
+
+
+## Map total discharge volume
+map_2 = folium.Map(
+	location=[42.29, -71.74], 
+	zoom_start=8.2,
+	tiles='Stamen Terrain',
+	)
+
+## Draw choropleth layer for census blocks
+map_2.choropleth(
+	geo_data=geo_blockgroups, 
+	name='Census Block Groups',
+	data=data_ins_g_bg['2011_Discharges_MGal'],
+	key_on='feature.properties.GEOID',
+	legend_name='Block Group: Total volume of discharge (2011; Millions of gallons)',
+	threshold_scale = list(np.nanpercentile(data_ins_g_bg, [0,25,50,75,100])),  ## NOTE Do I need to index these in order??
+	fill_color='BuGn', fill_opacity=0.4, line_opacity=0.3, highlight=True,
+	)
+
+## Draw Choropleth layer for towns
+map_2.choropleth(
+	geo_data=geo_towns, 
+	name='Municipalities',
+	data=data_ins_g_muni_j['2011_Discharges_MGal'],
+	key_on='feature.properties.TOWN',
+	legend_name='Municipality: Total volume of discharge (2011; Millions of gallons)',
+	threshold_scale = list(np.nanpercentile(data_ins_g_muni_j, [0,25,50,75,100])),  ## NOTE Do I need to index these in order??
+	fill_color='PuRd', fill_opacity=0.4, line_opacity=0.3, highlight=True,
+	)
+
+## Draw Choropleth layer for watersheds
+map_2.choropleth(
+	geo_data=geo_watersheds, 
+	name='Watersheds',
+	data=data_ins_g_ws_j['2011_Discharges_MGal'],
+	key_on='feature.properties.NAME',
+	legend_name='Watershed: Total volume of discharge (2011; Millions of gallons)',
+	threshold_scale = list(np.nanpercentile(data_ins_g_ws_j, [0,25,50,75,100])),  ## NOTE Do I need to index these in order??
+	fill_color='PuBu', fill_opacity=0.4, line_opacity=0.3, highlight=True,
+	)
+
+## Add points layer for CSOs
+for i in range(len(data_cso)):
+	## Gather CSO data
+	cso = data_cso.iloc[i]
+	## Add marker
+	html="""
+	<h1>CSO outfall at {address}</h1>
+	<p>
+	Discharge Body: {body}<br>
+	Municipality: {muni}<br>
+	Discharge volume (2011): {vol} (Millions of gallons)<br>
+	Discharge frequency (2011): {N} discharges<br>
+	</p>
+	""".format(
+			address = cso['Nearest_Pipe_Address'],
+			body = cso['DischargesBody'],
+			muni = cso['Municipality'],
+			vol = cso['2011_Discharges_MGal'],
+			N = cso['2011_Discharges_MGal'],
+		)
+	iframe = folium.IFrame(html=html, width=400, height=200)
+	popup = folium.Popup(iframe, max_width=500)
+	folium.RegularPolygonMarker(
+			location=(cso['Latitude'], cso['Longitude']), 
+			popup=popup, 
+			number_of_sides=8, 
+			radius=6, 
+			color='green',
+			fill_color='green',
+		).add_to(map_2)
+
+## Add labels for watersheds
+for feature in geo_watersheds_dict:
+	pos = shape(feature['geometry']).centroid.coords.xy
+	pos = (pos[1][0], pos[0][0])
+	folium.Marker(pos, icon=folium.features.DivIcon(
+        icon_size=(150,36),
+        icon_anchor=(7,20),
+        html='<div style="font-size: 12pt; color: blue; alpha: 0.3">{}</div>'.format(feature['properties']['NAME']),
+        )).add_to(map_2)
+
+## Add a layer control
+folium.LayerControl(collapsed=False).add_to(map_2)
+
+## Save to html
+map_2.save(out_path+'NECIR_CSO_map_total.html')
+
+
