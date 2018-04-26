@@ -20,4 +20,4 @@ All source code associated with {{ site.data.site_config.site_abbrev }} is avail
 
 You can contribute to {{ site.data.site_config.site_abbrev }} by issuing pull requests to that repository.  There, you can also fork your own version of AMEND to generate improvements or adapt it to other states or localities.
 
-{{ site.data.site_config.site_abbrev }} was developed primarily by [Nathan E. Sanders](https://github.com/nesanders) with Guidance and support by members of the [Mystic River Watershed Association's](https://mysticriver.org/) Policy Committee.
+{{ site.data.site_config.site_abbrev }} was developed primarily by [Nathan E. Sanders](https://github.com/nesanders) with guidance and support by members of the [Mystic River Watershed Association's](https://mysticriver.org/) Policy Committee.

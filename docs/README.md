@@ -15,11 +15,13 @@ All data, code for data gathering and cleaning, code for analysis, and web devel
 
 ## Datasets
 
-{{ site.data.site_config.site_abbrev }} includes a constantly-growing list of datasets such as:
+{{ site.data.site_config.site_abbrev }} includes a [constantly-growing list of datasets]({{ site.url }}{{ site.baseurl }}/data/index.html) such as:
 	
 * MA state budget information
 * MA Department of Environmental Protection (DEP) staffing records
 * MA DEP regulatory enforcement actions
+* MA 2011 combined sewer overflow (CSO) discharge data
+* US Environmental Protection Agency (EPA) Environmental Justice (EJ) community data
 * US Environmental Protection Agency (EPA) Region 1 NPDES permits
 * US Census and Social Security Administration population and wage data
 

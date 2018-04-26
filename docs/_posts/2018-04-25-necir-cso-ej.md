@@ -89,7 +89,7 @@ We explore the relationship between CSO discharge volumes within different geogr
 
 ### Relationship with linguistic isolation
 
-The plot below uses [bootstrap resampling](https://en.wikipedia.org/wiki/Bootstrap_(statistics)) to estimate the average volume of CSO discharge as a function of linguistic isolation, and the uncertainty in this value given the less-than-infinite number of observed discharges we have to estimate that (the 90% confidence interval).  Linguistic isolation is defined as the fraction of households with no adult who is a "very good" or better English speaker.  
+The plot below uses [bootstrap resampling](https://en.wikipedia.org/wiki/Bootstrap_(statistics)) to estimate the average volume of CSO discharge as a function of linguistic isolation, and the uncertainty in this value given the less-than-infinite number of observed discharges we have to estimate that (the 90% confidence interval).  Linguistic isolation is defined as the fraction of households with no adult who is a "very good" or better English speaker.  Click on the label in the plot legend to toggle display of the individual watershed points, which display detailed annotation when hovering your cursor.
 
 {% include /charts/NECIR_EJSCREEN_correlation_bywatershed_LINGISO.html %}
 
