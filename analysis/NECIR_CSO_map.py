@@ -211,7 +211,7 @@ for feature in geo_watersheds_dict:
 	folium.Marker(pos, icon=folium.features.DivIcon(
         icon_size=(150,36),
         icon_anchor=(7,20),
-        html='<div style="font-size: 12pt; color: blue; alpha: 0.3">{}</div>'.format(feature['properties']['NAME']),
+        html='<div style="font-size: 12pt; color: blue; opacity: 0.3">{}</div>'.format(feature['properties']['NAME']),
         )).add_to(map_2)
 
 ## Add a layer control
