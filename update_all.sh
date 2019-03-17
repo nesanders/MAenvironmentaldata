@@ -7,31 +7,31 @@
 cd get_data
 
 ## Get data
-python get_EPARegion1_NPDES_permits.py
-python get_MassBudget_environmental.py
-python get_DEP_staff_SODA.py
-python get_DEP_staff.py
-python get_Census_ACS.py
-python get_Census_statepop.py
-# python get_DEP_enforcement_actions.py # Deprecated
-python get_EEA_data_portal.py
+python3 get_EPARegion1_NPDES_permits.py
+python3 get_MassBudget_environmental.py
+python3 get_DEP_staff_SODA.py
+python3 get_DEP_staff.py
+python3 get_Census_ACS.py
+python3 get_Census_statepop.py
+# python3 get_DEP_enforcement_actions.py # Deprecated
+python3 get_EEA_data_portal.py
 
 ## Transformations - only need to be run once
-# python transform_ECOS_data.py
-# python transform_NECIR_CSO_data.py
+# python3 transform_ECOS_data.py
+# python3 transform_NECIR_CSO_data.py
 
 ## Assemble DB
-python assemble_db.py
+python3 assemble_db.py
 
 cd ..
 cd analysis
 
 ## Update charts
-python SSA_wages_viz.py
-python MADEP_staff.py
-python MADEP_budget_viz.py
-python MADEP_enforcements_viz.py
-python ECOS_budgets_viz.py
+python3 SSA_wages_viz.py
+python3 MADEP_staff.py
+python3 MADEP_budget_viz.py
+python3 MADEP_enforcements_viz.py
+python3 ECOS_budgets_viz.py
 
 ## Exclude large files from git repository
 cd ..

@@ -1,3 +1,4 @@
+from __future__ import absolute_import
 import pandas as pd
 import numpy as np
 from sqlalchemy import create_engine
@@ -8,6 +9,7 @@ import folium
 from scipy.stats import pearsonr
 
 import matplotlib as mpl
+from six.moves import range
 color_cycle = [c['color'] for c in list(mpl.rcParams['axes.prop_cycle'])]
 
 import locale

@@ -1,3 +1,5 @@
+from __future__ import absolute_import
+from __future__ import print_function
 import requests
 import datetime
 import os
@@ -16,9 +18,9 @@ def fix_commas(df):
 		if df[col].dtype == 'O':
 			try:
 				df[col+'_float'] = df[col].apply(lambda x: float(str(x).replace(',','')))
-				print "Fixed commas for "+col
+				print("Fixed commas for "+col)
 			except:
-				print "Wrong type: "+col
+				print("Wrong type: "+col)
 	df.rename(columns = {c:c.replace(' ','_') for c in df.columns if ' ' in c}, inplace=1)
 
 

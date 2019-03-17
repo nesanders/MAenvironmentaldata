@@ -5,6 +5,7 @@ https://qvs.visiblegovernment.us/QvAJAXZfc/notoolbar.htm?document=Clients/Massac
 
 To export: filter the view to DEP staff only, then right click on the spreadsheet and 'send to excel'
 """
+from __future__ import absolute_import
 import pandas as pd
 import numpy as np
 from matplotlib import pyplot as plt

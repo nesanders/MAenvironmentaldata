@@ -97,6 +97,7 @@ docs/.jekyll-metadata
 get_data/EPA_Region1_NPDES_permits
 *.db
 .~lock*
+*.bak
 
 # Large files
 get_data/EPA_Region1_NPDES_permits/ma/final/MA0003905_finalma0003905permit.pdf

@@ -1,5 +1,7 @@
+from __future__ import absolute_import
+from __future__ import print_function
 from bs4 import BeautifulSoup
-import urllib2
+import six.moves.urllib.request, six.moves.urllib.error, six.moves.urllib.parse
 import pickle
 import pandas as pd
 from unidecode import unidecode,unidecode_expect_nonascii
@@ -7,6 +9,7 @@ import re
 import os
 import datetime
 import numpy as np
+from six.moves import range
  
 URL_permit = {}
 URL_permit['final'] = "https://www.epa.gov/npdes-permits/{}-final-individual-npdes-permits"
@@ -24,8 +27,8 @@ for state in all_states:
 		all_url_states += [state]
 		all_url_stages += [stage]
 
-opener = urllib2.build_opener()  
-all_content = [opener.open(urllib2.Request(all_urls[i])).read() for i in range(len(all_urls))]
+opener = six.moves.urllib.request.build_opener()  
+all_content = [opener.open(six.moves.urllib.request.Request(all_urls[i])).read() for i in range(len(all_urls))]
 with open('EPARegion1_NPDES_permit_pages.p', 'w') as f: pickle.dump(all_content, f)
 
 permit_data = []
@@ -42,7 +45,7 @@ for ci, content in enumerate(all_content):
 		jsonURL = '/'.join(all_urls[ci].split('/')[:-2]) + '/' + jsonfn
 		
 		## Request content
-		json_raw = opener.open(urllib2.Request(jsonURL)).read()
+		json_raw = opener.open(six.moves.urllib.request.Request(jsonURL)).read()
 		
 		## Decode content
 		jsoncontent = unidecode_expect_nonascii(json_raw)
@@ -70,7 +73,7 @@ for ci, content in enumerate(all_content):
 		soup = BeautifulSoup(content, 'lxml')
 		
 		table = soup.findAll('tr')
-		print stage, state
+		print(stage, state)
 		header = [table[0].findAll('th')[i].get_text() for i in range(len(table[0].findAll('th')))]
 
 		if stage == 'final' and state == 'ma': pdb.set_trace()

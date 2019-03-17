@@ -1,3 +1,5 @@
+from __future__ import absolute_import
+from __future__ import print_function
 import pandas as pd
 import numpy as np
 import folium
@@ -7,6 +9,8 @@ from sqlalchemy import create_engine
 import chartjs
 
 import matplotlib as mpl
+from six.moves import map
+from six.moves import range
 color_cycle = [c['color'] for c in list(mpl.rcParams['axes.prop_cycle'])]
 
 def hex2rgb(hexcode):
@@ -67,7 +71,7 @@ for cso_i in range(len(data_cso)):
 			data_cso.loc[cso_i, 'BlockGroup'] = feature['properties']['GEOID'] 
 	## Warn if a blockgroup was not found
 	if data_cso.loc[cso_i, 'BlockGroup'] is np.nan:
-		print('No block group found for CSO #', str(cso_i))
+		print(('No block group found for CSO #', str(cso_i)))
 
 
 ##########################
@@ -87,7 +91,7 @@ for feature in geo_blockgroups_dict:
 			bg_mapping.loc[feature['properties']['GEOID'], 'Town'] = town_feature['properties']['TOWN'] 
 	## Warn if a town was not found
 	if bg_mapping.loc[feature['properties']['GEOID'], 'Town'] is np.nan:
-		print('No Town found for Block Group #', str(cso_i))
+		print(('No Town found for Block Group #', str(cso_i)))
 	## Loop over watersheds
 	for watershed_feature in geo_watersheds_dict:
 		watershed_polygon = shape(watershed_feature['geometry'])
@@ -95,7 +99,7 @@ for feature in geo_blockgroups_dict:
 			bg_mapping.loc[feature['properties']['GEOID'], 'Watershed'] = watershed_feature['properties']['NAME'] 
 	## Warn if a watershed was not found
 	if bg_mapping.loc[feature['properties']['GEOID'], 'Town'] is np.nan:
-		print('No Town found for Block Group #', str(cso_i))
+		print(('No Town found for Block Group #', str(cso_i)))
 
 data_ejs = pd.merge(data_ejs, bg_mapping, left_on = 'ID', right_index=True, how='left')
 

@@ -1,0 +1,31 @@
+## Run python-modernize on each script and inspect the output.  If satisfactory, rerun with -w to overwrite the original file.
+
+# find . -name '*.py' -print
+./analysis/SSA_wages_viz.py                         # Done
+./analysis/ECOS_budgets_viz.py                      # Done
+./analysis/MADEP_staff.py                           # Done
+./analysis/MADEP_enforcements_viz.py                # Done
+./analysis/EEADP_inspection_map.py                  # Done
+./analysis/MADEP_budget_viz.py                      # Done
+./analysis/EEADP_chlorine.py                        # Done
+./analysis/NECIR_CSO_map.py                         # Done
+./analysis/chartjs.py                               # Done
+./get_data/get_Census_ACS.py                        # Done
+./get_data/get_EPARegion1_NPDES_permits.py          # Done
+./get_data/get_DEP_staff.py                         # Done
+./get_data/get_DEP_enforcement_actions.py           # Done
+./get_data/get_EPA_303d.py                          # Done
+./get_data/get_EEA_data_portal.py                   # Done
+./get_data/get_DEP_staff_SODA.py                    # Done
+./get_data/get_MassBudget_environmental.py          # Done
+./get_data/assemble_db.py                           # Done
+./get_data/get_Census_statepop.py                   # Done
+./get_data/transform_ECOS_data.py                   # Done
+./get_data/transform_EPA_EJSCREEN.py                # Done
+./get_data/transform_NECIR_CSO_data.py              # Done
+
+# Also update packages to most recent version       # Done
+# Also rerun get_data and analysis scripts
+# Also update requirements on README
+# Delete .bak scripts
+## Update Zotero version references

@@ -1,5 +1,7 @@
+from __future__ import absolute_import
+from __future__ import print_function
 from bs4 import BeautifulSoup
-import urllib2
+import six.moves.urllib.request, six.moves.urllib.error, six.moves.urllib.parse
 import pickle
 import pandas as pd
 from unidecode import unidecode
@@ -7,6 +9,8 @@ import re
 import numpy as np
 import datetime
 import os
+from six.moves import range
+from six.moves import zip
 
 
 proper_noun_regexp = r'(?:\s*\b[A-Z][a-z\-]+\b)+'
@@ -18,19 +22,19 @@ def extract_proper_nouns(s):
 	return [g.lstrip() for g in proper_noun_regexp_c.findall(s)]
 
 
-years = range(2004, datetime.date.today().year+1)
+years = list(range(2004, datetime.date.today().year+1))
 
 ## Download DEP enforcement news archives
 base_url = "http://www.mass.gov/eea/agencies/massdep/service/enforcement/enforcement-actions-{}.html"
 all_urls = [base_url.format(i) for i in years]
-all_content = [urllib2.urlopen(url).read() for url in all_urls]
+all_content = [six.moves.urllib.request.urlopen(url).read() for url in all_urls]
 with open('DEP_enforcement_pages.p', 'w') as f: pickle.dump(all_content, f)
 
 ## Iterate through content
 all_soups = [BeautifulSoup(c, "lxml") for c in all_content]
 all_content_list = []
 for year, soup in zip(years, all_soups):
-	print year
+	print(year)
 	divs = soup.findAll('div')
 	div_i = [i for i in range(len(divs)) if 'class' in divs[i].attrs and divs[i].attrs['class'] == ['col','col12','bodyfield']] # identify which div has the enforcement data - this can change when alerts, etc. are temporarily posted to the site
 	assert(len(div_i) == 1)

@@ -1,7 +1,10 @@
+from __future__ import absolute_import
+from __future__ import print_function
 import pandas as pd
 import numpy as np
 import us,os
 from unidecode import unidecode
+from six.moves import range
 all_states = [s.name for s in us.STATES]
 
 import csv
@@ -16,12 +19,12 @@ ECOS_files = [
 	'ECOS/tabula-Budget-Report-FINAL-3_15_17-Final-4_manualedit.csv',
 	]
 
-print """
+print("""
 NOTE: ECOs reports state the following caveats,
 * 2009-2011 report, "Thirty-seven ECOS member agencies responded to the ECOS budget survey in May 2010 - 36 states and Puerto Rico, hereinafter referred to as 'states.'... ECOS omitted data provided by Michigan, New Hampshire, Pennsylvania, and West Virginia..."
 * 2011 - 2013 report, "We were unable to obtain data for Florida, Iowa, and New Mexico."
 * 2015 - 2017, "Louisiana, New Jersey, New Mexico, and North Carolina did not report information."
-"""
+""")
 
 ## Parse each ECOS file
 state_df = {}
@@ -76,9 +79,9 @@ for ecos_file in ECOS_files:
 	From report: FY 2011 and FY 2012 data include 47 states, the District of Columbia, and Puerto Rico. We were unable
 	to obtain data for Florida, Iowa, and New Mexico.
 	"""
-	print '\n\n',ecos_file
-	print "Total number of territories / states:", len(np.unique(state_df[ecos_file].index.get_level_values(0)))
-	print "States missing: ", [s for s in all_states if s not in np.unique(state_df[ecos_file].index.get_level_values(0))]
+	print('\n\n',ecos_file)
+	print("Total number of territories / states:", len(np.unique(state_df[ecos_file].index.get_level_values(0))))
+	print("States missing: ", [s for s in all_states if s not in np.unique(state_df[ecos_file].index.get_level_values(0))])
 
 	#state_df[ecos_file].to_pickle('ECOS/ECOS_state env budget_2011-2013.p')
 	state_df[ecos_file].to_csv(ecos_file.replace('.csv','_parsed.csv'))

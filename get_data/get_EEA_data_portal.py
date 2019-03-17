@@ -5,11 +5,14 @@ http://eeaonline.eea.state.ma.us/portal#!/home
 
 """
 
+from __future__ import absolute_import
+from __future__ import print_function
 import os
 import datetime
 import requests
 import pandas as pd
 import numpy as np
+from six.moves import range
 
 ##########################
 ## API parameters
@@ -53,7 +56,7 @@ def query_iterate(table_name, req_size = 100000, verbose = True):
 	dfs = []
 	for i in range(len(req_bins) - 1):
 		# Log output
-		if verbose: print table_name + ': request ' + str(i + 1) + ' of ' + str(len(req_bins) - 1)
+		if verbose: print(table_name + ': request ' + str(i + 1) + ' of ' + str(len(req_bins) - 1))
 		# Make request
 		url = API_root + table_name + '?_end=' + str(req_bins[i+1]) + '&_start='+str(req_bins[i])
 		r = requests.get(url)

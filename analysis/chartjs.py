@@ -4,7 +4,10 @@
 #
 # Updated by nesanders to support chart.js 2.6 features
 #
+from __future__ import absolute_import
 import numpy as np
+import six
+from six.moves import range
 
 ctypes = ["Bar", "Pie", "Doughnut", "PolarArea", "Radar", "Line", "Scatter"]
 
@@ -99,7 +102,7 @@ class chart:
 				raise ValueError("Data must be the same size as labels.")
 			
 			appendargs = {'data':data, 'label':"'"+dataset_label+"'"}
-			appendargs.update(kwargs.iteritems())
+			appendargs.update(six.iteritems(kwargs))
 			
 			self.data.append(js_str(appendargs))
 			
@@ -118,7 +121,7 @@ class chart:
 			appendargs = {
 				'data':'['+', '.join(['{x: '+str(data[i,0])+', y: '+str(data[i,1])+'}' for i in range(len(data))])+']', 
 				'label':"'"+dataset_label+"'"}
-			appendargs.update(kwargs.iteritems())
+			appendargs.update(six.iteritems(kwargs))
 			
 			self.data.append(js_str(appendargs))
 
