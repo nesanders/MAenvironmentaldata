@@ -19,6 +19,7 @@ Several python3 packages are required to execute the scripts needed to generate 
 * BeautifulSoup4-4.7.1
 * census-0.8.13
 * folium-0.8.3
+* lxml-4.3.2
 * matplotlib-3.0.2
 * numpy-1.16.2
 * pandas-0.24.2
@@ -28,6 +29,7 @@ Several python3 packages are required to execute the scripts needed to generate 
 * sodapy-1.5.2
 * sqlalchemy-1.3.1
 * unidecode-1.0.23
+* us-1.0.0
 
 ## Other tools used
 

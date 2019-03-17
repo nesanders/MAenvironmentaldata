@@ -3,7 +3,7 @@ layout: post
 title: Staff Changes at the MADEP Over Time
 ---
 
-A key element of the evolution of the role and effectiveness of environmental regulation in Massachusetts is the staffing of our most prominent environmental agency, the Department of Environmental Protection (DEP). The analysis presented below draws from the [MA DEP staffing]({{ site.url }}{{ site.baseurl }}/data/MADEP_staff.html) and [budget data]({{ site.url }}{{ site.baseurl }}/data/MassBudget_environmental.html) in the [{{ site.data.site_config.site_abbrev }} database]({{ site.url }}{{ site.baseurl }}/data/index.html).
+A key element of the evolution of the role and effectiveness of environmental regulation in Massachusetts is the staffing of our most prominent environmental agency, the Department of Environmental Protection (DEP). The analysis presented below draws from the [MA DEP staffing]({{ site.url }}{{ site.baseurl }}/data/MADEP_staff.html) and [budget data]({{ site.url }}{{ site.baseurl }}/data/MassBudget_environmental.html) in the [{{ site.data.site_config.site_abbrev }} database]({{ site.url }}{{ site.baseurl }}/data/index.html). Note that, because the VisibleGovernment dataset was last updated for calendar year 2016 (as of 3-17-2019), some figures displayed here are not available after that date.
 
 *[The code needed to reproduce this analysis using {{ site.data.site_config.site_abbrev }} data can be viewed and downloaded here](https://github.com/nesanders/MAenvironmentaldata/blob/master/analysis/MADEP_staff.py)*
 
@@ -11,11 +11,11 @@ A key element of the evolution of the role and effectiveness of environmental re
 
 ## Overall staffing levels
 
-As of the end of 2016, overall DEP staffing levels have been reduced by about 20% overall from 2009 levels.  Starting in 2010, we can use the [Comptroller's staffing records]({{ site.url }}{{ site.baseurl }}/data/MADEP_staff.html) to further break down these positions by full time versus part time and contractor roles.  Full time staff have grown somewhat as a fraction of overall DEP employment since 2010.
+As of the end of 2018, overall DEP staffing levels have been reduced by about 33% overall from 2009 levels.  Starting in 2010, we can use the [Comptroller's staffing records]({{ site.url }}{{ site.baseurl }}/data/MADEP_staff.html) to further break down these positions by full time versus part time and contractor roles.  Full time staff have grown somewhat as a fraction of overall DEP employment since 2010.
 
 {% include charts/MADEP_staffing_overall.html %}
 
-Note that the overall DEP staffing level is of course directly related to [overall DEP administration funding levels]({{ site.url }}{{ site.baseurl }}/data/MassBudget_environmental.html).  We find these two quantities are correlated at a level of {{ site.data.facts_DEPstaff.cor_staff_funding }}%.
+Note that the overall DEP staffing level is of course directly related to [overall DEP administration funding levels]({{ site.url }}{{ site.baseurl }}/data/MassBudget_environmental.html).  We find these two quantities are correlated at a level of {{ site.data.facts_DEPstaff.cor_staff_funding }}% (p={{ site.data.facts_DEPstaff.cor_staff_funding_p }}%).
 
 {% include charts/MADEP_staffing_overall_funding.html %}
 
@@ -35,7 +35,7 @@ Perhaps the strongest indicator of seniority and experience in the agency is the
 
 ## Buyouts
 
-Part of the story of the shifting seniority levels is explained by the buyout program at DEP over time.  As illustrated below, there was a particularly large buyout program executed in 2015, which led to about six times more retirees due to buyout than in a typical year, 140 employees in total at a cost of about $1.2 million.  2016 levels were similar.
+Part of the story of the shifting seniority levels is explained by the buyout program at DEP over time.  As illustrated below, there was a particularly large buyout program executed in 2015, which led to about six times more retirees due to buyout than in a typical year, 140 employees in total at a cost of about $1.2 million.  This program continued at similar levels through 2016 and 2017.
 
 {% include charts/MADEP_staffing_buyout.html %}
 

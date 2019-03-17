@@ -7,7 +7,7 @@ ancillary: 1
 
 ## Data source
 
-The US Census Bureau publishes results from its [American Community Survey (ACS)](https://www.census.gov/programs-surveys/acs/), based on a continuous nationwide survey that asks a variety of demographic, economic, and other questions of residents. We use the [Census API](https://www.google.com/search?q=census%20api) to retrieve data for selected questions from the 5-year survey estimates (which are less current than 1- and 3-year estimates, but more precise) for Massachusetts communities.
+The US Census Bureau publishes results from its [American Community Survey (ACS)](https://www.census.gov/programs-surveys/acs/), based on a continuous nationwide survey that asks a variety of demographic, economic, and other questions of residents. We use the [Census API](https://www.google.com/search?q=census%20api) to retrieve data for selected questions from the 5-year survey estimates (which are less current than 1- and 3-year estimates, but more precise) for Massachusetts communities.  The data selected here is for calendar year 2014.
 
 ## Download archive
 

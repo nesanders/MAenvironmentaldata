@@ -11,6 +11,8 @@ Unfortunately, the Comptroller's site only provides data back
 to 2010, whereas other sources extend back to 2004.
 """
 
+from __future__ import absolute_import
+from __future__ import print_function
 import pandas as pd
 import sodapy
 import datetime
@@ -44,10 +46,10 @@ query_limit=50000
 i = 0; df_d = []
 ## Page through records
 while i == 0 or len(df_d[-1]) == query_limit: 
-	print i
+	print(i)
 	df_d += [client.get(DEP_slug, 
 		where="department_division = 'DEPARTMENT OF ENVIRONMENTAL PROTECTION (EQE)'",
-		select = ','.join(fields.keys()),
+		select = ','.join(list(fields.keys())),
 		limit = query_limit, offset=i
 		)]
 	i += query_limit
@@ -59,6 +61,8 @@ for f in fields: df[f] = df[f].astype(fields[f])
 ## Write out
 df.to_csv('../docs/data/MADEP_staff_SODA.csv', index=0)
 
+## Print a sample of the file as an example
+df.sample(n=10).to_csv('../docs/data/MADEP_staff_SODA_sample.csv', index=0)
 
 ## Report last update
 with open('../docs/data/ts_update_MADEP_staff_SODA.yml', 'w') as f:

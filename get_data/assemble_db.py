@@ -30,10 +30,12 @@ data_csv['MAEEADP_Inspection'] = pd.read_csv('../docs/data/EEADP_inspection.csv'
 data_csv['MAEEADP_Permit'] = pd.read_csv('../docs/data/EEADP_permit.csv')
 data_csv['EPA_EJSCREEN_2017'] = pd.read_csv('../docs/data/EPA_EJSCREEN_MA_2017.csv')
 
-## Temporary insertion for 2016 assuming no inflation
-data_csv['SSAWages'] = pd.read_csv('../docs/data/SSAWages_2016-12-09.csv')
-data_csv['SSAWages'] = data_csv['SSAWages'].append(data_csv['SSAWages'].iloc[-1])
-data_csv['SSAWages'].Year.iloc[-1] = 2016
+## Temporary insertion for 2018 and 2019 assuming no inflation
+data_csv['SSAWages'] = pd.read_csv('../docs/data/SSAWages_2019-03-17.csv')
+for yr in [2018, 2019]:
+    data_csv['SSAWages'] = data_csv['SSAWages'].append(data_csv['SSAWages'].iloc[-1])
+    data_csv['SSAWages'].iloc[-1, 0] = yr
+    data_csv['SSAWages'].iloc[-1, 2:] = 0
 
 data_csv['AMEND_metadata'] = pd.Series({
 	'Website':'https://nesanders.github.io/MAenvironmentaldata/index.html',

@@ -4,12 +4,12 @@ import requests
 import datetime
 import os
 import pandas as pd
-from StringIO import StringIO
+from io import StringIO
 
 ## Download "All Line Items" spreasdsheet linked here: http://massbudget.org/browser/subcat.php?id=Environment&inflation=cpi#line_items
 massbudget_spreadsheet_link = 'http://massbudget.org/browser/spreadsheet.php?id=Environment&inflation=cpi&level=subcat'
 
-mb_csv = requests.get(massbudget_spreadsheet_link).content
+mb_csv = requests.get(massbudget_spreadsheet_link).content.decode('utf-8')
 ## File has a summary table and two separate line-item level tables
 
 

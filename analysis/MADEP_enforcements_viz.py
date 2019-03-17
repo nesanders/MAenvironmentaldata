@@ -48,7 +48,7 @@ geo_out_path = '../docs/assets/maps/'
 ## Show total enforcements per year
 #############################
 
-s_data_g = s_data.groupby(['Year']).count().ix[:,1]
+s_data_g = s_data.groupby(['Year']).count().iloc[:,1]
 
 ## Establish chart
 mychart = chartjs.chart("Overall DEP Enforcement", "Bar", 640, 480)
@@ -112,7 +112,7 @@ mychart.jekyll_write('../docs/_includes/charts/MADEP_enforcement_fines_overall_s
 ## Show enforcements per year versus budget
 #############################
 
-s_data_g = s_data.groupby(['Year']).count().ix[:,1]
+s_data_g = s_data.groupby(['Year']).count().iloc[:,1]
 
 ## Establish chart
 mychart = chartjs.chart("DEP Enforcements versus budget", "Line", 640, 480)
@@ -122,7 +122,7 @@ mychart.add_dataset(s_data_g.values.tolist(), "Number of enforcements",
 	type="'line'", fill = "false",
 	borderWidth = 2,
 	stack="'annual'", yAxisID= "'y-axis-0'")
-mychart.add_dataset((f_data['DEPAdministration_inf_float'].ix[years]/1e6).values.tolist(), "DEP administrative budget",
+mychart.add_dataset((f_data['DEPAdministration_inf_float'].loc[years]/1e6).values.tolist(), "DEP administrative budget",
 	borderColor = "'"+color_cycle[1]+"'", fill = "false",
 	borderWidth = 2,
 	stack="'annual'", type="'line'", yAxisID= "'y-axis-1'")
@@ -133,7 +133,7 @@ mychart.set_params(JSinline = 0, ylabel = 'Number of enforcements', xlabel='Year
 mychart.jekyll_write('../docs/_includes/charts/MADEP_enforcement_vsbudget.html')
 
 ## Output correlation level
-pr = pearsonr(s_data_g.values, (f_data['DEPAdministration_inf_float'].ix[years]/1e6).values)
+pr = pearsonr(s_data_g.values, (f_data['DEPAdministration_inf_float'].loc[years]/1e6).values)
 with open(fact_file, 'a') as f:
 	f.write('cor_enforcement_funding: %0.0f'%(pr[0]*100)+'\n')
 
@@ -167,9 +167,9 @@ with open(fact_file, 'a') as f:
 	f.write('yearly_ch91: %0.1f'%(s_data_g.sum()['law_chapter 91'][:-1].mean())+'\n')
 	f.write('yearly_npdes: %0.1f'%(s_data_g.sum()['law_npdes'][:-1].mean())+'\n')
 	f.write('yearly_avg_consentorder: %0.0f'%(s_data_g.mean()['order_consent order'][:-1].mean() * 100)+'\n')
-	f.write('yearly_avg_delta2016_wetlands: %0.0f'%((1 - s_data_g.mean()['order_wetlands'].ix[2016] / s_data_g.mean()['order_wetlands'].max()) * 100)+'\n')
-	f.write('yearly_2004_watersupply: %0.1f'%(s_data_g.mean()['order_water supply'].ix[2004] * 100)+'\n')
-	f.write('yearly_2016_watersupply: %0.1f'%(s_data_g.mean()['order_water supply'].ix[2016] * 100)+'\n')
+	f.write('yearly_avg_delta2016_wetlands: %0.0f'%((1 - s_data_g.mean()['order_wetlands'].loc[2016] / s_data_g.mean()['order_wetlands'].max()) * 100)+'\n')
+	f.write('yearly_2004_watersupply: %0.1f'%(s_data_g.mean()['order_water supply'].loc[2004] * 100)+'\n')
+	f.write('yearly_2016_watersupply: %0.1f'%(s_data_g.mean()['order_water supply'].loc[2016] * 100)+'\n')
 	
 	#Water supply-related enforcement has grown from ~5% to ~25% of all enforcements since 2004
 	#Wetlands-related enforcement has declined from ~16% at peak to <10% in recent years.
@@ -292,10 +292,10 @@ town_count = pd.Series(town_count)
 town_fines = pd.Series(town_fines)
 
 merge_census_df = pd.DataFrame(data={
-	'Population': c_data['population_acs52014'].ix[towns].values,
-	'Per capita income ($k)': c_data['per_capita_income_acs52014'].ix[towns].values / 1000,
-	'DEP enforcements': town_count.ix[towns].values,
-	'DEP penalties ($1,000)': town_fines.ix[towns].values / 1000,
+	'Population': c_data['population_acs52014'].loc[towns].values,
+	'Per capita income ($k)': c_data['per_capita_income_acs52014'].loc[towns].values / 1000,
+	'DEP enforcements': town_count.loc[towns].values,
+	'DEP penalties ($1,000)': town_fines.loc[towns].values / 1000,
 	}, index=towns)
 
 
@@ -321,8 +321,8 @@ for i in range(len(geo_towns_dict)):
 	town = geo_towns_dict[i]['properties']['TOWN']
 	if town in towns:
 		## Gather town data
-		enforcements = merge_census_df['DEP enforcements'].ix[town]
-		pop14 = merge_census_df['Population'].ix[town]
+		enforcements = merge_census_df['DEP enforcements'].loc[town]
+		pop14 = merge_census_df['Population'].loc[town]
 		top_enforcements = s_data[s_data.municipality.apply(lambda x: town in x)].sort_values('Fine', ascending=False)[['Date','Fine','Text']].values[:3]
 		enforcement_summary = '<br>'.join(['<b>'+c[0]+', $%0.0f'%(0 if np.isnan(c[1]) else c[1])+'</b>: '+c[2] for c in top_enforcements])
 		## Take average position of polygon points for marker center
