@@ -1,75 +1,78 @@
 {% raw  %}
 <html>
-	<head>
-		<title>Overall DEP Enforcement</title>
-		<script src='https://cdnjs.cloudflare.com/ajax/libs/Chart.js/2.6.0/Chart.bundle.min.js'></script>
-	</head>
-	<body>
-		<div style="width: 640px; height: 480px; max-width: 99%" class="chartjs">
+    <head>
+        <title>Overall DEP Enforcement</title>
+        <script src='https://cdnjs.cloudflare.com/ajax/libs/Chart.js/2.8.0/Chart.bundle.min.js'></script>
+    </head>
+    <body>
+        <div style="width: 640px; height: 480px; max-width: 99%" class="chartjs">
 
-			<canvas id="Overall DEP Enforcement" height="480" width="640"></canvas>
-			<script>
-				var chart_data = {
-				
-					data: {
-						labels: ['2004', '2005', '2006', '2007', '2008', '2009', '2010', '2011', '2012', '2013', '2014', '2015', '2016', '2017'],
-						datasets: [{'data': [335, 357, 374, 487, 363, 354, 331, 255, 197, 327, 330, 277, 239, 122], 'label': 'Number of enforcements', 'backgroundColor': 'rgba(50,50,200,0.8)', 'stack': 'annual', 'yAxisID': 'y-axis-0'}]
-					},
-					type: 'bar',
-					options: {
-						scales: {
-							yAxes: [{
-								display: true,
-								scaleLabel: {
-									display: true,
-									labelString: 'Total reported enforcement actions'
-								},
-								ticks: {
-									beginAtZero: true
-								},
-								"id": "y-axis-0",
-								"position": "left",
-								stacked: false
-							}, {
-								display: false,
-								scaleLabel: {
-									display: true,
-									labelString: ''
-								},
-								ticks: {
-									beginAtZero: true
-								},
-								"id": "y-axis-1",
-								"position": "right"
-							}],
-							xAxes: [{
-								scaleLabel: {
-									display: true,
-									labelString: 'Year'
-								},
-								stacked: false
-							}]
-						},
-						legend: {
-							display: true
-							},
-						tooltips: {
-							display: true
-							}
-					},
-				}
-				
-				
-				
-			</script>
-			<script>
-				{{
-					var ctx = document.getElementById("Overall DEP Enforcement").getContext("2d");
-					var mychart = new Chart(ctx, chart_data);
-				}}
-			</script>
+            <canvas id="Overall DEP Enforcement" height="480" width="640"></canvas>
+            <script>
+                var chart_data = {
+                
+                    data: {
+                        labels: ['2004', '2005', '2006', '2007', '2008', '2009', '2010', '2011', '2012', '2013', '2014', '2015', '2016', '2017'],
+                        datasets: [{'data': [335, 357, 374, 487, 363, 354, 331, 255, 197, 327, 330, 277, 239, 122], 'label': 'Number of enforcements', 'backgroundColor': 'rgba(50,50,200,0.8)', 'stack': 'annual', 'yAxisID': 'y-axis-0'}]
+                    },
+                    type: 'bar',
+                    options: {
+                        scales: {
+                            yAxes: [{
+                                display: true,
+                                scaleLabel: {
+                                    display: true,
+                                    labelString: 'Total reported enforcement actions'
+                                },
+                                ticks: {
+                                    beginAtZero: true
+                                },
+                                "id": "y-axis-0",
+                                "position": "left",
+                                stacked: false
+                            }, {
+                                display: false,
+                                scaleLabel: {
+                                    display: true,
+                                    labelString: ''
+                                },
+                                ticks: {
+                                    beginAtZero: true
+                                },
+                                "id": "y-axis-1",
+                                "position": "right"
+                            }],
+                            xAxes: [{
+                                scaleLabel: {
+                                    display: true,
+                                    labelString: 'Year'
+                                },
+                                stacked: false,
+                                ticks: {
+                                    autoSkip: true
+                                }
+                            }]
+                        },
+                        legend: {
+                            display: true
+                            },
+                        tooltips: {
+                            display: true
+                            }
+                    },
+                }
+                
+                
+                
+            </script>
+            <script>
+                {{
+                    var ctx = document.getElementById("Overall DEP Enforcement").getContext("2d");
+                    var mychart = new Chart(ctx, chart_data);
+                }}
+            </script>
 
-		</div>
-	</body>
+        </div>
+    </body>
 </html>
 {% endraw  %}

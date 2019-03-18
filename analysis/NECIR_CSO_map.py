@@ -15,7 +15,9 @@ color_cycle = [c['color'] for c in list(mpl.rcParams['axes.prop_cycle'])]
 
 def hex2rgb(hexcode):
 	# See http://www.psychocodes.in/rgb-to-hex-conversion-and-hex-to-rgb-conversion-in-python.html
-    rgb = tuple(map(ord,hexcode[1:].decode('hex')))
+    #rgb = tuple(map(ord,hexcode[1:].decode('hex')))
+    # See https://stackoverflow.com/a/29643643
+    rgb = tuple(int(hexcode.lstrip('#')[i:i+2], 16) for i in (0, 2 ,4))
     return rgb
 
 
@@ -108,6 +110,19 @@ data_ejs = pd.merge(data_ejs, bg_mapping, left_on = 'ID', right_index=True, how=
 ## Calculate population weighted averages for EJ characteristics
 #############################
 
+## Get counts by block group
+data_ins_g_bg = data_cso.groupby('BlockGroup').sum()[['2011_Discharges_MGal', '2011_Discharge_N']]
+data_ins_g_bg_j = pd.merge(data_ins_g_bg, data_ejs, left_index=True, right_on ='ID', how='left')
+
+## Get counts by municipality
+data_ins_g_muni_j = pd.merge(data_cso, data_ejs, left_on='BlockGroup', right_on='ID', how='outer')\
+					.groupby('Town').sum()[['2011_Discharges_MGal', '2011_Discharge_N']].fillna(0)
+
+## Get counts by watershed
+data_ins_g_ws_j = pd.merge(data_cso, data_ejs, left_on='BlockGroup', right_on='ID', how='outer')\
+					.groupby('Watershed').sum()[['2011_Discharges_MGal', '2011_Discharge_N']].fillna(0)
+
+
 data_egs_merge = pd.merge(
 	data_ins_g_bg_j.groupby('ID')[['2011_Discharge_N', '2011_Discharges_MGal']].sum(),
 	data_ejs, left_index = True, right_on='ID', how='outer')
@@ -129,19 +144,6 @@ df_town_level = data_egs_merge.groupby('Town').apply(lambda x: pop_weighted_aver
 #############################
 ## Map of discharge volumes with layers for watershed, town, and census block group with CSO points
 #############################
-
-## Get counts by block group
-data_ins_g_bg = data_cso.groupby('BlockGroup').sum()[['2011_Discharges_MGal', '2011_Discharge_N']]
-data_ins_g_bg_j = pd.merge(data_ins_g_bg, data_ejs, left_index=True, right_on ='ID', how='left')
-
-## Get counts by municipality
-data_ins_g_muni_j = pd.merge(data_cso, data_ejs, left_on='BlockGroup', right_on='ID', how='outer')\
-					.groupby('Town').sum()[['2011_Discharges_MGal', '2011_Discharge_N']].fillna(0)
-
-## Get counts by watershed
-data_ins_g_ws_j = pd.merge(data_cso, data_ejs, left_on='BlockGroup', right_on='ID', how='outer')\
-					.groupby('Watershed').sum()[['2011_Discharges_MGal', '2011_Discharge_N']].fillna(0)
-
 
 
 ## Map total discharge volume
@@ -169,7 +171,7 @@ map_1.choropleth(
 	data=data_ins_g_muni_j['2011_Discharges_MGal'],
 	key_on='feature.properties.TOWN',
 	legend_name='Municipality: Total volume of discharge (2011; Millions of gallons)',
-	threshold_scale = list(np.nanpercentile(data_ins_g_muni_j['2011_Discharges_MGal'][data_ins_g_muni_j['2011_Discharges_MGal'] > 0], [0,25,50,75,100])),  
+	threshold_scale = [0]+list(np.nanpercentile(data_ins_g_muni_j['2011_Discharges_MGal'][data_ins_g_muni_j['2011_Discharges_MGal'] > 0], [25,50,75,100])),  
 	fill_color='PuRd', fill_opacity=0.7, line_opacity=0.3, highlight=True,
 	)
 
@@ -352,9 +354,9 @@ for i, col, col_label in (
 	mychart.add_dataset(df_watershed_level[col][sel].values.tolist(), 
 		col_label,
 		backgroundColor="'rgba({},0.8)'".format(", ".join([str(x) for x in hex2rgb(color_cycle[i])])),
-		yAxisID= "'y-axis-0'",)
+		yAxisID= "'y-axis-0'")
 mychart.set_params(JSinline = 0, ylabel = 'Fraction of households', xlabel='Watershed',
-	scaleBeginAtZero=1)
+	scaleBeginAtZero=1, x_autoskip=False)
 
 mychart.jekyll_write('../docs/_includes/charts/EJSCREEN_demographics_watershed.html')
 
@@ -375,9 +377,9 @@ for i, col, col_label in (
 	mychart.add_dataset(df_town_level[col][sel].values.tolist(), 
 		col_label,
 		backgroundColor="'rgba({},0.8)'".format(", ".join([str(x) for x in hex2rgb(color_cycle[i])])),
-		yAxisID= "'y-axis-0'",)
+		yAxisID= "'y-axis-0'")
 mychart.set_params(JSinline = 0, ylabel = 'Fraction of households', xlabel='Municipality',
-	scaleBeginAtZero=1)
+	scaleBeginAtZero=1, x_autoskip=True)
 
 mychart.jekyll_write('../docs/_includes/charts/EJSCREEN_demographics_municipality.html')
 
@@ -440,7 +442,7 @@ for i, col, col_label in (
 		backgroundColor="'rgba(50,50,50,0.125)'",
 		showLine = "false",
 		yAxisID= "'y-axis-0'",
-		fill="'false'",
+		fill="false",
 		hidden="'true'"
 		)
 	## Add binned dataset
@@ -452,7 +454,7 @@ for i, col, col_label in (
 		borderColor="'rgba(50,50,200,1)'",
 		borderWidth=3,
 		yAxisID= "'y-axis-0'",
-		fill="'false'",
+		fill="false",
 		pointRadius=6,
 		)
 	## Add uncertainty contour
@@ -462,7 +464,7 @@ for i, col, col_label in (
 		fill = 'false', pointBackgroundColor="'rgba(50,50,200,0.3)'", pointBorderColor="'rgba(50,50,200,0.3)'")
 	mychart.add_dataset(np.array([x_bin_cent, y_bin[0] + 1.65 * y_bin[1]]).T, 
 		"Average upper bound (95% limit)",
-		backgroundColor="'rgba(50,50,200,0.3)'", yAxisID= "'y-axis-0'", borderWidth = 1, fill = "'3'", pointBackgroundColor="'rgba(50,50,200,0.3)'", pointBorderColor="'rgba(50,50,200,0.3)'")
+		backgroundColor="'rgba(50,50,200,0.3)'", yAxisID= "'y-axis-0'", borderWidth = 1, fill = "'-1'", pointBackgroundColor="'rgba(50,50,200,0.3)'", pointBorderColor="'rgba(50,50,200,0.3)'")
 
 	## Set overall chart parameters
 	mychart.set_params(

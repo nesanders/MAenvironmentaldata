@@ -446,7 +446,7 @@ mychart.add_dataset(
 	backgroundColor="'rgba(50,50,50,0.125)'",
 	showLine = "false",
 	yAxisID= "'y-axis-0'",
-	fill="'false'",
+	fill="false",
 	hidden="'true'"
 	)
 mychart.add_dataset(
@@ -455,7 +455,7 @@ mychart.add_dataset(
 	backgroundColor="'rgba(50,50,50,0.5)'",
 	showLine = "false",
 	yAxisID= "'y-axis-0'",
-	fill="'false'",
+	fill="false",
 	hidden="'true'"
 	)
 ## Add binned dataset
@@ -467,7 +467,7 @@ mychart.add_dataset(
 	borderColor="'rgba(50,50,200,1)'",
 	borderWidth=3,
 	yAxisID= "'y-axis-0'",
-	fill="'false'",
+	fill="false",
 	pointRadius=6,
 	)
 ## Add uncertainty contour

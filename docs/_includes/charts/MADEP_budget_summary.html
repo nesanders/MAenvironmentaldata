@@ -1,75 +1,78 @@
 {% raw  %}
 <html>
-	<head>
-		<title>DEP budget data</title>
-		<script src='https://cdnjs.cloudflare.com/ajax/libs/Chart.js/2.6.0/Chart.bundle.min.js'></script>
-	</head>
-	<body>
-		<div style="width: 640px; height: 480px; max-width: 99%" class="chartjs">
+    <head>
+        <title>DEP budget data</title>
+        <script src='https://cdnjs.cloudflare.com/ajax/libs/Chart.js/2.8.0/Chart.bundle.min.js'></script>
+    </head>
+    <body>
+        <div style="width: 640px; height: 480px; max-width: 99%" class="chartjs">
 
-			<canvas id="DEP budget data" height="480" width="640"></canvas>
-			<script>
-				var chart_data = {
-				
-					data: {
-						labels: ['FY01', 'FY02', 'FY03', 'FY04', 'FY05', 'FY06', 'FY07', 'FY08', 'FY09', 'FY10', 'FY11', 'FY12', 'FY13', 'FY14', 'FY15', 'FY16', 'FY17', 'FY18', 'FY19', 'FY20 Gov'],
-						datasets: [{'data': [96.720235, 97.649103, 79.897037, 74.15104, 77.061523, 78.967124, 85.689132, 88.07849, 88.233575, 79.388029, 74.681622, 72.172393, 78.117082, 84.213161, 89.59152, 94.006481, 83.458113, 84.658917, 95.592457, 101.686375], 'label': 'Total environmental budget\n(not inflation adjusted)', 'borderDash': [10,15], 'borderColor': 'rgba(0,0,0,0.5)', 'fill': false, 'steppedLine': true},{'data': [31.870112, 30.483537, 28.83081, 28.140275, 29.273935, 30.159434, 34.280671, 34.791004, 33.697007, 28.355551, 25.714271, 24.682305, 25.624684, 27.384269, 29.038198, 29.48062, 24.405437, 24.733484, 29.13, 31.500033], 'label': 'DEP administration (not inflation adjusted)', 'borderDash': [10,15], 'borderColor': '#1f77b4', 'fill': false, 'steppedLine': true},{'data': [47.319024, 44.472809, 41.154984, 39.302333, 39.693074, 39.405161, 43.655253, 42.720337, 40.805528, 34.002597, 30.235506, 28.19408, 28.785389, 30.292173, 31.893205, 32.163079, 26.141125, 25.909966, 29.81937, 31.500033], 'label': 'DEP administration (inflation adjusted)', 'borderColor': '#1f77b4', 'fill': true, 'steppedLine': true}]
-					},
-					type: 'line',
-					options: {
-						scales: {
-							yAxes: [{
-								display: true,
-								scaleLabel: {
-									display: true,
-									labelString: 'Total Budget ($M)'
-								},
-								ticks: {
-									beginAtZero: false
-								},
-								"id": "y-axis-0",
-								"position": "left",
-								stacked: false
-							}, {
-								display: false,
-								scaleLabel: {
-									display: true,
-									labelString: ''
-								},
-								ticks: {
-									beginAtZero: false
-								},
-								"id": "y-axis-1",
-								"position": "right"
-							}],
-							xAxes: [{
-								scaleLabel: {
-									display: true,
-									labelString: 'Fiscal Year'
-								},
-								stacked: false
-							}]
-						},
-						legend: {
-							display: true
-							},
-						tooltips: {
-							display: true
-							}
-					},
-				}
-				
-				
-				
-			</script>
-			<script>
-				{{
-					var ctx = document.getElementById("DEP budget data").getContext("2d");
-					var mychart = new Chart(ctx, chart_data);
-				}}
-			</script>
+            <canvas id="DEP budget data" height="480" width="640"></canvas>
+            <script>
+                var chart_data = {
+                
+                    data: {
+                        labels: ['FY01', 'FY02', 'FY03', 'FY04', 'FY05', 'FY06', 'FY07', 'FY08', 'FY09', 'FY10', 'FY11', 'FY12', 'FY13', 'FY14', 'FY15', 'FY16', 'FY17', 'FY18', 'FY19', 'FY20 Gov'],
+                        datasets: [{'data': [96.720235, 97.649103, 79.897037, 74.15104, 77.061523, 78.967124, 85.689132, 88.07849, 88.233575, 79.388029, 74.681622, 72.172393, 78.117082, 84.213161, 89.59152, 94.006481, 83.458113, 84.658917, 95.592457, 101.686375], 'label': 'Total environmental budget\n(not inflation adjusted)', 'borderDash': [10,15], 'borderColor': 'rgba(0,0,0,0.5)', 'fill': false, 'steppedLine': true},{'data': [31.870112, 30.483537, 28.83081, 28.140275, 29.273935, 30.159434, 34.280671, 34.791004, 33.697007, 28.355551, 25.714271, 24.682305, 25.624684, 27.384269, 29.038198, 29.48062, 24.405437, 24.733484, 29.13, 31.500033], 'label': 'DEP administration (not inflation adjusted)', 'borderDash': [10,15], 'borderColor': '#1f77b4', 'fill': false, 'steppedLine': true},{'data': [47.319024, 44.472809, 41.154984, 39.302333, 39.693074, 39.405161, 43.655253, 42.720337, 40.805528, 34.002597, 30.235506, 28.19408, 28.785389, 30.292173, 31.893205, 32.163079, 26.141125, 25.909966, 29.81937, 31.500033], 'label': 'DEP administration (inflation adjusted)', 'borderColor': '#1f77b4', 'fill': true, 'steppedLine': true}]
+                    },
+                    type: 'line',
+                    options: {
+                        scales: {
+                            yAxes: [{
+                                display: true,
+                                scaleLabel: {
+                                    display: true,
+                                    labelString: 'Total Budget ($M)'
+                                },
+                                ticks: {
+                                    beginAtZero: false
+                                },
+                                "id": "y-axis-0",
+                                "position": "left",
+                                stacked: false
+                            }, {
+                                display: false,
+                                scaleLabel: {
+                                    display: true,
+                                    labelString: ''
+                                },
+                                ticks: {
+                                    beginAtZero: false
+                                },
+                                "id": "y-axis-1",
+                                "position": "right"
+                            }],
+                            xAxes: [{
+                                scaleLabel: {
+                                    display: true,
+                                    labelString: 'Fiscal Year'
+                                },
+                                stacked: false,
+                                ticks: {
+                                    autoSkip: true
+                                }
+                            }]
+                        },
+                        legend: {
+                            display: true
+                            },
+                        tooltips: {
+                            display: true
+                            }
+                    },
+                }
+                
+                
+                
+            </script>
+            <script>
+                {{
+                    var ctx = document.getElementById("DEP budget data").getContext("2d");
+                    var mychart = new Chart(ctx, chart_data);
+                }}
+            </script>
 
-		</div>
-	</body>
+        </div>
+    </body>
 </html>
 {% endraw  %}

@@ -1,75 +1,78 @@
 {% raw  %}
 <html>
-	<head>
-		<title>DEP ACOPs Per Year</title>
-		<script src='https://cdnjs.cloudflare.com/ajax/libs/Chart.js/2.6.0/Chart.bundle.min.js'></script>
-	</head>
-	<body>
-		<div style="width: 640px; height: 480px; max-width: 99%" class="chartjs">
+    <head>
+        <title>DEP ACOPs Per Year</title>
+        <script src='https://cdnjs.cloudflare.com/ajax/libs/Chart.js/2.8.0/Chart.bundle.min.js'></script>
+    </head>
+    <body>
+        <div style="width: 640px; height: 480px; max-width: 99%" class="chartjs">
 
-			<canvas id="DEP ACOPs Per Year" height="480" width="640"></canvas>
-			<script>
-				var chart_data = {
-				
-					data: {
-						labels: ['2004', '2005', '2006', '2007', '2008', '2009', '2010', '2011', '2012', '2013', '2014', '2015', '2016', '2017'],
-						datasets: [{'data': [79.62264150943396, 83.57142857142857, 74.49664429530202, 70.23498694516971, 70.9090909090909, 75.0, 77.9467680608365, 77.2020725388601, 74.63768115942028, 65.09803921568627, 70.35573122529645, 68.07511737089203, 65.03067484662577, 75.9493670886076], 'label': 'Best estimate', 'backgroundColor': 'rgba(50,100,100,0.8)', 'yAxisID': 'y-axis-0', 'borderWidth': 3, 'fill': false},{'data': [75.09433962264151, 79.64285714285714, 70.13422818791948, 66.57963446475196, 65.81818181818181, 70.77464788732394, 73.76425855513308, 72.02072538860104, 68.84057971014492, 60.3921568627451, 65.21739130434783, 62.91079812206573, 58.282208588957054, 68.35443037974683], 'label': 'Lower bound (5% limit)', 'backgroundColor': 'rgba(50,50,50,0.3)', 'yAxisID': 'y-axis-0', 'borderWidth': 1, 'fill': false, 'pointBackgroundColor': 'rgba(0,0,0,0)', 'pointBorderColor': 'rgba(0,0,0,0)'},{'data': [83.39622641509435, 87.14285714285714, 78.52348993288591, 74.41253263707573, 75.63636363636364, 79.5774647887324, 81.76806083650189, 82.38341968911918, 80.43478260869566, 70.19607843137254, 75.09881422924902, 73.23943661971832, 70.5521472392638, 83.54430379746836], 'label': 'Upper bound (95% limit)', 'backgroundColor': 'rgba(50,50,50,0.3)', 'yAxisID': 'y-axis-0', 'borderWidth': 1, 'fill': '1', 'pointBackgroundColor': 'rgba(0,0,0,0)', 'pointBorderColor': 'rgba(0,0,0,0)'}]
-					},
-					type: 'line',
-					options: {
-						scales: {
-							yAxes: [{
-								display: true,
-								scaleLabel: {
-									display: true,
-									labelString: 'Enforcements with financial penalties (% of annual total consent orders)'
-								},
-								ticks: {
-									beginAtZero: false
-								},
-								"id": "y-axis-0",
-								"position": "left",
-								stacked: false
-							}, {
-								display: false,
-								scaleLabel: {
-									display: true,
-									labelString: ''
-								},
-								ticks: {
-									beginAtZero: false
-								},
-								"id": "y-axis-1",
-								"position": "right"
-							}],
-							xAxes: [{
-								scaleLabel: {
-									display: true,
-									labelString: 'Year'
-								},
-								stacked: false
-							}]
-						},
-						legend: {
-							display: true
-							},
-						tooltips: {
-							display: true
-							}
-					},
-				}
-				
-				
-				
-			</script>
-			<script>
-				{{
-					var ctx = document.getElementById("DEP ACOPs Per Year").getContext("2d");
-					var mychart = new Chart(ctx, chart_data);
-				}}
-			</script>
+            <canvas id="DEP ACOPs Per Year" height="480" width="640"></canvas>
+            <script>
+                var chart_data = {
+                
+                    data: {
+                        labels: ['2004', '2005', '2006', '2007', '2008', '2009', '2010', '2011', '2012', '2013', '2014', '2015', '2016', '2017'],
+                        datasets: [{'data': [79.62264150943396, 83.57142857142857, 74.49664429530202, 70.49608355091384, 70.9090909090909, 75.0, 77.9467680608365, 77.2020725388601, 74.63768115942028, 65.09803921568627, 70.35573122529645, 68.07511737089203, 64.41717791411043, 75.9493670886076], 'label': 'Best estimate', 'backgroundColor': 'rgba(50,100,100,0.8)', 'yAxisID': 'y-axis-0', 'borderWidth': 3, 'fill': false},{'data': [75.47169811320755, 79.28571428571428, 70.46979865771812, 66.57963446475196, 66.54545454545455, 70.77464788732394, 73.76425855513308, 72.02072538860104, 68.84057971014492, 60.0, 65.21739130434783, 62.91079812206573, 57.668711656441715, 68.35443037974683], 'label': 'Lower bound (5% limit)', 'backgroundColor': 'rgba(50,50,50,0.3)', 'yAxisID': 'y-axis-0', 'borderWidth': 1, 'fill': false, 'pointBackgroundColor': 'rgba(0,0,0,0)', 'pointBorderColor': 'rgba(0,0,0,0)'},{'data': [83.77358490566039, 86.78571428571429, 78.52348993288591, 74.41253263707573, 75.27272727272727, 79.5774647887324, 82.12927756653993, 81.86528497409327, 80.43478260869566, 70.19607843137254, 75.09881422924902, 73.23943661971832, 70.5521472392638, 83.54430379746836], 'label': 'Upper bound (95% limit)', 'backgroundColor': 'rgba(50,50,50,0.3)', 'yAxisID': 'y-axis-0', 'borderWidth': 1, 'fill': 'start', 'pointBackgroundColor': 'rgba(0,0,0,0)', 'pointBorderColor': 'rgba(0,0,0,0)'}]
+                    },
+                    type: 'line',
+                    options: {
+                        scales: {
+                            yAxes: [{
+                                display: true,
+                                scaleLabel: {
+                                    display: true,
+                                    labelString: 'Enforcements with financial penalties (% of annual total consent orders)'
+                                },
+                                ticks: {
+                                    beginAtZero: false
+                                },
+                                "id": "y-axis-0",
+                                "position": "left",
+                                stacked: false
+                            }, {
+                                display: false,
+                                scaleLabel: {
+                                    display: true,
+                                    labelString: ''
+                                },
+                                ticks: {
+                                    beginAtZero: false
+                                },
+                                "id": "y-axis-1",
+                                "position": "right"
+                            }],
+                            xAxes: [{
+                                scaleLabel: {
+                                    display: true,
+                                    labelString: 'Year'
+                                },
+                                stacked: false,
+                                ticks: {
+                                    autoSkip: true
+                                }
+                            }]
+                        },
+                        legend: {
+                            display: true
+                            },
+                        tooltips: {
+                            display: true
+                            }
+                    },
+                }
+                
+                
+                
+            </script>
+            <script>
+                {{
+                    var ctx = document.getElementById("DEP ACOPs Per Year").getContext("2d");
+                    var mychart = new Chart(ctx, chart_data);
+                }}
+            </script>
 
-		</div>
-	</body>
+        </div>
+    </body>
 </html>
 {% endraw  %}
