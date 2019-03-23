@@ -69,7 +69,7 @@ class chart:
             else:
                 self.js = jsurl
         if scaleBeginAtZero:
-            self.scaleBeginAtZero = "true"
+            self.scaleBeginAtZero = "beginAtZero: true, min: 0"
         if y2nd:
             self.y2nd = 'true'
         if y2nd_title != None:
@@ -148,7 +148,7 @@ class chart:
                                     labelString: '{3}'
                                 }},
                                 ticks: {{
-                                    beginAtZero: {5}
+                                    {5}
                                 }},
                                 "id": "y-axis-0",
                                 "position": "left",
@@ -160,7 +160,7 @@ class chart:
                                     labelString: '{7}'
                                 }},
                                 ticks: {{
-                                    beginAtZero: {5}
+                                    {5}
                                 }},
                                 "id": "y-axis-1",
                                 "position": "right"
@@ -312,7 +312,7 @@ class chart:
         self.barValueSpacing = 5
         self.scaleShowGridLines = True
         self.js = jsinline
-        self.scaleBeginAtZero = 'false'
+        self.scaleBeginAtZero = ''
         self.y2nd = 'false'
         self.y2nd_title = ""
         self.xlabel = ''
@@ -325,5 +325,5 @@ class chart:
         self.extra_code = ''
 
 # JavaScript (URL and inline)
-jsurl = "<script src='https://cdnjs.cloudflare.com/ajax/libs/Chart.js/2.8.0/Chart.bundle.min.js'></script>"
+jsurl = "<script src='https://cdn.jsdelivr.net/npm/chart.js@2.8.0/dist/Chart.bundle.min.js'></script>"
 jsinline = ''

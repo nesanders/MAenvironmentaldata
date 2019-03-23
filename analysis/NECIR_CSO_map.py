@@ -460,11 +460,11 @@ for i, col, col_label in (
 	## Add uncertainty contour
 	mychart.add_dataset(np.array([x_bin_cent, y_bin[0] - 1.65 * y_bin[1]]).T, 
 		"Average lower bound (5% limit)",
-		backgroundColor="'rgba(50,50,200,0.3)'", yAxisID= "'y-axis-0'", borderWidth = 1, 
+		backgroundColor="'rgba(50,50,200,0.3)'", showLine = "true", yAxisID= "'y-axis-0'", borderWidth = 1, 
 		fill = 'false', pointBackgroundColor="'rgba(50,50,200,0.3)'", pointBorderColor="'rgba(50,50,200,0.3)'")
 	mychart.add_dataset(np.array([x_bin_cent, y_bin[0] + 1.65 * y_bin[1]]).T, 
 		"Average upper bound (95% limit)",
-		backgroundColor="'rgba(50,50,200,0.3)'", yAxisID= "'y-axis-0'", borderWidth = 1, fill = "'-1'", pointBackgroundColor="'rgba(50,50,200,0.3)'", pointBorderColor="'rgba(50,50,200,0.3)'")
+		backgroundColor="'rgba(50,50,200,0.3)'", showLine = "true", yAxisID= "'y-axis-0'", borderWidth = 1, fill = "'-1'", pointBackgroundColor="'rgba(50,50,200,0.3)'", pointBorderColor="'rgba(50,50,200,0.3)'")
 
 	## Set overall chart parameters
 	mychart.set_params(
@@ -473,7 +473,7 @@ for i, col, col_label in (
 		xlabel=col_label,
 		yaxis_type='linear',	
 		y2nd = 0,
-		scaleBeginAtZero=0,
+		scaleBeginAtZero=1,
 		custom_tooltips = """
 					mode: 'single',
 					callbacks: {

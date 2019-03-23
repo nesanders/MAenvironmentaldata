@@ -429,7 +429,7 @@ def weight_mean(x, weights, N=1000):
 	return np.mean(avgs), np.std(avgs)
 
 ## Calculate binned values
-x_bins = np.nanpercentile(x, list(np.linspace(0,100,12)))
+x_bins = np.nanpercentile(x, list(np.linspace(0,100,9)))
 x_bin_cent = [np.mean([x_bins[i], x_bins[i+1]]) for i in range(len(x_bins) - 1)]
 x_bin_id = pd.cut(x, x_bins, labels=False)
 y_bin = np.array([
@@ -473,11 +473,11 @@ mychart.add_dataset(
 ## Add uncertainty contour
 mychart.add_dataset(np.array([x_bin_cent, y_bin[0] - 1.65 * y_bin[1]]).T, 
 	"Average lower bound (5% limit)",
-	backgroundColor="'rgba(50,50,200,0.3)'", yAxisID= "'y-axis-0'", borderWidth = 1, 
+	backgroundColor="'rgba(50,50,200,0.3)'", showLine = "true", yAxisID= "'y-axis-0'", borderWidth = 1, 
 	fill = 'false', pointBackgroundColor="'rgba(50,50,200,0.3)'", pointBorderColor="'rgba(50,50,200,0.3)'")
 mychart.add_dataset(np.array([x_bin_cent, y_bin[0] + 1.65 * y_bin[1]]).T, 
 	"Average upper bound (95% limit)",
-	backgroundColor="'rgba(50,50,200,0.3)'", yAxisID= "'y-axis-0'", borderWidth = 1, fill = "'3'", pointBackgroundColor="'rgba(50,50,200,0.3)'", pointBorderColor="'rgba(50,50,200,0.3)'")
+	backgroundColor="'rgba(50,50,200,0.3)'", showLine = "true", yAxisID= "'y-axis-0'", borderWidth = 1, fill = "'-1'", pointBackgroundColor="'rgba(50,50,200,0.3)'", pointBorderColor="'rgba(50,50,200,0.3)'")
 ## Set overall chart parameters
 mychart.set_params(
 	JSinline = 0, 
