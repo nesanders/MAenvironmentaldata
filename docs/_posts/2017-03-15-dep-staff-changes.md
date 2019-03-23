@@ -1,6 +1,7 @@
 ---
 layout: post
 title: Staff Changes at the MADEP Over Time
+ancillary: 0
 ---
 
 A key element of the evolution of the role and effectiveness of environmental regulation in Massachusetts is the staffing of our most prominent environmental agency, the Department of Environmental Protection (DEP). The analysis presented below draws from the [MA DEP staffing]({{ site.url }}{{ site.baseurl }}/data/MADEP_staff.html) and [budget data]({{ site.url }}{{ site.baseurl }}/data/MassBudget_environmental.html) in the [{{ site.data.site_config.site_abbrev }} database]({{ site.url }}{{ site.baseurl }}/data/index.html). Note that, because the VisibleGovernment dataset was last updated for calendar year 2016 (as of 3-17-2019), some figures displayed here are not available after that date.

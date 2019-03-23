@@ -23,6 +23,7 @@ Several python3 packages are required to execute the scripts needed to generate 
 * matplotlib-3.0.2
 * numpy-1.16.2
 * pandas-0.24.2
+* pystan-2.18.1.0
 * requests-2.21.0
 * scipy-1.2.1
 * shapely-1.6.4.post1

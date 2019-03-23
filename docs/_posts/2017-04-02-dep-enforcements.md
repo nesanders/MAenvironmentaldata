@@ -1,6 +1,7 @@
 ---
 layout: post
 title: Changes in Enforcement by MA Department of Environmental Protection Over Time
+ancillary: 0
 ---
 
 While a coalition of local, state, and federal agencies are responsible for enforcing environmental regulations, the MA Department of Environmental Protection (DEP) has a pivotal role in environmental law enforcement in the Commonwealth. The analysis presented below draws from the [MA DEP enforcement data]({{ site.url }}{{ site.baseurl }}/data/MADEP_enforcement_actions.html) in the [{{ site.data.site_config.site_abbrev }} database]({{ site.url }}{{ site.baseurl }}/data/index.html), which has been collected by scraping the public reports listed on DEP's website.

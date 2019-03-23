@@ -41,7 +41,8 @@ class chart:
         JSinline = None, scaleBeginAtZero = None,
         y2nd = None, y2nd_title = None,
         xlabel = None, ylabel = None, stacked=None, 
-        legend=None, tooltips=None, custom_tooltips=None, yaxis_type=None, x_autoskip=None):
+        legend=None, tooltips=None, custom_tooltips=None, yaxis_type=None, x_autoskip=None,
+        fontsize=12):
         
         if fillColor:
             self.fillColor = fillColor
@@ -94,6 +95,7 @@ class chart:
             self.x_autoskip = 'false'
         else:
             self.x_autoskip = 'true'
+        self.fontsize = fontsize
 
     # Add a dataset to the chart
     def add_dataset(self, data, dataset_label = '', **kwargs):
@@ -207,11 +209,12 @@ class chart:
         output = """
             <canvas id="{0}" height="{1}" width="{2}"></canvas>
             <script>
+                Chart.defaults.global.defaultFontSize = {5};
                 var chart_data = {3}
                 
                 {4}
             </script>
-""".format(str(self.canvas), str(self.height), str(self.width), dataset, self.extra_code)
+""".format(str(self.canvas), str(self.height), str(self.width), dataset, self.extra_code, self.fontsize)
         return output
 
     # Make onload function
@@ -225,9 +228,6 @@ class chart:
     # Make a chart based on datasets
     def make_chart(self):
         output = self.make_chart_canvas()
-        #output += """            <script>
-                #window.onload = function()
-                #{{"""
         output += """            <script>
                 {{"""
         output += self.make_chart_onload()
