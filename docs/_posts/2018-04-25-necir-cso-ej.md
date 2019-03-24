@@ -85,7 +85,7 @@ We aggregate the Census block group level EJSCREEN data to the watershed and mun
 
 ## Correlation between CSO discharge and EJ factors
 
-We explore the relationship between CSO discharge volumes within different geographic areas and their EJ population characteristics.  We use using bootstrap resampling to visualize the trend and uncertainty in the population-weighted mean discharge volume estimate in equal-sized bins of watersheds (figures below). We estimate the univariate dependence of CSO discharge on each EJ factor, and its 90% posterior (confidence) interval, with a population-weighted logarithmic regression model.  A detailed explanations of the methodology used in this analysis is provided [here]({% post_url 2019-03-23-necir-cso-ej_modeling %}).
+We explore the relationship between CSO discharge volumes within different geographic areas and their EJ population characteristics.  We use using bootstrap resampling to visualize the trend and uncertainty in the population-weighted mean discharge volume estimate in equal-sized bins of watersheds (figures below). We estimate the univariate dependence of CSO discharge on each EJ factor, and its 90% posterior (confidence) interval, with a population-weighted logarithmic regression model.  A detailed explanation of the methodology used in this analysis is provided [here]({% post_url 2019-03-23-necir-cso-ej_modeling %}).
 
 
 ### Relationship with linguistic isolation
