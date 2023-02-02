@@ -6,6 +6,9 @@ The website for the project can be [viewed here](https://nesanders.github.io/MAe
 
 This git repository contains code for data acquisition (see get_data subdirectory), analysis (see analysis subdirectory), and the [jekyll](https://jekyllrb.com/) site for this project (see docs subdirectory).
 
+
+## Updating data from the sources
+
 You can run the single convenience script *update_all.sh* (for bash) to (re)generate all content associated with the site.
 
 ## Hosting the site
@@ -14,23 +17,7 @@ The python3 scripts in this repository automatically feed content to a static we
 
 ## Python dependencies
 
-Several python3 packages are required to execute the scripts needed to generate this website:
-
-* BeautifulSoup4-4.7.1
-* census-0.8.13
-* folium-0.8.3
-* lxml-4.3.2
-* matplotlib-3.0.2
-* numpy-1.16.2
-* pandas-0.24.2
-* pystan-2.18.1.0
-* requests-2.21.0
-* scipy-1.2.1
-* shapely-1.6.4.post1
-* sodapy-1.5.2
-* sqlalchemy-1.3.1
-* unidecode-1.0.23
-* us-1.0.0
+Several python3 packages are required to execute the scripts needed to generate this website, specified in `requirements.txt`.
 
 ## Other tools used
 
