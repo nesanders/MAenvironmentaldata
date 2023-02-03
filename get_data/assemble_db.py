@@ -29,9 +29,9 @@ data_csv['MAEEADP_Inspection'] = pd.read_csv('../docs/data/EEADP_inspection.csv'
 data_csv['MAEEADP_Permit'] = pd.read_csv('../docs/data/EEADP_permit.csv')
 data_csv['EPA_EJSCREEN_2017'] = pd.read_csv('../docs/data/EPA_EJSCREEN_MA_2017.csv')
 
-## Temporary insertion for 2018 and 2019 assuming no inflation
+## Temporary insertion for 2022 assuming no inflation
 data_csv['SSAWages'] = pd.read_csv('../docs/data/SSAWages_2023-02-03.csv')
-for yr in [2018, 2019]:
+for yr in [2022]:
     data_csv['SSAWages'] = data_csv['SSAWages'].append(data_csv['SSAWages'].iloc[-1])
     data_csv['SSAWages'].iloc[-1, 0] = yr
     data_csv['SSAWages'].iloc[-1, 2:] = 0

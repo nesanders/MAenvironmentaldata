@@ -1,9 +1,8 @@
-from __future__ import absolute_import
+"""Generate plots of MA DEP staffing trends over time
+"""
+
 import pandas as pd
 import numpy as np
-#from matplotlib.ticker import FixedLocator, MaxNLocator,  MultipleLocator
-#from matplotlib import pyplot as plt
-#from matplotlib import cm
 from sqlalchemy import create_engine
 import chartjs
 from scipy.stats import pearsonr
