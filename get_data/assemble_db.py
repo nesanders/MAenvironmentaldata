@@ -1,4 +1,3 @@
-from __future__ import absolute_import
 import pandas as pd
 import datetime
 from sqlalchemy import create_engine
@@ -44,6 +43,7 @@ data_csv['AMEND_metadata'] = pd.Series({
 	})
 
 for key in data_csv:
-	data_csv[key].to_sql(key, disk_engine, if_exists='append')
+	print(f'Writing database table {key}')
+	data_csv[key].to_sql(name=key, con=disk_engine, if_exists='append')
 
 os.system('gsutil cp AMEND.db gs://ns697-amend/amend.db')

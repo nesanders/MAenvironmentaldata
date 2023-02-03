@@ -10,7 +10,8 @@ requests >= 2.21.0
 scipy >= 1.2.1
 shapely >= 1.6.4.post1
 sodapy >= 1.5.2
-sqlalchemy >= 1.3.1
+# for pandas compatability, see https://stackoverflow.com/a/75289814
+sqlalchemy == 1.4.46
 unidecode >= 1.0.23
 us >= 1.0.0
 fsspec
