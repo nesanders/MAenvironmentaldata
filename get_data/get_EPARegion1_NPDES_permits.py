@@ -17,7 +17,7 @@ import numpy as np
 # ------------------------------
 
 PERMIT_DIR = 'EPA_Region1_NPDES_permits/{}/{}/{}_'
-GS_URL = 'http://storage.googleapis.com/ns697-merdr/EPA_Region1_NPDES_permits/{}/{}/{}_'
+GS_URL = 'http://storage.googleapis.com/ns697-amend/EPA_Region1_NPDES_permits/{}/{}/{}_'
 
 ALL_STATES = {'ct':'connecticut','me':'maine','nh':'new-hampshire','ma':'massachusetts','ri':'rhode-island','vt':'vermont'}
  
@@ -182,8 +182,8 @@ permit_df['gs_path'] = ['<br>'.join(['[Permit PDF]('+xx+')' for xx in x if xx!= 
 permit_df = permit_df.sort_values(by = ['State','Watershed','Stage','Facility_name_clean'])
 
 ## Push PDFs to Google Cloud
-os.system('gsutil rsync -r '+PERMIT_DIR.split('/{}/')[0]+' gs://ns697-merdr/'+PERMIT_DIR.split('/{}/')[0])
-## access at e.g. http://storage.googleapis.com/ns697-merdr/EPA_Region1_NPDES_permits/nh/final/NH0000116_finalnh0000116permit.pdf
+os.system('gsutil rsync -r '+PERMIT_DIR.split('/{}/')[0]+' gs://ns697-amend/'+PERMIT_DIR.split('/{}/')[0])
+## access at e.g. http://storage.googleapis.com/ns697-amend/EPA_Region1_NPDES_permits/nh/final/NH0000116_finalnh0000116permit.pdf
 
 ## Write out data
 permit_df.to_pickle('EPARegion1_NPDES_permit_data.p')
