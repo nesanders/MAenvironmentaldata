@@ -1,3 +1,15 @@
+"""Generate folium-based map visualizations and pystan regression model fits.
+
+NOTE - this code was updated in 2023 to use pystan 3 conventions
+
+NOTE - if you run into pystan errors when executing this script in a conda environment, try using 
+[this solution](https://github.com/stan-dev/pystan/issues/294#issuecomment-988791438)
+to update the C compilers in the env.
+```
+conda install -c conda-forge c-compiler cxx-compiler
+```
+"""
+
 from __future__ import absolute_import
 from __future__ import print_function
 import pandas as pd
@@ -7,9 +19,7 @@ import json
 from shapely.geometry import shape, Point
 from sqlalchemy import create_engine
 import chartjs
-
-from six.moves import map
-from six.moves import range
+import stan
 
 import matplotlib as mpl
 from matplotlib import pyplot as plt
@@ -50,6 +60,7 @@ def safe_float(x):
     except:
         return np.nan
 
+
 ##########################
 ## Load data
 ##########################
@@ -65,6 +76,7 @@ data_cso['2011_Discharge_N'] = data_cso['2011_Discharge_N'].apply(safe_float)
 ## Get EJSCREEN data
 data_ejs = pd.read_sql_query('SELECT * FROM EPA_EJSCREEN_2017', disk_engine)
 data_ejs['ID'] = data_ejs['ID'].astype(str)
+
 
 ##########################
 ## Lookup CSOs assignment to census blocks
@@ -147,12 +159,9 @@ df_watershed_level = data_egs_merge.groupby('Watershed').apply(lambda x: pop_wei
 df_town_level = data_egs_merge.groupby('Town').apply(lambda x: pop_weighted_average(x, ['MINORPCT', 'LOWINCPCT', 'LINGISOPCT', 'OVER64PCT', 'VULSVI6PCT']))
 
 
-
-
 #############################
 ## Map of discharge volumes with layers for watershed, town, and census block group with CSO points
 #############################
-
 
 ## Map total discharge volume
 map_1 = folium.Map(
@@ -240,8 +249,6 @@ folium.LayerControl(collapsed=False).add_to(map_1)
 
 ## Save to html
 map_1.save(out_path+'NECIR_CSO_map_total.html')
-
-
 
 
 #############################
@@ -342,11 +349,9 @@ for col, col_label in (
     map_2.save(out_path+'NECIR_CSO_map_EJ_'+col+'.html')
 
 
-
 #############################
 ## Summary of EJ characteristics of geographic areas
 #############################
-
 
 ## By watershed
 mychart = chartjs.chart("EJ characteristics by watershed", "Bar", 640, 480)
@@ -392,23 +397,10 @@ mychart.set_params(JSinline = 0, ylabel = 'Fraction of households', xlabel='Muni
 mychart.jekyll_write('../docs/_includes/charts/EJSCREEN_demographics_municipality.html')
 
 
-
-
-
-
 #############################
 ## Comparison of EJ and CSO characteristics by geographic areas
 #############################
 
-
-## Lookup base values - Town level (too few to be useful)
-#l = data_egs_merge.Town.unique()
-#l = l[pd.isnull(l) == 0]
-#pop = data_egs_merge.groupby('Town')['ACSTOTPOP'].sum().loc[l].values
-#x = df_town_level['LINGISOPCT'].loc[l].values
-#y = data_ins_g_muni_j['2011_Discharges_MGal'].loc[l].values
-
-    
 for i, col, col_label in (
     (0, 'MINORPCT', 'Fraction of population identifying as non-white'),
     (1, 'LOWINCPCT', 'Fraction of population with income less than twice the Federal poverty limit'),
@@ -518,21 +510,16 @@ for i, col, col_label in (
     mychart.jekyll_write('../docs/_includes/charts/NECIR_EJSCREEN_correlation_bywatershed_'+col+'.html')
 
 
-
 #############################
 ## Regression model
 #############################
 
-import pystan
-
-data_ins_g_ws_j['2011_Discharges_MGal']
-
 stan_model = """
 data {
-    int<lower=0> J; // number of watersheds
-    vector<lower=0>[J] x; // EJ parameter
-    vector<lower=0>[J] y; // CSO discharge
-    vector<lower=0>[J] p; // population (normalized)
+    int<lower=0> J;         // number of watersheds
+    vector<lower=0>[J] x;   // EJ parameter
+    vector<lower=0>[J] y;   // CSO discharge
+    vector<lower=0>[J] p;   // population (normalized)
 }
 transformed data {
     real<lower=0> s_y;
@@ -540,13 +527,12 @@ transformed data {
     s_y = sd(y);
 }
 parameters {
-    real<lower=0> alpha;
-    real beta;
-    real<lower=0> sigma;
+    real<lower=0> alpha;    // Multiplicative offset
+    real beta;              // Exponent
+    real<lower=0> sigma;    // Error model scaler
 }
 transformed parameters {
-    vector[J] theta;
-    //theta = alpha + beta * x;
+    vector[J] theta;        // Regression estimate
     
     for (i in 1:J) {
         theta[i] = alpha * pow(x[i], beta);
@@ -559,9 +545,6 @@ model {
     y ~ normal(theta, sigma * s_y * sqrt(inv(p)));
 }
 """
-
-## Compile Stan model
-sm = pystan.StanModel(model_code=stan_model)
 
 for i, col, col_label in (
     (0, 'MINORPCT', 'Fraction of population identifying as non-white'),
@@ -578,13 +561,15 @@ for i, col, col_label in (
     ## Fit Stan model
     stan_dat = {
         'J': len(x),
-        'x': x,
-        'y': y,
-        'p': pop / np.mean(pop)
+        'x': list(x),
+        'y': list(y),
+        'p': list(pop / np.mean(pop))
         }
     
-    fit = sm.sampling(data=stan_dat, iter=10000, chains=10)
-    fit_par = fit.extract()
+    print(f'Building stan model for {col}')
+    sm = stan.build(stan_model, data=stan_dat)
+    fit = sm.sampling(num_samples=10000, num_chains=10)
+    fit_par = fit.to_frame()
     
     ## Stan fit diagnostic output
     #s = fit.summary()
@@ -605,8 +590,8 @@ for i, col, col_label in (
     N = len(fit_par['beta'])
     for i,n in enumerate(np.random.randint(0, N, 20)):
         px = np.linspace(min(x), max(x), 1000)
-        #plt.plot(px, fit_par['alpha'][i] + fit_par['beta'][i]*px, color='r', alpha=0.3)
-        plt.plot(px, fit_par['alpha'][n]*px**fit_par['beta'][n], color='r', alpha=0.3, label = 'Posterior draw' if i==0 else None, zorder=1)
+        plt.plot(px, fit_par.loc['alpha', n]*px**fit_par.loc['beta', n], color='r', alpha=0.3, 
+                 label = 'Posterior draw' if i==0 else None, zorder=1)
     
     plt.xlabel(col_label, wrap=True)
     plt.ylabel('CSO discharge (2011; Mgal)')
@@ -618,5 +603,5 @@ for i, col, col_label in (
     
     ## Output summary dependence statistics
     with open(fact_file, 'a') as f:
-        #f.write('depend_cso_'+col+': %0.1f'%(np.median(ph))+'x (90\% confidence interval %0.1f'%(np.percentile(ph, 5))+' to %0.1f'%(np.percentile(ph, 95))+'x)\n')
-        f.write('depend_cso_{}: {:0.1f} times (90% confidence interval {:0.1f} to {:0.1f} times)\n'.format(col, np.median(ph), np.percentile(ph, 5), np.percentile(ph, 95)))
+        f.write(f'depend_cso_{col}: {np.median(ph):0.1f} times (90% confidence interval '
+                f'{np.percentile(ph, 5):0.1f} to {np.percentile(ph, 95):0.1f} times)\n')
