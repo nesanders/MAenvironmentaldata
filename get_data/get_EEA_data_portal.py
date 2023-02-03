@@ -1,32 +1,27 @@
 """
 This script queries the MA Energy and Environemtal Affairs Data Portal, publicly viewable at:
 http://eeaonline.eea.state.ma.us/portal#!/home
-
-
 """
 
-from __future__ import absolute_import
-from __future__ import print_function
 import os
 import datetime
 import requests
 import pandas as pd
 import numpy as np
-from six.moves import range
 
 ##########################
 ## API parameters
 ##########################
 
-API_root = 'http://eeaonline.eea.state.ma.us/EEA/DataLake/V1.0/DataLakeAPI/'
-API_tables = ['permit', 'facility', 'inspection', 'enforcement', 'drinkingWater']
+API_ROOT = 'http://eeaonline.eea.state.ma.us/EEA/DataLake/V1.0/DataLakeAPI/'
+API_TABLES = ['permit', 'facility', 'inspection', 'enforcement', 'drinkingWater']
 
 
 ##########################
 ## Function definitions
 ##########################
 
-def query_iterate(table_name, req_size = 100000, verbose = True):
+def query_iterate(table_name: str, req_size: int=100000, verbose: bool=True):
 	"""
 	Query the EEA data portal to retrieve the entirety of a data table.
 	
@@ -42,7 +37,7 @@ def query_iterate(table_name, req_size = 100000, verbose = True):
 	"""
 	# Get total table size
 	try:
-		r = requests.get(API_root + table_name + '?_end=1&_start=0')
+		r = requests.get(API_ROOT + table_name + '?_end=1&_start=0')
 		table_size = r.json()['TotalCount']
 	except ValueError: 
 		raise ValueError("EEA Data Portal request returned error " + str(r.status_code) + '; perhaps table name is not valid\n\nFull response message:\n' + r.text)
@@ -58,7 +53,7 @@ def query_iterate(table_name, req_size = 100000, verbose = True):
 		# Log output
 		if verbose: print(table_name + ': request ' + str(i + 1) + ' of ' + str(len(req_bins) - 1))
 		# Make request
-		url = API_root + table_name + '?_end=' + str(req_bins[i+1]) + '&_start='+str(req_bins[i])
+		url = API_ROOT + table_name + '?_end=' + str(req_bins[i+1]) + '&_start='+str(req_bins[i])
 		r = requests.get(url)
 		# Add chunk contents to dataframe list
 		dfs += [pd.DataFrame(r.json()['Items'])]
@@ -75,14 +70,14 @@ def query_iterate(table_name, req_size = 100000, verbose = True):
 
 ## Query data for each table
 table_data = {}
-for tab in API_tables:
+for tab in API_TABLES:
 	table_data[tab] = query_iterate(tab)
 
 
 ## Write out, but treat large tables separately
 ## Only one table (drinkingWater) is >10MB as of 08/2017, so we handle this as a special case.
 ## Could also use `size_MB = os.path.getsize('../docs/data/EEADP_' + tab + '.csv')/1024/1024` to get file size
-for tab in API_tables:
+for tab in API_TABLES:
 	## Print a sample of the file as an example
 	table_data[tab].sample(n=10).to_csv('../docs/data/EEADP_' + tab + '_sample.csv', index=0)
 	
@@ -108,12 +103,10 @@ for tab in API_tables:
 		df_dw_annual_group.to_csv('../docs/data/EEADP_' + tab + '_annual.csv', index=1)
 		## Print a sample of the file as an example
 		df_dw_annual_group.sample(n=10).to_csv('../docs/data/EEADP_' + tab + '_annual_sample.csv', index=1)
-		
 
 		## Tests per year per PWS per chemical per raw/finished
 		### This still ends up being ~40% of the original size, so larger than desired
 		#df_dw_annual = table_data[tab].groupby(['Year','PWSName', 'ChemicalName','RaworFinished']).agg({'ContaminantGroup': lambda x: x.iloc[0], 'Result': pd.Series.count})
-
 
 
 ##########################
