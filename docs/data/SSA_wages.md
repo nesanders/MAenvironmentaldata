@@ -12,7 +12,7 @@ The Social Security Administration publishes an [Average Wage Index (AWI)](https
 
 ## Download archive
 
-In addition to including it in the integrated {{ site.data.site_config.site_abbrev }} Database, we provide our archive of this data in [CSV format](SSAWages_2019-03-17.csv) as accessed on 2019-03-17.
+In addition to including it in the integrated {{ site.data.site_config.site_abbrev }} Database, we provide our archive of this data in [CSV format](SSAWages_2023-02-03.csv) as accessed on 2023-02-03.
 
 ## Data visualization
 
@@ -27,7 +27,7 @@ In addition to including it in the integrated {{ site.data.site_config.site_abbr
 <!-- Note: need to have the for loop markup on the same line as the table rows as described here: http://stackoverflow.com/questions/35642820/jekyll-how-to-use-for-loop-to-generate-table-row-within-the-same-table-inside-m -->
 
 | Year | AWI | % increase |
-| --- | --- | --- |{% for row in site.data.SSAWages_2019-03-17 %}
+| --- | --- | --- |{% for row in site.data.SSAWages_2023-02-03 %}
 | {{ row.Year }} | {{ row.AWI }} | {{ row.Increase }} |{% endfor %}
 {: .sortable}
 

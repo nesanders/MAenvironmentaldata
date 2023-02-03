@@ -1,9 +1,8 @@
-from __future__ import absolute_import
+"""Generate plots of MA DEP staffing trends over time
+"""
+
 import pandas as pd
 import numpy as np
-#from matplotlib.ticker import FixedLocator, MaxNLocator,  MultipleLocator
-#from matplotlib import pyplot as plt
-#from matplotlib import cm
 from sqlalchemy import create_engine
 import chartjs
 from scipy.stats import pearsonr
@@ -52,7 +51,7 @@ s_data_jg = s_data_j.groupby(['position_type', 'year']).count().Earnings
 ## Establish chart
 mychart = chartjs.chart("Overall DEP Staffing", "Bar", 640, 480)
 mychart.set_labels(list(years))
-fte_stack = s_data_jg.loc['Full Time Employee'].loc[years].fillna(0).values
+fte_stack = s_data_jg.loc['Full Time Employee'].reindex(years).fillna(0).values
 mychart.add_dataset(fte_stack.tolist(), 
 	"Full time DEP employees",
 	backgroundColor="'rgba(50,50,200,0.8)'",
@@ -73,7 +72,7 @@ mychart.jekyll_write('../docs/_includes/charts/MADEP_staffing_overall.html')
 ## Establish chart
 mychart = chartjs.chart("Overall DEP Staffing vs Funding", "Bar", 640, 480)
 mychart.set_labels(list(years))
-fte_stack = s_data_jg.loc['Full Time Employee'].loc[years].fillna(0).values
+fte_stack = s_data_jg.loc['Full Time Employee'].reindex(years).fillna(0).values
 mychart.add_dataset((s_data_g.loc[years].values).tolist(), "Total DEP employment",
 	backgroundColor="'rgba(50,50,50,0.5)'",
 	type="'line'", fill = "false",
@@ -137,8 +136,8 @@ for i,jt in enumerate(sel_titles):
 	ys += [np.zeros(len(years))]
 	cs += [np.zeros(len(years))]
 	try:
-		ys[-1] += s_data_gj.Earnings.sum().loc[(jt[0])].loc[years].replace(np.nan, 0).values
-		cs[-1] += s_data_gj.Earnings.count().loc[(jt[0])].loc[years].replace(np.nan, 0).values
+		ys[-1] += s_data_gj.Earnings.sum().loc[(jt[0])].reindex(years).replace(np.nan, 0).values
+		cs[-1] += s_data_gj.Earnings.count().loc[(jt[0])].reindex(years).replace(np.nan, 0).values
 	except pd.core.indexing.IndexingError:
 		pass
 
@@ -187,8 +186,8 @@ for i,jt in enumerate(sel_titles):
 	ys += [np.zeros(len(years))]
 	cs += [np.zeros(len(years))]
 	try:
-		ys[-1] += s_data_gj.Seniority.sum().loc[(jt[0])].loc[years].replace(np.nan, 0).values
-		cs[-1] += s_data_gj.Earnings.count().loc[(jt[0])].loc[years].replace(np.nan, 0).values
+		ys[-1] += s_data_gj.Seniority.sum().loc[(jt[0])].reindex(years).replace(np.nan, 0).values
+		cs[-1] += s_data_gj.Earnings.count().loc[(jt[0])].reindex(years).replace(np.nan, 0).values
 	except pd.core.indexing.IndexingError:
 		pass
 
@@ -219,7 +218,7 @@ sel_titles = [['Environmental Analyst'], ['Environmental Engineer'], ['Program C
 ## Total number of employees in major types
 ys = []
 for i,t in enumerate(sel_titles):
-	ys += [s_data[s_data.JobType == t[0]].groupby('CalendarYear').Earnings.count().loc[years].values]
+	ys += [s_data[s_data.JobType == t[0]].groupby('CalendarYear').Earnings.count().reindex(years).values]
 
 mychart = chartjs.chart("DEP role volume over time", "Line", 640, 480)
 mychart.set_labels(years.tolist())

@@ -1,5 +1,6 @@
-from __future__ import absolute_import
-from __future__ import print_function
+"""Download Environmental agency budget data from the MassBudget website.
+"""
+
 import requests
 import datetime
 import os
@@ -7,13 +8,15 @@ import pandas as pd
 from io import StringIO
 
 ## Download "All Line Items" spreasdsheet linked here: http://massbudget.org/browser/subcat.php?id=Environment&inflation=cpi#line_items
-massbudget_spreadsheet_link = 'http://massbudget.org/browser/spreadsheet.php?id=Environment&inflation=cpi&level=subcat'
+MASSBUDGET_URL = 'https://massbudget.org/wp-content/themes/astra-child/browser-assets/spreadsheet.php?id=Environment&inflation=cpi&level=subcat'
 
-mb_csv = requests.get(massbudget_spreadsheet_link).content.decode('utf-8')
+mb_csv = requests.get(MASSBUDGET_URL).content.decode('utf-8')
 ## File has a summary table and two separate line-item level tables
 
 
-def fix_commas(df):
+def fix_commas(df: pd.DataFrame) -> None:
+	"""Convert string-with-comma-separator numbers in a DataFrame to floats in place.
+	"""
 	for col in df.columns:
 		if df[col].dtype == 'O':
 			try:
@@ -30,7 +33,9 @@ def fix_commas(df):
 
 df_summary = pd.read_csv(StringIO(mb_csv.split('\n\n')[1]))
 df_summary.rename(columns={
-		'Unnamed: 0':'FiscalYear', 'adjusted for inflation (CPI)':'TotalBudget_inf', 'NOT adjusted for inflation':'TotalBudget_noinf'
+		'Unnamed: 0':'FiscalYear', 
+		'adjusted for inflation (CPI)': 'TotalBudget_inf', 
+		'NOT adjusted for inflation':'TotalBudget_noinf'
 	}, inplace=1)
 
 df_summary['Year'] = 2000+df_summary.FiscalYear.apply(lambda x: int(x.split()[0][-2:]))
@@ -62,8 +67,8 @@ df_noinf.rename(columns={
 ## Add to summary table
 #########################
 
-df_summary['DEPAdministration_inf'] = df_inf[df_inf.LineItemName=='Department of Environmental Protection Administration'].T.ix[df_summary.FiscalYear].values
-df_summary['DEPAdministration_noinf'] = df_noinf[df_noinf.LineItemName=='Department of Environmental Protection Administration'].T.ix[df_summary.FiscalYear].values
+df_summary['DEPAdministration_inf'] = df_inf[df_inf.LineItemName=='Department of Environmental Protection Administration'].T.loc[df_summary.FiscalYear].values
+df_summary['DEPAdministration_noinf'] = df_noinf[df_noinf.LineItemName=='Department of Environmental Protection Administration'].T.loc[df_summary.FiscalYear].values
 
 
 #########################

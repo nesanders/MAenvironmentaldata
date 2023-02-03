@@ -9,11 +9,12 @@
 
             <canvas id="DEP buyouts" height="480" width="640"></canvas>
             <script>
+                Chart.defaults.global.defaultFontSize = 12;
                 var chart_data = {
                 
                     data: {
-                        labels: ['2004.0', '2005.0', '2006.0', '2007.0', '2008.0', '2009.0', '2010.0', '2011.0', '2012.0', '2013.0', '2014.0', '2015.0', '2016.0', '2017.0', '2018.0'],
-                        datasets: [{'data': [0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.4271685950243198, 0.22575302498665553, 0.4378713912090967, 0.3508890942007122, 0.49826305618863576, 1.1377993200000003, 0.8209166378929296, 0.9569623043569706, 0.08236835771624682], 'label': 'Buyout expenditures', 'backgroundColor': 'rgba(50,50,50,0.5)', 'type': 'line', 'fill': false, 'borderWidth': 2, 'stack': 'annual', 'yAxisID': 'y-axis-0'},{'data': [0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 67.0, 14.0, 25.0, 24.0, 34.0, 138.0, 124.0, 125.0, 7.0], 'label': 'Staff Bought Out', 'borderColor': '#ff7f0e', 'fill': false, 'borderWidth': 2, 'steppedLine': true, 'stack': 'annual', 'type': 'line', 'yAxisID': 'y-axis-1'}]
+                        labels: ['2004.0', '2005.0', '2006.0', '2007.0', '2008.0', '2009.0', '2010.0', '2011.0', '2012.0', '2013.0', '2014.0', '2015.0', '2016.0', '2017.0', '2018.0', '2019.0', '2020.0', '2021.0', '2022.0'],
+                        datasets: [{'data': [0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.42716859502431986, 0.22575302498665553, 0.43787139120909674, 0.35088909420071224, 0.49826305618863576, 1.13779932, 0.8209166378929296, 0.9569623043569703, 0.28793985459003724, 0.8615933910558221, 0.8379721223024856, 1.3852871582829074, 0.512092929275179], 'label': 'Buyout expenditures', 'backgroundColor': 'rgba(50,50,50,0.5)', 'type': 'line', 'fill': false, 'borderWidth': 2, 'stack': 'annual', 'yAxisID': 'y-axis-0'},{'data': [0, 0, 0, 0, 0, 0, 67, 14, 25, 24, 34, 138, 124, 125, 20, 34, 33, 49, 20], 'label': 'Staff Bought Out', 'borderColor': '#ff7f0e', 'fill': false, 'borderWidth': 2, 'steppedLine': true, 'stack': 'annual', 'type': 'line', 'yAxisID': 'y-axis-1'}]
                     },
                     type: 'bar',
                     options: {
@@ -25,7 +26,7 @@
                                     labelString: 'Cost($M)'
                                 },
                                 ticks: {
-                                    beginAtZero: true
+                                    beginAtZero: true, min: 0
                                 },
                                 "id": "y-axis-0",
                                 "position": "left",
@@ -37,7 +38,7 @@
                                     labelString: 'Number of personnel'
                                 },
                                 ticks: {
-                                    beginAtZero: true
+                                    beginAtZero: true, min: 0
                                 },
                                 "id": "y-axis-1",
                                 "position": "right"

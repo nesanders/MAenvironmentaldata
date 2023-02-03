@@ -9,11 +9,12 @@
 
             <canvas id="Overall DEP Staffing vs Funding" height="480" width="640"></canvas>
             <script>
+                Chart.defaults.global.defaultFontSize = 12;
                 var chart_data = {
                 
                     data: {
-                        labels: ['2004.0', '2005.0', '2006.0', '2007.0', '2008.0', '2009.0', '2010.0', '2011.0', '2012.0', '2013.0', '2014.0', '2015.0', '2016.0', '2017.0', '2018.0'],
-                        datasets: [{'data': [967, 946, 966, 1010, 1014, 1032, 1026, 901, 909, 927, 946, 942, 888, 843, 692], 'label': 'Total DEP employment', 'backgroundColor': 'rgba(50,50,50,0.5)', 'type': 'line', 'fill': false, 'borderWidth': 2, 'stack': 'annual', 'yAxisID': 'y-axis-0'},{'data': [39.302333, 39.693074, 39.405161, 43.655253, 42.720337, 40.805528, 34.002597, 30.235506, 28.19408, 28.785389, 30.292173, 31.893205, 32.163079, 26.141125, 25.909966], 'label': 'DEP administrative budget', 'borderColor': '#ff7f0e', 'fill': false, 'borderWidth': 2, 'stack': 'annual', 'type': 'line', 'yAxisID': 'y-axis-1'}]
+                        labels: ['2004.0', '2005.0', '2006.0', '2007.0', '2008.0', '2009.0', '2010.0', '2011.0', '2012.0', '2013.0', '2014.0', '2015.0', '2016.0', '2017.0', '2018.0', '2019.0', '2020.0', '2021.0', '2022.0'],
+                        datasets: [{'data': [967, 946, 966, 1010, 1014, 1032, 1026, 901, 909, 927, 946, 942, 888, 849, 747, 864, 802, 843, 757], 'label': 'Total DEP employment', 'backgroundColor': 'rgba(50,50,50,0.5)', 'type': 'line', 'fill': false, 'borderWidth': 2, 'stack': 'annual', 'yAxisID': 'y-axis-0'},{'data': [44.419855, 44.861473, 44.536072, 49.339565, 48.282913, 46.11878, 38.430044, 34.172444, 31.865206, 32.533509, 34.234829, 36.044604, 36.352241, 29.544438, 29.285083, 33.790151, 36.635671, 44.783425, 34.880801], 'label': 'DEP administrative budget', 'borderColor': '#ff7f0e', 'fill': false, 'borderWidth': 2, 'stack': 'annual', 'type': 'line', 'yAxisID': 'y-axis-1'}]
                     },
                     type: 'bar',
                     options: {
@@ -25,7 +26,7 @@
                                     labelString: 'Total employment'
                                 },
                                 ticks: {
-                                    beginAtZero: false
+                                    
                                 },
                                 "id": "y-axis-0",
                                 "position": "left",
@@ -37,7 +38,7 @@
                                     labelString: 'Funding level ($M, 2016 dollars)'
                                 },
                                 ticks: {
-                                    beginAtZero: false
+                                    
                                 },
                                 "id": "y-axis-1",
                                 "position": "right"

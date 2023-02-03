@@ -45,7 +45,7 @@ inf_data = pd.read_sql_query('SELECT * FROM SSAWages', disk_engine)
 inf_data.index = inf_data.Year.astype(str)
 inf_target = '2016'
 ## Restrict to relevant years and calculate correction factors
-inf_data_sel = inf_data.loc[ECOS_years]
+inf_data_sel = inf_data.reindex(ECOS_years)
 inf_data_sel['correct'] = inf_data_sel['AWI'].loc[inf_target] / inf_data_sel['AWI']
 
 ## Establish file to export facts
@@ -70,7 +70,7 @@ states = sorted(s_data_g.groups.keys())
 mychart = chartjs.chart("ECOS Budgets by State Per Year", "Line", 640, 600)
 mychart.set_labels(ECOS_years)
 for i,state in enumerate(states):
-	vals = s_data_g.get_group(state).set_index('Year').loc[ECOS_years].value.astype(float) * inf_data_sel['correct'] / 1e6 
+	vals = s_data_g.get_group(state).set_index('Year').reindex(ECOS_years).value.astype(float) * inf_data_sel['correct'] / 1e6 
 	mychart.add_dataset(
 		vals, 
 		state,
@@ -93,8 +93,8 @@ mychart.jekyll_write('../docs/_includes/charts/ECOS_budget_peryear_bystate.html'
 mychart = chartjs.chart("ECOS Budget per capita by State Per Year", "Line", 640, 600)
 mychart.set_labels(ECOS_years)
 for i,state in enumerate(states):
-	statepop_data_sel = statepop_data[statepop_data['State']==state].T.loc[ECOS_years]
-	vals = s_data_g.get_group(state).set_index('Year').loc[ECOS_years].value.astype(float) * (inf_data_sel['correct'] / statepop_data_sel.T) / 1e3 
+	statepop_data_sel = statepop_data[statepop_data['State']==state].T.reindex(ECOS_years)
+	vals = s_data_g.get_group(state).set_index('Year').reindex(ECOS_years).value.astype(float) * (inf_data_sel['correct'] / statepop_data_sel.T) / 1e3 
 	mychart.add_dataset(
 		vals.astype(float).values[0], 
 		state,
@@ -120,7 +120,7 @@ s_data_g_fed = s_data[sel].groupby(['State'])
 mychart = chartjs.chart("ECOS Federal Contribution by State Per Year", "Line", 640, 600)
 mychart.set_labels(ECOS_years)
 for i,state in enumerate(states):
-	vals = s_data_g_fed.get_group(state).set_index('Year').loc[ECOS_years].value.astype(float)
+	vals = s_data_g_fed.get_group(state).set_index('Year').reindex(ECOS_years).value.astype(float)
 	mychart.add_dataset(
 		vals, 
 		state,

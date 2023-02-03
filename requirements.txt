@@ -1,0 +1,17 @@
+BeautifulSoup4 >= 4.7.1
+census >= 0.8.13
+folium >= 0.8.3
+lxml >= 4.3.2
+matplotlib >= 3.0.2
+numpy >= 1.16.2
+pandas >= 0.24.2
+pystan >= 3.0
+requests >= 2.21.0
+scipy >= 1.2.1
+shapely >= 1.6.4.post1
+sodapy >= 1.5.2
+# for pandas compatability, see https://stackoverflow.com/a/75289814
+sqlalchemy == 1.4.46
+unidecode >= 1.0.23
+us >= 1.0.0
+fsspec

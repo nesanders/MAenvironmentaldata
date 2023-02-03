@@ -29,8 +29,7 @@ python3 get_EEA_data_portal.py
 ## Assemble DB
 python3 assemble_db.py
 
-cd ..
-cd analysis
+cd ../analysis
 
 ## Update charts
 python3 SSA_wages_viz.py
