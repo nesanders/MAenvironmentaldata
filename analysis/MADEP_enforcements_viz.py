@@ -292,10 +292,10 @@ town_count = pd.Series(town_count)
 town_fines = pd.Series(town_fines)
 
 merge_census_df = pd.DataFrame(data={
-	'Population': c_data['population_acs52014'].loc[towns].values,
-	'Per capita income ($k)': c_data['per_capita_income_acs52014'].loc[towns].values / 1000,
-	'DEP enforcements': town_count.loc[towns].values,
-	'DEP penalties ($1,000)': town_fines.loc[towns].values / 1000,
+	'Population': c_data['population_acs52014'].reindex(towns).values,
+	'Per capita income ($k)': c_data['per_capita_income_acs52014'].reindex(towns).values / 1000,
+	'DEP enforcements': town_count.reindex(towns).values,
+	'DEP penalties ($1,000)': town_fines.reindex(towns).values / 1000,
 	}, index=towns)
 
 
