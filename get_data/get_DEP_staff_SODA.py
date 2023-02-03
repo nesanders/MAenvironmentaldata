@@ -11,14 +11,12 @@ Unfortunately, the Comptroller's site only provides data back
 to 2010, whereas other sources extend back to 2004.
 """
 
-from __future__ import absolute_import
-from __future__ import print_function
 import pandas as pd
 import sodapy
 import datetime
 import os
 
-DEP_slug = "rr3a-7twk"
+DEP_SLUG = "rr3a-7twk"
 
 ### Load credentials - you need to sign up for a SODA account to register a token
 with open('SECRET_SODA_token', 'r') as f:
@@ -46,8 +44,8 @@ query_limit=50000
 i = 0; df_d = []
 ## Page through records
 while i == 0 or len(df_d[-1]) == query_limit: 
-	print(i)
-	df_d += [client.get(DEP_slug, 
+	print(f'Loading record page: {i}')
+	df_d += [client.get(DEP_SLUG, 
 		where="department_division = 'DEPARTMENT OF ENVIRONMENTAL PROTECTION (EQE)'",
 		select = ','.join(list(fields.keys())),
 		limit = query_limit, offset=i
