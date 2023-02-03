@@ -9,11 +9,12 @@
 
             <canvas id="Overall DEP Staffing" height="480" width="640"></canvas>
             <script>
+                Chart.defaults.global.defaultFontSize = 12;
                 var chart_data = {
                 
                     data: {
-                        labels: ['2004.0', '2005.0', '2006.0', '2007.0', '2008.0', '2009.0', '2010.0', '2011.0', '2012.0', '2013.0', '2014.0', '2015.0', '2016.0', '2017.0', '2018.0'],
-                        datasets: [{'data': [0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 831.0, 762.0, 775.0, 797.0, 823.0, 832.0, 784.0, 768.0, 633.0], 'label': 'Full time DEP employees', 'backgroundColor': 'rgba(50,50,200,0.8)', 'stack': 'annual', 'yAxisID': 'y-axis-0'},{'data': [967, 946, 966, 1010, 1014, 1032, 1026, 901, 909, 927, 946, 942, 888, 843, 692], 'label': 'Total DEP employment', 'backgroundColor': 'rgba(50,50,50,0.5)', 'stack': 'annual', 'yAxisID': 'y-axis-0'}]
+                        labels: ['2004.0', '2005.0', '2006.0', '2007.0', '2008.0', '2009.0', '2010.0', '2011.0', '2012.0', '2013.0', '2014.0', '2015.0', '2016.0', '2017.0', '2018.0', '2019.0', '2020.0', '2021.0', '2022.0'],
+                        datasets: [{'data': [0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 831.0, 762.0, 775.0, 797.0, 823.0, 832.0, 784.0, 774.0, 687.0, 803.0, 752.0, 769.0, 694.0], 'label': 'Full time DEP employees', 'backgroundColor': 'rgba(50,50,200,0.8)', 'stack': 'annual', 'yAxisID': 'y-axis-0'},{'data': [967, 946, 966, 1010, 1014, 1032, 1026, 901, 909, 927, 946, 942, 888, 849, 747, 864, 802, 843, 757], 'label': 'Total DEP employment', 'backgroundColor': 'rgba(50,50,50,0.5)', 'stack': 'annual', 'yAxisID': 'y-axis-0'}]
                     },
                     type: 'bar',
                     options: {
@@ -25,7 +26,7 @@
                                     labelString: 'Total employment'
                                 },
                                 ticks: {
-                                    beginAtZero: true
+                                    beginAtZero: true, min: 0
                                 },
                                 "id": "y-axis-0",
                                 "position": "left",
@@ -37,7 +38,7 @@
                                     labelString: ''
                                 },
                                 ticks: {
-                                    beginAtZero: true
+                                    beginAtZero: true, min: 0
                                 },
                                 "id": "y-axis-1",
                                 "position": "right"
