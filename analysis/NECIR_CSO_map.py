@@ -16,7 +16,7 @@ conda install -c conda-forge c-compiler cxx-compiler
 """
 
 import json
-from typing import Any, Optional, Tuple
+from typing import Any, Callable, Optional, Tuple
 
 import chartjs
 import folium
@@ -690,7 +690,7 @@ def regression_plot_model_draws(fit_par: pd.DataFrame, col_label: str, plot_path
 # Main logic
 # -------------------------
 
-def main():
+def main(load_data: Callable=load_data):
     """Load all data and generate all plots and analysis.
     """
     # Clear out the fact file

@@ -41,9 +41,6 @@ def load_data_cso(pick_year: int=PICK_CSO_YEAR) -> pd.DataFrame:
     disk_engine = get_engine()
     data_cso = pd.read_sql_query(EEA_DP_CSO_QUERY, disk_engine)
     data_cso_trans = transform_data_cso(data_cso)
-    breakpoint()
-    #data_cso['2011_Discharges_MGal'] = data_cso['2011_Discharges_MGal'].apply(safe_float)
-    #data_cso['2011_Discharge_N'] = data_cso['2011_Discharge_N'].apply(safe_float)
     return data_cso
 
 def collapse(x: list) -> Any:
@@ -96,9 +93,18 @@ def transform_data_cso(data_cso: pd.DataFrame, pick_year: int=PICK_CSO_YEAR) -> 
     
     return df_per_outfall
 
+
+def load_data() -> Tuple[pd.DataFrame, pd.DataFrame]:
+    """Load all data, CSO and EJ.
+    """
+    print('Loading all data')
+    data_cso = load_data_cso()
+    data_ejs = load_data_ej()
+    return data_cso, data_ejs
+
 # -------------------------
 # Main logic
 # -------------------------
     
 if __name__ == '__main__':
-    main()
+    main(load_data)
