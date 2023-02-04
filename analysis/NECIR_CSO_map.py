@@ -118,22 +118,24 @@ def load_data() -> Tuple[pd.DataFrame, pd.DataFrame]:
 # -------------------------
 
 @memory.cache
-def assign_cso_data_to_census_blocks(data_cso: pd.DataFrame, geo_blockgroups_dict: dict):
-    """Operate on `data_cso` in place to add a new 'BlockGroup' column assigning CSOs to Census block groups.
+def assign_cso_data_to_census_blocks(data_cso: pd.DataFrame, geo_blockgroups_dict: dict) -> pd.DataFrame:
+    """Add a new 'BlockGroup' column to `data_cso` assigning CSOs to Census block groups.
     """
     print('Assigning CSO data to census blocks')
+    data_out = data_cso.copy()
     ## Loop over Census block groups
-    data_cso['BlockGroup'] = np.nan
+    data_out['BlockGroup'] = np.nan
     ## Loop over CSO outfalls
-    for cso_i in range(len(data_cso)):
-        point = Point(data_cso.iloc[cso_i]['Longitude'], data_cso.iloc[cso_i]['Latitude'])
+    for cso_i in range(len(data_out)):
+        point = Point(data_out.iloc[cso_i]['Longitude'], data_out.iloc[cso_i]['Latitude'])
         for feature in geo_blockgroups_dict:
             polygon = shape(feature['geometry'])
             if polygon.contains(point):
-                data_cso.loc[cso_i, 'BlockGroup'] = feature['properties']['GEOID'] 
+                data_out.loc[cso_i, 'BlockGroup'] = feature['properties']['GEOID'] 
         ## Warn if a blockgroup was not found
-        if data_cso.loc[cso_i, 'BlockGroup'] is np.nan:
+        if data_out.loc[cso_i, 'BlockGroup'] is np.nan:
             print(('No block group found for CSO #', str(cso_i)))
+    return data_out
 
 def pick_non_null(x: list) -> Optional[str]:
     """Return the first non-null value from a list, if any.
@@ -676,7 +678,7 @@ def main():
     geo_blockgroups, geo_towns_dict, geo_watersheds_dict, geo_blockgroups_dict = get_geo_files()
     data_cso, data_ejs = load_data()
     # TODO should add these results to the database, not just the local (`memory`) cache
-    assign_cso_data_to_census_blocks(data_cso, geo_blockgroups_dict)
+    data_cso = assign_cso_data_to_census_blocks(data_cso, geo_blockgroups_dict)
     data_ejs = assign_ej_data_to_geo_bins(data_ejs, geo_towns_dict, geo_watersheds_dict, geo_blockgroups_dict)
     data_ins_g_bg, data_ins_g_muni_j, data_ins_g_ws_j, data_egs_merge, df_watershed_level, df_town_level = apply_pop_weighted_avg(data_cso, data_ejs)
     
