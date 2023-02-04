@@ -49,7 +49,9 @@ GEO_TOWNS_PATH = GEO_PATH + 'TOWNSSURVEY_POLYM_geojson_simple.json'
 GEO_WATERSHEDS_PATH = GEO_PATH + 'watshdp1_geojson_simple.json'
 GEO_BLOCKGROUPS_PATH = GEO_PATH + 'cb_2017_25_bg_500k.json'
 
-global memory
+# Create a joblib cache
+memory = Memory('necir_cso_data_cache', verbose=1)
+    
 
 # -------------------------
 # Convenience functions
@@ -675,9 +677,6 @@ def main():
     """
     # Clear out the fact file
     open(FACT_FILE, 'w').close()
-    # Create a joblib cache
-    global memory
-    memory = Memory('necir_cso_data_cache', verbose=1)
     
     # Data ETL
     geo_towns_dict, geo_watersheds_dict, geo_blockgroups_dict = get_geo_files()
