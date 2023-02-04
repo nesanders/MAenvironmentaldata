@@ -16,6 +16,7 @@ from typing import Any, Tuple
 
 import chartjs
 import folium
+from joblib import Parallel, delayed
 import matplotlib as mpl
 from matplotlib import pyplot as plt
 from matplotlib import cm
@@ -48,7 +49,7 @@ def hex2rgb(hexcode: str) -> Tuple[int, int, int]:
     rgb = tuple(int(hexcode.lstrip('#')[i:i+2], 16) for i in (0, 2, 4))
     return rgb
 
-def get_geo_files() -> Tuple[dict, dict, dict]:
+def get_geo_files() -> Tuple[dict, dict, dict, dict]:
     """Load and return geo json files.
     """
     geo_path = '../docs/assets/geo_json/'
@@ -60,7 +61,7 @@ def get_geo_files() -> Tuple[dict, dict, dict]:
     geo_watersheds_dict = json.load(open(geo_watersheds))['features']
     geo_blockgroups_dict = json.load(open(geo_blockgroups))['features']
     
-    return geo_towns_dict, geo_watersheds_dict, geo_blockgroups_dict
+    return geo_blockgroups, geo_towns_dict, geo_watersheds_dict, geo_blockgroups_dict
 
 def safe_float(x: Any) -> float:
     """Return a float if possible, or else a np.nan value.
@@ -128,12 +129,37 @@ def assign_cso_data_to_census_blocks(data_cso: pd.DataFrame, geo_blockgroups_dic
         if data_cso.loc[cso_i, 'BlockGroup'] is np.nan:
             print(('No block group found for CSO #', str(cso_i)))
 
+def pick_non_null(x: list) -> Optional[str]:
+    """Return the first non-null value from a list, if any.
+    """
+    for val in x:
+        if val is not None:
+            return val
+    return None
+
+def lookup_town_for_feature(town_feature, point) -> Optional[str]:
+    """Try to assign an input feature to a town
+    """
+    town_polygon = shape(town_feature['geometry'])
+    if town_polygon.contains(point):
+        return town_feature['properties']['TOWN'] 
+    else:
+        return None
+
+def lookup_watershed_for_feature(watershed_feature, point) -> Optional[str]:
+    """Try to assign an input feature to a watershed
+    """
+    town_polygon = shape(town_feature['geometry'])
+    if town_polygon.contains(point):
+        return town_feature['properties']['TOWN'] 
+    else:
+        return None
 
 def assign_ej_data_to_geo_bins(data_ejs: pd.DataFrame, geo_towns_dict: dict, geo_watersheds_dict: dict, 
     geo_blockgroups_dict: dict) -> pd.DataFrame:
     """Return a version of `data_ejs` with added 'Town' and 'Watershed' columns.
     
-    TODO this is very slow (minutes) and could surely be sped up, at least through parallelization.
+    NOTE: this runs in parallel with `joblib`
     """
     print('Adding Town and Watershed labels to EJ data')
     ## Loop over Census block groups
@@ -145,18 +171,14 @@ def assign_ej_data_to_geo_bins(data_ejs: pd.DataFrame, geo_towns_dict: dict, geo
         polygon = shape(feature['geometry'])
         point = polygon.centroid
         ## Loop over towns
-        for town_feature in geo_towns_dict:
-            town_polygon = shape(town_feature['geometry'])
-            if town_polygon.contains(point):
-                bg_mapping.loc[feature['properties']['GEOID'], 'Town'] = town_feature['properties']['TOWN'] 
+        bg_mapping.loc[feature['properties']['GEOID'], 'Town'] = pick_non_null(
+            Parallel(n_jobs=-1)(delayed(lookup_town_for_feature)(town_feature, point) for town_feature in geo_towns_dict))
         ## Warn if a town was not found
         if bg_mapping.loc[feature['properties']['GEOID'], 'Town'] is np.nan:
             print(f'No Town found for GEOID {feature['properties']['GEOID']}')
         ## Loop over watersheds
-        for watershed_feature in geo_watersheds_dict:
-            watershed_polygon = shape(watershed_feature['geometry'])
-            if watershed_polygon.contains(point):
-                bg_mapping.loc[feature['properties']['GEOID'], 'Watershed'] = watershed_feature['properties']['NAME'] 
+        bg_mapping.loc[feature['properties']['GEOID'], 'Watershed'] = pick_non_null(
+            Parallel(n_jobs=-1)(delayed(lookup_watershed_for_feature)(watershed_feature, point) for watershed_feature in geo_watersheds_dict))
         ## Warn if a watershed was not found
         if bg_mapping.loc[feature['properties']['GEOID'], 'Watershed'] is np.nan:
             print(f'No Watershed found for GEOID {feature['properties']['GEOID']}')
@@ -640,7 +662,7 @@ def main():
     """Load all data and generate all plots and analysis.
     """
     # Data ETL
-    geo_towns_dict, geo_watersheds_dict, geo_blockgroups_dict = get_geo_files()
+    geo_blockgroups, geo_towns_dict, geo_watersheds_dict, geo_blockgroups_dict = get_geo_files()
     data_cso, data_ejs = load_data()
     # TODO should cache these results and add them to the database
     assign_cso_data_to_census_blocks(data_cso, geo_blockgroups_dict)
