@@ -16,3 +16,4 @@ unidecode >= 1.0.23
 us >= 1.0.0
 fsspec
 joblib >= 1.2.0
+openpyxl ?= 3.1.0
