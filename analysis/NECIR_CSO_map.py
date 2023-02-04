@@ -39,6 +39,8 @@ FACT_FILE = '../docs/data/facts_NECIR_CSO.yml'
 # Location to write out map and figure assets
 OUT_PATH = '../docs/assets/maps/'
 FIG_PATH = '../docs/assets/figures/'
+OUTPUT_SLUG_DATASET = 'NECIR'
+OUTPUT_SLUG = f'{OUTPUT_SLUG_DATASET}_CSO'
 
 # Location of Stan regression model code
 STAN_MODEL_CODE = open('discharge_regression_model.stan').read()
@@ -48,6 +50,15 @@ GEO_PATH = '../docs/assets/geo_json/'
 GEO_TOWNS_PATH = GEO_PATH + 'TOWNSSURVEY_POLYM_geojson_simple.json'
 GEO_WATERSHEDS_PATH = GEO_PATH + 'watshdp1_geojson_simple.json'
 GEO_BLOCKGROUPS_PATH = GEO_PATH + 'cb_2017_25_bg_500k.json'
+
+# Column names
+DISCHARGE_VOL_COL = '2011_Discharges_MGal'
+DISCHARGE_COUNT_COL = '2011_Discharge_N'
+LATITUDE_COL = 'Latitude'
+LONGITUDE_COL = 'Longitude'
+
+# Year represented by the CSO dataset
+CSO_DATA_YEAR = 2011
 
 # Create a joblib cache
 memory = Memory('necir_cso_data_cache', verbose=1)
@@ -97,8 +108,8 @@ def load_data_cso() -> pd.DataFrame:
     print('Loading NECIR 2011 CSO data')
     disk_engine = get_engine()
     data_cso = pd.read_sql_query('SELECT * FROM NECIR_CSO_2011', disk_engine)
-    data_cso['2011_Discharges_MGal'] = data_cso['2011_Discharges_MGal'].apply(safe_float)
-    data_cso['2011_Discharge_N'] = data_cso['2011_Discharge_N'].apply(safe_float)
+    data_cso[DISCHARGE_VOL_COL] = data_cso[DISCHARGE_VOL_COL].apply(safe_float)
+    data_cso[DISCHARGE_COUNT_COL] = data_cso[DISCHARGE_COUNT_COL].apply(safe_float)
     return data_cso
 
 def load_data_ej() -> pd.DataFrame:
@@ -132,7 +143,7 @@ def assign_cso_data_to_census_blocks(data_cso: pd.DataFrame, geo_blockgroups_dic
     data_out['BlockGroup'] = np.nan
     ## Loop over CSO outfalls
     for cso_i in range(len(data_out)):
-        point = Point(data_out.iloc[cso_i]['Longitude'], data_out.iloc[cso_i]['Latitude'])
+        point = Point(data_out.iloc[cso_i][LONGITUDE_COL], data_out.iloc[cso_i][LATITUDE_COL])
         for feature in geo_blockgroups_dict:
             polygon = shape(feature['geometry'])
             if polygon.contains(point):
@@ -210,7 +221,7 @@ def pop_weighted_average(x, cols):
 
 @memory.cache
 def apply_pop_weighted_avg(data_cso: pd.DataFrame, data_ejs: pd.DataFrame, 
-    discharge_vol_col: str='2011_Discharges_MGal', discharge_count_col: str='2011_Discharge_N'
+    discharge_vol_col: str=DISCHARGE_VOL_COL, discharge_count_col: str=DISCHARGE_COUNT_COL
 ) -> Tuple[pd.DataFrame, pd.DataFrame, pd.DataFrame, pd.DataFrame, pd.DataFrame]:
     """Calculate population weighted averages for EJ characteristics, averaging over block group, watershed, and town.
     """
@@ -257,10 +268,10 @@ def make_map_discharge_volumes(data_cso: pd.DataFrame, geo_watersheds_dict: dict
     map_1.choropleth(
         geo_data=GEO_BLOCKGROUPS_PATH, 
         name='Census Block Groups',
-        data=data_ins_g_bg['2011_Discharges_MGal'],
+        data=data_ins_g_bg[DISCHARGE_VOL_COL],
         key_on='feature.properties.GEOID',
-        legend_name='Block Group: Total volume of discharge (2011; Millions of gallons)',
-        threshold_scale = list(np.nanpercentile(data_ins_g_bg['2011_Discharges_MGal'], [0,25,50,75,100])),  
+        legend_name=f'Block Group: Total volume of discharge ({CSO_DATA_YEAR}; Millions of gallons)',
+        threshold_scale = list(np.nanpercentile(data_ins_g_bg[DISCHARGE_VOL_COL], [0,25,50,75,100])),  
         fill_color='BuGn', fill_opacity=0.7, line_opacity=0.3, highlight=True,
         )
 
@@ -268,10 +279,10 @@ def make_map_discharge_volumes(data_cso: pd.DataFrame, geo_watersheds_dict: dict
     map_1.choropleth(
         geo_data=GEO_TOWNS_PATH, 
         name='Municipalities',
-        data=data_ins_g_muni_j['2011_Discharges_MGal'],
+        data=data_ins_g_muni_j[DISCHARGE_VOL_COL],
         key_on='feature.properties.TOWN',
-        legend_name='Municipality: Total volume of discharge (2011; Millions of gallons)',
-        threshold_scale = [0]+list(np.nanpercentile(data_ins_g_muni_j['2011_Discharges_MGal'][data_ins_g_muni_j['2011_Discharges_MGal'] > 0], [25,50,75,100])),  
+        legend_name='Municipality: Total volume of discharge ({CSO_DATA_YEAR}; Millions of gallons)',
+        threshold_scale = [0]+list(np.nanpercentile(data_ins_g_muni_j[DISCHARGE_VOL_COL][data_ins_g_muni_j[DISCHARGE_VOL_COL] > 0], [25,50,75,100])),  
         fill_color='PuRd', fill_opacity=0.7, line_opacity=0.3, highlight=True,
         )
 
@@ -279,10 +290,10 @@ def make_map_discharge_volumes(data_cso: pd.DataFrame, geo_watersheds_dict: dict
     map_1.choropleth(
         geo_data=GEO_WATERSHEDS_PATH, 
         name='Watersheds',
-        data=data_ins_g_ws_j['2011_Discharges_MGal'],
+        data=data_ins_g_ws_j[DISCHARGE_VOL_COL],
         key_on='feature.properties.NAME',
-        legend_name='Watershed: Total volume of discharge (2011; Millions of gallons)',
-        threshold_scale = list(np.nanpercentile(data_ins_g_ws_j['2011_Discharges_MGal'], [0,25,50,75,100])),  
+        legend_name='Watershed: Total volume of discharge ({CSO_DATA_YEAR}; Millions of gallons)',
+        threshold_scale = list(np.nanpercentile(data_ins_g_ws_j[DISCHARGE_VOL_COL], [0,25,50,75,100])),  
         fill_color='PuBu', fill_opacity=0.7, line_opacity=0.3, highlight=True,
         )
 
@@ -296,20 +307,20 @@ def make_map_discharge_volumes(data_cso: pd.DataFrame, geo_watersheds_dict: dict
         <p>
         Discharge Body: {body}<br>
         Municipality: {muni}<br>
-        Discharge volume (2011): {vol} (Millions of gallons)<br>
-        Discharge frequency (2011): {N} discharges<br>
+        Discharge volume ({CSO_DATA_YEAR}): {vol} (Millions of gallons)<br>
+        Discharge frequency ({CSO_DATA_YEAR}): {N} discharges<br>
         </p>
         """.format(
                 address = cso['Nearest_Pipe_Address'],
                 body = cso['DischargesBody'],
                 muni = cso['Municipality'],
-                vol = cso['2011_Discharges_MGal'],
-                N = cso['2011_Discharges_MGal'],
+                vol = cso[DISCHARGE_VOL_COL],
+                N = cso[DISCHARGE_VOL_COL],
             )
         iframe = folium.IFrame(html=html, width=400, height=200)
         popup = folium.Popup(iframe, max_width=500)
         folium.RegularPolygonMarker(
-                location=(cso['Latitude'], cso['Longitude']), 
+                location=(cso[LATITUDE_COL], cso[LONGITUDE_COL]), 
                 popup=popup, 
                 number_of_sides=8, 
                 radius=6, 
@@ -331,7 +342,7 @@ def make_map_discharge_volumes(data_cso: pd.DataFrame, geo_watersheds_dict: dict
     folium.LayerControl(collapsed=False).add_to(map_1)
 
     ## Save to html
-    map_1.save(OUT_PATH+'NECIR_CSO_map_total.html')
+    map_1.save(OUT_PATH + f'{OUTPUT_SLUG}_map_total.html')
 
 
 def make_map_ej_characteristics(data_egs_merge: pd.DataFrame, data_cso: pd.DataFrame, 
@@ -395,20 +406,20 @@ def make_map_ej_characteristics(data_egs_merge: pd.DataFrame, data_cso: pd.DataF
             <p>
             Discharge Body: {body}<br>
             Municipality: {muni}<br>
-            Discharge volume (2011): {vol} (Millions of gallons)<br>
-            Discharge frequency (2011): {N} discharges<br>
+            Discharge volume ({CSO_DATA_YEAR}): {vol} (Millions of gallons)<br>
+            Discharge frequency ({CSO_DATA_YEAR}): {N} discharges<br>
             </p>
             """.format(
                     address = cso['Nearest_Pipe_Address'],
                     body = cso['DischargesBody'],
                     muni = cso['Municipality'],
-                    vol = cso['2011_Discharges_MGal'],
-                    N = cso['2011_Discharges_MGal'],
+                    vol = cso[DISCHARGE_VOL_COL],
+                    N = cso[DISCHARGE_VOL_COL],
                 )
             iframe = folium.IFrame(html=html, width=400, height=200)
             popup = folium.Popup(iframe, max_width=500)
             folium.RegularPolygonMarker(
-                    location=(cso['Latitude'], cso['Longitude']), 
+                    location=(cso[LATITUDE_COL], cso[LONGITUDE_COL]), 
                     popup=popup, 
                     number_of_sides=8, 
                     radius=6, 
@@ -430,7 +441,7 @@ def make_map_ej_characteristics(data_egs_merge: pd.DataFrame, data_cso: pd.DataF
         folium.LayerControl(collapsed=False).add_to(map_2)
 
         ## Save to html
-        map_2.save(OUT_PATH+'NECIR_CSO_map_EJ_'+col+'.html')
+        map_2.save(OUT_PATH + f'{OUTPUT_SLUG}_map_EJ_'+col+'.html')
 
 
 
@@ -496,7 +507,7 @@ def weight_mean(x, weights, N=1000):
     return np.mean(avgs), np.std(avgs)
 
 def make_chart_ej_cso_comparison(data_egs_merge: pd.DataFrame, data_ins_g_ws_j: pd.DataFrame, 
-    df_watershed_level: pd.DataFrame, outpath: str='../docs/_includes/charts/NECIR_EJSCREEN_correlation_bywatershed_{}.html'):
+    df_watershed_level: pd.DataFrame, outpath: str=f'../docs/_includes/charts/{OUTPUT_SLUG_DATASET}_EJSCREEN_correlation_bywatershed_{}.html'):
     """Comparison of EJ and CSO characteristics by geographic areas
     """
     print('Making comparison plot of EJ and CSO data')
@@ -510,7 +521,7 @@ def make_chart_ej_cso_comparison(data_egs_merge: pd.DataFrame, data_ins_g_ws_j: 
         l = l[pd.isnull(l) == 0]
         pop = data_egs_merge.groupby('Watershed')['ACSTOTPOP'].sum().loc[l].values
         x = df_watershed_level[col].loc[l].values
-        y = data_ins_g_ws_j['2011_Discharges_MGal'].loc[l].values
+        y = data_ins_g_ws_j[DISCHARGE_VOL_COL].loc[l].values
 
         ## Calculate binned values
         x_bins = np.nanpercentile(x, list(np.linspace(0,100,5)))
@@ -557,7 +568,7 @@ def make_chart_ej_cso_comparison(data_egs_merge: pd.DataFrame, data_ins_g_ws_j: 
         ## Set overall chart parameters
         mychart.set_params(
             JSinline = 0, 
-            ylabel = 'Total volume of discharge (2011; Millions of gallons)', 
+            ylabel = 'Total volume of discharge ({CSO_DATA_YEAR}; Millions of gallons)', 
             xlabel=col_label,
             yaxis_type='linear',    
             y2nd = 0,
@@ -612,7 +623,7 @@ def fit_stan_model(col: str, data_egs_merge: pd.DataFrame, df_watershed_level: p
     l = l[pd.isnull(l) == 0]
     pop = data_egs_merge.groupby('Watershed')['ACSTOTPOP'].sum().loc[l].values
     x = df_watershed_level[col].loc[l].values
-    y = data_ins_g_ws_j['2011_Discharges_MGal'].loc[l].values
+    y = data_ins_g_ws_j[DISCHARGE_VOL_COL].loc[l].values
     
     ## Fit Stan model
     stan_dat = {
@@ -668,7 +679,7 @@ def regression_plot_model_draws(fit_par: pd.DataFrame, col_label: str, plot_path
                  label = 'Posterior draw' if i==0 else None, zorder=1)
     
     plt.xlabel(col_label, wrap=True)
-    plt.ylabel('CSO discharge (2011; Mgal)')
+    plt.ylabel('CSO discharge ({CSO_DATA_YEAR}; Mgal)')
     
     plt.scatter(x, y, marker='o', c=pop_data / 1e3, cmap=cm.Blues, label='Watersheds', zorder=2)
     plt.colorbar(label='Population (1000s)')
@@ -709,8 +720,8 @@ def main():
         ('LINGISOPCT', 'Fraction of population in households whose adults speak English less than "very well"'),
         ):
         fit, fit_par, stan_dat, pop_data = fit_stan_model(col, data_egs_merge, df_watershed_level, data_ins_g_ws_j)
-        regression_plot_beta_posterior(fit_par, col, plot_path=FIG_PATH+'NECIR_CSO_stanfit_beta_'+col+'.png')
-        regression_plot_model_draws(fit_par, col_label, FIG_PATH+'NECIR_CSO_stanfit_'+col+'.png', stan_dat, pop_data)
+        regression_plot_beta_posterior(fit_par, col, plot_path=FIG_PATH + f'{OUTPUT_SLUG}_stanfit_beta_'+col+'.png')
+        regression_plot_model_draws(fit_par, col_label, FIG_PATH + f'{OUTPUT_SLUG}_stanfit_'+col+'.png', stan_dat, pop_data)
     
 if __name__ == '__main__':
     main()

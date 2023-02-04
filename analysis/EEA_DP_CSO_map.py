@@ -8,16 +8,24 @@ from typing import Any, Tuple
 import numpy as np
 import pandas as pd
 
-from NECIR_CSO_map import get_engine, load_data_ej
+from NECIR_CSO_map import *
 
-## Establish file to export facts
-FACT_FILE = '../docs/data/facts_EEA_DP_CSO.yml'
 # Which year's CSO data to load
 PICK_CSO_YEAR = 2022
+
 # Pick one of two possible report types, 'Public Notification Report' or 'Verified Data Report'
 PICK_REPORT_TYPE = 'Verified Data Report'
 # Path to file with lat long data from the state
 CSO_LAT_LONG_DATA_FILE = '../docs/data/ma_permittee-and-outfall-lists.xlsx'
+
+# Overwrite some globals from NECIR_CSO_map
+CSO_DATA_YEAR = PICK_CSO_YEAR
+DISCHARGE_VOL_COL = 'DischargeVolume'
+DISCHARGE_COUNT_COL = 'DischargeCount'
+LATITUDE_COL = 'latitude'
+LONGITUDE_COL = 'longitude'
+FACT_FILE = '../docs/data/facts_EEA_DP_CSO.yml'
+OUTPUT_SLUG = 'MAEEADP_CSO'
 
 # -------------------------
 # Data loading functions
@@ -56,12 +64,15 @@ def transform_data_cso(data_cso: pd.DataFrame, pick_year: int=PICK_CSO_YEAR) -> 
     sum_cols = ['volumnOfEvent']
     # Columns to be aggregated with a collapse function
     collapse_cols = ['Year', 'permiteeClass', 'permiteeName', 'permiteeId', 'municipality', 'location', 'waterBody', 'waterBodyDescription']
+    # Columns to be counted
+    count_cols = ['incidentId']
     
     # NOTE ther are tree possible eventTypes: 'CSO – Treated', 'CSO – UnTreated', 'Partially Treated – Blended', 'Partially Treated – Other'
     # We choose to sum over all of them
     
     aggregators = {col: np.sum for col in sum_cols}
     aggregators.update({col: collapse for col in collapse_cols})
+    aggregators.update({col: len for col in count_cols})
     
     print(f'Aggregating CSO data for year {pick_year}')
     df_pick = data_cso[data_cso['Year'].astype(int) == pick_year]
@@ -79,27 +90,15 @@ def transform_data_cso(data_cso: pd.DataFrame, pick_year: int=PICK_CSO_YEAR) -> 
     
     df_agg = df_pick.groupby(agg_cols).agg(aggregators)
     df_per_outfall = df_agg.loc[PICK_REPORT_TYPE].reset_index()
-    breakpoint()
+    
+    # Rename some columns
+    df_per_outfall.rename(columns={'volumnOfEvent': 'DischargeVolume', 'incidentId': 'DischargeCount'}, inplace=True)
     
     return df_per_outfall
-
-def load_data() -> Tuple[pd.DataFrame, pd.DataFrame]:
-    """Load all data, CSO and EJ.
-    """
-    print('Loading all data')
-    data_cso = load_data_cso()
-    data_ejs = load_data_ej()
-    return data_cso, data_ejs
 
 # -------------------------
 # Main logic
 # -------------------------
-
-
-def main():
-    """Load all data and generate all plots and analysis.
-    """
-    data_cso, data_ejs = load_data()
     
 if __name__ == '__main__':
     main()
