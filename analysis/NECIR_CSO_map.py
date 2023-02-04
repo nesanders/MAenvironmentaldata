@@ -53,14 +53,6 @@ def hex2rgb(hexcode: str) -> Tuple[int, int, int]:
     rgb = tuple(int(hexcode.lstrip('#')[i:i+2], 16) for i in (0, 2, 4))
     return rgb
 
-def get_geo_files() -> Tuple[dict, dict, dict, dict]:
-    """Load and return geo json files.
-    """
-    geo_towns_dict = json.load(open(geo_towns_path))['features']
-    geo_watersheds_dict = json.load(open(geo_watershed_path))['features']
-    geo_blockgroups_dict = json.load(open(geo_blockgroups_path))['features']
-    return geo_towns_dict, geo_watersheds_dict, geo_blockgroups_dict
-
 def safe_float(x: Any) -> float:
     """Return a float if possible, or else a np.nan value.
     """
@@ -120,6 +112,89 @@ def pop_weighted_average(x, cols):
         out += [np.sum(w * x[col].values) / np.sum(w)]
     return pd.Series(data = out, index=cols)
 
+@memory.cache
+def _assign_cso_data_to_census_blocks(data_cso: pd.DataFrame, geo_blockgroups_dict: dict, 
+    longitude_col: str, latitude_col: str) -> pd.DataFrame:
+    """Add a new 'BlockGroup' column to `data_cso` assigning CSOs to Census block groups.
+    """
+    print('Assigning CSO data to census blocks')
+    data_out = data_cso.copy()
+    ## Loop over Census block groups
+    data_out['BlockGroup'] = np.nan
+    ## Loop over CSO outfalls
+    for cso_i in range(len(data_out)):
+        point = Point(data_out.iloc[cso_i][longitude_col], data_out.iloc[cso_i][latitude_col])
+        for feature in geo_blockgroups_dict:
+            polygon = shape(feature['geometry'])
+            if polygon.contains(point):
+                data_out.loc[cso_i, 'BlockGroup'] = feature['properties']['GEOID'] 
+        ## Warn if a blockgroup was not found
+        if data_out.loc[cso_i, 'BlockGroup'] is np.nan:
+            print(('No block group found for CSO #', str(cso_i)))
+    return data_out
+
+@memory.cache
+def assign_ej_data_to_geo_bins(data_ejs: pd.DataFrame, geo_towns_dict: dict, geo_watersheds_dict: dict, 
+    geo_blockgroups_dict: dict) -> pd.DataFrame:
+    """Return a version of `data_ejs` with added 'Town' and 'Watershed' columns.
+    
+    NOTE: this runs in parallel with `joblib`
+    TODO joblib doesn't actually seem to be achieving a lot of speedup; it would probably work better if done in batches
+    """
+    print('Adding Town and Watershed labels to EJ data')
+    ## Loop over Census block groups
+    bg_mapping = pd.DataFrame(
+        index=[geo_blockgroups_dict[i]['properties']['GEOID'] for i in range(len(geo_blockgroups_dict))], 
+        columns=['Town','Watershed'])
+    ## Loop over block groups
+    for feature in geo_blockgroups_dict:
+        polygon = shape(feature['geometry'])
+        point = polygon.centroid
+        ## Loop over towns
+        bg_mapping.loc[feature['properties']['GEOID'], 'Town'] = pick_non_null(
+            Parallel(n_jobs=-1)(delayed(lookup_town_for_feature)(town_feature, point) for town_feature in geo_towns_dict))
+        ## Warn if a town was not found
+        if bg_mapping.loc[feature['properties']['GEOID'], 'Town'] is np.nan:
+            print(f"No Town found for GEOID {feature['properties']['GEOID']}")
+        ## Loop over watersheds
+        bg_mapping.loc[feature['properties']['GEOID'], 'Watershed'] = pick_non_null(
+            Parallel(n_jobs=-1)(delayed(lookup_watershed_for_feature)(watershed_feature, point) for watershed_feature in geo_watersheds_dict))
+        ## Warn if a watershed was not found
+        if bg_mapping.loc[feature['properties']['GEOID'], 'Watershed'] is np.nan:
+            print(f"No Watershed found for GEOID {feature['properties']['GEOID']}")
+
+    data_ejs = pd.merge(data_ejs, bg_mapping, left_on = 'ID', right_index=True, how='left')
+    return data_ejs
+
+@memory.cache
+def _apply_pop_weighted_avg( data_cso: pd.DataFrame, data_ejs: pd.DataFrame, discharge_vol_col: str, discharge_count_col: str
+) -> Tuple[pd.DataFrame, pd.DataFrame, pd.DataFrame, pd.DataFrame, pd.DataFrame]:
+    """Calculate population weighted averages for EJ characteristics, averaging over block group, watershed, and town.
+    """
+    print('Calculating population weighted averages')
+    ## Get counts by block group
+    data_ins_g_bg = data_cso.groupby('BlockGroup').sum()[[discharge_vol_col, discharge_count_col]]
+    data_ins_g_bg_j = pd.merge(data_ins_g_bg, data_ejs, left_index=True, right_on ='ID', how='left')
+    data_egs_merge = pd.merge(
+        data_ins_g_bg_j.groupby('ID')[[discharge_count_col, discharge_vol_col]].sum(),
+        data_ejs, left_index = True, right_on='ID', how='outer')
+
+    ## Get counts by municipality
+    data_ins_g_muni_j = pd.merge(data_cso, data_ejs, left_on='BlockGroup', right_on='ID', how='outer')\
+                        .groupby('Town').sum()[[discharge_vol_col, discharge_count_col]].fillna(0)
+
+    ## Get counts by watershed
+    data_ins_g_ws_j = pd.merge(data_cso, data_ejs, left_on='BlockGroup', right_on='ID', how='outer')\
+                        .groupby('Watershed').sum()[[discharge_vol_col, discharge_count_col]].fillna(0)
+
+    df_watershed_level = data_egs_merge.groupby('Watershed').apply(
+        lambda x: pop_weighted_average(x, ['MINORPCT', 'LOWINCPCT', 'LINGISOPCT', 'OVER64PCT', 'VULSVI6PCT']))
+
+    df_town_level = data_egs_merge.groupby('Town').apply(
+        lambda x: pop_weighted_average(x, ['MINORPCT', 'LOWINCPCT', 'LINGISOPCT', 'OVER64PCT', 'VULSVI6PCT']))
+    
+    return data_ins_g_bg, data_ins_g_muni_j, data_ins_g_ws_j, data_egs_merge, df_watershed_level, df_town_level
+
 # -------------------------
 # Analysis class
 # -------------------------
@@ -168,6 +243,15 @@ class CSOAnalysis():
     # Data loading methods
     # -------------------------
     
+    def get_geo_files(self) -> Tuple[dict, dict, dict, dict]:
+        """Load and return geo json files.
+        """
+        geo_towns_dict = json.load(open(self.geo_towns_path))['features']
+        geo_watersheds_dict = json.load(open(self.geo_watershed_path))['features']
+        geo_blockgroups_dict = json.load(open(self.geo_blockgroups_path))['features']
+        return geo_towns_dict, geo_watersheds_dict, geo_blockgroups_dict
+
+    
     def load_data_cso(self) -> pd.DataFrame:
         """Load NECIR 2011 CSO data
         """
@@ -200,88 +284,23 @@ class CSOAnalysis():
     # Data transforming methods
     # -------------------------
 
-    @memory.cache
     def assign_cso_data_to_census_blocks(self, data_cso: pd.DataFrame, geo_blockgroups_dict: dict) -> pd.DataFrame:
         """Add a new 'BlockGroup' column to `data_cso` assigning CSOs to Census block groups.
-        """
-        print('Assigning CSO data to census blocks')
-        data_out = data_cso.copy()
-        ## Loop over Census block groups
-        data_out['BlockGroup'] = np.nan
-        ## Loop over CSO outfalls
-        for cso_i in range(len(data_out)):
-            point = Point(data_out.iloc[cso_i][self.longitude_col], data_out.iloc[cso_i][self.latitude_col])
-            for feature in geo_blockgroups_dict:
-                polygon = shape(feature['geometry'])
-                if polygon.contains(point):
-                    data_out.loc[cso_i, 'BlockGroup'] = feature['properties']['GEOID'] 
-            ## Warn if a blockgroup was not found
-            if data_out.loc[cso_i, 'BlockGroup'] is np.nan:
-                print(('No block group found for CSO #', str(cso_i)))
-        return data_out
-    
-    @memory.cache
-    @staticmethod
-    def assign_ej_data_to_geo_bins(data_ejs: pd.DataFrame, geo_towns_dict: dict, geo_watersheds_dict: dict, 
-        geo_blockgroups_dict: dict) -> pd.DataFrame:
-        """Return a version of `data_ejs` with added 'Town' and 'Watershed' columns.
         
-        NOTE: this runs in parallel with `joblib`
-        TODO joblib doesn't actually seem to be achieving a lot of speedup; it would probably work better if done in batches
+        This is a thin wrapper around _assign_cso_data_to_census_blocks that facilitates using memory.cache by abstracting
+        the state-dependent attributes of self.
         """
-        print('Adding Town and Watershed labels to EJ data')
-        ## Loop over Census block groups
-        bg_mapping = pd.DataFrame(
-            index=[geo_blockgroups_dict[i]['properties']['GEOID'] for i in range(len(geo_blockgroups_dict))], 
-            columns=['Town','Watershed'])
-        ## Loop over block groups
-        for feature in geo_blockgroups_dict:
-            polygon = shape(feature['geometry'])
-            point = polygon.centroid
-            ## Loop over towns
-            bg_mapping.loc[feature['properties']['GEOID'], 'Town'] = pick_non_null(
-                Parallel(n_jobs=-1)(delayed(lookup_town_for_feature)(town_feature, point) for town_feature in geo_towns_dict))
-            ## Warn if a town was not found
-            if bg_mapping.loc[feature['properties']['GEOID'], 'Town'] is np.nan:
-                print(f"No Town found for GEOID {feature['properties']['GEOID']}")
-            ## Loop over watersheds
-            bg_mapping.loc[feature['properties']['GEOID'], 'Watershed'] = pick_non_null(
-                Parallel(n_jobs=-1)(delayed(lookup_watershed_for_feature)(watershed_feature, point) for watershed_feature in geo_watersheds_dict))
-            ## Warn if a watershed was not found
-            if bg_mapping.loc[feature['properties']['GEOID'], 'Watershed'] is np.nan:
-                print(f"No Watershed found for GEOID {feature['properties']['GEOID']}")
-
-        data_ejs = pd.merge(data_ejs, bg_mapping, left_on = 'ID', right_index=True, how='left')
-        return data_ejs
+        return _assign_cso_data_to_census_blocks(data_cso, geo_blockgroups_dict, self.latitude_col, self.longitude_col)
     
     @memory.cache
     def apply_pop_weighted_avg(self, data_cso: pd.DataFrame, data_ejs: pd.DataFrame
     ) -> Tuple[pd.DataFrame, pd.DataFrame, pd.DataFrame, pd.DataFrame, pd.DataFrame]:
         """Calculate population weighted averages for EJ characteristics, averaging over block group, watershed, and town.
+                
+        This is a thin wrapper around _apply_pop_weighted_avg that facilitates using memory.cache by abstracting
+        the state-dependent attributes of self.
         """
-        print('Calculating population weighted averages')
-        ## Get counts by block group
-        data_ins_g_bg = data_cso.groupby('BlockGroup').sum()[[self.discharge_vol_col, self.discharge_count_col]]
-        data_ins_g_bg_j = pd.merge(data_ins_g_bg, data_ejs, left_index=True, right_on ='ID', how='left')
-        data_egs_merge = pd.merge(
-            data_ins_g_bg_j.groupby('ID')[[self.discharge_count_col, self.discharge_vol_col]].sum(),
-            data_ejs, left_index = True, right_on='ID', how='outer')
-
-        ## Get counts by municipality
-        data_ins_g_muni_j = pd.merge(data_cso, data_ejs, left_on='BlockGroup', right_on='ID', how='outer')\
-                            .groupby('Town').sum()[[self.discharge_vol_col, self.discharge_count_col]].fillna(0)
-
-        ## Get counts by watershed
-        data_ins_g_ws_j = pd.merge(data_cso, data_ejs, left_on='BlockGroup', right_on='ID', how='outer')\
-                            .groupby('Watershed').sum()[[self.discharge_vol_col, self.discharge_count_col]].fillna(0)
-
-        df_watershed_level = data_egs_merge.groupby('Watershed').apply(
-            lambda x: pop_weighted_average(x, ['MINORPCT', 'LOWINCPCT', 'LINGISOPCT', 'OVER64PCT', 'VULSVI6PCT']))
-
-        df_town_level = data_egs_merge.groupby('Town').apply(
-            lambda x: pop_weighted_average(x, ['MINORPCT', 'LOWINCPCT', 'LINGISOPCT', 'OVER64PCT', 'VULSVI6PCT']))
-        
-        return data_ins_g_bg, data_ins_g_muni_j, data_ins_g_ws_j, data_egs_merge, df_watershed_level, df_town_level
+        return _apply_pop_weighted_avg(data_cso, data_ejs, self.discharge_vol_col, self.discharge_count_col)
 
     # -------------------------
     # Mapping functions
@@ -720,11 +739,11 @@ class CSOAnalysis():
         open(self.fact_file, 'w').close()
         
         # Data ETL
-        self.geo_towns_dict, self.geo_watersheds_dict, self.geo_blockgroups_dict = get_geo_files()
+        self.geo_towns_dict, self.geo_watersheds_dict, self.geo_blockgroups_dict = self.get_geo_files()
         self.data_cso, self.data_ejs = self.load_data()
         # TODO should add these results to the database, not just the local (`memory`) cache
         self.data_cso = self.assign_cso_data_to_census_blocks(self.data_cso, self.geo_blockgroups_dict)
-        self.data_ejs = self.assign_ej_data_to_geo_bins(self.data_ejs, self.geo_towns_dict, self.geo_watersheds_dict, geo_blockgroups_dict)
+        self.data_ejs = assign_ej_data_to_geo_bins(self.data_ejs, self.geo_towns_dict, self.geo_watersheds_dict, geo_blockgroups_dict)
         self.data_ins_g_bg, self.data_ins_g_muni_j, self.data_ins_g_ws_j, self.data_egs_merge, self.df_watershed_level, self.df_town_level = \
             self.apply_pop_weighted_avg(self.data_cso, self.data_ejs)
         
