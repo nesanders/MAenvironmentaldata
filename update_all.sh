@@ -38,6 +38,7 @@ python3 MADEP_budget_viz.py
 python3 MADEP_enforcements_viz.py
 python3 ECOS_budgets_viz.py
 python3 NECIR_CSO_map.py
+python get_eea_dp_cso.py
 
 ## Exclude large files from git repository
 cd ..

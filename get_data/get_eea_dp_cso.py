@@ -59,6 +59,7 @@ def get_data() -> pd.DataFrame:
     df = run_query()
     df['incidentDate'] = pd.to_datetime(df['incidentDate'])
     df['submittedDate'] = pd.to_datetime(df['submittedDate'])
+    df['Year'] = df['incidentDate'].apply(lambda x: x.year)
     return df
 
 def write_data(df: pd.DataFrame):
