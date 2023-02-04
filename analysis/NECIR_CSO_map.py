@@ -30,17 +30,26 @@ from shapely.geometry import shape, Point
 import sqlalchemy
 import stan
 
+# Colors to use in plots
 COLOR_CYCLE = [c['color'] for c in list(mpl.rcParams['axes.prop_cycle'])]
-FIG_PATH = '../docs/assets/figures/'
 
 ## Establish file to export facts
 FACT_FILE = '../docs/data/facts_NECIR_CSO.yml'
 
+# Location to write out map and figure assets
 OUT_PATH = '../docs/assets/maps/'
+FIG_PATH = '../docs/assets/figures/'
 
+# Location of Stan regression model code
 STAN_MODEL_CODE = open('discharge_regression_model.stan').read()
 
-memory = Memory('necir_cso_data_cache', verbose=1)
+# Location of input geo json data
+GEO_PATH = '../docs/assets/geo_json/'
+GEO_TOWNS_PATH = GEO_PATH + 'TOWNSSURVEY_POLYM_geojson_simple.json'
+GEO_WATERSHEDS_PATH = GEO_PATH + 'watshdp1_geojson_simple.json'
+GEO_BLOCKGROUPS_PATH = GEO_PATH + 'cb_2017_25_bg_500k.json'
+
+global memory
 
 # -------------------------
 # Convenience functions
@@ -57,16 +66,10 @@ def hex2rgb(hexcode: str) -> Tuple[int, int, int]:
 def get_geo_files() -> Tuple[dict, dict, dict, dict]:
     """Load and return geo json files.
     """
-    geo_path = '../docs/assets/geo_json/'
-    geo_towns = geo_path+'TOWNSSURVEY_POLYM_geojson_simple.json'
-    geo_watersheds = geo_path+'watshdp1_geojson_simple.json'
-    geo_blockgroups = geo_path+'cb_2017_25_bg_500k.json'
-
-    geo_towns_dict = json.load(open(geo_towns))['features']
-    geo_watersheds_dict = json.load(open(geo_watersheds))['features']
-    geo_blockgroups_dict = json.load(open(geo_blockgroups))['features']
-    
-    return geo_blockgroups, geo_towns_dict, geo_watersheds_dict, geo_blockgroups_dict
+    geo_towns_dict = json.load(open(GEO_TOWNS_PATH))['features']
+    geo_watersheds_dict = json.load(open(GEO_WATERSHEDS_PATH))['features']
+    geo_blockgroups_dict = json.load(open(GEO_BLOCKGROUPS_PATH))['features']
+    return geo_towns_dict, geo_watersheds_dict, geo_blockgroups_dict
 
 def safe_float(x: Any) -> float:
     """Return a float if possible, or else a np.nan value.
@@ -235,8 +238,7 @@ def apply_pop_weighted_avg(data_cso: pd.DataFrame, data_ejs: pd.DataFrame,
 # Mapping functions
 # -------------------------
 
-def make_map_discharge_volumes(geo_blockgroups: dict, data_ins_g_bg: pd.DataFrame, 
-    data_ins_g_muni_j: pd.DataFrame, data_ins_g_ws_j: pd.DataFrame):
+def make_map_discharge_volumes(data_ins_g_bg: pd.DataFrame, data_ins_g_muni_j: pd.DataFrame, data_ins_g_ws_j: pd.DataFrame):
     """
     Map of discharge volumes with layers for watershed, town, and census block group with CSO points
     """
@@ -250,7 +252,7 @@ def make_map_discharge_volumes(geo_blockgroups: dict, data_ins_g_bg: pd.DataFram
 
     ## Draw choropleth layer for census blocks
     map_1.choropleth(
-        geo_data=geo_blockgroups, 
+        geo_data=GEO_BLOCKGROUPS_PATH, 
         name='Census Block Groups',
         data=data_ins_g_bg['2011_Discharges_MGal'],
         key_on='feature.properties.GEOID',
@@ -261,7 +263,7 @@ def make_map_discharge_volumes(geo_blockgroups: dict, data_ins_g_bg: pd.DataFram
 
     ## Draw Choropleth layer for towns
     map_1.choropleth(
-        geo_data=geo_towns, 
+        geo_data=GEO_TOWNS_PATH, 
         name='Municipalities',
         data=data_ins_g_muni_j['2011_Discharges_MGal'],
         key_on='feature.properties.TOWN',
@@ -329,8 +331,7 @@ def make_map_discharge_volumes(geo_blockgroups: dict, data_ins_g_bg: pd.DataFram
     map_1.save(OUT_PATH+'NECIR_CSO_map_total.html')
 
 
-def make_map_ej_characteristics(geo_blockgroups: dict, geo_towns: dict, geo_watersheds: dict, 
-    data_egs_merge: pd.DataFrame, data_cso: pd.DataFrame):
+def make_map_ej_characteristics(data_egs_merge: pd.DataFrame, data_cso: pd.DataFrame):
     """Map of EJ characteristics with layers for watershed, town, and census block group with CSO points
     """
     print('Making map of EJ characteristics')
@@ -349,7 +350,7 @@ def make_map_ej_characteristics(geo_blockgroups: dict, geo_towns: dict, geo_wate
 
         ## Draw choropleth layer for census blocks
         map_2.choropleth(
-            geo_data=geo_blockgroups, 
+            geo_data=GEO_BLOCKGROUPS_PATH, 
             name='Census Block Groups',
             data=data_egs_merge[col],
             key_on='feature.properties.GEOID',
@@ -360,7 +361,7 @@ def make_map_ej_characteristics(geo_blockgroups: dict, geo_towns: dict, geo_wate
 
         ## Draw Choropleth layer for towns
         map_2.choropleth(
-            geo_data=geo_towns, 
+            geo_data=GEO_TOWNS_PATH, 
             name='Municipalities',
             data=df_town_level[col],
             key_on='feature.properties.TOWN',
@@ -371,7 +372,7 @@ def make_map_ej_characteristics(geo_blockgroups: dict, geo_towns: dict, geo_wate
 
         ## Draw Choropleth layer for watersheds
         map_2.choropleth(
-            geo_data=geo_watersheds, 
+            geo_data=GEO_WATERSHEDS_PATH, 
             name='Watersheds',
             data=df_watershed_level[col],
             key_on='feature.properties.NAME',
@@ -672,10 +673,14 @@ def regression_plot_model_draws(fit_par: pd.DataFrame, col_label: str, plot_path
 def main():
     """Load all data and generate all plots and analysis.
     """
+    # Clear out the fact file
     open(FACT_FILE, 'w').close()
+    # Create a joblib cache
+    global memory
+    memory = Memory('necir_cso_data_cache', verbose=1)
     
     # Data ETL
-    geo_blockgroups, geo_towns_dict, geo_watersheds_dict, geo_blockgroups_dict = get_geo_files()
+    geo_towns_dict, geo_watersheds_dict, geo_blockgroups_dict = get_geo_files()
     data_cso, data_ejs = load_data()
     # TODO should add these results to the database, not just the local (`memory`) cache
     data_cso = assign_cso_data_to_census_blocks(data_cso, geo_blockgroups_dict)
@@ -683,8 +688,8 @@ def main():
     data_ins_g_bg, data_ins_g_muni_j, data_ins_g_ws_j, data_egs_merge, df_watershed_level, df_town_level = apply_pop_weighted_avg(data_cso, data_ejs)
     
     # Make maps
-    make_map_discharge_volumes(geo_blockgroups, data_ins_g_bg, data_ins_g_muni_j, data_ins_g_ws_j)
-    make_map_ej_characteristics(geo_blockgroups, geo_towns, geo_watersheds, data_egs_merge, data_cso)
+    make_map_discharge_volumes(data_ins_g_bg, data_ins_g_muni_j, data_ins_g_ws_j)
+    make_map_ej_characteristics(data_egs_merge, data_cso)
     
     # Make charts
     make_chart_summary_ej_characteristics_watershed(df_watershed_level)

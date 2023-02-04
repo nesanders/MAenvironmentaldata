@@ -20,7 +20,7 @@ def load_data_cso(pick_year: int=PICK_CSO_YEAR) -> pd.DataFrame:
     """
     print(f'Loading EEA Data Portal CSO data for {pick_year}')
     disk_engine = get_engine()
-    data_cso = pd.read_sql_query('SELECT * FROM NECIR_CSO_2011', disk_engine)
+    data_cso = pd.read_sql_query('SELECT * FROM MAEEADP_CSO', disk_engine)
     data_cso['2011_Discharges_MGal'] = data_cso['2011_Discharges_MGal'].apply(safe_float)
     data_cso['2011_Discharge_N'] = data_cso['2011_Discharge_N'].apply(safe_float)
     return data_cso
