@@ -50,11 +50,12 @@ def transform_data_cso(data_cso: pd.DataFrame, pick_year: int=PICK_CSO_YEAR) -> 
     """Transform the loaded MA EEA DP CSO data by aggregating results for `pick_year` over outfalls.
     """
     # Columns to be aggregated over
-    agg_cols = ['reporterClass', 'outfallId']
+    # NOTE we aggregate over lat/long because there are several outfalls named '001' that have different lat/longs
+    agg_cols = ['reporterClass', 'outfallId', 'latitude', 'longitude']
     # Columns to be aggregated with a sum function
     sum_cols = ['volumnOfEvent']
     # Columns to be aggregated with a collapse function
-    collapse_cols = ['Year', 'permiteeClass', 'permiteeName', 'permiteeId', 'municipality', 'location', 'latitude', 'longitude', 'waterBody', 'waterBodyDescription']
+    collapse_cols = ['Year', 'permiteeClass', 'permiteeName', 'permiteeId', 'municipality', 'location', 'waterBody', 'waterBodyDescription']
     
     # NOTE ther are tree possible eventTypes: 'CSO – Treated', 'CSO – UnTreated', 'Partially Treated – Blended', 'Partially Treated – Other'
     # We choose to sum over all of them
