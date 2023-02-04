@@ -3,6 +3,10 @@ NECIR CSO data.
 
 NOTE - this code was updated in 2023 to use pystan 3 conventions
 
+This code uses joblib.Memory to do local disk caching of expensive operations (geo polygon lookups to assign census 
+blocks to town and watershed units). If you rerun the script locally, it should hit the cache and skip those
+computations.
+
 NOTE - if you run into pystan errors when executing this script in a conda environment, try using 
 [this solution](https://github.com/stan-dev/pystan/issues/294#issuecomment-988791438)
 to update the C compilers in the env.
@@ -31,7 +35,6 @@ FIG_PATH = '../docs/assets/figures/'
 
 ## Establish file to export facts
 FACT_FILE = '../docs/data/facts_NECIR_CSO.yml'
-open(FACT_FILE, 'w').close()
 
 OUT_PATH = '../docs/assets/maps/'
 
@@ -224,7 +227,7 @@ def apply_pop_weighted_avg(data_cso: pd.DataFrame, data_ejs: pd.DataFrame,
 
     df_town_level = data_egs_merge.groupby('Town').apply(lambda x: pop_weighted_average(x, ['MINORPCT', 'LOWINCPCT', 'LINGISOPCT', 'OVER64PCT', 'VULSVI6PCT']))
     
-    return data_ins_g_muni_j, data_ins_g_ws_j, data_egs_merge, df_watershed_level, df_town_level
+    return data_ins_g_bg, data_ins_g_muni_j, data_ins_g_ws_j, data_egs_merge, df_watershed_level, df_town_level
 
 # -------------------------
 # Mapping functions
@@ -667,13 +670,15 @@ def regression_plot_model_draws(fit_par: pd.DataFrame, col_label: str, plot_path
 def main():
     """Load all data and generate all plots and analysis.
     """
+    open(FACT_FILE, 'w').close()
+    
     # Data ETL
     geo_blockgroups, geo_towns_dict, geo_watersheds_dict, geo_blockgroups_dict = get_geo_files()
     data_cso, data_ejs = load_data()
-    # TODO should cache these results and add them to the database
+    # TODO should add these results to the database, not just the local (`memory`) cache
     assign_cso_data_to_census_blocks(data_cso, geo_blockgroups_dict)
     data_ejs = assign_ej_data_to_geo_bins(data_ejs, geo_towns_dict, geo_watersheds_dict, geo_blockgroups_dict)
-    data_ins_g_muni_j, data_ins_g_ws_j, data_egs_merge, df_watershed_level, df_town_level = apply_pop_weighted_avg(data_cso, data_ejs)
+    data_ins_g_bg, data_ins_g_muni_j, data_ins_g_ws_j, data_egs_merge, df_watershed_level, df_town_level = apply_pop_weighted_avg(data_cso, data_ejs)
     
     # Make maps
     make_map_discharge_volumes(geo_blockgroups, data_ins_g_bg, data_ins_g_muni_j, data_ins_g_ws_j)
