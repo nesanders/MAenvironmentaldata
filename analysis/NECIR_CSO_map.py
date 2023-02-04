@@ -240,7 +240,8 @@ def apply_pop_weighted_avg(data_cso: pd.DataFrame, data_ejs: pd.DataFrame,
 # Mapping functions
 # -------------------------
 
-def make_map_discharge_volumes(data_ins_g_bg: pd.DataFrame, data_ins_g_muni_j: pd.DataFrame, data_ins_g_ws_j: pd.DataFrame):
+def make_map_discharge_volumes(data_cso: pd.DataFrame, geo_watersheds_dict: dict, data_ins_g_bg: pd.DataFrame, 
+    data_ins_g_muni_j: pd.DataFrame, data_ins_g_ws_j: pd.DataFrame):
     """
     Map of discharge volumes with layers for watershed, town, and census block group with CSO points
     """
@@ -276,7 +277,7 @@ def make_map_discharge_volumes(data_ins_g_bg: pd.DataFrame, data_ins_g_muni_j: p
 
     ## Draw Choropleth layer for watersheds
     map_1.choropleth(
-        geo_data=geo_watersheds, 
+        geo_data=GEO_WATERSHEDS_PATH, 
         name='Watersheds',
         data=data_ins_g_ws_j['2011_Discharges_MGal'],
         key_on='feature.properties.NAME',
@@ -333,7 +334,8 @@ def make_map_discharge_volumes(data_ins_g_bg: pd.DataFrame, data_ins_g_muni_j: p
     map_1.save(OUT_PATH+'NECIR_CSO_map_total.html')
 
 
-def make_map_ej_characteristics(data_egs_merge: pd.DataFrame, data_cso: pd.DataFrame):
+def make_map_ej_characteristics(data_egs_merge: pd.DataFrame, data_cso: pd.DataFrame, 
+    df_town_level: pd.DataFrame, df_watershed_level: pd.DataFrame, geo_watersheds_dict: dict):
     """Map of EJ characteristics with layers for watershed, town, and census block group with CSO points
     """
     print('Making map of EJ characteristics')
@@ -687,13 +689,13 @@ def main():
     data_ins_g_bg, data_ins_g_muni_j, data_ins_g_ws_j, data_egs_merge, df_watershed_level, df_town_level = apply_pop_weighted_avg(data_cso, data_ejs)
     
     # Make maps
-    make_map_discharge_volumes(data_ins_g_bg, data_ins_g_muni_j, data_ins_g_ws_j)
-    make_map_ej_characteristics(data_egs_merge, data_cso)
+    make_map_discharge_volumes(data_cso, geo_watersheds_dict, data_ins_g_bg, data_ins_g_muni_j, data_ins_g_ws_j)
+    make_map_ej_characteristics(data_egs_merge, data_cso, df_town_level, df_watershed_level, geo_watersheds_dict)
     
     # Make charts
     make_chart_summary_ej_characteristics_watershed(df_watershed_level)
     make_chart_summary_ej_characteristics_town(df_town_level)
-    make_chart_ej_cso_comparison(data_egs_merge, data_ins_g_ws_j, df_watershed_level, outpath)
+    make_chart_ej_cso_comparison(data_egs_merge, data_ins_g_ws_j, df_watershed_level)
     
     # Regression modeling
     for col, col_label in (
