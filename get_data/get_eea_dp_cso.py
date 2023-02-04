@@ -32,7 +32,7 @@ def _query_page(page: int, query_params: Optional[dict[str, str]]=None) -> Optio
     query_params['pageNumber'] = page
     query_string = '&'.join(f'{key}={val}' for key, val in query_params.items())
     r = requests.get(API_BASE_URL + query_string)
-    df = pd.read_json(r.json()['results'])
+    df = pd.concat(pd.Series(c) for c in r.json()['results'])
     if len(df) > 0:
         return df
     else:
