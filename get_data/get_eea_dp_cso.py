@@ -27,24 +27,28 @@ def _query_page(page: int, query_params: Optional[dict[str, str]]=None) -> Optio
 
     If the resulting query is empty, return Non
     """
+    print(f'Querying for page {page}')
     if query_params is None:
         query_params = {}
     query_params['pageNumber'] = page
     query_string = '&'.join(f'{key}={val}' for key, val in query_params.items())
     r = requests.get(API_BASE_URL + query_string)
-    df = pd.concat(pd.Series(c) for c in r.json()['results'])
-    if len(df) > 0:
-        return df
+    if len(r.json()['results']) > 0:
+        return pd.concat(pd.Series(c) for c in r.json()['results'])
     else:
         return None
 
 def run_query() -> pd.DataFrame:
     """Run a full query, paging through results and returning a combined DataFrame.
     """
+    print('Running full query')
     page = 0
     result_dfs = []
     while True:
-        result_dfs.append(_query_page(page))
+        df = _query_page(page)
+        if df is None:
+            break
+        result_dfs.append(df)
         page += 1
     return pd.concat(result_dfs)
 
@@ -56,6 +60,7 @@ def get_data() -> pd.DataFrame:
 def write_data(df: pd.DataFrame):
     """Write data to a local table for integration with AMEND.
     """
+    print('Writing out queries data')
     df.to_csv('../docs/data/EEADP_CSO.csv', index=True)
     ## Print a sample of the file as an example
     df.sample(n=10).to_csv('../docs/data/EEADP_CSO_sample.csv', index=0)
