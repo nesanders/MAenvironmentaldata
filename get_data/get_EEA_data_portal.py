@@ -63,66 +63,58 @@ def query_iterate(table_name: str, req_size: int=100000, verbose: bool=True):
 	
 	return df
 
+def main():
+	"""Query for data, persist it, and report the update
+	"""
+	# Get data
+	## Query data for each table
+	table_data = {}
+	for tab in API_TABLES:
+		table_data[tab] = query_iterate(tab)
 
-##########################
-## Get data
-##########################
-
-## Query data for each table
-table_data = {}
-for tab in API_TABLES:
-	table_data[tab] = query_iterate(tab)
-
-
-## Write out, but treat large tables separately
-## Only one table (drinkingWater) is >10MB as of 08/2017, so we handle this as a special case.
-## Could also use `size_MB = os.path.getsize('../docs/data/EEADP_' + tab + '.csv')/1024/1024` to get file size
-for tab in API_TABLES:
-	## Print a sample of the file as an example
-	table_data[tab].sample(n=10).to_csv('../docs/data/EEADP_' + tab + '_sample.csv', index=0)
-	
-	if tab != 'drinkingWater': 
-		table_data[tab].to_csv('../docs/data/EEADP_' + tab + '.csv', index=0)
-	else:
-		## Send to Google object store
-		table_data[tab].to_csv('EEADP_' + tab + '.csv', encoding='utf-8', index=0)
-		os.system('gsutil cp EEADP_' + tab + '.csv gs://ns697-amend/EEADP_' + tab + '.csv')
-		
-		## Include some special summary statistics tables
-		## ---		
-		## Most recent report for each chemical for each site
-		## This still ends up being ~20% of the original size, so larger than desired
-		#table_data[tab].sort_values('CollectedDate', inplace=True)
-		#df_dw_last = table_data[tab].groupby(['ChemicalName','PWSName','LocationName']).last()
-		
-		# Tests per year per PWS per contaminant group per raw/finished
-		## This still ends up being ~40% of the original size, so larger than desired
-		table_data[tab]['CollectedDate'] = pd.to_datetime(table_data[tab]['CollectedDate'], errors='coerce')
-		table_data[tab]['Year'] = table_data[tab]['CollectedDate'].apply(lambda x: x.year)
-		df_dw_annual_group = table_data[tab].groupby(['Year','PWSName', 'ContaminantGroup','RaworFinished']).agg({'Result': pd.Series.count})
-		df_dw_annual_group.to_csv('../docs/data/EEADP_' + tab + '_annual.csv', index=1)
+	## Write out, but treat large tables separately
+	## Only one table (drinkingWater) is >10MB as of 08/2017, so we handle this as a special case.
+	## Could also use `size_MB = os.path.getsize('../docs/data/EEADP_' + tab + '.csv')/1024/1024` to get file size
+	for tab in API_TABLES:
 		## Print a sample of the file as an example
-		df_dw_annual_group.sample(n=10).to_csv('../docs/data/EEADP_' + tab + '_annual_sample.csv', index=1)
+		table_data[tab].sample(n=10).to_csv('../docs/data/EEADP_' + tab + '_sample.csv', index=0)
+		
+		if tab != 'drinkingWater': 
+			table_data[tab].to_csv('../docs/data/EEADP_' + tab + '.csv', index=0)
+		else:
+			## Send to Google object store
+			table_data[tab].to_csv('EEADP_' + tab + '.csv', encoding='utf-8', index=0)
+			os.system('gsutil cp EEADP_' + tab + '.csv gs://ns697-amend/EEADP_' + tab + '.csv')
+			
+			## Include some special summary statistics tables
+			## ---		
+			## Most recent report for each chemical for each site
+			## This still ends up being ~20% of the original size, so larger than desired
+			#table_data[tab].sort_values('CollectedDate', inplace=True)
+			#df_dw_last = table_data[tab].groupby(['ChemicalName','PWSName','LocationName']).last()
+			
+			# Tests per year per PWS per contaminant group per raw/finished
+			## This still ends up being ~40% of the original size, so larger than desired
+			table_data[tab]['CollectedDate'] = pd.to_datetime(table_data[tab]['CollectedDate'], errors='coerce')
+			table_data[tab]['Year'] = table_data[tab]['CollectedDate'].apply(lambda x: x.year)
+			df_dw_annual_group = table_data[tab].groupby(['Year','PWSName', 'ContaminantGroup','RaworFinished']).agg({'Result': pd.Series.count})
+			df_dw_annual_group.to_csv('../docs/data/EEADP_' + tab + '_annual.csv', index=1)
+			## Print a sample of the file as an example
+			df_dw_annual_group.sample(n=10).to_csv('../docs/data/EEADP_' + tab + '_annual_sample.csv', index=1)
 
-		## Tests per year per PWS per chemical per raw/finished
-		### This still ends up being ~40% of the original size, so larger than desired
-		#df_dw_annual = table_data[tab].groupby(['Year','PWSName', 'ChemicalName','RaworFinished']).agg({'ContaminantGroup': lambda x: x.iloc[0], 'Result': pd.Series.count})
+			## Tests per year per PWS per chemical per raw/finished
+			### This still ends up being ~40% of the original size, so larger than desired
+			#df_dw_annual = table_data[tab].groupby(['Year','PWSName', 'ChemicalName','RaworFinished']).agg({'ContaminantGroup': lambda x: x.iloc[0], 'Result': pd.Series.count})
 
+	# Archive PDF help files
+	os.system('wget http://eeaonline.eea.state.ma.us/Portal/documents/General%20Query%20Search%20FAQs.pdf')
+	os.system('mv "General Query Search FAQs.pdf" ../docs/assets/PDFs/EEADP_FAQ.pdf')
+	os.system('wget http://eeaonline.eea.state.ma.us/Portal/documents/Terms%20and%20Definitions%20for%20EEA.pdf')
+	os.system('mv "Terms and Definitions for EEA.pdf" ../docs/assets/PDFs/EEADP_Definitions.pdf')
 
-##########################
-## Archive PDF help files
-##########################
+	# Report last update
+	with open('../docs/data/ts_update_EEADP.yml', 'w') as f:
+		f.write('updated: '+str(datetime.datetime.now()).split('.')[0]+'\n')
 
-os.system('wget http://eeaonline.eea.state.ma.us/Portal/documents/General%20Query%20Search%20FAQs.pdf')
-os.system('mv "General Query Search FAQs.pdf" ../docs/assets/PDFs/EEADP_FAQ.pdf')
-os.system('wget http://eeaonline.eea.state.ma.us/Portal/documents/Terms%20and%20Definitions%20for%20EEA.pdf')
-os.system('mv "Terms and Definitions for EEA.pdf" ../docs/assets/PDFs/EEADP_Definitions.pdf')
-
-
-##########################
-## Report last update
-##########################
-
-with open('../docs/data/ts_update_EEADP.yml', 'w') as f:
-	f.write('updated: '+str(datetime.datetime.now()).split('.')[0]+'\n')
-
+if __name__ == '__main__':
+	main()
