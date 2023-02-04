@@ -668,7 +668,7 @@ class CSOAnalysis():
     #print(summary)
     
     @staticmethod
-    def regression_plot_beta_posterior(fit_par: pd.DataFrame, col: str, plot_path: str, fact_file: str=fact_file):
+    def regression_plot_beta_posterior(fit_par: pd.DataFrame, col: str, plot_path: str):
         """Plot a beta posterior histogram for the regression model. Also output some summary statistics
         to the `fact_file`.
         """
@@ -720,7 +720,7 @@ class CSOAnalysis():
         open(self.fact_file, 'w').close()
         
         # Data ETL
-        self.geo_towns_dict, self.geo_watersheds_dict, self.geo_blockgroups_dict = self.get_geo_files()
+        self.geo_towns_dict, self.geo_watersheds_dict, self.geo_blockgroups_dict = get_geo_files()
         self.data_cso, self.data_ejs = self.load_data()
         # TODO should add these results to the database, not just the local (`memory`) cache
         self.data_cso = self.assign_cso_data_to_census_blocks(self.data_cso, self.geo_blockgroups_dict)
@@ -753,4 +753,4 @@ class CSOAnalysis():
     
 if __name__ == '__main__':
     csoa = CSOAnalysis()
-    csoa().run_analysis()
+    csoa.run_analysis()
