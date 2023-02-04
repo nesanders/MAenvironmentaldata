@@ -16,7 +16,7 @@ from typing import Any, Optional, Tuple
 
 import chartjs
 import folium
-from joblib import Parallel, delayed
+from joblib import Parallel, delayed, Memory
 import matplotlib as mpl
 from matplotlib import pyplot as plt
 from matplotlib import cm
@@ -36,6 +36,8 @@ open(FACT_FILE, 'w').close()
 OUT_PATH = '../docs/assets/maps/'
 
 STAN_MODEL_CODE = open('discharge_regression_model.stan').read()
+
+memory = Memory('necir_cso_data_cache', verbose=1)
 
 # -------------------------
 # Convenience functions
@@ -90,7 +92,7 @@ def load_data_cso() -> pd.DataFrame:
     data_cso['2011_Discharges_MGal'] = data_cso['2011_Discharges_MGal'].apply(safe_float)
     data_cso['2011_Discharge_N'] = data_cso['2011_Discharge_N'].apply(safe_float)
     return data_cso
-    
+
 def load_data_ej() -> pd.DataFrame:
     """Load EJSCREEN data
     """
@@ -112,6 +114,7 @@ def load_data() -> Tuple[pd.DataFrame, pd.DataFrame]:
 # Data transforming functions
 # -------------------------
 
+@memory.cache
 def assign_cso_data_to_census_blocks(data_cso: pd.DataFrame, geo_blockgroups_dict: dict):
     """Operate on `data_cso` in place to add a new 'BlockGroup' column assigning CSOs to Census block groups.
     """
@@ -149,17 +152,19 @@ def lookup_town_for_feature(town_feature, point) -> Optional[str]:
 def lookup_watershed_for_feature(watershed_feature, point) -> Optional[str]:
     """Try to assign an input feature to a watershed
     """
-    town_polygon = shape(town_feature['geometry'])
+    town_polygon = shape(watershed_feature['geometry'])
     if town_polygon.contains(point):
-        return town_feature['properties']['TOWN'] 
+        return watershed_feature['properties']['NAME']
     else:
         return None
 
+@memory.cache
 def assign_ej_data_to_geo_bins(data_ejs: pd.DataFrame, geo_towns_dict: dict, geo_watersheds_dict: dict, 
     geo_blockgroups_dict: dict) -> pd.DataFrame:
     """Return a version of `data_ejs` with added 'Town' and 'Watershed' columns.
     
     NOTE: this runs in parallel with `joblib`
+    TODO joblib doesn't actually seem to be achieving a lot of speedup; it would probably work better if done in batches
     """
     print('Adding Town and Watershed labels to EJ data')
     ## Loop over Census block groups
@@ -193,6 +198,7 @@ def pop_weighted_average(x, cols):
         out += [np.sum(w * x[col].values) / np.sum(w)]
     return pd.Series(data = out, index=cols)
 
+@memory.cache
 def apply_pop_weighted_avg(data_cso: pd.DataFrame, data_ejs: pd.DataFrame, 
     discharge_vol_col: str='2011_Discharges_MGal', discharge_count_col: str='2011_Discharge_N'
 ) -> Tuple[pd.DataFrame, pd.DataFrame, pd.DataFrame, pd.DataFrame, pd.DataFrame]:
