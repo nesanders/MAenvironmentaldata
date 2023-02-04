@@ -17,8 +17,10 @@ import pandas as pd
 API_BASE_URL = 'https://eeaonline.eea.state.ma.us/dep/CSOAPI/api/Incident/GetIncidentsBySearchFields/?pageSize=50&'
 
 def update_query_time():
+    """Update the yml file that indicates the time of last query.
+    """
     with open('../docs/data/ts_update_EEADP_CSO.yml', 'w') as f:
-		f.write('updated: '+str(datetime.datetime.now()).split('.')[0]+'\n')
+        f.write('updated: '+str(datetime.datetime.now()).split('.')[0]+'\n')
 
 def _query_page(page: int, query_params: Optional[dict[str, str]]=None) -> Optional[pd.DataFrame]:
     """Query for and return a single page of API results.
@@ -41,7 +43,7 @@ def run_query() -> pd.DataFrame:
     """
     page = 0
     result_dfs = []
-    while true
+    while True:
         result_dfs.append(_query_page(page))
         page += 1
     return pd.concat(result_dfs)
