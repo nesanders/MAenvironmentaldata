@@ -1,5 +1,5 @@
 """
-This script queries the MA Energy and Environemtal Affairs Data Portal, publicly viewable at:
+This script queries the MA Energy and Environmental Affairs Data Portal, publicly viewable at:
 http://eeaonline.eea.state.ma.us/portal#!/home
 """
 
