@@ -12,7 +12,7 @@ conda install -c conda-forge c-compiler cxx-compiler
 """
 
 import json
-from typing import Any
+from typing import Any, Tuple
 
 import chartjs
 import folium
@@ -40,7 +40,7 @@ STAN_MODEL_CODE = open('discharge_regression_model.stan').read()
 # Convenience functions
 # -------------------------
 
-def hex2rgb(hexcode: str) -> tuple[int, int, int]:
+def hex2rgb(hexcode: str) -> Tuple[int, int, int]:
     """Convert a hex color to RGB tuple)
     See http://www.psychocodes.in/rgb-to-hex-conversion-and-hex-to-rgb-conversion-in-python.html
     See https://stackoverflow.com/a/29643643
@@ -48,7 +48,7 @@ def hex2rgb(hexcode: str) -> tuple[int, int, int]:
     rgb = tuple(int(hexcode.lstrip('#')[i:i+2], 16) for i in (0, 2, 4))
     return rgb
 
-def get_geo_files() -> tuple[dict, dict, dict]:
+def get_geo_files() -> Tuple[dict, dict, dict]:
     """Load and return geo json files.
     """
     geo_path = '../docs/assets/geo_json/'
@@ -77,11 +77,13 @@ def safe_float(x: Any) -> float:
 def get_engine() -> sqlalchemy.engine.Engine:
     """Establish a sqlite database connection
     """
+    print('Opening SQL engine')
     return sqlalchemy.create_engine('sqlite:///../get_data/AMEND.db')
 
 def load_data_cso() -> pd.DataFrame:
     """Load NECIR 2011 CSO data
     """
+    print('Loading NECIR 2011 CSO data')
     disk_engine = get_engine()
     data_cso = pd.read_sql_query('SELECT * FROM NECIR_CSO_2011', disk_engine)
     data_cso['2011_Discharges_MGal'] = data_cso['2011_Discharges_MGal'].apply(safe_float)
@@ -91,14 +93,16 @@ def load_data_cso() -> pd.DataFrame:
 def load_data_ej() -> pd.DataFrame:
     """Load EJSCREEN data
     """
+    print('Loading EJSCREEN data')
     disk_engine = get_engine()
     data_ejs = pd.read_sql_query('SELECT * FROM EPA_EJSCREEN_2017', disk_engine)
     data_ejs['ID'] = data_ejs['ID'].astype(str)
     return data_ejs
 
-def load_data -> tuple[pd.DataFrame, pd.DataFrame]:
+def load_data() -> Tuple[pd.DataFrame, pd.DataFrame]:
     """Load all data, CSO and EJ.
     """
+    print('Loading all data')
     data_cso = load_data_cso()
     data_ejs = load_data_ej()
     return data_cso, data_ejs
@@ -107,9 +111,10 @@ def load_data -> tuple[pd.DataFrame, pd.DataFrame]:
 # Data transforming functions
 # -------------------------
 
-def assign_cso_data_to_census_blocks(df_cso: pd.DataFrame, geo_blockgroups_dict: dict):
-    """Operate on `df_cso` in place to add a new 'BlockGroup' column assigning CSOs to Census block groups.
+def assign_cso_data_to_census_blocks(data_cso: pd.DataFrame, geo_blockgroups_dict: dict):
+    """Operate on `data_cso` in place to add a new 'BlockGroup' column assigning CSOs to Census block groups.
     """
+    print('Assigning CSO data to census blocks')
     ## Loop over Census block groups
     data_cso['BlockGroup'] = np.nan
     ## Loop over CSO outfalls
@@ -124,9 +129,11 @@ def assign_cso_data_to_census_blocks(df_cso: pd.DataFrame, geo_blockgroups_dict:
             print(('No block group found for CSO #', str(cso_i)))
 
 
-def assign_cso_data_to_census_blocks(data_ejs: pd.DataFrame, geo_blockgroups_dict: dict) -> pd.DataFrame:
+def assign_ej_data_to_geo_bins(data_ejs: pd.DataFrame, geo_towns_dict: dict, geo_watersheds_dict: dict, 
+    geo_blockgroups_dict: dict) -> pd.DataFrame:
     """Return a version of `data_ejs` with added 'Town' and 'Watershed' columns.
     """
+    print('Adding Town and Watershed labels to EJ data')
     ## Loop over Census block groups
     bg_mapping = pd.DataFrame(
         index=[geo_blockgroups_dict[i]['properties']['GEOID'] for i in range(len(geo_blockgroups_dict))], 
@@ -164,9 +171,10 @@ def pop_weighted_average(x, cols):
 
 def apply_pop_weighted_avg(data_cso: pd.DataFrame, data_ejs: pd.DataFrame, 
     discharge_vol_col: str='2011_Discharges_MGal', discharge_count_col: str='2011_Discharge_N'
-) -> tuple[pd.DataFrame, pd.DataFrame, pd.DataFrame, pd.DataFrame, pd.DataFrame]:
+) -> Tuple[pd.DataFrame, pd.DataFrame, pd.DataFrame, pd.DataFrame, pd.DataFrame]:
     """Calculate population weighted averages for EJ characteristics, averaging over block group, watershed, and town.
     """
+    print('Calculating population weighted averages')
     ## Get counts by block group
     data_ins_g_bg = data_cso.groupby('BlockGroup').sum()[[discharge_vol_col, discharge_count_col]]
     data_ins_g_bg_j = pd.merge(data_ins_g_bg, data_ejs, left_index=True, right_on ='ID', how='left')
@@ -197,6 +205,7 @@ def make_map_discharge_volumes(geo_blockgroups: dict, data_ins_g_bg: pd.DataFram
     """
     Map of discharge volumes with layers for watershed, town, and census block group with CSO points
     """
+    print('Making map of discharge volumes')
     ## Map total discharge volume
     map_1 = folium.Map(
         location=[42.29, -71.74], 
@@ -287,8 +296,9 @@ def make_map_discharge_volumes(geo_blockgroups: dict, data_ins_g_bg: pd.DataFram
 
 def make_map_ej_characteristics(geo_blockgroups: dict, geo_towns: dict, geo_watersheds: dict, 
     data_egs_merge: pd.DataFrame, data_cso: pd.DataFrame):
-    """Map of EJ racial characteristics with layers for watershed, town, and census block group with CSO points
+    """Map of EJ characteristics with layers for watershed, town, and census block group with CSO points
     """
+    print('Making map of EJ characteristics')
     for col, col_label in (
         ('MINORPCT', 'Fraction of population identifying as non-white'),
         ('LOWINCPCT', 'Fraction of population with income less than twice the Federal poverty limit'),
@@ -388,6 +398,7 @@ def make_chart_summary_ej_characteristics_watershed(df_watershed_level: pd.DataF
     outpath: str='../docs/_includes/charts/EJSCREEN_demographics_watershed.html'):
     """Summary of EJ characteristics per watershed
     """
+    print('Making map of EJ characteristics per watershed')
     mychart = chartjs.chart("EJ characteristics by watershed", "Bar", 640, 480)
     sel = np.argsort(df_watershed_level['MINORPCT'])
     mychart.set_labels(df_watershed_level.index.values[sel].tolist())
@@ -412,6 +423,7 @@ def make_chart_summary_ej_characteristics_town(df_town_level: pd.DataFrame,
     outpath: str='../docs/_includes/charts/EJSCREEN_demographics_municipality.html'):
     """Summary of EJ characteristics per town
     """
+    print('Making summary chart of EJ data by town')
     mychart = chartjs.chart("EJ characteristics by municipality", "Bar", 640, 480)
     sel = np.argsort(df_town_level['MINORPCT'])
     mychart.set_labels(df_town_level.index.values[sel].tolist())
@@ -447,6 +459,7 @@ def make_chart_ej_cso_comparison(data_egs_merge: pd.DataFrame, data_ins_g_ws_j: 
     df_watershed_level: pd.DataFrame, outpath: str='../docs/_includes/charts/NECIR_EJSCREEN_correlation_bywatershed_{}.html'):
     """Comparison of EJ and CSO characteristics by geographic areas
     """
+    print('Making comparison plot of EJ and CSO data')
     for i, col, col_label in (
         (0, 'MINORPCT', 'Fraction of population identifying as non-white'),
         (1, 'LOWINCPCT', 'Fraction of population with income less than twice the Federal poverty limit'),
@@ -549,8 +562,11 @@ def make_chart_ej_cso_comparison(data_egs_merge: pd.DataFrame, data_ins_g_ws_j: 
 # Regression modeling functions
 # -------------------------
 
-def fit_stan_model(i: int, col: str, col_label: str, data_egs_merge: pd.DataFrame, df_watershed_level: pd.DataFrame, 
-    data_ins_g_ws_j: pd.DataFrame) -> tuple[stan.fit.Fit, pd.DataFrame]:
+def fit_stan_model(col: str, data_egs_merge: pd.DataFrame, df_watershed_level: pd.DataFrame, 
+    data_ins_g_ws_j: pd.DataFrame) -> Tuple[stan.fit.Fit, pd.DataFrame]:
+    """Fit Stan model for a particular EJ characteristic (`col`)
+    """
+    print(f'Building stan model for {col}')
     ## Lookup base values - Census group block level
     l = data_egs_merge.Watershed.unique()
     l = l[pd.isnull(l) == 0]
@@ -566,7 +582,6 @@ def fit_stan_model(i: int, col: str, col_label: str, data_egs_merge: pd.DataFram
         'p': list(pop / np.mean(pop))
         }
     
-    print(f'Building stan model for {col}')
     sm = stan.build(STAN_MODEL_CODE, data=stan_dat)
     fit = sm.sample(num_samples=10000, num_chains=10)
     fit_par = fit.to_frame()
@@ -583,6 +598,7 @@ def regression_plot_beta_posterior(fit_par: pd.DataFrame, col: str, plot_path: s
     """Plot a beta posterior histogram for the regression model. Also output some summary statistics
     to the `fact_file`.
     """
+    print('Plotting regression beta posterior')
     plt.figure()
     ph = 2**fit_par['beta']
     plt.hist(ph, bins=100, range=[0,6])
@@ -598,9 +614,10 @@ def regression_plot_beta_posterior(fit_par: pd.DataFrame, col: str, plot_path: s
 def regression_plot_model_draws(fit_par: pd.DataFrame, col_label: str, plot_path: str):
     """Plot fitted exponential model draws from the regression model posterior.
     """
+    print('Plotting sample regression model draws')
     plt.figure()
     N = len(fit_par['beta'])
-    for i,n in enumerate(np.random.randint(0, N, 20)):
+    for i, n in enumerate(np.random.randint(0, N, 20)):
         px = np.linspace(min(x), max(x), 1000)
         plt.plot(px, fit_par.loc['alpha', n]*px**fit_par.loc['beta', n], color='r', alpha=0.3, 
                  label = 'Posterior draw' if i==0 else None, zorder=1)
@@ -624,7 +641,7 @@ def main():
     geo_towns_dict, geo_watersheds_dict, geo_blockgroups_dict = get_geo_files()
     data_cso, data_ejs = load_data()
     assign_cso_data_to_census_blocks(data_cso, geo_blockgroups_dict)
-    data_ejs = assign_cso_data_to_census_blocks(data_ejs, geo_blockgroups_dict)
+    data_ejs = assign_ej_data_to_geo_bins(data_ejs, geo_towns_dict, geo_watersheds_dict, geo_blockgroups_dict)
     data_ins_g_muni_j, data_ins_g_ws_j, data_egs_merge, df_watershed_level, df_town_level = apply_pop_weighted_avg(data_cso, data_ejs)
     
     # Make maps
@@ -637,12 +654,12 @@ def main():
     make_chart_ej_cso_comparison(data_egs_merge, data_ins_g_ws_j, df_watershed_level, outpath)
     
     # Regression modeling
-    for i, col, col_label in (
-        (0, 'MINORPCT', 'Fraction of population identifying as non-white'),
-        (1, 'LOWINCPCT', 'Fraction of population with income less than twice the Federal poverty limit'),
-        (2, 'LINGISOPCT', 'Fraction of population in households whose adults speak English less than "very well"'),
+    for col, col_label in (
+        ('MINORPCT', 'Fraction of population identifying as non-white'),
+        ('LOWINCPCT', 'Fraction of population with income less than twice the Federal poverty limit'),
+        ('LINGISOPCT', 'Fraction of population in households whose adults speak English less than "very well"'),
         ):
-        fit, fit_par = fit_stan_model(i, col, col_label, data_egs_merge, df_watershed_level, data_ins_g_ws_j)
+        fit, fit_par = fit_stan_model(col, data_egs_merge, df_watershed_level, data_ins_g_ws_j)
         regression_plot_beta_posterior(fit_par, col, plot_path=FIG_PATH+'NECIR_CSO_stanfit_beta_'+col+'.png')
         regression_plot_model_draws(fit_par, col_label, FIG_PATH+'NECIR_CSO_stanfit_'+col+'.png')
     
