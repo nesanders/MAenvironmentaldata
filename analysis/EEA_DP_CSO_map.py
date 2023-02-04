@@ -65,19 +65,20 @@ def transform_data_cso(data_cso: pd.DataFrame, pick_year: int=PICK_CSO_YEAR) -> 
     
     print(f'Aggregating CSO data for year {pick_year}')
     df_pick = data_cso[data_cso['Year'].astype(int) == pick_year]
-    print(f'N={len(df_pick)} total CSO records loaded')
-    df_agg = df_pick.groupby(agg_cols).agg(aggregators)
-    df_per_outfall = df_agg.loc[PICK_REPORT_TYPE].reset_index()
+    print(f'N={len(df_pick)} total CSO records loaded from {pick_year}')
     
     # Fill in missing lat/long data from the state file
-    sel_missing = df_per_outfall['latitude'].isnull()
+    sel_missing = df_pick['latitude'].isnull()
     print(f"Missing N={sum(sel_missing)} outfall lat/longs")
     print(f'Loading missing lat/long data from {CSO_LAT_LONG_DATA_FILE}')
     df_lat_long_cso = pd.read_excel(CSO_LAT_LONG_DATA_FILE, 'CSO Outfalls').set_index('Outfall ID')
-    missing_lat_long_ids = df_per_outfall[sel_missing]['outfallId']
+    missing_lat_long_ids = df_pick[sel_missing]['outfallId']
     missing_lat_long_coords = df_lat_long_cso.reindex(missing_lat_long_ids)[['Lat', 'Long']]
-    df_per_outfall.loc[sel_missing, ['latitude', 'longitude']] = missing_lat_long_coords.values
-    print(f"Missing N={sum(df_per_outfall['latitude'].isnull())} outfall lat/longs after replacement")
+    df_pick.loc[sel_missing, ['latitude', 'longitude']] = missing_lat_long_coords.values
+    print(f"Missing N={sum(df_pick['latitude'].isnull())} outfall lat/longs after replacement")
+    
+    df_agg = df_pick.groupby(agg_cols).agg(aggregators)
+    df_per_outfall = df_agg.loc[PICK_REPORT_TYPE].reset_index()
     breakpoint()
     
     return df_per_outfall
