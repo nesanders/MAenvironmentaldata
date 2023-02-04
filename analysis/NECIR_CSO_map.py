@@ -603,7 +603,7 @@ def make_chart_ej_cso_comparison(data_egs_merge: pd.DataFrame, data_ins_g_ws_j: 
 # -------------------------
 
 def fit_stan_model(col: str, data_egs_merge: pd.DataFrame, df_watershed_level: pd.DataFrame, 
-    data_ins_g_ws_j: pd.DataFrame) -> Tuple[stan.fit.Fit, pd.DataFrame]:
+    data_ins_g_ws_j: pd.DataFrame) -> Tuple[stan.fit.Fit, pd.DataFrame, dict]:
     """Fit Stan model for a particular EJ characteristic (`col`)
     """
     print(f'Building stan model for {col}')
@@ -626,7 +626,7 @@ def fit_stan_model(col: str, data_egs_merge: pd.DataFrame, df_watershed_level: p
     fit = sm.sample(num_samples=10000, num_chains=10)
     fit_par = fit.to_frame()
     
-    return fit, fit_par
+    return fit, fit_par, stan_dat
     
 ## Stan fit diagnostic output
 #s = fit.summary()
@@ -651,10 +651,14 @@ def regression_plot_beta_posterior(fit_par: pd.DataFrame, col: str, plot_path: s
         f.write(f'depend_cso_{col}: {np.median(ph):0.1f} times (90% confidence interval '
                 f'{np.percentile(ph, 5):0.1f} to {np.percentile(ph, 95):0.1f} times)\n')
 
-def regression_plot_model_draws(fit_par: pd.DataFrame, col_label: str, plot_path: str):
+def regression_plot_model_draws(fit_par: pd.DataFrame, col_label: str, plot_path: str, stan_dat: dict):
     """Plot fitted exponential model draws from the regression model posterior.
     """
     print('Plotting sample regression model draws')
+    
+    x = stan_dat['x']
+    y = stan_dat['y']
+    
     plt.figure()
     N = len(fit_par['beta'])
     for i, n in enumerate(np.random.randint(0, N, 20)):
@@ -703,9 +707,9 @@ def main():
         ('LOWINCPCT', 'Fraction of population with income less than twice the Federal poverty limit'),
         ('LINGISOPCT', 'Fraction of population in households whose adults speak English less than "very well"'),
         ):
-        fit, fit_par = fit_stan_model(col, data_egs_merge, df_watershed_level, data_ins_g_ws_j)
+        fit, fit_par, stan_dat = fit_stan_model(col, data_egs_merge, df_watershed_level, data_ins_g_ws_j)
         regression_plot_beta_posterior(fit_par, col, plot_path=FIG_PATH+'NECIR_CSO_stanfit_beta_'+col+'.png')
-        regression_plot_model_draws(fit_par, col_label, FIG_PATH+'NECIR_CSO_stanfit_'+col+'.png')
+        regression_plot_model_draws(fit_par, col_label, FIG_PATH+'NECIR_CSO_stanfit_'+col+'.png', stan_dat)
     
 if __name__ == '__main__':
     main()
