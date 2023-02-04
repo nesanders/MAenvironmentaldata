@@ -507,7 +507,7 @@ def weight_mean(x, weights, N=1000):
     return np.mean(avgs), np.std(avgs)
 
 def make_chart_ej_cso_comparison(data_egs_merge: pd.DataFrame, data_ins_g_ws_j: pd.DataFrame, 
-    df_watershed_level: pd.DataFrame, outpath: str=f'../docs/_includes/charts/{OUTPUT_SLUG_DATASET}_EJSCREEN_correlation_bywatershed_{}.html'):
+    df_watershed_level: pd.DataFrame, outpath: str):
     """Comparison of EJ and CSO characteristics by geographic areas
     """
     print('Making comparison plot of EJ and CSO data')
@@ -606,7 +606,7 @@ def make_chart_ej_cso_comparison(data_egs_merge: pd.DataFrame, data_ins_g_ws_j: 
         mychart.add_extra_code(
             'var ma_towns = ["' + '","'.join(l) + '"];')
 
-        mychart.jekyll_write(outpath.format(col))
+        mychart.jekyll_write(outpath + f'_{col}.html')
 
 
 # -------------------------
@@ -711,7 +711,7 @@ def main():
     # Make charts
     make_chart_summary_ej_characteristics_watershed(df_watershed_level)
     make_chart_summary_ej_characteristics_town(df_town_level)
-    make_chart_ej_cso_comparison(data_egs_merge, data_ins_g_ws_j, df_watershed_level)
+    make_chart_ej_cso_comparison(data_egs_merge, data_ins_g_ws_j, df_watershed_level, f'../docs/_includes/charts/{OUTPUT_SLUG_DATASET}_EJSCREEN_correlation_bywatershed')
     
     # Regression modeling
     for col, col_label in (
