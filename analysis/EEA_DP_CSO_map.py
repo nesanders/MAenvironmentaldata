@@ -5,6 +5,7 @@ but is defined separately because some aspects of the data differ.
 
 from typing import Any, Tuple
 
+from joblib import Memory
 import numpy as np
 import pandas as pd
 
@@ -13,7 +14,7 @@ from NECIR_CSO_map import CSOAnalysis, get_engine
 # Create a joblib cache
 memory = Memory('eea_dp_cso_data_cache', verbose=1)
 
-PICK_YEAR = 2022
+PICK_CSO_YEAR = 2022
 
 def collapse(x: list) -> Any:
     """Pick an arbitrary non-null value from a list.
@@ -38,7 +39,7 @@ class CSOAnalysisEEADP(CSOAnalysis):
     
     def __init__(
         self, 
-        fact_file: str='../docs/data/facts_EEA_DP_CSO.yml'
+        fact_file: str='../docs/data/facts_EEA_DP_CSO.yml',
         out_path: str='../docs/data/facts_EEA_DP_CSO.yml',
         fig_path: str='../docs/assets/figures/',
         stan_model_code: str='discharge_regression_model.stan',
@@ -69,11 +70,13 @@ class CSOAnalysisEEADP(CSOAnalysis):
 
     EEA_DP_CSO_QUERY = """SELECT * FROM MAEEADP_CSO"""
 
-    def load_data_cso(self, pick_year: int=PICK_CSO_YEAR) -> pd.DataFrame:
+    def load_data_cso(self, pick_year: Optional[int]=None) -> pd.DataFrame:
         """Load EEA Data Portal CSO data, adding latitude and longitude from the NECIR_CSO_2011 data table
         where possible.
         """
-        print(f'Loading EEA Data Portal CSO data for {pick_year}')
+        if pick_year is None:
+            pick_year = self.cso_data_year
+        print(f'Loading EEA Data Portal CSO data for {self.cso_data_year}')
         disk_engine = get_engine()
         data_cso = pd.read_sql_query(EEA_DP_CSO_QUERY, disk_engine)
         data_cso_trans = self.transform_data_cso(data_cso)
@@ -126,5 +129,5 @@ class CSOAnalysisEEADP(CSOAnalysis):
 # -------------------------
     
 if __name__ == '__main__':
-    csoa = CSOAnalysisEEADP(PICK_YEAR)
-    csoa().run_analysis()
+    csoa = CSOAnalysisEEADP(PICK_CSO_YEAR)
+    csoa.run_analysis()
