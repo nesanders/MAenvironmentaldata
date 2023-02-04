@@ -175,13 +175,13 @@ def assign_ej_data_to_geo_bins(data_ejs: pd.DataFrame, geo_towns_dict: dict, geo
             Parallel(n_jobs=-1)(delayed(lookup_town_for_feature)(town_feature, point) for town_feature in geo_towns_dict))
         ## Warn if a town was not found
         if bg_mapping.loc[feature['properties']['GEOID'], 'Town'] is np.nan:
-            print(f'No Town found for GEOID {feature['properties']['GEOID']}')
+            print(f"No Town found for GEOID {feature['properties']['GEOID']}")
         ## Loop over watersheds
         bg_mapping.loc[feature['properties']['GEOID'], 'Watershed'] = pick_non_null(
             Parallel(n_jobs=-1)(delayed(lookup_watershed_for_feature)(watershed_feature, point) for watershed_feature in geo_watersheds_dict))
         ## Warn if a watershed was not found
         if bg_mapping.loc[feature['properties']['GEOID'], 'Watershed'] is np.nan:
-            print(f'No Watershed found for GEOID {feature['properties']['GEOID']}')
+            print(f"No Watershed found for GEOID {feature['properties']['GEOID']}")
 
     data_ejs = pd.merge(data_ejs, bg_mapping, left_on = 'ID', right_index=True, how='left')
     return data_ejs
