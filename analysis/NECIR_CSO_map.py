@@ -663,7 +663,7 @@ def regression_plot_model_draws(fit_par: pd.DataFrame, col_label: str, plot_path
     N = len(fit_par['beta'])
     for i, n in enumerate(np.random.randint(0, N, 20)):
         px = np.linspace(min(x), max(x), 1000)
-        plt.plot(px, fit_par.loc['alpha', n]*px**fit_par.loc['beta', n], color='r', alpha=0.3, 
+        plt.plot(px, fit_par.loc[n, 'alpha'] * px**fit_par.loc[n, 'beta'], color='r', alpha=0.3, 
                  label = 'Posterior draw' if i==0 else None, zorder=1)
     
     plt.xlabel(col_label, wrap=True)
