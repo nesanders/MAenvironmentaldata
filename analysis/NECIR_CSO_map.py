@@ -79,13 +79,13 @@ def weight_mean(x, weights, N=1000):
         avgs[i] = np.average(x[sel], weights=weights[sel])
     return np.mean(avgs), np.std(avgs)
 
-    def pick_non_null(x: list) -> Optional[str]:
-        """Return the first non-null value from a list, if any.
-        """
-        for val in x:
-            if val is not None:
-                return val
-        return None
+def pick_non_null(x: list) -> Optional[str]:
+    """Return the first non-null value from a list, if any.
+    """
+    for val in x:
+        if val is not None:
+            return val
+    return None
 
 def lookup_town_for_feature(town_feature, point) -> Optional[str]:
     """Try to assign an input feature to a town
