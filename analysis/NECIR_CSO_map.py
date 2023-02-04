@@ -1,4 +1,5 @@
-"""Generate folium-based map visualizations and pystan regression model fits.
+"""Generate folium-based map visualizations and pystan regression model fits for CSO discharge distributions using
+NECIR CSO data.
 
 NOTE - this code was updated in 2023 to use pystan 3 conventions
 
@@ -10,8 +11,6 @@ conda install -c conda-forge c-compiler cxx-compiler
 ```
 """
 
-from __future__ import absolute_import
-from __future__ import print_function
 import pandas as pd
 import numpy as np
 import folium
@@ -24,8 +23,20 @@ import stan
 import matplotlib as mpl
 from matplotlib import pyplot as plt
 from matplotlib import cm
-color_cycle = [c['color'] for c in list(mpl.rcParams['axes.prop_cycle'])]
-fig_path = '../docs/assets/figures/'
+
+COLOR_CYCLE = [c['color'] for c in list(mpl.rcParams['axes.prop_cycle'])]
+FIG_PATH = '../docs/assets/figures/'
+
+## Establish file to export facts
+FACT_FILE = '../docs/data/facts_NECIR_CSO.yml'
+with open(FACT_FILE, 'w') as f: f.write('')
+
+OUT_PATH = '../docs/assets/maps/'
+
+
+##########################
+## Function defs
+##########################
 
 def hex2rgb(hexcode):
     # See http://www.psychocodes.in/rgb-to-hex-conversion-and-hex-to-rgb-conversion-in-python.html
@@ -34,25 +45,19 @@ def hex2rgb(hexcode):
     rgb = tuple(int(hexcode.lstrip('#')[i:i+2], 16) for i in (0, 2 ,4))
     return rgb
 
-## Establish file to export facts
-fact_file = '../docs/data/facts_NECIR_CSO.yml'
-with open(fact_file, 'w') as f: f.write('')
+def get_geo_files() -> tuple[dict, dict, dict]:
+    """Load and return geo json files.
+    """
+    geo_path = '../docs/assets/geo_json/'
+    geo_towns = geo_path+'TOWNSSURVEY_POLYM_geojson_simple.json'
+    geo_watersheds = geo_path+'watshdp1_geojson_simple.json'
+    geo_blockgroups = geo_path+'cb_2017_25_bg_500k.json'
 
-
-##########################
-## Load shapefiles
-##########################
-
-geo_path = '../docs/assets/geo_json/'
-geo_towns = geo_path+'TOWNSSURVEY_POLYM_geojson_simple.json'
-geo_watersheds = geo_path+'watshdp1_geojson_simple.json'
-geo_blockgroups = geo_path+'cb_2017_25_bg_500k.json'
-
-geo_towns_dict = json.load(open(geo_towns))['features']
-geo_watersheds_dict = json.load(open(geo_watersheds))['features']
-geo_blockgroups_dict = json.load(open(geo_blockgroups))['features']
-
-out_path = '../docs/assets/maps/'
+    geo_towns_dict = json.load(open(geo_towns))['features']
+    geo_watersheds_dict = json.load(open(geo_watersheds))['features']
+    geo_blockgroups_dict = json.load(open(geo_blockgroups))['features']
+    
+    return geo_towns_dict, geo_watersheds_dict, geo_blockgroups_dict
 
 def safe_float(x):
     try:
@@ -60,22 +65,18 @@ def safe_float(x):
     except:
         return np.nan
 
+def load_data -> ():
+    ## Load database
+    disk_engine = create_engine('sqlite:///../get_data/AMEND.db')
 
-##########################
-## Load data
-##########################
+    ## Get CSO data
+    data_cso = pd.read_sql_query('SELECT * FROM NECIR_CSO_2011', disk_engine)
+    data_cso['2011_Discharges_MGal'] = data_cso['2011_Discharges_MGal'].apply(safe_float)
+    data_cso['2011_Discharge_N'] = data_cso['2011_Discharge_N'].apply(safe_float)
 
-## Load database
-disk_engine = create_engine('sqlite:///../get_data/AMEND.db')
-
-## Get CSO data
-data_cso = pd.read_sql_query('SELECT * FROM NECIR_CSO_2011', disk_engine)
-data_cso['2011_Discharges_MGal'] = data_cso['2011_Discharges_MGal'].apply(safe_float)
-data_cso['2011_Discharge_N'] = data_cso['2011_Discharge_N'].apply(safe_float)
-
-## Get EJSCREEN data
-data_ejs = pd.read_sql_query('SELECT * FROM EPA_EJSCREEN_2017', disk_engine)
-data_ejs['ID'] = data_ejs['ID'].astype(str)
+    ## Get EJSCREEN data
+    data_ejs = pd.read_sql_query('SELECT * FROM EPA_EJSCREEN_2017', disk_engine)
+    data_ejs['ID'] = data_ejs['ID'].astype(str)
 
 
 ##########################
@@ -248,7 +249,7 @@ for feature in geo_watersheds_dict:
 folium.LayerControl(collapsed=False).add_to(map_1)
 
 ## Save to html
-map_1.save(out_path+'NECIR_CSO_map_total.html')
+map_1.save(OUT_PATH+'NECIR_CSO_map_total.html')
 
 
 #############################
@@ -346,7 +347,7 @@ for col, col_label in (
     folium.LayerControl(collapsed=False).add_to(map_2)
 
     ## Save to html
-    map_2.save(out_path+'NECIR_CSO_map_EJ_'+col+'.html')
+    map_2.save(OUT_PATH+'NECIR_CSO_map_EJ_'+col+'.html')
 
 
 #############################
@@ -366,7 +367,7 @@ for i, col, col_label in (
 
     mychart.add_dataset(df_watershed_level[col][sel].values.tolist(), 
         col_label,
-        backgroundColor="'rgba({},0.8)'".format(", ".join([str(x) for x in hex2rgb(color_cycle[i])])),
+        backgroundColor="'rgba({},0.8)'".format(", ".join([str(x) for x in hex2rgb(COLOR_CYCLE[i])])),
         yAxisID= "'y-axis-0'")
 mychart.set_params(JSinline = 0, ylabel = 'Fraction of households', xlabel='Watershed',
     scaleBeginAtZero=1, x_autoskip=False)
@@ -389,7 +390,7 @@ for i, col, col_label in (
 
     mychart.add_dataset(df_town_level[col][sel].values.tolist(), 
         col_label,
-        backgroundColor="'rgba({},0.8)'".format(", ".join([str(x) for x in hex2rgb(color_cycle[i])])),
+        backgroundColor="'rgba({},0.8)'".format(", ".join([str(x) for x in hex2rgb(COLOR_CYCLE[i])])),
         yAxisID= "'y-axis-0'")
 mychart.set_params(JSinline = 0, ylabel = 'Fraction of households', xlabel='Municipality',
     scaleBeginAtZero=1, x_autoskip=True)
@@ -583,7 +584,7 @@ for i, col, col_label in (
     plt.hist(ph, bins=100, range=[0,6])
     plt.xlabel("2x growth ratio -- " + col)
     plt.ylabel('Posterior samples')
-    plt.savefig(fig_path+'NECIR_CSO_stanfit_beta_'+col+'.png', dpi=200)
+    plt.savefig(FIG_PATH+'NECIR_CSO_stanfit_beta_'+col+'.png', dpi=200)
     
     ## Plot fitted model draws
     plt.figure()
@@ -599,9 +600,9 @@ for i, col, col_label in (
     plt.scatter(x, y, marker='o', c=pop/1e3, cmap=cm.Blues, label='Watersheds', zorder=2)
     plt.colorbar(label='Population (1000s)')
     plt.legend(loc=2)
-    plt.savefig(fig_path+'NECIR_CSO_stanfit_'+col+'.png', dpi=200, bbox_inches='tight')
+    plt.savefig(FIG_PATH+'NECIR_CSO_stanfit_'+col+'.png', dpi=200, bbox_inches='tight')
     
     ## Output summary dependence statistics
-    with open(fact_file, 'a') as f:
+    with open(FACT_FILE, 'a') as f:
         f.write(f'depend_cso_{col}: {np.median(ph):0.1f} times (90% confidence interval '
                 f'{np.percentile(ph, 5):0.1f} to {np.percentile(ph, 95):0.1f} times)\n')
