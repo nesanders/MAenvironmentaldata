@@ -292,7 +292,6 @@ class CSOAnalysis():
         """
         return _assign_cso_data_to_census_blocks(data_cso, geo_blockgroups_dict, self.latitude_col, self.longitude_col)
     
-    @memory.cache
     def apply_pop_weighted_avg(self, data_cso: pd.DataFrame, data_ejs: pd.DataFrame
     ) -> Tuple[pd.DataFrame, pd.DataFrame, pd.DataFrame, pd.DataFrame, pd.DataFrame]:
         """Calculate population weighted averages for EJ characteristics, averaging over block group, watershed, and town.
@@ -743,7 +742,7 @@ class CSOAnalysis():
         self.data_cso, self.data_ejs = self.load_data()
         # TODO should add these results to the database, not just the local (`memory`) cache
         self.data_cso = self.assign_cso_data_to_census_blocks(self.data_cso, self.geo_blockgroups_dict)
-        self.data_ejs = assign_ej_data_to_geo_bins(self.data_ejs, self.geo_towns_dict, self.geo_watersheds_dict, geo_blockgroups_dict)
+        self.data_ejs = assign_ej_data_to_geo_bins(self.data_ejs, self.geo_towns_dict, self.geo_watersheds_dict, self.geo_blockgroups_dict)
         self.data_ins_g_bg, self.data_ins_g_muni_j, self.data_ins_g_ws_j, self.data_egs_merge, self.df_watershed_level, self.df_town_level = \
             self.apply_pop_weighted_avg(self.data_cso, self.data_ejs)
         
