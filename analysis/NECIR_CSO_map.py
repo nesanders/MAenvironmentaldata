@@ -11,38 +11,41 @@ conda install -c conda-forge c-compiler cxx-compiler
 ```
 """
 
-import pandas as pd
-import numpy as np
-import folium
 import json
-from shapely.geometry import shape, Point
-from sqlalchemy import create_engine
-import chartjs
-import stan
+from typing import Any
 
+import chartjs
+import folium
 import matplotlib as mpl
 from matplotlib import pyplot as plt
 from matplotlib import cm
+import pandas as pd
+import numpy as np
+from shapely.geometry import shape, Point
+import sqlalchemy
+import stan
 
 COLOR_CYCLE = [c['color'] for c in list(mpl.rcParams['axes.prop_cycle'])]
 FIG_PATH = '../docs/assets/figures/'
 
 ## Establish file to export facts
 FACT_FILE = '../docs/data/facts_NECIR_CSO.yml'
-with open(FACT_FILE, 'w') as f: f.write('')
+open(FACT_FILE, 'w').close()
 
 OUT_PATH = '../docs/assets/maps/'
 
+STAN_MODEL_CODE = open('discharge_regression_model.stan').read()
 
-##########################
-## Function defs
-##########################
+# -------------------------
+# Convenience functions
+# -------------------------
 
-def hex2rgb(hexcode):
-    # See http://www.psychocodes.in/rgb-to-hex-conversion-and-hex-to-rgb-conversion-in-python.html
-    #rgb = tuple(map(ord,hexcode[1:].decode('hex')))
-    # See https://stackoverflow.com/a/29643643
-    rgb = tuple(int(hexcode.lstrip('#')[i:i+2], 16) for i in (0, 2 ,4))
+def hex2rgb(hexcode: str) -> tuple[int, int, int]:
+    """Convert a hex color to RGB tuple)
+    See http://www.psychocodes.in/rgb-to-hex-conversion-and-hex-to-rgb-conversion-in-python.html
+    See https://stackoverflow.com/a/29643643
+    """
+    rgb = tuple(int(hexcode.lstrip('#')[i:i+2], 16) for i in (0, 2, 4))
     return rgb
 
 def get_geo_files() -> tuple[dict, dict, dict]:
@@ -59,94 +62,98 @@ def get_geo_files() -> tuple[dict, dict, dict]:
     
     return geo_towns_dict, geo_watersheds_dict, geo_blockgroups_dict
 
-def safe_float(x):
+def safe_float(x: Any) -> float:
+    """Return a float if possible, or else a np.nan value.
+    """
     try:
         return float(x)
     except:
         return np.nan
 
-def load_data -> ():
-    ## Load database
-    disk_engine = create_engine('sqlite:///../get_data/AMEND.db')
+# -------------------------
+# Data loading functions
+# -------------------------
 
-    ## Get CSO data
+def get_engine() -> sqlalchemy.engine.Engine:
+    """Establish a sqlite database connection
+    """
+    return sqlalchemy.create_engine('sqlite:///../get_data/AMEND.db')
+
+def load_data_cso() -> pd.DataFrame:
+    """Load NECIR 2011 CSO data
+    """
+    disk_engine = get_engine()
     data_cso = pd.read_sql_query('SELECT * FROM NECIR_CSO_2011', disk_engine)
     data_cso['2011_Discharges_MGal'] = data_cso['2011_Discharges_MGal'].apply(safe_float)
     data_cso['2011_Discharge_N'] = data_cso['2011_Discharge_N'].apply(safe_float)
-
-    ## Get EJSCREEN data
+    return data_cso
+    
+def load_data_ej() -> pd.DataFrame:
+    """Load EJSCREEN data
+    """
+    disk_engine = get_engine()
     data_ejs = pd.read_sql_query('SELECT * FROM EPA_EJSCREEN_2017', disk_engine)
     data_ejs['ID'] = data_ejs['ID'].astype(str)
+    return data_ejs
+
+def load_data -> tuple[pd.DataFrame, pd.DataFrame]:
+    """Load all data, CSO and EJ.
+    """
+    data_cso = load_data_cso()
+    data_ejs = load_data_ej()
+    return data_cso, data_ejs
+
+# -------------------------
+# Data transforming functions
+# -------------------------
+
+def assign_cso_data_to_census_blocks(df_cso: pd.DataFrame, geo_blockgroups_dict: dict):
+    """Operate on `df_cso` in place to add a new 'BlockGroup' column assigning CSOs to Census block groups.
+    """
+    ## Loop over Census block groups
+    data_cso['BlockGroup'] = np.nan
+    ## Loop over CSO outfalls
+    for cso_i in range(len(data_cso)):
+        point = Point(data_cso.iloc[cso_i]['Longitude'], data_cso.iloc[cso_i]['Latitude'])
+        for feature in geo_blockgroups_dict:
+            polygon = shape(feature['geometry'])
+            if polygon.contains(point):
+                data_cso.loc[cso_i, 'BlockGroup'] = feature['properties']['GEOID'] 
+        ## Warn if a blockgroup was not found
+        if data_cso.loc[cso_i, 'BlockGroup'] is np.nan:
+            print(('No block group found for CSO #', str(cso_i)))
 
 
-##########################
-## Lookup CSOs assignment to census blocks
-##########################
-
-## Loop over Census block groups
-data_cso['BlockGroup'] = np.nan
-## Loop over CSO outfalls
-for cso_i in range(len(data_cso)):
-    point = Point(data_cso.iloc[cso_i]['Longitude'], data_cso.iloc[cso_i]['Latitude'])
+def assign_cso_data_to_census_blocks(data_ejs: pd.DataFrame, geo_blockgroups_dict: dict) -> pd.DataFrame:
+    """Return a version of `data_ejs` with added 'Town' and 'Watershed' columns.
+    """
+    ## Loop over Census block groups
+    bg_mapping = pd.DataFrame(
+        index=[geo_blockgroups_dict[i]['properties']['GEOID'] for i in range(len(geo_blockgroups_dict))], 
+        columns=['Town','Watershed'])
+    ## Loop over block groups
     for feature in geo_blockgroups_dict:
         polygon = shape(feature['geometry'])
-        if polygon.contains(point):
-            data_cso.loc[cso_i, 'BlockGroup'] = feature['properties']['GEOID'] 
-    ## Warn if a blockgroup was not found
-    if data_cso.loc[cso_i, 'BlockGroup'] is np.nan:
-        print(('No block group found for CSO #', str(cso_i)))
+        point = polygon.centroid
+        ## Loop over towns
+        for town_feature in geo_towns_dict:
+            town_polygon = shape(town_feature['geometry'])
+            if town_polygon.contains(point):
+                bg_mapping.loc[feature['properties']['GEOID'], 'Town'] = town_feature['properties']['TOWN'] 
+        ## Warn if a town was not found
+        if bg_mapping.loc[feature['properties']['GEOID'], 'Town'] is np.nan:
+            print(('No Town found for Block Group #', str(cso_i)))
+        ## Loop over watersheds
+        for watershed_feature in geo_watersheds_dict:
+            watershed_polygon = shape(watershed_feature['geometry'])
+            if watershed_polygon.contains(point):
+                bg_mapping.loc[feature['properties']['GEOID'], 'Watershed'] = watershed_feature['properties']['NAME'] 
+        ## Warn if a watershed was not found
+        if bg_mapping.loc[feature['properties']['GEOID'], 'Town'] is np.nan:
+            print(('No Town found for Block Group #', str(cso_i)))
 
-
-##########################
-## Assign Census blocks to towns and watersheds
-##########################
-
-## Loop over Census block groups
-bg_mapping = pd.DataFrame(index=[geo_blockgroups_dict[i]['properties']['GEOID'] for i in range(len(geo_blockgroups_dict))] , columns=['Town','Watershed'])
-## Loop over block groups
-for feature in geo_blockgroups_dict:
-    polygon = shape(feature['geometry'])
-    point = polygon.centroid
-    ## Loop over towns
-    for town_feature in geo_towns_dict:
-        town_polygon = shape(town_feature['geometry'])
-        if town_polygon.contains(point):
-            bg_mapping.loc[feature['properties']['GEOID'], 'Town'] = town_feature['properties']['TOWN'] 
-    ## Warn if a town was not found
-    if bg_mapping.loc[feature['properties']['GEOID'], 'Town'] is np.nan:
-        print(('No Town found for Block Group #', str(cso_i)))
-    ## Loop over watersheds
-    for watershed_feature in geo_watersheds_dict:
-        watershed_polygon = shape(watershed_feature['geometry'])
-        if watershed_polygon.contains(point):
-            bg_mapping.loc[feature['properties']['GEOID'], 'Watershed'] = watershed_feature['properties']['NAME'] 
-    ## Warn if a watershed was not found
-    if bg_mapping.loc[feature['properties']['GEOID'], 'Town'] is np.nan:
-        print(('No Town found for Block Group #', str(cso_i)))
-
-data_ejs = pd.merge(data_ejs, bg_mapping, left_on = 'ID', right_index=True, how='left')
-
-
-#############################
-## Calculate population weighted averages for EJ characteristics
-#############################
-
-## Get counts by block group
-data_ins_g_bg = data_cso.groupby('BlockGroup').sum()[['2011_Discharges_MGal', '2011_Discharge_N']]
-data_ins_g_bg_j = pd.merge(data_ins_g_bg, data_ejs, left_index=True, right_on ='ID', how='left')
-
-## Get counts by municipality
-data_ins_g_muni_j = pd.merge(data_cso, data_ejs, left_on='BlockGroup', right_on='ID', how='outer')\
-                    .groupby('Town').sum()[['2011_Discharges_MGal', '2011_Discharge_N']].fillna(0)
-
-## Get counts by watershed
-data_ins_g_ws_j = pd.merge(data_cso, data_ejs, left_on='BlockGroup', right_on='ID', how='outer')\
-                    .groupby('Watershed').sum()[['2011_Discharges_MGal', '2011_Discharge_N']].fillna(0)
-
-
-data_egs_merge = pd.merge(
-    data_ins_g_bg_j.groupby('ID')[['2011_Discharge_N', '2011_Discharges_MGal']].sum(),
-    data_ejs, left_index = True, right_on='ID', how='outer')
+    data_ejs = pd.merge(data_ejs, bg_mapping, left_on = 'ID', right_index=True, how='left')
+    return data_ejs
 
 def pop_weighted_average(x, cols):
     w = x['ACSTOTPOP']
@@ -155,150 +162,78 @@ def pop_weighted_average(x, cols):
         out += [np.sum(w * x[col].values) / np.sum(w)]
     return pd.Series(data = out, index=cols)
 
-df_watershed_level = data_egs_merge.groupby('Watershed').apply(lambda x: pop_weighted_average(x, ['MINORPCT', 'LOWINCPCT', 'LINGISOPCT', 'OVER64PCT', 'VULSVI6PCT']))
+def apply_pop_weighted_avg(data_cso: pd.DataFrame, data_ejs: pd.DataFrame, 
+    discharge_vol_col: str='2011_Discharges_MGal', discharge_count_col: str='2011_Discharge_N'
+) -> tuple[pd.DataFrame, pd.DataFrame, pd.DataFrame, pd.DataFrame, pd.DataFrame]:
+    """Calculate population weighted averages for EJ characteristics, averaging over block group, watershed, and town.
+    """
+    ## Get counts by block group
+    data_ins_g_bg = data_cso.groupby('BlockGroup').sum()[[discharge_vol_col, discharge_count_col]]
+    data_ins_g_bg_j = pd.merge(data_ins_g_bg, data_ejs, left_index=True, right_on ='ID', how='left')
+    data_egs_merge = pd.merge(
+        data_ins_g_bg_j.groupby('ID')[[discharge_count_col, discharge_vol_col]].sum(),
+        data_ejs, left_index = True, right_on='ID', how='outer')
 
-df_town_level = data_egs_merge.groupby('Town').apply(lambda x: pop_weighted_average(x, ['MINORPCT', 'LOWINCPCT', 'LINGISOPCT', 'OVER64PCT', 'VULSVI6PCT']))
+    ## Get counts by municipality
+    data_ins_g_muni_j = pd.merge(data_cso, data_ejs, left_on='BlockGroup', right_on='ID', how='outer')\
+                        .groupby('Town').sum()[[discharge_vol_col, discharge_count_col]].fillna(0)
 
+    ## Get counts by watershed
+    data_ins_g_ws_j = pd.merge(data_cso, data_ejs, left_on='BlockGroup', right_on='ID', how='outer')\
+                        .groupby('Watershed').sum()[[discharge_vol_col, discharge_count_col]].fillna(0)
 
-#############################
-## Map of discharge volumes with layers for watershed, town, and census block group with CSO points
-#############################
+    df_watershed_level = data_egs_merge.groupby('Watershed').apply(lambda x: pop_weighted_average(x, ['MINORPCT', 'LOWINCPCT', 'LINGISOPCT', 'OVER64PCT', 'VULSVI6PCT']))
 
-## Map total discharge volume
-map_1 = folium.Map(
-    location=[42.29, -71.74], 
-    zoom_start=8.2,
-    tiles='Stamen Terrain',
-    )
+    df_town_level = data_egs_merge.groupby('Town').apply(lambda x: pop_weighted_average(x, ['MINORPCT', 'LOWINCPCT', 'LINGISOPCT', 'OVER64PCT', 'VULSVI6PCT']))
+    
+    return data_ins_g_muni_j, data_ins_g_ws_j, data_egs_merge, df_watershed_level, df_town_level
 
-## Draw choropleth layer for census blocks
-map_1.choropleth(
-    geo_data=geo_blockgroups, 
-    name='Census Block Groups',
-    data=data_ins_g_bg['2011_Discharges_MGal'],
-    key_on='feature.properties.GEOID',
-    legend_name='Block Group: Total volume of discharge (2011; Millions of gallons)',
-    threshold_scale = list(np.nanpercentile(data_ins_g_bg['2011_Discharges_MGal'], [0,25,50,75,100])),  
-    fill_color='BuGn', fill_opacity=0.7, line_opacity=0.3, highlight=True,
-    )
+# -------------------------
+# Mapping functions
+# -------------------------
 
-## Draw Choropleth layer for towns
-map_1.choropleth(
-    geo_data=geo_towns, 
-    name='Municipalities',
-    data=data_ins_g_muni_j['2011_Discharges_MGal'],
-    key_on='feature.properties.TOWN',
-    legend_name='Municipality: Total volume of discharge (2011; Millions of gallons)',
-    threshold_scale = [0]+list(np.nanpercentile(data_ins_g_muni_j['2011_Discharges_MGal'][data_ins_g_muni_j['2011_Discharges_MGal'] > 0], [25,50,75,100])),  
-    fill_color='PuRd', fill_opacity=0.7, line_opacity=0.3, highlight=True,
-    )
-
-## Draw Choropleth layer for watersheds
-map_1.choropleth(
-    geo_data=geo_watersheds, 
-    name='Watersheds',
-    data=data_ins_g_ws_j['2011_Discharges_MGal'],
-    key_on='feature.properties.NAME',
-    legend_name='Watershed: Total volume of discharge (2011; Millions of gallons)',
-    threshold_scale = list(np.nanpercentile(data_ins_g_ws_j['2011_Discharges_MGal'], [0,25,50,75,100])),  
-    fill_color='PuBu', fill_opacity=0.7, line_opacity=0.3, highlight=True,
-    )
-
-## Add points layer for CSOs
-for i in range(len(data_cso)):
-    ## Gather CSO data
-    cso = data_cso.iloc[i]
-    ## Add marker
-    html="""
-    <h1>CSO outfall at {address}</h1>
-    <p>
-    Discharge Body: {body}<br>
-    Municipality: {muni}<br>
-    Discharge volume (2011): {vol} (Millions of gallons)<br>
-    Discharge frequency (2011): {N} discharges<br>
-    </p>
-    """.format(
-            address = cso['Nearest_Pipe_Address'],
-            body = cso['DischargesBody'],
-            muni = cso['Municipality'],
-            vol = cso['2011_Discharges_MGal'],
-            N = cso['2011_Discharges_MGal'],
-        )
-    iframe = folium.IFrame(html=html, width=400, height=200)
-    popup = folium.Popup(iframe, max_width=500)
-    folium.RegularPolygonMarker(
-            location=(cso['Latitude'], cso['Longitude']), 
-            popup=popup, 
-            number_of_sides=8, 
-            radius=6, 
-            color='green',
-            fill_color='green',
-        ).add_to(map_1)
-
-## Add labels for watersheds
-for feature in geo_watersheds_dict:
-    pos = shape(feature['geometry']).centroid.coords.xy
-    pos = (pos[1][0], pos[0][0])
-    folium.Marker(pos, icon=folium.features.DivIcon(
-        icon_size=(150,36),
-        icon_anchor=(7,20),
-        html='<div style="font-size: 12pt; color: blue; opacity: 0.3">{}</div>'.format(feature['properties']['NAME']),
-        )).add_to(map_1)
-
-## Add a layer control
-folium.LayerControl(collapsed=False).add_to(map_1)
-
-## Save to html
-map_1.save(OUT_PATH+'NECIR_CSO_map_total.html')
-
-
-#############################
-## Map of EJ racial characteristics with layers for watershed, town, and census block group with CSO points
-#############################
-
-for col, col_label in (
-    ('MINORPCT', 'Fraction of population identifying as non-white'),
-    ('LOWINCPCT', 'Fraction of population with income less than twice the Federal poverty limit'),
-    ('LINGISOPCT', 'Fraction of population in households whose adults speak English less than "very well"'),
-    ):
-
+def make_map_discharge_volumes(geo_blockgroups: dict, data_ins_g_bg: pd.DataFrame, 
+    data_ins_g_muni_j: pd.DataFrame, data_ins_g_ws_j: pd.DataFrame):
+    """
+    Map of discharge volumes with layers for watershed, town, and census block group with CSO points
+    """
     ## Map total discharge volume
-    map_2 = folium.Map(
+    map_1 = folium.Map(
         location=[42.29, -71.74], 
         zoom_start=8.2,
         tiles='Stamen Terrain',
         )
 
     ## Draw choropleth layer for census blocks
-    map_2.choropleth(
+    map_1.choropleth(
         geo_data=geo_blockgroups, 
         name='Census Block Groups',
-        data=data_egs_merge[col],
+        data=data_ins_g_bg['2011_Discharges_MGal'],
         key_on='feature.properties.GEOID',
-        legend_name='Block Group: '+col_label,
-        threshold_scale = list(np.nanpercentile(data_egs_merge[col], [0,25,50,75,100])),  
+        legend_name='Block Group: Total volume of discharge (2011; Millions of gallons)',
+        threshold_scale = list(np.nanpercentile(data_ins_g_bg['2011_Discharges_MGal'], [0,25,50,75,100])),  
         fill_color='BuGn', fill_opacity=0.7, line_opacity=0.3, highlight=True,
         )
 
     ## Draw Choropleth layer for towns
-    map_2.choropleth(
+    map_1.choropleth(
         geo_data=geo_towns, 
         name='Municipalities',
-        data=df_town_level[col],
+        data=data_ins_g_muni_j['2011_Discharges_MGal'],
         key_on='feature.properties.TOWN',
-        legend_name='Municipality: '+col_label,
-        threshold_scale = list(np.nanpercentile(df_town_level[col], [0,25,50,75,100])),  
+        legend_name='Municipality: Total volume of discharge (2011; Millions of gallons)',
+        threshold_scale = [0]+list(np.nanpercentile(data_ins_g_muni_j['2011_Discharges_MGal'][data_ins_g_muni_j['2011_Discharges_MGal'] > 0], [25,50,75,100])),  
         fill_color='PuRd', fill_opacity=0.7, line_opacity=0.3, highlight=True,
         )
 
     ## Draw Choropleth layer for watersheds
-    map_2.choropleth(
+    map_1.choropleth(
         geo_data=geo_watersheds, 
         name='Watersheds',
-        data=df_watershed_level[col],
+        data=data_ins_g_ws_j['2011_Discharges_MGal'],
         key_on='feature.properties.NAME',
-        legend_name='Watershed: '+col_label,
-        threshold_scale = list(np.nanpercentile(df_watershed_level[col], [0,25,50,75,100])),  
+        legend_name='Watershed: Total volume of discharge (2011; Millions of gallons)',
+        threshold_scale = list(np.nanpercentile(data_ins_g_ws_j['2011_Discharges_MGal'], [0,25,50,75,100])),  
         fill_color='PuBu', fill_opacity=0.7, line_opacity=0.3, highlight=True,
         )
 
@@ -331,7 +266,7 @@ for col, col_label in (
                 radius=6, 
                 color='green',
                 fill_color='green',
-            ).add_to(map_2)
+            ).add_to(map_1)
 
     ## Add labels for watersheds
     for feature in geo_watersheds_dict:
@@ -341,217 +276,281 @@ for col, col_label in (
             icon_size=(150,36),
             icon_anchor=(7,20),
             html='<div style="font-size: 12pt; color: blue; opacity: 0.3">{}</div>'.format(feature['properties']['NAME']),
-            )).add_to(map_2)
+            )).add_to(map_1)
 
     ## Add a layer control
-    folium.LayerControl(collapsed=False).add_to(map_2)
+    folium.LayerControl(collapsed=False).add_to(map_1)
 
     ## Save to html
-    map_2.save(OUT_PATH+'NECIR_CSO_map_EJ_'+col+'.html')
+    map_1.save(OUT_PATH+'NECIR_CSO_map_total.html')
 
 
-#############################
-## Summary of EJ characteristics of geographic areas
-#############################
+def make_map_ej_characteristics(geo_blockgroups: dict, geo_towns: dict, geo_watersheds: dict, 
+    data_egs_merge: pd.DataFrame, data_cso: pd.DataFrame):
+    """Map of EJ racial characteristics with layers for watershed, town, and census block group with CSO points
+    """
+    for col, col_label in (
+        ('MINORPCT', 'Fraction of population identifying as non-white'),
+        ('LOWINCPCT', 'Fraction of population with income less than twice the Federal poverty limit'),
+        ('LINGISOPCT', 'Fraction of population in households whose adults speak English less than "very well"'),
+        ):
 
-## By watershed
-mychart = chartjs.chart("EJ characteristics by watershed", "Bar", 640, 480)
-sel = np.argsort(df_watershed_level['MINORPCT'])
-mychart.set_labels(df_watershed_level.index.values[sel].tolist())
-    
-for i, col, col_label in (
-    (0, 'MINORPCT', 'Fraction of population identifying as non-white'),
-    (1, 'LOWINCPCT', 'Fraction of population with income less than twice the Federal poverty limit'),
-    (2, 'LINGISOPCT', 'Fraction of population in households whose adults speak English less than "very well"'),
-    ):
+        ## Map total discharge volume
+        map_2 = folium.Map(
+            location=[42.29, -71.74], 
+            zoom_start=8.2,
+            tiles='Stamen Terrain',
+            )
 
-    mychart.add_dataset(df_watershed_level[col][sel].values.tolist(), 
-        col_label,
-        backgroundColor="'rgba({},0.8)'".format(", ".join([str(x) for x in hex2rgb(COLOR_CYCLE[i])])),
-        yAxisID= "'y-axis-0'")
-mychart.set_params(JSinline = 0, ylabel = 'Fraction of households', xlabel='Watershed',
-    scaleBeginAtZero=1, x_autoskip=False)
+        ## Draw choropleth layer for census blocks
+        map_2.choropleth(
+            geo_data=geo_blockgroups, 
+            name='Census Block Groups',
+            data=data_egs_merge[col],
+            key_on='feature.properties.GEOID',
+            legend_name='Block Group: '+col_label,
+            threshold_scale = list(np.nanpercentile(data_egs_merge[col], [0,25,50,75,100])),  
+            fill_color='BuGn', fill_opacity=0.7, line_opacity=0.3, highlight=True,
+            )
 
-mychart.jekyll_write('../docs/_includes/charts/EJSCREEN_demographics_watershed.html')
+        ## Draw Choropleth layer for towns
+        map_2.choropleth(
+            geo_data=geo_towns, 
+            name='Municipalities',
+            data=df_town_level[col],
+            key_on='feature.properties.TOWN',
+            legend_name='Municipality: '+col_label,
+            threshold_scale = list(np.nanpercentile(df_town_level[col], [0,25,50,75,100])),  
+            fill_color='PuRd', fill_opacity=0.7, line_opacity=0.3, highlight=True,
+            )
+
+        ## Draw Choropleth layer for watersheds
+        map_2.choropleth(
+            geo_data=geo_watersheds, 
+            name='Watersheds',
+            data=df_watershed_level[col],
+            key_on='feature.properties.NAME',
+            legend_name='Watershed: '+col_label,
+            threshold_scale = list(np.nanpercentile(df_watershed_level[col], [0,25,50,75,100])),  
+            fill_color='PuBu', fill_opacity=0.7, line_opacity=0.3, highlight=True,
+            )
+
+        ## Add points layer for CSOs
+        for i in range(len(data_cso)):
+            ## Gather CSO data
+            cso = data_cso.iloc[i]
+            ## Add marker
+            html="""
+            <h1>CSO outfall at {address}</h1>
+            <p>
+            Discharge Body: {body}<br>
+            Municipality: {muni}<br>
+            Discharge volume (2011): {vol} (Millions of gallons)<br>
+            Discharge frequency (2011): {N} discharges<br>
+            </p>
+            """.format(
+                    address = cso['Nearest_Pipe_Address'],
+                    body = cso['DischargesBody'],
+                    muni = cso['Municipality'],
+                    vol = cso['2011_Discharges_MGal'],
+                    N = cso['2011_Discharges_MGal'],
+                )
+            iframe = folium.IFrame(html=html, width=400, height=200)
+            popup = folium.Popup(iframe, max_width=500)
+            folium.RegularPolygonMarker(
+                    location=(cso['Latitude'], cso['Longitude']), 
+                    popup=popup, 
+                    number_of_sides=8, 
+                    radius=6, 
+                    color='green',
+                    fill_color='green',
+                ).add_to(map_2)
+
+        ## Add labels for watersheds
+        for feature in geo_watersheds_dict:
+            pos = shape(feature['geometry']).centroid.coords.xy
+            pos = (pos[1][0], pos[0][0])
+            folium.Marker(pos, icon=folium.features.DivIcon(
+                icon_size=(150,36),
+                icon_anchor=(7,20),
+                html='<div style="font-size: 12pt; color: blue; opacity: 0.3">{}</div>'.format(feature['properties']['NAME']),
+                )).add_to(map_2)
+
+        ## Add a layer control
+        folium.LayerControl(collapsed=False).add_to(map_2)
+
+        ## Save to html
+        map_2.save(OUT_PATH+'NECIR_CSO_map_EJ_'+col+'.html')
 
 
 
+def make_chart_summary_ej_characteristics_watershed(df_watershed_level: pd.DataFrame, 
+    outpath: str='../docs/_includes/charts/EJSCREEN_demographics_watershed.html'):
+    """Summary of EJ characteristics per watershed
+    """
+    mychart = chartjs.chart("EJ characteristics by watershed", "Bar", 640, 480)
+    sel = np.argsort(df_watershed_level['MINORPCT'])
+    mychart.set_labels(df_watershed_level.index.values[sel].tolist())
+        
+    for i, col, col_label in (
+        (0, 'MINORPCT', 'Fraction of population identifying as non-white'),
+        (1, 'LOWINCPCT', 'Fraction of population with income less than twice the Federal poverty limit'),
+        (2, 'LINGISOPCT', 'Fraction of population in households whose adults speak English less than "very well"'),
+        ):
 
-## By town
-mychart = chartjs.chart("EJ characteristics by municipality", "Bar", 640, 480)
-sel = np.argsort(df_town_level['MINORPCT'])
-mychart.set_labels(df_town_level.index.values[sel].tolist())
-    
-for i, col, col_label in (
-    (0, 'MINORPCT', 'Fraction of population identifying as non-white'),
-    (1, 'LOWINCPCT', 'Fraction of population with income less than twice the Federal poverty limit'),
-    (2, 'LINGISOPCT', 'Fraction of population in households whose adults speak English less than "very well"'),
-    ):
+        mychart.add_dataset(df_watershed_level[col][sel].values.tolist(), 
+            col_label,
+            backgroundColor="'rgba({},0.8)'".format(", ".join([str(x) for x in hex2rgb(COLOR_CYCLE[i])])),
+            yAxisID= "'y-axis-0'")
+    mychart.set_params(JSinline = 0, ylabel = 'Fraction of households', xlabel='Watershed',
+        scaleBeginAtZero=1, x_autoskip=False)
 
-    mychart.add_dataset(df_town_level[col][sel].values.tolist(), 
-        col_label,
-        backgroundColor="'rgba({},0.8)'".format(", ".join([str(x) for x in hex2rgb(COLOR_CYCLE[i])])),
-        yAxisID= "'y-axis-0'")
-mychart.set_params(JSinline = 0, ylabel = 'Fraction of households', xlabel='Municipality',
-    scaleBeginAtZero=1, x_autoskip=True)
-
-mychart.jekyll_write('../docs/_includes/charts/EJSCREEN_demographics_municipality.html')
+    mychart.jekyll_write(outpath)
 
 
-#############################
-## Comparison of EJ and CSO characteristics by geographic areas
-#############################
+def make_chart_summary_ej_characteristics_town(df_town_level: pd.DataFrame, 
+    outpath: str='../docs/_includes/charts/EJSCREEN_demographics_municipality.html'):
+    """Summary of EJ characteristics per town
+    """
+    mychart = chartjs.chart("EJ characteristics by municipality", "Bar", 640, 480)
+    sel = np.argsort(df_town_level['MINORPCT'])
+    mychart.set_labels(df_town_level.index.values[sel].tolist())
+        
+    for i, col, col_label in (
+        (0, 'MINORPCT', 'Fraction of population identifying as non-white'),
+        (1, 'LOWINCPCT', 'Fraction of population with income less than twice the Federal poverty limit'),
+        (2, 'LINGISOPCT', 'Fraction of population in households whose adults speak English less than "very well"'),
+        ):
 
-for i, col, col_label in (
-    (0, 'MINORPCT', 'Fraction of population identifying as non-white'),
-    (1, 'LOWINCPCT', 'Fraction of population with income less than twice the Federal poverty limit'),
-    (2, 'LINGISOPCT', 'Fraction of population in households whose adults speak English less than "very well"'),
-    ):
-    ## Lookup base values - Census group block level
-    l = data_egs_merge.Watershed.unique()
-    l = l[pd.isnull(l) == 0]
-    pop = data_egs_merge.groupby('Watershed')['ACSTOTPOP'].sum().loc[l].values
-    x = df_watershed_level[col].loc[l].values
-    y = data_ins_g_ws_j['2011_Discharges_MGal'].loc[l].values
+        mychart.add_dataset(df_town_level[col][sel].values.tolist(), 
+            col_label,
+            backgroundColor="'rgba({},0.8)'".format(", ".join([str(x) for x in hex2rgb(COLOR_CYCLE[i])])),
+            yAxisID= "'y-axis-0'")
+    mychart.set_params(JSinline = 0, ylabel = 'Fraction of households', xlabel='Municipality',
+        scaleBeginAtZero=1, x_autoskip=True)
 
-    ## Boostrapped weighted mean function
-    def weight_mean(x, weights, N=1000):
-        avgs = np.zeros(N)
-        nonan_sel = (np.isnan(x) == 0) & (np.isnan(weights) == 0)
-        x = x[nonan_sel]
-        weights = weights[nonan_sel]
-        for i in range(N):
-            sel = np.random.randint(len(x), size=len(x))
-            avgs[i] = np.average(x[sel], weights=weights[sel])
-        return np.mean(avgs), np.std(avgs)
+    mychart.jekyll_write(outpath)
 
-    ## Calculate binned values
-    x_bins = np.nanpercentile(x, list(np.linspace(0,100,5)))
-    x_bin_cent = [np.mean([x_bins[i], x_bins[i+1]]) for i in range(len(x_bins) - 1)]
-    x_bin_id = pd.cut(x, x_bins, labels=False)
-    y_bin = np.array([
-        weight_mean(y[x_bin_id == i], pop[x_bin_id == i])
-        for i in range(len(x_bins) - 1)]).T
+def weight_mean(x, weights, N=1000):
+    """Boostrapped weighted mean function
+    """
+    avgs = np.zeros(N)
+    nonan_sel = (np.isnan(x) == 0) & (np.isnan(weights) == 0)
+    x = x[nonan_sel]
+    weights = weights[nonan_sel]
+    for i in range(N):
+        sel = np.random.randint(len(x), size=len(x))
+        avgs[i] = np.average(x[sel], weights=weights[sel])
+    return np.mean(avgs), np.std(avgs)
 
-    ## Establish chart
-    mychart = chartjs.chart("CSO discharge volume vs EJ characteristics by watershed: "+col, "Scatter", 640, 480)
+def make_chart_ej_cso_comparison(data_egs_merge: pd.DataFrame, data_ins_g_ws_j: pd.DataFrame, 
+    df_watershed_level: pd.DataFrame, outpath: str='../docs/_includes/charts/NECIR_EJSCREEN_correlation_bywatershed_{}.html'):
+    """Comparison of EJ and CSO characteristics by geographic areas
+    """
+    for i, col, col_label in (
+        (0, 'MINORPCT', 'Fraction of population identifying as non-white'),
+        (1, 'LOWINCPCT', 'Fraction of population with income less than twice the Federal poverty limit'),
+        (2, 'LINGISOPCT', 'Fraction of population in households whose adults speak English less than "very well"'),
+        ):
+        ## Lookup base values - Census group block level
+        l = data_egs_merge.Watershed.unique()
+        l = l[pd.isnull(l) == 0]
+        pop = data_egs_merge.groupby('Watershed')['ACSTOTPOP'].sum().loc[l].values
+        x = df_watershed_level[col].loc[l].values
+        y = data_ins_g_ws_j['2011_Discharges_MGal'].loc[l].values
 
-    ## Add individual-level dataset
-    mychart.add_dataset(
-        np.array([x, y]).T, 
-        dataset_label="Individual watersheds",
-        backgroundColor="'rgba(50,50,50,0.125)'",
-        showLine = "false",
-        yAxisID= "'y-axis-0'",
-        fill="false",
-        hidden="'true'"
-        )
-    ## Add binned dataset
-    mychart.add_dataset(
-        np.array([x_bin_cent, y_bin[0]]).T, 
-        dataset_label="Average (population weighted & binned)",
-        backgroundColor="'rgba(50,50,200,1)'",
-        showLine = "true",
-        borderColor="'rgba(50,50,200,1)'",
-        borderWidth=3,
-        yAxisID= "'y-axis-0'",
-        fill="false",
-        pointRadius=6,
-        )
-    ## Add uncertainty contour
-    mychart.add_dataset(np.array([x_bin_cent, y_bin[0] - 1.65 * y_bin[1]]).T, 
-        "Average lower bound (5% limit)",
-        backgroundColor="'rgba(50,50,200,0.3)'", showLine = "true", yAxisID= "'y-axis-0'", borderWidth = 1, 
-        fill = 'false', pointBackgroundColor="'rgba(50,50,200,0.3)'", pointBorderColor="'rgba(50,50,200,0.3)'")
-    mychart.add_dataset(np.array([x_bin_cent, y_bin[0] + 1.65 * y_bin[1]]).T, 
-        "Average upper bound (95% limit)",
-        backgroundColor="'rgba(50,50,200,0.3)'", showLine = "true", yAxisID= "'y-axis-0'", borderWidth = 1, fill = "'-1'", pointBackgroundColor="'rgba(50,50,200,0.3)'", pointBorderColor="'rgba(50,50,200,0.3)'")
+        ## Calculate binned values
+        x_bins = np.nanpercentile(x, list(np.linspace(0,100,5)))
+        x_bin_cent = [np.mean([x_bins[i], x_bins[i+1]]) for i in range(len(x_bins) - 1)]
+        x_bin_id = pd.cut(x, x_bins, labels=False)
+        y_bin = np.array([
+            weight_mean(y[x_bin_id == i], pop[x_bin_id == i])
+            for i in range(len(x_bins) - 1)]).T
 
-    ## Set overall chart parameters
-    mychart.set_params(
-        JSinline = 0, 
-        ylabel = 'Total volume of discharge (2011; Millions of gallons)', 
-        xlabel=col_label,
-        yaxis_type='linear',    
-        y2nd = 0,
-        scaleBeginAtZero=1,
-        custom_tooltips = """
-                    mode: 'single',
-                    callbacks: {
-                        label: function(tooltipItems, data) { 
-                            var title = '';
-                            
-                            if (tooltipItems.datasetIndex == 0) {
-                                title = ma_towns[tooltipItems.index];
-                            } else {
-                                title = data.datasets[tooltipItems.datasetIndex].label;
+        ## Establish chart
+        mychart = chartjs.chart("CSO discharge volume vs EJ characteristics by watershed: "+col, "Scatter", 640, 480)
+
+        ## Add individual-level dataset
+        mychart.add_dataset(
+            np.array([x, y]).T, 
+            dataset_label="Individual watersheds",
+            backgroundColor="'rgba(50,50,50,0.125)'",
+            showLine = "false",
+            yAxisID= "'y-axis-0'",
+            fill="false",
+            hidden="'true'"
+            )
+        ## Add binned dataset
+        mychart.add_dataset(
+            np.array([x_bin_cent, y_bin[0]]).T, 
+            dataset_label="Average (population weighted & binned)",
+            backgroundColor="'rgba(50,50,200,1)'",
+            showLine = "true",
+            borderColor="'rgba(50,50,200,1)'",
+            borderWidth=3,
+            yAxisID= "'y-axis-0'",
+            fill="false",
+            pointRadius=6,
+            )
+        ## Add uncertainty contour
+        mychart.add_dataset(np.array([x_bin_cent, y_bin[0] - 1.65 * y_bin[1]]).T, 
+            "Average lower bound (5% limit)",
+            backgroundColor="'rgba(50,50,200,0.3)'", showLine = "true", yAxisID= "'y-axis-0'", borderWidth = 1, 
+            fill = 'false', pointBackgroundColor="'rgba(50,50,200,0.3)'", pointBorderColor="'rgba(50,50,200,0.3)'")
+        mychart.add_dataset(np.array([x_bin_cent, y_bin[0] + 1.65 * y_bin[1]]).T, 
+            "Average upper bound (95% limit)",
+            backgroundColor="'rgba(50,50,200,0.3)'", showLine = "true", yAxisID= "'y-axis-0'", borderWidth = 1, fill = "'-1'", pointBackgroundColor="'rgba(50,50,200,0.3)'", pointBorderColor="'rgba(50,50,200,0.3)'")
+
+        ## Set overall chart parameters
+        mychart.set_params(
+            JSinline = 0, 
+            ylabel = 'Total volume of discharge (2011; Millions of gallons)', 
+            xlabel=col_label,
+            yaxis_type='linear',    
+            y2nd = 0,
+            scaleBeginAtZero=1,
+            custom_tooltips = """
+                        mode: 'single',
+                        callbacks: {
+                            label: function(tooltipItems, data) { 
+                                var title = '';
+                                
+                                if (tooltipItems.datasetIndex == 0) {
+                                    title = ma_towns[tooltipItems.index];
+                                } else {
+                                    title = data.datasets[tooltipItems.datasetIndex].label;
+                                }
+                                return [title, 'Total volume of discharge: ' + tooltipItems.yLabel, 'Linguistic isoluation: ' + tooltipItems.xLabel];
                             }
-                            return [title, 'Total volume of discharge: ' + tooltipItems.yLabel, 'Linguistic isoluation: ' + tooltipItems.xLabel];
                         }
-                    }
-    """
-        ) 
-    ## Update logarithm tick format as in https://github.com/chartjs/Chart.js/issues/3121
-    mychart.add_extra_code(
-    """
-    Chart.scaleService.updateScaleDefaults('linear', {
-    ticks: {
-        autoSkip: true,
-        autoSkipPadding: 100,
-        callback: function(tick, index, ticks) {
-        return tick.toLocaleString()
+        """
+            ) 
+        ## Update logarithm tick format as in https://github.com/chartjs/Chart.js/issues/3121
+        mychart.add_extra_code(
+        """
+        Chart.scaleService.updateScaleDefaults('linear', {
+        ticks: {
+            autoSkip: true,
+            autoSkipPadding: 100,
+            callback: function(tick, index, ticks) {
+            return tick.toLocaleString()
+            }
         }
-    }
-    });
-    """)
-    ## Add watershed dataset
-    mychart.add_extra_code(
-        'var ma_towns = ["' + '","'.join(l) + '"];')
+        });
+        """)
+        ## Add watershed dataset
+        mychart.add_extra_code(
+            'var ma_towns = ["' + '","'.join(l) + '"];')
 
-    mychart.jekyll_write('../docs/_includes/charts/NECIR_EJSCREEN_correlation_bywatershed_'+col+'.html')
+        mychart.jekyll_write(outpath.format(col))
 
 
-#############################
-## Regression model
-#############################
+# -------------------------
+# Regression modeling functions
+# -------------------------
 
-stan_model = """
-data {
-    int<lower=0> J;         // number of watersheds
-    vector<lower=0>[J] x;   // EJ parameter
-    vector<lower=0>[J] y;   // CSO discharge
-    vector<lower=0>[J] p;   // population (normalized)
-}
-transformed data {
-    real<lower=0> s_y;
-    
-    s_y = sd(y);
-}
-parameters {
-    real<lower=0> alpha;    // Multiplicative offset
-    real beta;              // Exponent
-    real<lower=0> sigma;    // Error model scaler
-}
-transformed parameters {
-    vector[J] theta;        // Regression estimate
-    
-    for (i in 1:J) {
-        theta[i] = alpha * pow(x[i], beta);
-    }
-}
-model {
-    sigma ~ normal(0, 4);
-    alpha ~ normal(0, 10*s_y);
-    beta ~ normal(0, 4);
-    y ~ normal(theta, sigma * s_y * sqrt(inv(p)));
-}
-"""
-
-for i, col, col_label in (
-    (0, 'MINORPCT', 'Fraction of population identifying as non-white'),
-    (1, 'LOWINCPCT', 'Fraction of population with income less than twice the Federal poverty limit'),
-    (2, 'LINGISOPCT', 'Fraction of population in households whose adults speak English less than "very well"'),
-    ):
+def fit_stan_model(i: int, col: str, col_label: str, data_egs_merge: pd.DataFrame, df_watershed_level: pd.DataFrame, 
+    data_ins_g_ws_j: pd.DataFrame) -> tuple[stan.fit.Fit, pd.DataFrame]:
     ## Lookup base values - Census group block level
     l = data_egs_merge.Watershed.unique()
     l = l[pd.isnull(l) == 0]
@@ -568,25 +567,37 @@ for i, col, col_label in (
         }
     
     print(f'Building stan model for {col}')
-    sm = stan.build(stan_model, data=stan_dat)
-    fit = sm.sampling(num_samples=10000, num_chains=10)
+    sm = stan.build(STAN_MODEL_CODE, data=stan_dat)
+    fit = sm.sample(num_samples=10000, num_chains=10)
     fit_par = fit.to_frame()
     
-    ## Stan fit diagnostic output
-    #s = fit.summary()
-    #summary = pd.DataFrame(s['summary'], columns=s['summary_colnames'], index=s['summary_rownames'])
-    #print(col)
-    #print(summary)
+    return fit, fit_par
     
-    ## Plot beta posterior
+## Stan fit diagnostic output
+#s = fit.summary()
+#summary = pd.DataFrame(s['summary'], columns=s['summary_colnames'], index=s['summary_rownames'])
+#print(col)
+#print(summary)
+    
+def regression_plot_beta_posterior(fit_par: pd.DataFrame, col: str, plot_path: str, fact_file: str=FACT_FILE):
+    """Plot a beta posterior histogram for the regression model. Also output some summary statistics
+    to the `fact_file`.
+    """
     plt.figure()
-    ph = 2**fit['beta']
+    ph = 2**fit_par['beta']
     plt.hist(ph, bins=100, range=[0,6])
     plt.xlabel("2x growth ratio -- " + col)
     plt.ylabel('Posterior samples')
-    plt.savefig(FIG_PATH+'NECIR_CSO_stanfit_beta_'+col+'.png', dpi=200)
+    plt.savefig(plot_path, dpi=200)
     
-    ## Plot fitted model draws
+    ## Output summary dependence statistics
+    with open(fact_file, 'a') as f:
+        f.write(f'depend_cso_{col}: {np.median(ph):0.1f} times (90% confidence interval '
+                f'{np.percentile(ph, 5):0.1f} to {np.percentile(ph, 95):0.1f} times)\n')
+
+def regression_plot_model_draws(fit_par: pd.DataFrame, col_label: str, plot_path: str):
+    """Plot fitted exponential model draws from the regression model posterior.
+    """
     plt.figure()
     N = len(fit_par['beta'])
     for i,n in enumerate(np.random.randint(0, N, 20)):
@@ -600,9 +611,40 @@ for i, col, col_label in (
     plt.scatter(x, y, marker='o', c=pop/1e3, cmap=cm.Blues, label='Watersheds', zorder=2)
     plt.colorbar(label='Population (1000s)')
     plt.legend(loc=2)
-    plt.savefig(FIG_PATH+'NECIR_CSO_stanfit_'+col+'.png', dpi=200, bbox_inches='tight')
+    plt.savefig(plot_path, dpi=200, bbox_inches='tight')
+
+# -------------------------
+# Main logic
+# -------------------------
+
+def main():
+    """Load all data and generate all plots and analysis.
+    """
+    # Data ETL
+    geo_towns_dict, geo_watersheds_dict, geo_blockgroups_dict = get_geo_files()
+    data_cso, data_ejs = load_data()
+    assign_cso_data_to_census_blocks(data_cso, geo_blockgroups_dict)
+    data_ejs = assign_cso_data_to_census_blocks(data_ejs, geo_blockgroups_dict)
+    data_ins_g_muni_j, data_ins_g_ws_j, data_egs_merge, df_watershed_level, df_town_level = apply_pop_weighted_avg(data_cso, data_ejs)
     
-    ## Output summary dependence statistics
-    with open(FACT_FILE, 'a') as f:
-        f.write(f'depend_cso_{col}: {np.median(ph):0.1f} times (90% confidence interval '
-                f'{np.percentile(ph, 5):0.1f} to {np.percentile(ph, 95):0.1f} times)\n')
+    # Make maps
+    make_map_discharge_volumes(geo_blockgroups, data_ins_g_bg, data_ins_g_muni_j, data_ins_g_ws_j)
+    make_map_ej_characteristics(geo_blockgroups, geo_towns, geo_watersheds, data_egs_merge, data_cso)
+    
+    # Make charts
+    make_chart_summary_ej_characteristics_watershed(df_watershed_level)
+    make_chart_summary_ej_characteristics_town(df_town_level)
+    make_chart_ej_cso_comparison(data_egs_merge, data_ins_g_ws_j, df_watershed_level, outpath)
+    
+    # Regression modeling
+    for i, col, col_label in (
+        (0, 'MINORPCT', 'Fraction of population identifying as non-white'),
+        (1, 'LOWINCPCT', 'Fraction of population with income less than twice the Federal poverty limit'),
+        (2, 'LINGISOPCT', 'Fraction of population in households whose adults speak English less than "very well"'),
+        ):
+        fit, fit_par = fit_stan_model(i, col, col_label, data_egs_merge, df_watershed_level, data_ins_g_ws_j)
+        regression_plot_beta_posterior(fit_par, col, plot_path=FIG_PATH+'NECIR_CSO_stanfit_beta_'+col+'.png')
+        regression_plot_model_draws(fit_par, col_label, FIG_PATH+'NECIR_CSO_stanfit_'+col+'.png')
+    
+if __name__ == '__main__':
+    main()
