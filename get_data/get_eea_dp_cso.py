@@ -12,6 +12,7 @@ import json
 import requests
 from typing import Optional
 
+import datetime
 import pandas as pd
 
 API_BASE_URL = 'https://eeaonline.eea.state.ma.us/dep/CSOAPI/api/Incident/GetIncidentsBySearchFields/?pageSize=50&'
@@ -34,7 +35,7 @@ def _query_page(page: int, query_params: Optional[dict[str, str]]=None) -> Optio
     query_string = '&'.join(f'{key}={val}' for key, val in query_params.items())
     r = requests.get(API_BASE_URL + query_string)
     if len(r.json()['results']) > 0:
-        return pd.concat(pd.Series(c) for c in r.json()['results'])
+        return pd.concat([pd.Series(c) for c in r.json()['results']], axis=1).T
     else:
         return None
 
@@ -55,7 +56,10 @@ def run_query() -> pd.DataFrame:
 def get_data() -> pd.DataFrame:
     """Query data from the data portal API and do any necessary post processing.
     """
-    return run_query()
+    df = run_query()
+    df['incidentDate'] = pd.to_datetime(df['incidentDate'])
+    df['submittedDate'] = pd.to_datetime(df['submittedDate'])
+    return df
 
 def write_data(df: pd.DataFrame):
     """Write data to a local table for integration with AMEND.
