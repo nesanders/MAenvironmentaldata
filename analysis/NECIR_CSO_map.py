@@ -132,6 +132,8 @@ def assign_cso_data_to_census_blocks(data_cso: pd.DataFrame, geo_blockgroups_dic
 def assign_ej_data_to_geo_bins(data_ejs: pd.DataFrame, geo_towns_dict: dict, geo_watersheds_dict: dict, 
     geo_blockgroups_dict: dict) -> pd.DataFrame:
     """Return a version of `data_ejs` with added 'Town' and 'Watershed' columns.
+    
+    TODO this is very slow (minutes) and could surely be sped up, at least through parallelization.
     """
     print('Adding Town and Watershed labels to EJ data')
     ## Loop over Census block groups
@@ -149,15 +151,15 @@ def assign_ej_data_to_geo_bins(data_ejs: pd.DataFrame, geo_towns_dict: dict, geo
                 bg_mapping.loc[feature['properties']['GEOID'], 'Town'] = town_feature['properties']['TOWN'] 
         ## Warn if a town was not found
         if bg_mapping.loc[feature['properties']['GEOID'], 'Town'] is np.nan:
-            print(('No Town found for Block Group #', str(cso_i)))
+            print(f'No Town found for GEOID {feature['properties']['GEOID']}')
         ## Loop over watersheds
         for watershed_feature in geo_watersheds_dict:
             watershed_polygon = shape(watershed_feature['geometry'])
             if watershed_polygon.contains(point):
                 bg_mapping.loc[feature['properties']['GEOID'], 'Watershed'] = watershed_feature['properties']['NAME'] 
         ## Warn if a watershed was not found
-        if bg_mapping.loc[feature['properties']['GEOID'], 'Town'] is np.nan:
-            print(('No Town found for Block Group #', str(cso_i)))
+        if bg_mapping.loc[feature['properties']['GEOID'], 'Watershed'] is np.nan:
+            print(f'No Watershed found for GEOID {feature['properties']['GEOID']}')
 
     data_ejs = pd.merge(data_ejs, bg_mapping, left_on = 'ID', right_index=True, how='left')
     return data_ejs
@@ -640,6 +642,7 @@ def main():
     # Data ETL
     geo_towns_dict, geo_watersheds_dict, geo_blockgroups_dict = get_geo_files()
     data_cso, data_ejs = load_data()
+    # TODO should cache these results and add them to the database
     assign_cso_data_to_census_blocks(data_cso, geo_blockgroups_dict)
     data_ejs = assign_ej_data_to_geo_bins(data_ejs, geo_towns_dict, geo_watersheds_dict, geo_blockgroups_dict)
     data_ins_g_muni_j, data_ins_g_ws_j, data_egs_merge, df_watershed_level, df_town_level = apply_pop_weighted_avg(data_cso, data_ejs)
