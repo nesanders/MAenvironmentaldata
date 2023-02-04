@@ -12,7 +12,7 @@ conda install -c conda-forge c-compiler cxx-compiler
 """
 
 import json
-from typing import Any, Tuple
+from typing import Any, Optional, Tuple
 
 import chartjs
 import folium
