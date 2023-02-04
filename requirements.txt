@@ -15,3 +15,4 @@ sqlalchemy == 1.4.46
 unidecode >= 1.0.23
 us >= 1.0.0
 fsspec
+joblib >= 1.2.0
