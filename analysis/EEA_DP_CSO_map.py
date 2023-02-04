@@ -8,40 +8,12 @@ from typing import Any, Tuple
 import numpy as np
 import pandas as pd
 
-from NECIR_CSO_map import *
+from NECIR_CSO_map import CSOAnalysis, get_engine
 
-# Which year's CSO data to load
-PICK_CSO_YEAR = 2022
+# Create a joblib cache
+memory = Memory('eea_dp_cso_data_cache', verbose=1)
 
-# Pick one of two possible report types, 'Public Notification Report' or 'Verified Data Report'
-PICK_REPORT_TYPE = 'Verified Data Report'
-# Path to file with lat long data from the state
-CSO_LAT_LONG_DATA_FILE = '../docs/data/ma_permittee-and-outfall-lists.xlsx'
-
-# Overwrite some globals from NECIR_CSO_map
-CSO_DATA_YEAR = PICK_CSO_YEAR
-DISCHARGE_VOL_COL = 'DischargeVolume'
-DISCHARGE_COUNT_COL = 'DischargeCount'
-LATITUDE_COL = 'latitude'
-LONGITUDE_COL = 'longitude'
-FACT_FILE = '../docs/data/facts_EEA_DP_CSO.yml'
-OUTPUT_SLUG = 'MAEEADP_CSO'
-
-# -------------------------
-# Data loading functions
-# -------------------------
-
-EEA_DP_CSO_QUERY = """SELECT * FROM MAEEADP_CSO"""
-
-def load_data_cso(pick_year: int=PICK_CSO_YEAR) -> pd.DataFrame:
-    """Load EEA Data Portal CSO data, adding latitude and longitude from the NECIR_CSO_2011 data table
-    where possible.
-    """
-    print(f'Loading EEA Data Portal CSO data for {pick_year}')
-    disk_engine = get_engine()
-    data_cso = pd.read_sql_query(EEA_DP_CSO_QUERY, disk_engine)
-    data_cso_trans = transform_data_cso(data_cso)
-    return data_cso
+PICK_YEAR = 2022
 
 def collapse(x: list) -> Any:
     """Pick an arbitrary non-null value from a list.
@@ -51,60 +23,108 @@ def collapse(x: list) -> Any:
             return val
     return None
 
-def transform_data_cso(data_cso: pd.DataFrame, pick_year: int=PICK_CSO_YEAR) -> pd.DataFrame:
-    """Transform the loaded MA EEA DP CSO data by aggregating results for `pick_year` over outfalls.
+class CSOAnalysisEEADP(CSOAnalysis):
+    """Class containing methods and attributes related to CSO EJ analysis using EEA DP CSO data.
     """
-    # Columns to be aggregated over
-    # NOTE we aggregate over lat/long because there are several outfalls named '001' that have different lat/longs
-    agg_cols = ['reporterClass', 'outfallId', 'latitude', 'longitude']
-    # Columns to be aggregated with a sum function
-    sum_cols = ['volumnOfEvent']
-    # Columns to be aggregated with a collapse function
-    collapse_cols = ['Year', 'permiteeClass', 'permiteeName', 'permiteeId', 'municipality', 'location', 'waterBody', 'waterBodyDescription']
-    # Columns to be counted
-    count_cols = ['incidentId']
+        
+    output_slug_dataset: str = 'MAEEADP'
+    output_slug: str = 'MAEEADP_CSO'
+    discharge_vol_col: str = 'DischargeVolume'
+    discharge_count_col: str = 'DischargeCount'
+    latitude_col: str = 'latitude'
+    longitude_col: str = 'longitude'
+    # Path to file with lat long data from the state
+    cso_lat_long_data_file: str = '../docs/data/ma_permittee-and-outfall-lists.xlsx'
     
-    # NOTE ther are tree possible eventTypes: 'CSO – Treated', 'CSO – UnTreated', 'Partially Treated – Blended', 'Partially Treated – Other'
-    # We choose to sum over all of them
-    
-    aggregators = {col: np.sum for col in sum_cols}
-    aggregators.update({col: collapse for col in collapse_cols})
-    aggregators.update({col: len for col in count_cols})
-    
-    print(f'Aggregating CSO data for year {pick_year}')
-    df_pick = data_cso[data_cso['Year'].astype(int) == pick_year]
-    print(f'N={len(df_pick)} total CSO records loaded from {pick_year}')
-    
-    # Fill in missing lat/long data from the state file
-    sel_missing = df_pick['latitude'].isnull()
-    print(f"Missing N={sum(sel_missing)} outfall lat/longs")
-    print(f'Loading missing lat/long data from {CSO_LAT_LONG_DATA_FILE}')
-    df_lat_long_cso = pd.read_excel(CSO_LAT_LONG_DATA_FILE, 'CSO Outfalls').set_index('Outfall ID')
-    missing_lat_long_ids = df_pick[sel_missing]['outfallId']
-    missing_lat_long_coords = df_lat_long_cso.reindex(missing_lat_long_ids)[['Lat', 'Long']]
-    df_pick.loc[sel_missing, ['latitude', 'longitude']] = missing_lat_long_coords.values
-    print(f"Missing N={sum(df_pick['latitude'].isnull())} outfall lat/longs after replacement")
-    
-    df_agg = df_pick.groupby(agg_cols).agg(aggregators)
-    df_per_outfall = df_agg.loc[PICK_REPORT_TYPE].reset_index()
-    
-    # Rename some columns
-    df_per_outfall.rename(columns={'volumnOfEvent': 'DischargeVolume', 'incidentId': 'DischargeCount'}, inplace=True)
-    
-    return df_per_outfall
+    def __init__(
+        self, 
+        fact_file: str='../docs/data/facts_EEA_DP_CSO.yml'
+        out_path: str='../docs/data/facts_EEA_DP_CSO.yml',
+        fig_path: str='../docs/assets/figures/',
+        stan_model_code: str='discharge_regression_model.stan',
+        geo_towns_path: str='../docs/assets/geo_json/TOWNSSURVEY_POLYM_geojson_simple.json',
+        geo_watershed_path: str='../docs/assets/geo_json/watshdp1_geojson_simple.json',
+        geo_blockgroups_path: str='../docs/assets/geo_json/cb_2017_25_bg_500k.json',
+        cso_data_year: int=2022,
+        pick_report_type: str='Verified Data Report'
+    ):
+        """Inittialize parameters for CSOAnalysisEEADP
+        """
+        super().__init__(
+            fact_file,
+            out_path,
+            fig_path,
+            stan_model_code,
+            geo_towns_path,
+            geo_watershed_path,
+            geo_blockgroups_path
+        )
+        self.cso_data_year = cso_data_year
+        # Pick one of two possible report types, 'Public Notification Report' or 'Verified Data Report'
+        self.pick_report_type = pick_report_type
 
+    # -------------------------
+    # Data loading functions
+    # -------------------------
 
-def load_data() -> Tuple[pd.DataFrame, pd.DataFrame]:
-    """Load all data, CSO and EJ.
-    """
-    print('Loading all data')
-    data_cso = load_data_cso()
-    data_ejs = load_data_ej()
-    return data_cso, data_ejs
+    EEA_DP_CSO_QUERY = """SELECT * FROM MAEEADP_CSO"""
+
+    def load_data_cso(self, pick_year: int=PICK_CSO_YEAR) -> pd.DataFrame:
+        """Load EEA Data Portal CSO data, adding latitude and longitude from the NECIR_CSO_2011 data table
+        where possible.
+        """
+        print(f'Loading EEA Data Portal CSO data for {pick_year}')
+        disk_engine = get_engine()
+        data_cso = pd.read_sql_query(EEA_DP_CSO_QUERY, disk_engine)
+        data_cso_trans = self.transform_data_cso(data_cso)
+        return data_cso
+
+    def transform_data_cso(self, data_cso: pd.DataFrame, pick_year: int=PICK_CSO_YEAR) -> pd.DataFrame:
+        """Transform the loaded MA EEA DP CSO data by aggregating results for `pick_year` over outfalls.
+        """
+        # Columns to be aggregated over
+        # NOTE we aggregate over lat/long because there are several outfalls named '001' that have different lat/longs
+        agg_cols = ['reporterClass', 'outfallId', 'latitude', 'longitude']
+        # Columns to be aggregated with a sum function
+        sum_cols = ['volumnOfEvent']
+        # Columns to be aggregated with a collapse function
+        collapse_cols = ['Year', 'permiteeClass', 'permiteeName', 'permiteeId', 'municipality', 'location', 'waterBody', 'waterBodyDescription']
+        # Columns to be counted
+        count_cols = ['incidentId']
+        
+        # NOTE ther are tree possible eventTypes: 'CSO – Treated', 'CSO – UnTreated', 'Partially Treated – Blended', 'Partially Treated – Other'
+        # We choose to sum over all of them
+        
+        aggregators = {col: np.sum for col in sum_cols}
+        aggregators.update({col: collapse for col in collapse_cols})
+        aggregators.update({col: len for col in count_cols})
+        
+        print(f'Aggregating CSO data for year {pick_year}')
+        df_pick = data_cso[data_cso['Year'].astype(int) == pick_year]
+        print(f'N={len(df_pick)} total CSO records loaded from {pick_year}')
+        
+        # Fill in missing lat/long data from the state file
+        sel_missing = df_pick['latitude'].isnull()
+        print(f"Missing N={sum(sel_missing)} outfall lat/longs")
+        print(f'Loading missing lat/long data from {self.cso_lat_long_data_file}')
+        df_lat_long_cso = pd.read_excel(self.cso_lat_long_data_file, 'CSO Outfalls').set_index('Outfall ID')
+        missing_lat_long_ids = df_pick[sel_missing]['outfallId']
+        missing_lat_long_coords = df_lat_long_cso.reindex(missing_lat_long_ids)[['Lat', 'Long']]
+        df_pick.loc[sel_missing, ['latitude', 'longitude']] = missing_lat_long_coords.values
+        print(f"Missing N={sum(df_pick['latitude'].isnull())} outfall lat/longs after replacement")
+        
+        df_agg = df_pick.groupby(agg_cols).agg(aggregators)
+        df_per_outfall = df_agg.loc[self.pick_report_type].reset_index()
+        
+        # Rename some columns
+        df_per_outfall.rename(columns={'volumnOfEvent': 'DischargeVolume', 'incidentId': 'DischargeCount'}, inplace=True)
+        
+        return df_per_outfall
 
 # -------------------------
 # Main logic
 # -------------------------
     
 if __name__ == '__main__':
-    main(load_data)
+    csoa = CSOAnalysisEEADP(PICK_YEAR)
+    csoa().run_analysis()
