@@ -147,6 +147,7 @@ class CSOAnalysisEEADP(CSOAnalysis):
         
         data_types = self.data_cso_raw['eventType'].unique()
         all_days = pd.date_range(start=f'1/1/{self.cso_data_year}', end=f'12/31/{self.cso_data_year}')
+        mychart.set_labels(all_days.tolist())
         cso_df_counts = self.data_cso_raw.groupby(['eventType', 'incidentDate']).size()
         
         cumulative_counts = pd.Series(index=all_days, data=np.zeros(len(all_days)))
