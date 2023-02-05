@@ -151,10 +151,12 @@ class CSOAnalysisEEADP(CSOAnalysis):
         print('Making map of CSO counts per day by event type')
         mychart = chartjs.chart("CSO counts per day by event type", "Bar", 640, 480)
         
-        data_types = self.data_cso_raw['eventType'].unique()
+        data_cso_report = self.data_cso_raw[self.data_cso_raw['reporterClass'] == self.pick_report_type]
+        
+        data_types = data_cso_report['eventType'].unique()
         all_months = pd.date_range(start=f'1/1/{self.cso_data_year}', end=f'12/31/{self.cso_data_year}', freq='MS')
         mychart.set_labels(all_months.tolist())
-        cso_df_counts = self.data_cso_raw.groupby(['eventType', 'incidentDate']).size()
+        cso_df_counts = data_cso_report.groupby(['eventType', 'incidentDate']).size()
         
         # cumulative_counts = pd.Series(index=all_months, data=np.zeros(len(all_months)))
         for i, event_type in enumerate(data_types):

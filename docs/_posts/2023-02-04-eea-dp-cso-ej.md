@@ -24,7 +24,7 @@ For more background information about CSO discharges and environmental justice, 
 
 ## Characteristics of new CSO discharge dataset
 
-The first sewage discharge report in the EEA Data Portal was from June 30th, 2022.
+The first sewage discharge report in the EEA Data Portal was from June 30th, 2022.  In this analysis, we consider only final validated reports (i.e. `reporterClass == 'Verified Data Report'`), not initial public notifications (i.e. we exclude reports of class `Public Notification Report`).
 
 ### How many reports were there?
 
@@ -101,7 +101,7 @@ We aggregate the Census block group level EJSCREEN data to the watershed and mun
 
 ## Correlation between CSO discharge and EJ factors
 
-We explore the relationship between CSO discharge volumes within different geographic areas and their EJ population characteristics.  We use using bootstrap resampling to visualize the trend and uncertainty in the population-weighted mean discharge volume estimate in equal-sized bins of watersheds (figures below). We estimate the univariate dependence of CSO discharge on each EJ factor, and its 90% posterior (confidence) interval, with a population-weighted logarithmic regression model.  A detailed explanation of the methodology used in this analysis is provided [here]({% post_url 2019-03-23-necir-cso-ej_modeling %}).
+We explore the relationship between CSO discharge volumes within different geographic areas and their EJ population characteristics.  We use using bootstrap resampling to visualize the trend and uncertainty in the population-weighted mean discharge volume estimate in equal-sized bins of watersheds (figures below). We estimate the univariate dependence of CSO discharge on each EJ factor, and its 90% posterior (confidence) interval, with a population-weighted logarithmic regression model.  A detailed explanation of the methodology used in this analysis is provided [here]({% post_url 2019-03-23-necir-cso-ej_modeling %}) and additional model diagnostics are available [here]({% post_url 2023-02-04-eea-dp-cso-ej_modeling %}).
 
 
 ### Relationship with linguistic isolation
