@@ -77,10 +77,19 @@ class CSOAnalysisEEADP(CSOAnalysis):
         disk_engine = get_engine()
         data_cso = pd.read_sql_query(self.EEA_DP_CSO_QUERY, disk_engine)
         data_cso['incidentDate'] = pd.to_datetime(data_cso['incidentDate'])
-        data_cso_trans = self.transform_data_cso(data_cso)
+        
+        print(f'Filtering CSO data for year {pick_year}')
+        df_pick = data_cso[data_cso['Year'].astype(int) == pick_year]
+        print(f'N={len(df_pick)} total CSO records loaded from {pick_year}')
+        
+        print(f'Filtering CSO data for class {pick_report_type}')
+        df_pick = df_pick[df_pick['reporterClass'] == self.pick_report_type]
+        print(f'N={len(df_pick)} total CSO records loaded from {pick_report_type}')
         
         # Save for use in `extra_plots`
-        self.data_cso_raw = data_cso
+        self.data_cso_filtered_reports = df_pick
+        
+        data_cso_trans = self.transform_data_cso(df_pick)
         
         return data_cso_trans
 
@@ -103,10 +112,6 @@ class CSOAnalysisEEADP(CSOAnalysis):
         aggregators = {col: np.sum for col in sum_cols}
         aggregators.update({col: collapse for col in collapse_cols})
         aggregators.update({col: len for col in count_cols})
-        
-        print(f'Aggregating CSO data for year {pick_year}')
-        df_pick = data_cso[data_cso['Year'].astype(int) == pick_year]
-        print(f'N={len(df_pick)} total CSO records loaded from {pick_year}')
         
         # Fill in missing lat/long data from the state file
         sel_missing = df_pick['latitude'].isnull()
@@ -138,12 +143,10 @@ class CSOAnalysisEEADP(CSOAnalysis):
         print('Making map of CSO counts per day by event type')
         mychart = chartjs.chart("CSO counts per day by event type", "Bar", 640, 480)
         
-        data_cso_report = self.data_cso_raw[self.data_cso_raw['reporterClass'] == self.pick_report_type]
-        
-        data_types = data_cso_report['eventType'].unique()
+        data_types = self.data_cso_filtered_reports['eventType'].unique()
         all_months = pd.date_range(start=f'1/1/{self.cso_data_year}', end=f'12/31/{self.cso_data_year}', freq='MS')
         mychart.set_labels(all_months.tolist())
-        cso_df_counts = data_cso_report.groupby(['eventType', 'incidentDate']).size()
+        cso_df_counts = self.data_cso_filtered_reports.groupby(['eventType', 'incidentDate']).size()
         
         # cumulative_counts = pd.Series(index=all_months, data=np.zeros(len(all_months)))
         for i, event_type in enumerate(data_types):
