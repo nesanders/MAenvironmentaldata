@@ -64,10 +64,17 @@ Roughly half of untreated CSO discharges seem to be based on modeled estimates. 
 
 {% include /charts/EEA_DP_CSO_non_zero_volume.html %}
 
+### How does this vary by sewer operator?
 
-### How much discharge is reported as CSO versus other types?
+Different sewer operators have vastly different patterns of discharge by effluent type.
+The six largest discharges by volume are Lowell Regional, the City of Fall River, the City of New Bedford, and Springfield Water & Sewer, and the MWRA (which encompasses many cities and towns in the Greater Boston area), and the City of Holyoke.
+Among these, New Bedford and Springfield report almost entirely untreated CSO discharge.
+Lowell, meanwhile, reports primarily 'blended' discharge.
+The MWRA reports a fairly even mix of treated CSO and 'blended' discharge.
+Fall River, meanwhile, reports mostly non-'blended' partially treated discharge.
+Holyoke reports mostly untrteated CSO and some treated CSO discharge.
 
-### How does this vary by operator?
+{% include /charts/EEA_DP_CSO_volume_per_operator.html %}
 
 ## Locations of CSO discharges
 

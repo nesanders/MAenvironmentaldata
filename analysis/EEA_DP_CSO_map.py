@@ -164,7 +164,7 @@ class CSOAnalysisEEADP(CSOAnalysis):
         mychart.jekyll_write(outpath)
 
     def plot_volume_per_month_by_event_type(self, outpath: str='../docs/_includes/charts/EEA_DP_CSO_volume_per_month.html'):
-        """Bar chart showing how many reports were made each day of different discharge types.
+        """Bar chart showing how many reports were made each month of different discharge types.
         """        
         print('Making chart of discharge volume per month by discharge type')
         mychart = chartjs.chart("Discharge volume per month by discharge type", "Bar", 640, 480)
@@ -172,7 +172,7 @@ class CSOAnalysisEEADP(CSOAnalysis):
         data_types = self.data_cso_filtered_reports['eventType'].unique()
         all_months = pd.date_range(start=f'1/1/{self.cso_data_year}', end=f'12/31/{self.cso_data_year}', freq='MS')
         mychart.set_labels(all_months.tolist())
-        cso_df_vol = self.data_cso_filtered_reports.groupby(['eventType', 'incidentDate'])[self.discharge_vol_col].sum()
+        cso_df_vol = self.data_cso_filtered_reports.groupby(['eventType', 'incidentDate'])[self.discharge_vol_col].sum() / 1e6
         
         for i, event_type in enumerate(data_types):
             counts_per_month = cso_df_vol.loc[event_type].resample('MS').sum().reindex(all_months).fillna(0)
@@ -181,6 +181,29 @@ class CSOAnalysisEEADP(CSOAnalysis):
                 backgroundColor="'rgba({},0.8)'".format(", ".join([str(x) for x in hex2rgb(COLOR_CYCLE[i])])),
                 yAxisID= "'y-axis-0'")
         mychart.set_params(JSinline=0, ylabel='Volume of discharges (millions of gallons)', xlabel='Date',
+            scaleBeginAtZero=1)
+        mychart.stacked = 'true'
+
+        mychart.jekyll_write(outpath)
+
+    def plot_volume_per_operator_by_event_type(self, outpath: str='../docs/_includes/charts/EEA_DP_CSO_volume_per_operator.html'):
+        """Bar chart showing how many reports were made each day of different discharge types.
+        """        
+        print('Making chart of discharge volume per operator by discharge type')
+        mychart = chartjs.chart("Discharge volume per operator by discharge type", "Bar", 640, 480)
+        
+        data_types = self.data_cso_filtered_reports['eventType'].unique()
+        all_operators = sorted(self.data_cso_filtered_reports['permiteeName'].unique())
+        mychart.set_labels(all_operators)
+        cso_df_vol = self.data_cso_filtered_reports.groupby(['eventType', 'permiteeName'])[self.discharge_vol_col].sum() / 1e6
+        
+        for i, event_type in enumerate(data_types):
+            counts_per_operator = cso_df_vol.loc[event_type].reindex(all_operators).fillna(0)
+            mychart.add_dataset(counts_per_operator.values.tolist(), 
+                event_type,
+                backgroundColor="'rgba({},0.8)'".format(", ".join([str(x) for x in hex2rgb(COLOR_CYCLE[i])])),
+                yAxisID= "'y-axis-0'")
+        mychart.set_params(JSinline=0, ylabel='Volume of discharges (millions of gallons)', xlabel='Sewer operator (permittee)',
             scaleBeginAtZero=1)
         mychart.stacked = 'true'
 
@@ -226,6 +249,7 @@ class CSOAnalysisEEADP(CSOAnalysis):
         """
         self.plot_reports_per_month_by_event_type()
         self.plot_volume_per_month_by_event_type()
+        self.plot_volume_per_operator_by_event_type()
         self.plot_reports_non_zero_volume()
 
     
@@ -234,7 +258,8 @@ class CSOAnalysisEEADP(CSOAnalysis):
 # -------------------------
     
 if __name__ == '__main__':
-    # TODO debug - remove 'False' flags below
-    csoa = CSOAnalysisEEADP(cso_data_year=PICK_CSO_YEAR, make_maps=False, make_charts=False, make_regression=False)
+    # NOTE for fast debugging of the `extra_plot`, try using these parameters:
+    # > make_maps=False, make_charts=False, make_regression=False
+    csoa = CSOAnalysisEEADP(cso_data_year=PICK_CSO_YEAR)
     csoa.run_analysis()
     csoa.extra_plots()
