@@ -29,7 +29,8 @@ from matplotlib import pyplot as plt
 from matplotlib import cm
 import pandas as pd
 import numpy as np
-from shapely.geometry import shape, Point
+from shapely.geometry import Point, shape
+from shapely.strtree import STRtree
 import sqlalchemy
 import stan
 
@@ -138,6 +139,33 @@ def _assign_cso_data_to_census_blocks(data_cso: pd.DataFrame, geo_blockgroups_di
         ## Warn if a blockgroup was not found
         if is_nan(data_out.loc[cso_i, 'BlockGroup']):
             print('No block group found for CSO #', str(cso_i))
+    return data_out
+
+def _assign_cso_data_to_census_blocks_with_strtree(data_cso: pd.DataFrame, geo_blockgroups_dict: dict, 
+    latitude_col: str, longitude_col: str) -> pd.DataFrame:
+    """Add a new 'BlockGroup' column to `data_cso` assigning CSOs to Census block groups using Shapely's
+    STRTree class, based on a Sort-Tile-Recursive algorithm.
+    """
+    print('Assigning CSO data to census blocks')
+    data_out = data_cso.copy()
+    # Loop over Census block groups
+    data_out['BlockGroup'] = np.nan
+    # Create STRTree
+    census_block_tree = STRtree([shape(feature['geometry']) for feature in geo_blockgroups_dict])
+    cso_points = [Point(data_out.iloc[cso_i][longitude_col], data_out.iloc[cso_i][latitude_col]) for cso_i in range(len(data_out))]
+    # Query for containment
+    result_indices = census_block_tree.query(cso_points, predicate='within')
+    # Parse the results
+    for cso_i in range(len(data_out)):
+        cso_result_set = (np.array(result_indices[0]) == cso_i)
+        ## Warn if a blockgroup was not found
+        if sum(cso_result_set) == 0:
+            print(f'No block group found for CSO #{cso_i}')
+            continue
+        ## Warn if multiple blockgroups were found
+        if sum(cso_result_set) > 1:
+            print(f'N={sum(cso_result_set)} block groups were found for CSO #{cso_i}; will pick the first')
+        data_out.loc[cso_i, 'BlockGroup'] = geo_blockgroups_dict[result_indices[1][cso_result_set][0]]['properties']['GEOID']
     return data_out
 
 @memory.cache
@@ -328,7 +356,10 @@ class CSOAnalysis():
         This is a thin wrapper around _assign_cso_data_to_census_blocks that facilitates using memory.cache by abstracting
         the state-dependent attributes of self.
         """
-        return _assign_cso_data_to_census_blocks(data_cso, geo_blockgroups_dict, self.latitude_col, self.longitude_col)
+        res_1 = _assign_cso_data_to_census_blocks_with_strtree(data_cso.iloc[:20], geo_blockgroups_dict, self.latitude_col, self.longitude_col)
+        # This is an older, much slower method, which should yield equivalent results
+        #_assign_cso_data_to_census_blocks(data_cso, geo_blockgroups_dict, self.latitude_col, self.longitude_col)
+        return _assign_cso_data_to_census_blocks_with_strtree(data_cso, geo_blockgroups_dict, self.latitude_col, self.longitude_col)
     
     def apply_pop_weighted_avg(self, data_cso: pd.DataFrame, data_ejs: pd.DataFrame
     ) -> Tuple[pd.DataFrame, pd.DataFrame, pd.DataFrame, pd.DataFrame, pd.DataFrame]:
