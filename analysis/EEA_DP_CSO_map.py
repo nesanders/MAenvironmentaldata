@@ -43,6 +43,7 @@ class CSOAnalysisEEADP(CSOAnalysis):
     
     def __init__(
         self, 
+        fact_file: str='../docs/data/facts_EEA_DP_CSO.yml',
         cso_data_year: int=2022,
         pick_report_type: str='Verified Data Report',
         **kwargs
@@ -51,6 +52,8 @@ class CSOAnalysisEEADP(CSOAnalysis):
         
         Parameters
         ----------
+        fact_file: str
+            Path of yml file to write calculated results to, by default '../docs/data/facts_EEA_DP_CSO.yml'
         cso_data_year: int
             Year of the dataset to extract and do analysis on, by default 2022
         pick_report_type: str
@@ -58,7 +61,7 @@ class CSOAnalysisEEADP(CSOAnalysis):
         
         `kwargs` passed to `CSOAnalysis`
         """
-        super().__init__(**kwargs)
+        super().__init__(fact_file=fact_file, **kwargs)
         self.cso_data_year = cso_data_year
         # Pick one of two possible report types, 'Public Notification Report' or 'Verified Data Report'
         self.pick_report_type = pick_report_type
