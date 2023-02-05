@@ -9,11 +9,12 @@
 
             <canvas id="CSO discharge volume vs EJ characteristics by watershed: LOWINCPCT" height="480" width="640"></canvas>
             <script>
+                Chart.defaults.global.defaultFontSize = 12;
                 var chart_data = {
                 
                     data: {
                         labels: [],
-                        datasets: [{'data': [{x: 0.22535687730307438, y: 379.65999999999997}, {x: 0.40033493123004454, y: 124.0}, {x: 0.2974238428432441, y: 255.0}, {x: 0.25276579258872245, y: 48.52}, {x: 0.29802171126344523, y: 360.87}, {x: 0.14494958231655666, y: 7.69}, {x: 0.36870176509849073, y: 622.3199999999998}, {x: 0.28871432625193943, y: 132.02999999999997}, {x: 0.2654294378407041, y: 149.10000000000002}, {x: 0.2672258310773385, y: 525.74}, {x: 0.22278774892643818, y: 29.37}, {x: 0.27874764137770286, y: 0.0}, {x: 0.21888545790417668, y: 0.0}, {x: 0.14978758942475814, y: 0.0}, {x: 0.2942975708185436, y: 0.0}, {x: 0.29393245611594604, y: 0.0}, {x: 0.29453282413758214, y: 0.0}, {x: 0.2563513795736233, y: 0.0}, {x: 0.20724498699427144, y: 0.0}, {x: 0.0853994490358, y: 0.0}, {x: 0.19459846953816864, y: 0.0}, {x: 0.13373448371959706, y: 0.0}, {x: 0.24481979878519702, y: 0.0}, {x: 0.10656722453238086, y: 0.0}, {x: 0.10447326929966626, y: 0.0}, {x: 0.3095526099340421, y: 0.0}, {x: 0.2567286483155789, y: 0.0}, {x: 0.15869878238564775, y: 0.0}, {x: 0.21068331576635727, y: 0.0}, {x: 0.21204016538746873, y: 0.0}, {x: 0.23777653878796506, y: 0.0}], 'label': 'Individual watersheds', 'backgroundColor': 'rgba(50,50,50,0.125)', 'showLine': false, 'yAxisID': 'y-axis-0', 'fill': false, 'hidden': 'true'},{'data': [{x: 0.14316058865101003, y: 1.109422990402683}, {x: 0.22287076352570853, y: 108.39903357441348}, {x: 0.2680715949845699, y: 234.16395187086562}, {x: 0.34582916120699364, y: 322.48776168212083}], 'label': 'Average (population weighted & binned)', 'backgroundColor': 'rgba(50,50,200,1)', 'showLine': true, 'borderColor': 'rgba(50,50,200,1)', 'borderWidth': 3, 'yAxisID': 'y-axis-0', 'fill': false, 'pointRadius': 6},{'data': [{x: 0.14316058865101003, y: -0.6944145334557639}, {x: 0.22287076352570853, y: -36.85438451433269}, {x: 0.2680715949845699, y: 34.40361333995892}, {x: 0.34582916120699364, y: 147.0190572082975}], 'label': 'Average lower bound (5% limit)', 'backgroundColor': 'rgba(50,50,200,0.3)', 'showLine': true, 'yAxisID': 'y-axis-0', 'borderWidth': 1, 'fill': false, 'pointBackgroundColor': 'rgba(50,50,200,0.3)', 'pointBorderColor': 'rgba(50,50,200,0.3)'},{'data': [{x: 0.14316058865101003, y: 2.91326051426113}, {x: 0.22287076352570853, y: 253.65245166315964}, {x: 0.2680715949845699, y: 433.9242904017723}, {x: 0.34582916120699364, y: 497.95646615594416}], 'label': 'Average upper bound (95% limit)', 'backgroundColor': 'rgba(50,50,200,0.3)', 'showLine': true, 'yAxisID': 'y-axis-0', 'borderWidth': 1, 'fill': '-1', 'pointBackgroundColor': 'rgba(50,50,200,0.3)', 'pointBorderColor': 'rgba(50,50,200,0.3)'}]
+                        datasets: [{'data': [{x: 0.22535687730307435, y: 379.65999999999997}, {x: 0.40033493123004454, y: 124.0}, {x: 0.2974238428432441, y: 255.0}, {x: 0.25276579258872245, y: 48.519999999999996}, {x: 0.29802171126344523, y: 360.87}, {x: 0.14494958231655664, y: 7.69}, {x: 0.36870176509849073, y: 622.32}, {x: 0.2887143262519394, y: 132.03}, {x: 0.2654294378407041, y: 149.1}, {x: 0.2672258310773385, y: 525.74}, {x: 0.22278774892643818, y: 29.37}, {x: 0.27874764137770286, y: 0.0}, {x: 0.2188854579041766, y: 0.0}, {x: 0.14978758942475814, y: 0.0}, {x: 0.2942975708185435, y: 0.0}, {x: 0.29393245611594604, y: 0.0}, {x: 0.29453282413758214, y: 0.0}, {x: 0.2563513795736233, y: 0.0}, {x: 0.20724498699427144, y: 0.0}, {x: 0.0853994490358, y: 0.0}, {x: 0.19459846953816862, y: 0.0}, {x: 0.13373448371959706, y: 0.0}, {x: 0.24481979878519702, y: 0.0}, {x: 0.10656722453238085, y: 0.0}, {x: 0.10447326929966624, y: 0.0}, {x: 0.3095526099340421, y: 0.0}, {x: 0.2567286483155789, y: 0.0}, {x: 0.15869878238564775, y: 0.0}, {x: 0.21068331576635727, y: 0.0}, {x: 0.2120401653874687, y: 0.0}, {x: 0.23777653878796506, y: 0.0}], 'label': 'Individual watersheds', 'backgroundColor': 'rgba(50,50,50,0.125)', 'showLine': false, 'yAxisID': 'y-axis-0', 'fill': false, 'hidden': 'true'},{'data': [{x: 0.14316058865101, y: 1.0765860086066024}, {x: 0.2228707635257085, y: 109.00870008283272}, {x: 0.26807159498456984, y: 228.36798243599895}, {x: 0.3458291612069936, y: 325.4253632711922}], 'label': 'Average (population weighted & binned)', 'backgroundColor': 'rgba(50,50,200,1)', 'showLine': true, 'borderColor': 'rgba(50,50,200,1)', 'borderWidth': 3, 'yAxisID': 'y-axis-0', 'fill': false, 'pointRadius': 6},{'data': [{x: 0.14316058865101, y: -0.7270302705239211}, {x: 0.2228707635257085, y: -35.60432441330241}, {x: 0.26807159498456984, y: 27.705549890775927}, {x: 0.3458291612069936, y: 155.48148356763727}], 'label': 'Average lower bound (5% limit)', 'backgroundColor': 'rgba(50,50,200,0.3)', 'showLine': true, 'yAxisID': 'y-axis-0', 'borderWidth': 1, 'fill': false, 'pointBackgroundColor': 'rgba(50,50,200,0.3)', 'pointBorderColor': 'rgba(50,50,200,0.3)'},{'data': [{x: 0.14316058865101, y: 2.880202287737126}, {x: 0.2228707635257085, y: 253.62172457896784}, {x: 0.26807159498456984, y: 429.03041498122195}, {x: 0.3458291612069936, y: 495.3692429747472}], 'label': 'Average upper bound (95% limit)', 'backgroundColor': 'rgba(50,50,200,0.3)', 'showLine': true, 'yAxisID': 'y-axis-0', 'borderWidth': 1, 'fill': '-1', 'pointBackgroundColor': 'rgba(50,50,200,0.3)', 'pointBorderColor': 'rgba(50,50,200,0.3)'}]
                     },
                     type: 'scatter',
                     options: {
@@ -22,7 +23,7 @@
                                 display: true,
                                 scaleLabel: {
                                     display: true,
-                                    labelString: 'Total volume of discharge (2011; Millions of gallons)'
+                                    labelString: 'Total volume of discharge ({self.cso_data_year}; Millions of gallons)'
                                 },
                                 ticks: {
                                     beginAtZero: true, min: 0
@@ -59,20 +60,20 @@ type: "linear"
                             },
                         tooltips: {
                             display: true, 
-                    mode: 'single',
-                    callbacks: {
-                        label: function(tooltipItems, data) { 
-                            var title = '';
-                            
-                            if (tooltipItems.datasetIndex == 0) {
-                                title = ma_towns[tooltipItems.index];
-                            } else {
-                                title = data.datasets[tooltipItems.datasetIndex].label;
+                            mode: 'single',
+                            callbacks: {
+                                label: function(tooltipItems, data) { 
+                                    var title = '';
+                                    
+                                    if (tooltipItems.datasetIndex == 0) {
+                                        title = ma_towns[tooltipItems.index];
+                                    } else {
+                                        title = data.datasets[tooltipItems.datasetIndex].label;
+                                    }
+                                    return [title, 'Total volume of discharge: ' + tooltipItems.yLabel, 'Linguistic isoluation: ' + tooltipItems.xLabel];
+                                }
                             }
-                            return [title, 'Total volume of discharge: ' + tooltipItems.yLabel, 'Linguistic isoluation: ' + tooltipItems.xLabel];
-                        }
-                    }
-    
+            
                             }
                     },
                 }
@@ -81,16 +82,16 @@ type: "linear"
                 
 
 
-    Chart.scaleService.updateScaleDefaults('linear', {
-    ticks: {
-        autoSkip: true,
-        autoSkipPadding: 100,
-        callback: function(tick, index, ticks) {
-        return tick.toLocaleString()
-        }
-    }
-    });
-    
+            Chart.scaleService.updateScaleDefaults('linear', {
+            ticks: {
+                autoSkip: true,
+                autoSkipPadding: 100,
+                callback: function(tick, index, ticks) {
+                return tick.toLocaleString()
+                }
+            }
+            });
+            
 
 var ma_towns = ["TAUNTON","MT HOPE BAY","BUZZARDS BAY","NORTH COAST","MERRIMACK","SHAWSHEEN","CONNECTICUT","CHICOPEE","MYSTIC","CHARLES","NASHUA","BLACKSTONE","CAPE COD","SOUTH COASTAL","HOUSATONIC","HOOSIC","DEERFIELD","WESTFIELD","FARMINGTON","KINDERHOOK","TEN MILE","NARRAGANSETT BAY","ISLANDS","IPSWICH","PARKER","MILLERS","QUINEBAUG","CONCORD","NEPONSET","WEIR","FRENCH"];
             </script>
