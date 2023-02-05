@@ -43,33 +43,20 @@ class CSOAnalysisEEADP(CSOAnalysis):
     
     def __init__(
         self, 
-        fact_file: str='../docs/data/facts_EEA_DP_CSO.yml',
-        out_path: str='../docs/assets/maps/',
-        fig_path: str='../docs/assets/figures/',
-        stan_model_code: str='discharge_regression_model.stan',
-        geo_towns_path: str='../docs/assets/geo_json/TOWNSSURVEY_POLYM_geojson_simple.json',
-        geo_watershed_path: str='../docs/assets/geo_json/watshdp1_geojson_simple.json',
-        geo_blockgroups_path: str='../docs/assets/geo_json/cb_2017_25_bg_500k.json',
-        make_maps: bool=True,
-        make_charts: bool=True,
-        make_regression: bool=True,
-        cso_data_year: int=2022,
         pick_report_type: str='Verified Data Report'
     ):
-        """Initialize parameters for CSOAnalysisEEADP
+        """Initialize parameters for CSOAnalysisEEADP.
+        
+        Parameters
+        ----------
+        cso_data_year: int
+            Year of the dataset to extract and do analysis on, by default 2022
+        pick_report_type: str
+            What type of `reporterClass` to extract and do analysis on, by default 'Verified Data Report'
+        
+        `kwargs` passed to `CSOAnalysis`
         """
-        super().__init__(
-            fact_file,
-            out_path,
-            fig_path,
-            stan_model_code,
-            geo_towns_path,
-            geo_watershed_path,
-            geo_blockgroups_path,
-            make_maps,
-            make_charts,
-            make_regression
-        )
+        super().__init__(**kwargs)
         self.cso_data_year = cso_data_year
         # Pick one of two possible report types, 'Public Notification Report' or 'Verified Data Report'
         self.pick_report_type = pick_report_type

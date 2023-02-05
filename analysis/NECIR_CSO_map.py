@@ -236,6 +236,28 @@ class CSOAnalysis():
     ):
         """Initialize parameters
         
+        Parameters
+        ----------
+        fact_file: str
+            Path of yml file to write calculated results to, by default '../docs/data/facts_NECIR_CSO.yml',
+        out_path: str
+            Path of directory to write map outputs to, by default '../docs/assets/maps/',
+        fig_path: str
+            Path of directory to write chart outputs to, by default '../docs/assets/figures/',
+        stan_model_code: str
+            Path to file with stan regression model code, by default 'discharge_regression_model.stan',
+        geo_towns_path: str
+            Path to geojson file with municipality polygons, by default '../docs/assets/geo_json/TOWNSSURVEY_POLYM_geojson_simple.json',
+        geo_watershed_path: str
+            Path to geojson file with watershed polygons, by default '../docs/assets/geo_json/watshdp1_geojson_simple.json',
+        geo_blockgroups_path: str
+            Path to geojson file with Census block group polygons, by default '../docs/assets/geo_json/cb_2017_25_bg_500k.json',
+        make_maps: bool
+            Whether or not to execute the functions to generate maps, by default True,
+        make_charts: bool
+            Whether or not to execute the functions to generate charts, by default True,
+        make_regression: bool
+            Whether or not to execute the functions to generate regression models, by default True
         """
         # Establish file to export facts
         self.fact_file = fact_file
