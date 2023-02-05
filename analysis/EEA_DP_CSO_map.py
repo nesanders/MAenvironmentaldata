@@ -129,6 +129,19 @@ class CSOAnalysisEEADP(CSOAnalysis):
         
         return df_per_outfall
 
+    # -------------------------
+    # Extra plots of dataset characteristics
+    # -------------------------
+    
+    def plot_reports_per_day(self):
+        
+    
+    def extra_plots(self):
+        """Generate all extra data plots for the EEA DP CSO data
+        """
+        self.plot_reports_per_day()
+
+    
 # -------------------------
 # Main logic
 # -------------------------
@@ -136,3 +149,4 @@ class CSOAnalysisEEADP(CSOAnalysis):
 if __name__ == '__main__':
     csoa = CSOAnalysisEEADP(cso_data_year=PICK_CSO_YEAR)
     csoa.run_analysis()
+    csoa.extra_plots()
