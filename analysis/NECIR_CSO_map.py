@@ -328,6 +328,7 @@ class CSOAnalysis():
             tiles='Stamen Terrain',
             )
 
+        # We show only the watershed view by default
         ## Draw choropleth layer for census blocks
         map_1.choropleth(
             geo_data=self.geo_blockgroups_path, 
@@ -336,7 +337,7 @@ class CSOAnalysis():
             key_on='feature.properties.GEOID',
             legend_name=f'Block Group: Total volume of discharge ({self.cso_data_year}; Millions of gallons)',
             threshold_scale = list(np.nanpercentile(data_ins_g_bg[self.discharge_vol_col], [0,25,50,75,100])),  
-            fill_color='BuGn', fill_opacity=0.7, line_opacity=0.3, highlight=True,
+            fill_color='BuGn', fill_opacity=0.7, line_opacity=0.3, highlight=True, show=False
             )
 
         ## Draw Choropleth layer for towns
@@ -345,11 +346,11 @@ class CSOAnalysis():
             name='Municipalities',
             data=data_ins_g_muni_j[self.discharge_vol_col],
             key_on='feature.properties.TOWN',
-            legend_name='Municipality: Total volume of discharge ({self.cso_data_year}; Millions of gallons)',
+            legend_name=f'Municipality: Total volume of discharge ({self.cso_data_year}; Millions of gallons)',
             threshold_scale = [0] + list(np.nanpercentile(
                 data_ins_g_muni_j[self.discharge_vol_col][data_ins_g_muni_j[self.discharge_vol_col] > 0], 
                 [25,50,75,100])),  
-            fill_color='PuRd', fill_opacity=0.7, line_opacity=0.3, highlight=True,
+            fill_color='PuRd', fill_opacity=0.7, line_opacity=0.3, highlight=True, show=False
             )
 
         ## Draw Choropleth layer for watersheds
@@ -358,7 +359,7 @@ class CSOAnalysis():
             name='Watersheds',
             data=data_ins_g_ws_j[self.discharge_vol_col],
             key_on='feature.properties.NAME',
-            legend_name='Watershed: Total volume of discharge ({self.cso_data_year}; Millions of gallons)',
+            legend_name=f'Watershed: Total volume of discharge ({self.cso_data_year}; Millions of gallons)',
             threshold_scale = list(np.nanpercentile(data_ins_g_ws_j[self.discharge_vol_col], [0,25,50,75,100])),  
             fill_color='PuBu', fill_opacity=0.7, line_opacity=0.3, highlight=True,
             )
@@ -429,6 +430,7 @@ class CSOAnalysis():
                 tiles='Stamen Terrain',
                 )
 
+            # We show only the watershed by default
             ## Draw choropleth layer for census blocks
             map_2.choropleth(
                 geo_data=self.geo_blockgroups_path, 
@@ -437,7 +439,7 @@ class CSOAnalysis():
                 key_on='feature.properties.GEOID',
                 legend_name='Block Group: '+col_label,
                 threshold_scale = list(np.nanpercentile(data_egs_merge[col], [0,25,50,75,100])),  
-                fill_color='BuGn', fill_opacity=0.7, line_opacity=0.3, highlight=True,
+                fill_color='BuGn', fill_opacity=0.7, line_opacity=0.3, highlight=True, show=False
                 )
 
             ## Draw Choropleth layer for towns
@@ -448,7 +450,7 @@ class CSOAnalysis():
                 key_on='feature.properties.TOWN',
                 legend_name='Municipality: '+col_label,
                 threshold_scale = list(np.nanpercentile(df_town_level[col], [0,25,50,75,100])),  
-                fill_color='PuRd', fill_opacity=0.7, line_opacity=0.3, highlight=True,
+                fill_color='PuRd', fill_opacity=0.7, line_opacity=0.3, highlight=True, show=False
                 )
 
             ## Draw Choropleth layer for watersheds
@@ -621,7 +623,7 @@ class CSOAnalysis():
             ## Set overall chart parameters
             mychart.set_params(
                 JSinline = 0, 
-                ylabel = 'Total volume of discharge ({self.cso_data_year}; Millions of gallons)', 
+                ylabel = f'Total volume of discharge ({self.cso_data_year}; Millions of gallons)', 
                 xlabel=col_label,
                 yaxis_type='linear',    
                 y2nd = 0,

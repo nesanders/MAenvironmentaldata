@@ -4,7 +4,7 @@ title: Revisiting the environmental justice implications of CSOs with 2022 data
 ancillary: 0
 ---
 
-In 2018, AMEND [featured]({{ site.url }}{{ site.baseurl }}/2018/04/25/necir-cso-ej.html) the first analysis of the distributional impacts of [combined sewer overflows (CSOs)](https://www.epa.gov/npdes/combined-sewer-overflows-csos) in Massachusetts, demonstrating that there were severe inequities in the extent to which different communities are burdened with sewage pollution based on race, language isolation, and income. This work was later published in the journal [Media and Communication](https://doi.org/10.17645/mac.v7i3.2136).
+In 2018, AMEND [featured]({% post_url 2018-04-25-necir-cso-ej %}) the first analysis of the distributional impacts of [combined sewer overflows (CSOs)](https://www.epa.gov/npdes/combined-sewer-overflows-csos) in Massachusetts, demonstrating that there were severe inequities in the extent to which different communities are burdened with sewage pollution based on race, language isolation, and income. This work was later published in the journal [Media and Communication](https://doi.org/10.17645/mac.v7i3.2136).
 
 The analysis in 2018 was limited to [CSO data from 2011]({{ site.url }}{{ site.baseurl }}/data/NECIR_CSO.html) collected at that time by the [New England Center for Investigative Reporting](https://www.necir.org/).  Data from other years were not previously availble.
 
@@ -12,7 +12,7 @@ In 2021, Massachusetts [enacted a new law](https://malegislature.gov/Laws/Sessio
 
 The availability of this new dataset allows us to revisit the distributional impacts of CSO discharges in MA a decade after the dataset collected by NECIR in 2011. In particular, in this post, we examine the first full year of data collected under the new law, from 2022.  As we will see below, this new dataset has limitations, but it does allow us to draw some insight into how the water pollution conditions in the Commonwealth have changed over a decade that has seen the culmination of hundreds of millions of dollars of [sewage pollution mitigation work by MWRA](https://www.mwra.com/cso/pcmapa.html) and other sewer operators.
 
-The [environmental justice data used in this analysis]({{ site.url }}{{ site.baseurl }}/data/EPA_EJSCREEN.html) comes from the [US EPA EJSCREEN tool](https://www.epa.gov/ejscreen/what-ejscreen).  Both the EJ SCREEN and CSO data are available in the [{{ site.data.site_config.site_abbrev }} database]({{ site.url }}{{ site.baseurl }}/data/index.html)
+The [environmental justice data used in this analysis]({{ site.url }}{{ site.baseurl }}/data/EPA_EJSCREEN.html) comes from the [US EPA EJSCREEN tool](https://www.epa.gov/ejscreen/what-ejscreen). Latitude and longitude coordinates for the CSO outfalls were retrieved from [a state publication](https://www.mass.gov/doc/permittee-and-outfall-lists/download), also [archived on this site]({{ site.url }}{{ site.baseurl }}/data/ma_permittee-and-outfall-lists.xlsx).  Both the EJ SCREEN and CSO data are available in the [{{ site.data.site_config.site_abbrev }} database]({{ site.url }}{{ site.baseurl }}/data/index.html)
 
 *[The code needed to reproduce this analysis using {{ site.data.site_config.site_abbrev }} data can be viewed and downloaded here](https://github.com/nesanders/MAenvironmentaldata/blob/master/analysis/EEA_DP_CSO_map.py)*
 
