@@ -22,6 +22,14 @@ For more background information about CSO discharges and environmental justice, 
 
 ## Characteristics of new CSO discharge dataset
 
+### How many reports were there?
+
+### What fraction of reports have non-zero, non-modeled discharge volumes?
+
+### How much discharge is reported as CSO versus other types?
+
+### How does this vary by operator?
+
 ## Locations of CSO discharges
 
 The map below shows the location of CSO outfalls in MA (points), with overlays showing the sum total of CSO discharge volume in 2022 by watershed, municipality, and Census block group (use the control at right to toggle these layers).  Watershed names are labeled in blue.

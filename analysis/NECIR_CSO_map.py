@@ -732,7 +732,7 @@ class CSOAnalysis():
                     label = 'Posterior draw' if i==0 else None, zorder=1)
         
         plt.xlabel(col_label, wrap=True)
-        plt.ylabel('CSO discharge ({self.cso_data_year}; Mgal)')
+        plt.ylabel(f'CSO discharge ({self.cso_data_year}; Mgal)')
         
         plt.scatter(x, y, marker='o', c=pop_data / 1e3, cmap=cm.Blues, label='Watersheds', zorder=2)
         plt.colorbar(label='Population (1000s)')
