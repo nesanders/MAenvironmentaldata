@@ -4,7 +4,7 @@ title: Revisiting the environmental justice implications of CSOs with 2022 data
 ancillary: 0
 ---
 
-In 2018, AMEND [featured]({{ site.url }}{{ site.baseurl }}/2018/04/25/necir-cso-ej.html) the first analysis of the distributional impacts of [combined sewer overflows (CSOs)](https://www.epa.gov/npdes/combined-sewer-overflows-csos) in Massachusetts, demonstrating that there were severe inequities in the extent to which different communities are burdened with sewage pollution based on race, language isolation, and income. This work was later published in the journal [Media and Communication](https://doi.org/10.17645/mac.v7i3.2136).
+In 2018, AMEND [featured]({% post_url 2018-04-25-necir-cso-ej %}) the first analysis of the distributional impacts of [combined sewer overflows (CSOs)](https://www.epa.gov/npdes/combined-sewer-overflows-csos) in Massachusetts, demonstrating that there were severe inequities in the extent to which different communities are burdened with sewage pollution based on race, language isolation, and income. This work was later published in the journal [Media and Communication](https://doi.org/10.17645/mac.v7i3.2136).
 
 The analysis in 2018 was limited to [CSO data from 2011]({{ site.url }}{{ site.baseurl }}/data/NECIR_CSO.html) collected at that time by the [New England Center for Investigative Reporting](https://www.necir.org/).  Data from other years were not previously availble.
 
