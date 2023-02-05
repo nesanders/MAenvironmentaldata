@@ -32,9 +32,9 @@ class CSOAnalysisEEADP(CSOAnalysis):
     output_slug: str = 'MAEEADP_CSO'
     discharge_vol_col: str = 'DischargeVolume'
     discharge_count_col: str = 'DischargeCount'
-    outfall_address_col: str = 'Nearest_Pipe_Address'
-    water_body_call: str = 'DischargesBody'
-    municipality_col: str = 'Municipality'
+    outfall_address_col: str = 'location'
+    water_body_col: str = 'waterBody'
+    municipality_col: str = 'municipality'
     latitude_col: str = 'latitude'
     longitude_col: str = 'longitude'
     # Path to file with lat long data from the state
@@ -124,6 +124,8 @@ class CSOAnalysisEEADP(CSOAnalysis):
         
         # Rename some columns
         df_per_outfall.rename(columns={'volumnOfEvent': 'DischargeVolume', 'incidentId': 'DischargeCount'}, inplace=True)
+        # Convert to millions of gallons
+        df_per_outfall['DischargeVolume'] /= 1e6
         
         return df_per_outfall
 

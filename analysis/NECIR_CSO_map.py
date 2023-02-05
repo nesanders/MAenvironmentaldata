@@ -214,9 +214,9 @@ class CSOAnalysis():
     output_slug: str = 'NECIR_CSO'
     discharge_vol_col: str = '2011_Discharges_MGal'
     discharge_count_col: str = '2011_Discharge_N'
-    outfall_address_col: str = 'location'
-    water_body_call: str = 'waterBody'
-    municipality_col: str = 'municipality'
+    outfall_address_col: str = 'Nearest_Pipe_Address'
+    water_body_col: str = 'DischargesBody'
+    municipality_col: str = 'Municipality'
     latitude_col: str = 'Latitude'
     longitude_col: str = 'Longitude'
     cso_data_year: int = 2011
@@ -378,10 +378,10 @@ class CSOAnalysis():
             </p>
             """.format(
                     address = cso[self.outfall_address_col],
-                    body = cso['DischargesBody'],
+                    body = cso[self.water_body_col],
                     muni = cso[self.municipality_col],
                     vol = cso[self.discharge_vol_col],
-                    N = cso[self.discharge_vol_col],
+                    N = cso[self.discharge_count_col],
                     cso_data_year = self.cso_data_year
                 )
             iframe = folium.IFrame(html=html, width=400, height=200)
@@ -477,10 +477,10 @@ class CSOAnalysis():
                 </p>
                 """.format(
                         address = cso[self.outfall_address_col],
-                        body = cso[self.water_body_call],
+                        body = cso[self.water_body_col],
                         muni = cso[self.municipality_col],
                         vol = cso[self.discharge_vol_col],
-                        N = cso[self.discharge_vol_col],
+                        N = cso[self.discharge_count_col],
                         cso_data_year = self.cso_data_year
                     )
                 iframe = folium.IFrame(html=html, width=400, height=200)
@@ -535,8 +535,7 @@ class CSOAnalysis():
 
         mychart.jekyll_write(outpath)
 
-    @staticmethod
-    def make_chart_summary_ej_characteristics_town(df_town_level: pd.DataFrame, 
+    def make_chart_summary_ej_characteristics_town(self, df_town_level: pd.DataFrame, 
         outpath: str='../docs/_includes/charts/EJSCREEN_demographics_municipality.html'):
         """Summary of EJ characteristics per town
         """
