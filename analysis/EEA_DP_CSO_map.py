@@ -208,7 +208,6 @@ class CSOAnalysisEEADP(CSOAnalysis):
         mychart.stacked = 'true'
 
         mychart.jekyll_write(outpath)
-        breakpoint()
 
     def plot_reports_non_zero_volume(self, outpath: str='../docs/_includes/charts/EEA_DP_CSO_non_zero_volume.html'):
         """Bar chart showing how many reports of each discharge type have zero volume reported.
