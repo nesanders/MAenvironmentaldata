@@ -345,7 +345,7 @@ class CSOAnalysis():
             name='Municipalities',
             data=data_ins_g_muni_j[self.discharge_vol_col],
             key_on='feature.properties.TOWN',
-            legend_name='Municipality: Total volume of discharge ({self.cso_data_year}; Millions of gallons)',
+            legend_name=f'Municipality: Total volume of discharge ({self.cso_data_year}; Millions of gallons)',
             threshold_scale = [0] + list(np.nanpercentile(
                 data_ins_g_muni_j[self.discharge_vol_col][data_ins_g_muni_j[self.discharge_vol_col] > 0], 
                 [25,50,75,100])),  
@@ -358,7 +358,7 @@ class CSOAnalysis():
             name='Watersheds',
             data=data_ins_g_ws_j[self.discharge_vol_col],
             key_on='feature.properties.NAME',
-            legend_name='Watershed: Total volume of discharge ({self.cso_data_year}; Millions of gallons)',
+            legend_name=f'Watershed: Total volume of discharge ({self.cso_data_year}; Millions of gallons)',
             threshold_scale = list(np.nanpercentile(data_ins_g_ws_j[self.discharge_vol_col], [0,25,50,75,100])),  
             fill_color='PuBu', fill_opacity=0.7, line_opacity=0.3, highlight=True,
             )
@@ -621,7 +621,7 @@ class CSOAnalysis():
             ## Set overall chart parameters
             mychart.set_params(
                 JSinline = 0, 
-                ylabel = 'Total volume of discharge ({self.cso_data_year}; Millions of gallons)', 
+                ylabel = f'Total volume of discharge ({self.cso_data_year}; Millions of gallons)', 
                 xlabel=col_label,
                 yaxis_type='linear',    
                 y2nd = 0,
@@ -732,7 +732,7 @@ class CSOAnalysis():
                     label = 'Posterior draw' if i==0 else None, zorder=1)
         
         plt.xlabel(col_label, wrap=True)
-        plt.ylabel('CSO discharge ({self.cso_data_year}; Mgal)')
+        plt.ylabel(f'CSO discharge ({self.cso_data_year}; Mgal)')
         
         plt.scatter(x, y, marker='o', c=pop_data / 1e3, cmap=cm.Blues, label='Watersheds', zorder=2)
         plt.colorbar(label='Population (1000s)')
