@@ -32,6 +32,9 @@ class CSOAnalysisEEADP(CSOAnalysis):
     output_slug: str = 'MAEEADP_CSO'
     discharge_vol_col: str = 'DischargeVolume'
     discharge_count_col: str = 'DischargeCount'
+    outfall_address_col: str = 'Nearest_Pipe_Address'
+    water_body_call: str = 'DischargesBody'
+    municipality_col: str = 'Municipality'
     latitude_col: str = 'latitude'
     longitude_col: str = 'longitude'
     # Path to file with lat long data from the state
@@ -49,7 +52,7 @@ class CSOAnalysisEEADP(CSOAnalysis):
         cso_data_year: int=2022,
         pick_report_type: str='Verified Data Report'
     ):
-        """Inittialize parameters for CSOAnalysisEEADP
+        """Initialize parameters for CSOAnalysisEEADP
         """
         super().__init__(
             fact_file,
@@ -80,7 +83,7 @@ class CSOAnalysisEEADP(CSOAnalysis):
         disk_engine = get_engine()
         data_cso = pd.read_sql_query(self.EEA_DP_CSO_QUERY, disk_engine)
         data_cso_trans = self.transform_data_cso(data_cso)
-        return data_cso
+        return data_cso_trans
 
     def transform_data_cso(self, data_cso: pd.DataFrame, pick_year: int=PICK_CSO_YEAR) -> pd.DataFrame:
         """Transform the loaded MA EEA DP CSO data by aggregating results for `pick_year` over outfalls.

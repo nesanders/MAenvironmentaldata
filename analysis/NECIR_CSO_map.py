@@ -214,6 +214,9 @@ class CSOAnalysis():
     output_slug: str = 'NECIR_CSO'
     discharge_vol_col: str = '2011_Discharges_MGal'
     discharge_count_col: str = '2011_Discharge_N'
+    outfall_address_col: str = 'location'
+    water_body_call: str = 'waterBody'
+    municipality_col: str = 'municipality'
     latitude_col: str = 'Latitude'
     longitude_col: str = 'Longitude'
     cso_data_year: int = 2011
@@ -374,9 +377,9 @@ class CSOAnalysis():
             Discharge frequency ({cso_data_year}): {N} discharges<br>
             </p>
             """.format(
-                    address = cso['Nearest_Pipe_Address'],
+                    address = cso[self.outfall_address_col],
                     body = cso['DischargesBody'],
-                    muni = cso['Municipality'],
+                    muni = cso[self.municipality_col],
                     vol = cso[self.discharge_vol_col],
                     N = cso[self.discharge_vol_col],
                     cso_data_year = self.cso_data_year
@@ -473,9 +476,9 @@ class CSOAnalysis():
                 Discharge frequency ({cso_data_year}): {N} discharges<br>
                 </p>
                 """.format(
-                        address = cso['Nearest_Pipe_Address'],
-                        body = cso['DischargesBody'],
-                        muni = cso['Municipality'],
+                        address = cso[self.outfall_address_col],
+                        body = cso[self.water_body_call],
+                        muni = cso[self.municipality_col],
                         vol = cso[self.discharge_vol_col],
                         N = cso[self.discharge_vol_col],
                         cso_data_year = self.cso_data_year
@@ -552,7 +555,7 @@ class CSOAnalysis():
                 col_label,
                 backgroundColor="'rgba({},0.8)'".format(", ".join([str(x) for x in hex2rgb(COLOR_CYCLE[i])])),
                 yAxisID= "'y-axis-0'")
-        mychart.set_params(JSinline = 0, ylabel = 'Fraction of households', xlabel='Municipality',
+        mychart.set_params(JSinline = 0, ylabel = 'Fraction of households', xlabel=self.municipality_col,
             scaleBeginAtZero=1, x_autoskip=True)
 
         mychart.jekyll_write(outpath)
