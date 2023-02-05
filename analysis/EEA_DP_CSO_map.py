@@ -163,8 +163,35 @@ class CSOAnalysisEEADP(CSOAnalysis):
 
         mychart.jekyll_write(outpath)
 
+    def plot_volume_per_month_by_event_type(self, outpath: str='../docs/_includes/charts/EEA_DP_CSO_volume_per_month.html'):
+        """Bar chart showing how many reports were made each day of different discharge types.
+        """        
+        print('Making chart of discharge volume per month by discharge type')
+        mychart = chartjs.chart("Discharge volume per month by discharge type", "Bar", 640, 480)
+        
+        data_types = self.data_cso_filtered_reports['eventType'].unique()
+        all_months = pd.date_range(start=f'1/1/{self.cso_data_year}', end=f'12/31/{self.cso_data_year}', freq='MS')
+        mychart.set_labels(all_months.tolist())
+        cso_df_vol = self.data_cso_filtered_reports.groupby(['eventType', 'incidentDate'])[self.discharge_vol_col].sum()
+        
+        for i, event_type in enumerate(data_types):
+            counts_per_month = cso_df_vol.loc[event_type].resample('MS').sum().reindex(all_months).fillna(0)
+            mychart.add_dataset(counts_per_month.values.tolist(), 
+                event_type,
+                backgroundColor="'rgba({},0.8)'".format(", ".join([str(x) for x in hex2rgb(COLOR_CYCLE[i])])),
+                yAxisID= "'y-axis-0'")
+        mychart.set_params(JSinline=0, ylabel='Volume of discharges (millions of gallons)', xlabel='Date',
+            scaleBeginAtZero=1)
+        mychart.stacked = 'true'
+
+        mychart.jekyll_write(outpath)
+        breakpoint()
+
     def plot_reports_non_zero_volume(self, outpath: str='../docs/_includes/charts/EEA_DP_CSO_non_zero_volume.html'):
         """Bar chart showing how many reports of each discharge type have zero volume reported.
+        
+        NOTE: We use a very simplistic assumption to decide if a volume report is likely modeled rather than
+        metered; we simply look to see if the reported volume was rounded to the nearest 1000.
         """        
         print('Making chart of discharges with no volume reported by discharge type')
         mychart = chartjs.chart("Discharges with no volume reported by discharge type", "Bar", 640, 480)
@@ -175,19 +202,30 @@ class CSOAnalysisEEADP(CSOAnalysis):
         def vol_gtr_0(x: float) -> float:
             return 100 * np.mean(x > 0)
         
-        nonzero_rates = self.data_cso_filtered_reports.groupby(['eventType'])[self.discharge_vol_col].apply(vol_gtr_0)
+        def likely_modeled(x: float) -> bool:
+            return 100 * np.mean((x % 1000) == 0)
         
-        mychart.add_dataset(nonzero_rates.reindex(data_types).tolist(), 'Discharges', yAxisID= "'y-axis-0'")
-        mychart.set_params(JSinline=0, ylabel='% of discharges with nonzero volume reported', 
+        nonzero_rates = self.data_cso_filtered_reports.groupby(['eventType'])[self.discharge_vol_col].apply(vol_gtr_0)
+        likely_modeled_rates = self.data_cso_filtered_reports.groupby(['eventType'])[self.discharge_vol_col].apply(likely_modeled)
+        
+        mychart.add_dataset(nonzero_rates.reindex(data_types).tolist(), 
+            '...with nonzero volume reported',
+            backgroundColor="'rgba({},0.5)'".format(", ".join([str(x) for x in hex2rgb(COLOR_CYCLE[0])])),
+        )
+        mychart.add_dataset(likely_modeled_rates.reindex(data_types).tolist(), 
+            '...with likely-modeled volume reported',
+            backgroundColor="'rgba({},0.5)'".format(", ".join([str(x) for x in hex2rgb(COLOR_CYCLE[1])])),
+        )
+        mychart.set_params(JSinline=0, ylabel='% of discharges...', 
             xlabel='Discharge type', scaleBeginAtZero=1)
 
         mychart.jekyll_write(outpath)
-        breakpoint()
     
     def extra_plots(self):
         """Generate all extra data plots for the EEA DP CSO data
         """
         self.plot_reports_per_month_by_event_type()
+        self.plot_volume_per_month_by_event_type()
         self.plot_reports_non_zero_volume()
 
     

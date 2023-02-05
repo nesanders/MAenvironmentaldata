@@ -28,11 +28,39 @@ The first sewage discharge report in the EEA Data Portal was from June 30th, 202
 
 ### How many reports were there?
 
+Looking at the **count** of discharge reports over time, we can see that reports substantially began in July of 2021. 
+As expected, the report volume recedes somewhat in the late-fall / winter months (November and later) when rainfall decreases.
+
+We can also see that the vast majority of reports are for untreated CSOs.
+A smaller fraction of reports are for treated CSOs.
+Very few 'blended' discharges and SSOs are being reported.
 
 {% include /charts/EEA_DP_CSO_counts_per_month.html %}
 
+However, looking at the **volume** (i.e. severity) of discharges reported over time shows a very different picture.
+Still, the plurality of discharge volume each month is from untreated CSOs, whose effluent can be expected to varry the greatest risk to public health from bacterial load.
+Still, only a small volume of discharges can be attributed to treated CSOs.
+However, while they are a small fraction of the count of discharges, the volume of partially treated CSO and 'blended' discharge is very high relative to their count.
+In December of 2022, the plurality of discharge was actually in the form of 'blended' discharge.
+
+{% include /charts/EEA_DP_CSO_volume_per_month.html %}
+
+According to the [Massachusetts Water Resources Authority](https://www.mwra.com/harbor/html/blending_reporting.htm) (MWRA), 'blended' discharge from their system constitutes "excess primary-treated flow [that has been] diverted around the secondary process and then blended with the secondary effluent before being disinfected and discharged." 
+In other words, part of the effluent in this discharge skipped the stage where microbes are applied to break down solids and contaminants (the secondary treatment process).
+The notification regulations [required](https://www.mass.gov/doc/314-cmr-1600-notification-requirements-to-promote-public-awareness-of-sewage-pollution-note-to-reviewers/download) reporting of 'blended' discharges following public comment from the [Massachusetts Rivers Alliance](https://www.massriversalliance.org/sewage-right-to-know) and other advocates.
+
+In the analysis below, we combine discharges of all types (i.e. we treat every gallon of discharge as equivalent).
 
 ### What fraction of reports have non-zero, non-modeled discharge volumes?
+
+The [final discharge notification regulations](https://www.mass.gov/doc/314-cmr-1600-notification-requirements-to-promote-public-awareness-of-sewage-pollution-1/download) require reporting of discharge volumes after the event have ceased, but give sewer operators some leeway in what they report.
+In particular, some sewer operators have not installed metering systems to directly measure the amount of sewage they discharge and, instead, are allowed to report the "Estimated volume of the discharge or overflow based on the average discharge or overflow from data reported to the Department and/orEPA for the prior three calendar years, taking into consideration historical information for the projected rainfall event, if possible, as set forth in the permittee’s CSO Public Notification Plan."
+
+Unfortunately, the state Data Portal does not indicate which reports come from modeled (3-year average) data and which are directly metered.
+As a simplistic way to estimate the number of modeled (non-metered) reports, we look for reports that are rounded.
+To generate the plot below, any report rounded to the nearest 1,000 gallons is assumed to be a modeled volume estimate.
+
+Roughly half of untreated CSO discharges seem to be based on modeled estimates. The number of treated and blended CSO discharges that are modeled is much lower. Furthermore, a small fraction (a few percent) of 'final validated reports' contain no volume information about the discharge.
 
 {% include /charts/EEA_DP_CSO_non_zero_volume.html %}
 
