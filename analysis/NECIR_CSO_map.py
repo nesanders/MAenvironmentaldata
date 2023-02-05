@@ -230,6 +230,9 @@ class CSOAnalysis():
         geo_towns_path: str='../docs/assets/geo_json/TOWNSSURVEY_POLYM_geojson_simple.json',
         geo_watershed_path: str='../docs/assets/geo_json/watshdp1_geojson_simple.json',
         geo_blockgroups_path: str='../docs/assets/geo_json/cb_2017_25_bg_500k.json',
+        make_maps: bool=True,
+        make_charts: bool=True,
+        make_regression: bool=True
     ):
         """Initialize parameters
         
@@ -247,7 +250,10 @@ class CSOAnalysis():
         self.geo_blockgroups_path = geo_blockgroups_path
         # Year represented by the CSO dataset
         self.cso_data_year = 2011
-    
+        self.make_maps = make_maps
+        self.make_charts = make_charts
+        self.make_regression = make_regression
+   
     
     # -------------------------
     # Data loading methods
@@ -761,27 +767,30 @@ class CSOAnalysis():
             self.apply_pop_weighted_avg(self.data_cso, self.data_ejs)
         
         # Make maps
-        self.make_map_discharge_volumes(
-            self.data_cso, self.geo_watersheds_dict, self.data_ins_g_bg, self.data_ins_g_muni_j, self.data_ins_g_ws_j)
-        self.make_map_ej_characteristics(
-            self.data_egs_merge, self.data_cso, self.df_town_level, self.df_watershed_level, self.geo_watersheds_dict)
+        if self.make_maps:
+            self.make_map_discharge_volumes(
+                self.data_cso, self.geo_watersheds_dict, self.data_ins_g_bg, self.data_ins_g_muni_j, self.data_ins_g_ws_j)
+            self.make_map_ej_characteristics(
+                self.data_egs_merge, self.data_cso, self.df_town_level, self.df_watershed_level, self.geo_watersheds_dict)
         
         # Make charts
-        self.make_chart_summary_ej_characteristics_watershed(self.df_watershed_level)
-        self.make_chart_summary_ej_characteristics_town(self.df_town_level)
-        self.make_chart_ej_cso_comparison(self.data_egs_merge, self.data_ins_g_ws_j, self.df_watershed_level)
+        if self.make_charts:
+            self.make_chart_summary_ej_characteristics_watershed(self.df_watershed_level)
+            self.make_chart_summary_ej_characteristics_town(self.df_town_level)
+            self.make_chart_ej_cso_comparison(self.data_egs_merge, self.data_ins_g_ws_j, self.df_watershed_level)
         
         # Regression modeling
-        self.fits = {}
-        for col, col_label in (
-            ('MINORPCT', 'Fraction of population identifying as non-white'),
-            ('LOWINCPCT', 'Fraction of population with income less than twice the Federal poverty limit'),
-            ('LINGISOPCT', 'Fraction of population in households whose adults speak English less than "very well"'),
-            ):
-            fit, fit_par, stan_dat, pop_data = self.fit_stan_model(col, self.data_egs_merge, self.df_watershed_level, self.data_ins_g_ws_j)
-            self.regression_plot_beta_posterior(fit_par, col, plot_path=self.fig_path + f'{self.output_slug}_stanfit_beta_'+col+'.png')
-            self.regression_plot_model_draws(fit_par, col_label, self.fig_path + f'{self.output_slug}_stanfit_'+col+'.png', stan_dat, pop_data)
-            self.fits[col] = {'fit_par': fit_par, 'stan_dat': stan_dat, 'pop_data': pop_data}
+        if self.make_regression:
+            self.fits = {}
+            for col, col_label in (
+                ('MINORPCT', 'Fraction of population identifying as non-white'),
+                ('LOWINCPCT', 'Fraction of population with income less than twice the Federal poverty limit'),
+                ('LINGISOPCT', 'Fraction of population in households whose adults speak English less than "very well"'),
+                ):
+                fit, fit_par, stan_dat, pop_data = self.fit_stan_model(col, self.data_egs_merge, self.df_watershed_level, self.data_ins_g_ws_j)
+                self.regression_plot_beta_posterior(fit_par, col, plot_path=self.fig_path + f'{self.output_slug}_stanfit_beta_'+col+'.png')
+                self.regression_plot_model_draws(fit_par, col_label, self.fig_path + f'{self.output_slug}_stanfit_'+col+'.png', stan_dat, pop_data)
+                self.fits[col] = {'fit_par': fit_par, 'stan_dat': stan_dat, 'pop_data': pop_data}
     
 if __name__ == '__main__':
     csoa = CSOAnalysis()

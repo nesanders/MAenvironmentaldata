@@ -10,7 +10,9 @@ The analysis in 2018 was limited to [CSO data from 2011]({{ site.url }}{{ site.b
 
 In 2021, Massachusetts [enacted a new law](https://malegislature.gov/Laws/SessionLaws/Acts/2020/Chapter322), the [Sewage Notification Act](https://www.wbur.org/news/2021/01/06/cso-notification-bill-sewage-river-baker), which [requires public notification](https://www.mass.gov/regulations/314-CMR-1600-notification-requirements-to-promote-public-awareness-of-sewage-pollution) of CSO discharges. This law generated a new data resource, a table in the [MA EEA Data Portal]({{ site.url }}{{ site.baseurl }}/data/EEADP_all.html) for CSO discharge events. 
 
-The availability of this new dataset allows us to revisit the distributional impacts of CSO discharges in MA a decade after the dataset collected by NECIR in 2011. In particular, in this post, we examine the first full year of data collected under the new law, from 2022.  As we will see below, this new dataset has limitations, but it does allow us to draw some insight into how the water pollution conditions in the Commonwealth have changed over a decade that has seen the culmination of hundreds of millions of dollars of [sewage pollution mitigation work by MWRA](https://www.mwra.com/cso/pcmapa.html) and other sewer operators.
+The availability of this new dataset allows us to revisit the distributional impacts of CSO discharges in MA a decade after the dataset collected by NECIR in 2011. In particular, in this post, we examine the first five months of data collected under the new law, from the second half of 2022.  As we will see below, this new dataset has limitations, but it does allow us to draw some insight into how the water pollution conditions in the Commonwealth have changed over a decade that has seen the culmination of hundreds of millions of dollars of [sewage pollution mitigation work by MWRA](https://www.mwra.com/cso/pcmapa.html) and other sewer operators.
+
+When comparing results in this analysis to the previous analysis of 2011 data, keep in mind that the 2022 data is available only for July through December and does not constitute a full year of reporting.
 
 The [environmental justice data used in this analysis]({{ site.url }}{{ site.baseurl }}/data/EPA_EJSCREEN.html) comes from the [US EPA EJSCREEN tool](https://www.epa.gov/ejscreen/what-ejscreen). Latitude and longitude coordinates for the CSO outfalls were retrieved from [a state publication](https://www.mass.gov/doc/permittee-and-outfall-lists/download), also [archived on this site]({{ site.url }}{{ site.baseurl }}/data/ma_permittee-and-outfall-lists.xlsx).  Both the EJ SCREEN and CSO data are available in the [{{ site.data.site_config.site_abbrev }} database]({{ site.url }}{{ site.baseurl }}/data/index.html)
 
@@ -21,6 +23,8 @@ The [environmental justice data used in this analysis]({{ site.url }}{{ site.bas
 For more background information about CSO discharges and environmental justice, see the [2018 post on AMEND]({{ site.url }}{{ site.baseurl }}/2018/04/25/necir-cso-ej.html).
 
 ## Characteristics of new CSO discharge dataset
+
+The first sewage discharge report in the EEA Data Portal was from June 30th, 2022.
 
 ### How many reports were there?
 

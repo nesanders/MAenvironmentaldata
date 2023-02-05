@@ -1,1 +1,79 @@
 {% raw  %}
+<html>
+    <head>
+        <title>CSO counts per day by event type</title>
+        <script src='https://cdn.jsdelivr.net/npm/chart.js@2.8.0/dist/Chart.bundle.min.js'></script>
+    </head>
+    <body>
+        <div style="width: 640px; height: 480px; max-width: 99%" class="chartjs">
+
+            <canvas id="CSO counts per day by event type" height="480" width="640"></canvas>
+            <script>
+                Chart.defaults.global.defaultFontSize = 12;
+                var chart_data = {
+                
+                    data: {
+                        labels: ['2022-01-01 00:00:00', '2022-02-01 00:00:00', '2022-03-01 00:00:00', '2022-04-01 00:00:00', '2022-05-01 00:00:00', '2022-06-01 00:00:00', '2022-07-01 00:00:00', '2022-08-01 00:00:00', '2022-09-01 00:00:00', '2022-10-01 00:00:00', '2022-11-01 00:00:00', '2022-12-01 00:00:00'],
+                        datasets: [{'data': [0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 294.0, 287.0, 444.0, 435.0, 316.0, 305.0], 'label': 'CSO – UnTreated', 'backgroundColor': 'rgba(31, 119, 180,0.8)', 'yAxisID': 'y-axis-0'},{'data': [0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 16.0, 15.0, 26.0, 35.0, 34.0, 39.0], 'label': 'CSO – Treated', 'backgroundColor': 'rgba(255, 127, 14,0.8)', 'yAxisID': 'y-axis-0'},{'data': [0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 8.0, 3.0, 28.0, 7.0, 10.0, 18.0], 'label': 'Partially Treated – Blended', 'backgroundColor': 'rgba(44, 160, 44,0.8)', 'yAxisID': 'y-axis-0'},{'data': [0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 2.0, 0.0, 0.0, 0.0, 0.0, 3.0], 'label': 'SSO – System Surcharging Under High Flow Conditions', 'backgroundColor': 'rgba(214, 39, 40,0.8)', 'yAxisID': 'y-axis-0'},{'data': [0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 9.0, 11.0, 15.0, 10.0, 13.0], 'label': 'Partially Treated – Other', 'backgroundColor': 'rgba(148, 103, 189,0.8)', 'yAxisID': 'y-axis-0'},{'data': [0.0, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0, 1.0, 1.0, 0.0, 0.0, 4.0], 'label': 'SSO – Failure of Pump Station or Associated Force Main', 'backgroundColor': 'rgba(140, 86, 75,0.8)', 'yAxisID': 'y-axis-0'},{'data': [0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 1.0, 1.0, 0.0, 0.0, 0.0, 1.0], 'label': 'SSO – Discharge Through Wastewater Outfall', 'backgroundColor': 'rgba(227, 119, 194,0.8)', 'yAxisID': 'y-axis-0'}]
+                    },
+                    type: 'bar',
+                    options: {
+                        scales: {
+                            yAxes: [{
+                                display: true,
+                                scaleLabel: {
+                                    display: true,
+                                    labelString: 'Number of discharges'
+                                },
+                                ticks: {
+                                    beginAtZero: true, min: 0
+                                },
+                                "id": "y-axis-0",
+                                "position": "left",
+                                stacked: true
+                            }, {
+                                display: false,
+                                scaleLabel: {
+                                    display: true,
+                                    labelString: ''
+                                },
+                                ticks: {
+                                    beginAtZero: true, min: 0
+                                },
+                                "id": "y-axis-1",
+                                "position": "right"
+                            }],
+                            xAxes: [{
+                                scaleLabel: {
+                                    display: true,
+                                    labelString: 'Date'
+                                },
+                                stacked: true,
+                                ticks: {
+                                    autoSkip: true
+                                }
+                            }]
+                        },
+                        legend: {
+                            display: true
+                            },
+                        tooltips: {
+                            display: true
+                            }
+                    },
+                }
+                
+                
+                
+            </script>
+            <script>
+                {{
+                    var ctx = document.getElementById("CSO counts per day by event type").getContext("2d");
+                    var mychart = new Chart(ctx, chart_data);
+                }}
+            </script>
+
+        </div>
+    </body>
+</html>
+{% endraw  %}

@@ -50,6 +50,9 @@ class CSOAnalysisEEADP(CSOAnalysis):
         geo_towns_path: str='../docs/assets/geo_json/TOWNSSURVEY_POLYM_geojson_simple.json',
         geo_watershed_path: str='../docs/assets/geo_json/watshdp1_geojson_simple.json',
         geo_blockgroups_path: str='../docs/assets/geo_json/cb_2017_25_bg_500k.json',
+        make_maps: bool=True,
+        make_charts: bool=True,
+        make_regression: bool=True,
         cso_data_year: int=2022,
         pick_report_type: str='Verified Data Report'
     ):
@@ -62,7 +65,10 @@ class CSOAnalysisEEADP(CSOAnalysis):
             stan_model_code,
             geo_towns_path,
             geo_watershed_path,
-            geo_blockgroups_path
+            geo_blockgroups_path,
+            make_maps,
+            make_charts,
+            make_regression
         )
         self.cso_data_year = cso_data_year
         # Pick one of two possible report types, 'Public Notification Report' or 'Verified Data Report'
@@ -146,19 +152,20 @@ class CSOAnalysisEEADP(CSOAnalysis):
         mychart = chartjs.chart("CSO counts per day by event type", "Bar", 640, 480)
         
         data_types = self.data_cso_raw['eventType'].unique()
-        all_days = pd.date_range(start=f'1/1/{self.cso_data_year}', end=f'12/31/{self.cso_data_year}')
-        mychart.set_labels(all_days.tolist())
+        all_months = pd.date_range(start=f'1/1/{self.cso_data_year}', end=f'12/31/{self.cso_data_year}', freq='MS')
+        mychart.set_labels(all_months.tolist())
         cso_df_counts = self.data_cso_raw.groupby(['eventType', 'incidentDate']).size()
         
-        cumulative_counts = pd.Series(index=all_days, data=np.zeros(len(all_days)))
+        # cumulative_counts = pd.Series(index=all_months, data=np.zeros(len(all_months)))
         for i, event_type in enumerate(data_types):
-            counts_per_day = cso_df_counts.loc[event_type].reindex(all_days).fillna(0)
-            mychart.add_dataset(counts_per_day.values.tolist(), 
+            counts_per_month = cso_df_counts.loc[event_type].resample('MS').sum().reindex(all_months).fillna(0)
+            mychart.add_dataset(counts_per_month.values.tolist(), 
                 event_type,
                 backgroundColor="'rgba({},0.8)'".format(", ".join([str(x) for x in hex2rgb(COLOR_CYCLE[i])])),
                 yAxisID= "'y-axis-0'")
         mychart.set_params(JSinline=0, ylabel='Number of discharges', xlabel='Date',
             scaleBeginAtZero=1)
+        mychart.stacked = 'true'
 
         mychart.jekyll_write(outpath)
         breakpoint()
@@ -174,6 +181,7 @@ class CSOAnalysisEEADP(CSOAnalysis):
 # -------------------------
     
 if __name__ == '__main__':
-    csoa = CSOAnalysisEEADP(cso_data_year=PICK_CSO_YEAR)
+    # TODO debug
+    csoa = CSOAnalysisEEADP(cso_data_year=PICK_CSO_YEAR, make_maps=False, make_charts=False, make_regression=False)
     csoa.run_analysis()
     csoa.extra_plots()
