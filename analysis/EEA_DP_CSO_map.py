@@ -43,7 +43,9 @@ class CSOAnalysisEEADP(CSOAnalysis):
     
     def __init__(
         self, 
-        pick_report_type: str='Verified Data Report'
+        cso_data_year: int=2022,
+        pick_report_type: str='Verified Data Report',
+        **kwargs
     ):
         """Initialize parameters for CSOAnalysisEEADP.
         
@@ -82,9 +84,9 @@ class CSOAnalysisEEADP(CSOAnalysis):
         df_pick = data_cso[data_cso['Year'].astype(int) == pick_year]
         print(f'N={len(df_pick)} total CSO records loaded from {pick_year}')
         
-        print(f'Filtering CSO data for class {pick_report_type}')
+        print(f'Filtering CSO data for class {self.pick_report_type}')
         df_pick = df_pick[df_pick['reporterClass'] == self.pick_report_type]
-        print(f'N={len(df_pick)} total CSO records loaded from {pick_report_type}')
+        print(f'N={len(df_pick)} total CSO records loaded from {self.pick_report_type}')
         
         # Save for use in `extra_plots`
         self.data_cso_filtered_reports = df_pick
@@ -114,16 +116,16 @@ class CSOAnalysisEEADP(CSOAnalysis):
         aggregators.update({col: len for col in count_cols})
         
         # Fill in missing lat/long data from the state file
-        sel_missing = df_pick['latitude'].isnull()
+        sel_missing = data_cso['latitude'].isnull()
         print(f"Missing N={sum(sel_missing)} outfall lat/longs")
         print(f'Loading missing lat/long data from {self.cso_lat_long_data_file}')
         df_lat_long_cso = pd.read_excel(self.cso_lat_long_data_file, 'CSO Outfalls').set_index('Outfall ID')
-        missing_lat_long_ids = df_pick[sel_missing]['outfallId']
+        missing_lat_long_ids = data_cso[sel_missing]['outfallId']
         missing_lat_long_coords = df_lat_long_cso.reindex(missing_lat_long_ids)[['Lat', 'Long']]
-        df_pick.loc[sel_missing, ['latitude', 'longitude']] = missing_lat_long_coords.values
-        print(f"Missing N={sum(df_pick['latitude'].isnull())} outfall lat/longs after replacement")
+        data_cso.loc[sel_missing, ['latitude', 'longitude']] = missing_lat_long_coords.values
+        print(f"Missing N={sum(data_cso['latitude'].isnull())} outfall lat/longs after replacement")
         
-        df_agg = df_pick.groupby(agg_cols).agg(aggregators)
+        df_agg = data_cso.groupby(agg_cols).agg(aggregators)
         df_per_outfall = df_agg.loc[self.pick_report_type].reset_index()
         
         # Rename some columns
