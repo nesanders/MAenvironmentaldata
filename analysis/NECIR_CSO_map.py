@@ -87,6 +87,13 @@ def pick_non_null(x: list) -> Optional[str]:
             return val
     return None
 
+def is_nan(x: Any) -> bool:
+    """Safely check if a value is np.nan.
+    """
+    if isinstance(x, float) and np.isnan(x):
+        return True
+    return False
+
 def lookup_town_for_feature(town_feature, point) -> Optional[str]:
     """Try to assign an input feature to a town
     """
@@ -114,7 +121,7 @@ def pop_weighted_average(x, cols):
 
 @memory.cache
 def _assign_cso_data_to_census_blocks(data_cso: pd.DataFrame, geo_blockgroups_dict: dict, 
-    longitude_col: str, latitude_col: str) -> pd.DataFrame:
+    latitude_col: str, longitude_col: str) -> pd.DataFrame:
     """Add a new 'BlockGroup' column to `data_cso` assigning CSOs to Census block groups.
     """
     print('Assigning CSO data to census blocks')
@@ -129,8 +136,8 @@ def _assign_cso_data_to_census_blocks(data_cso: pd.DataFrame, geo_blockgroups_di
             if polygon.contains(point):
                 data_out.loc[cso_i, 'BlockGroup'] = feature['properties']['GEOID'] 
         ## Warn if a blockgroup was not found
-        if data_out.loc[cso_i, 'BlockGroup'] is np.nan:
-            print(('No block group found for CSO #', str(cso_i)))
+        if is_nan(data_out.loc[cso_i, 'BlockGroup']):
+            print('No block group found for CSO #', str(cso_i))
     return data_out
 
 @memory.cache
@@ -154,13 +161,13 @@ def assign_ej_data_to_geo_bins(data_ejs: pd.DataFrame, geo_towns_dict: dict, geo
         bg_mapping.loc[feature['properties']['GEOID'], 'Town'] = pick_non_null(
             Parallel(n_jobs=-1)(delayed(lookup_town_for_feature)(town_feature, point) for town_feature in geo_towns_dict))
         ## Warn if a town was not found
-        if bg_mapping.loc[feature['properties']['GEOID'], 'Town'] is np.nan:
+        if is_nan(bg_mapping.loc[feature['properties']['GEOID'], 'Town']):
             print(f"No Town found for GEOID {feature['properties']['GEOID']}")
         ## Loop over watersheds
         bg_mapping.loc[feature['properties']['GEOID'], 'Watershed'] = pick_non_null(
             Parallel(n_jobs=-1)(delayed(lookup_watershed_for_feature)(watershed_feature, point) for watershed_feature in geo_watersheds_dict))
         ## Warn if a watershed was not found
-        if bg_mapping.loc[feature['properties']['GEOID'], 'Watershed'] is np.nan:
+        if is_nan(bg_mapping.loc[feature['properties']['GEOID'], 'Watershed']):
             print(f"No Watershed found for GEOID {feature['properties']['GEOID']}")
 
     data_ejs = pd.merge(data_ejs, bg_mapping, left_on = 'ID', right_index=True, how='left')
@@ -214,7 +221,7 @@ class CSOAnalysis():
     def __init__(
         self, 
         fact_file: str='../docs/data/facts_NECIR_CSO.yml',
-        out_path: str='../docs/data/facts_NECIR_CSO.yml',
+        out_path: str='../docs/assets/maps/',
         fig_path: str='../docs/assets/figures/',
         stan_model_code: str='discharge_regression_model.stan',
         geo_towns_path: str='../docs/assets/geo_json/TOWNSSURVEY_POLYM_geojson_simple.json',
@@ -336,7 +343,9 @@ class CSOAnalysis():
             data=data_ins_g_muni_j[self.discharge_vol_col],
             key_on='feature.properties.TOWN',
             legend_name='Municipality: Total volume of discharge ({self.cso_data_year}; Millions of gallons)',
-            threshold_scale = [0]+list(np.nanpercentile(data_ins_g_muni_j[self.discharge_vol_col][data_ins_g_muni_j[discharge_vol_col] > 0], [25,50,75,100])),  
+            threshold_scale = [0] + list(np.nanpercentile(
+                data_ins_g_muni_j[self.discharge_vol_col][data_ins_g_muni_j[self.discharge_vol_col] > 0], 
+                [25,50,75,100])),  
             fill_color='PuRd', fill_opacity=0.7, line_opacity=0.3, highlight=True,
             )
 
@@ -370,6 +379,7 @@ class CSOAnalysis():
                     muni = cso['Municipality'],
                     vol = cso[self.discharge_vol_col],
                     N = cso[self.discharge_vol_col],
+                    cso_data_year = self.cso_data_year
                 )
             iframe = folium.IFrame(html=html, width=400, height=200)
             popup = folium.Popup(iframe, max_width=500)
@@ -468,6 +478,7 @@ class CSOAnalysis():
                         muni = cso['Municipality'],
                         vol = cso[self.discharge_vol_col],
                         N = cso[self.discharge_vol_col],
+                        cso_data_year = self.cso_data_year
                     )
                 iframe = folium.IFrame(html=html, width=400, height=200)
                 popup = folium.Popup(iframe, max_width=500)
@@ -685,8 +696,7 @@ class CSOAnalysis():
     #print(col)
     #print(summary)
     
-    @staticmethod
-    def regression_plot_beta_posterior(fit_par: pd.DataFrame, col: str, plot_path: str):
+    def regression_plot_beta_posterior(self, fit_par: pd.DataFrame, col: str, plot_path: str):
         """Plot a beta posterior histogram for the regression model. Also output some summary statistics
         to the `fact_file`.
         """
@@ -699,7 +709,7 @@ class CSOAnalysis():
         plt.savefig(plot_path, dpi=200)
         
         ## Output summary dependence statistics
-        with open(fact_file, 'a') as f:
+        with open(self.fact_file, 'a') as f:
             f.write(f'depend_cso_{col}: {np.median(ph):0.1f} times (90% confidence interval '
                     f'{np.percentile(ph, 5):0.1f} to {np.percentile(ph, 95):0.1f} times)\n')
     
