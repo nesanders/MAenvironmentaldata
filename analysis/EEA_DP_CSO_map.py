@@ -5,6 +5,7 @@ but is defined separately because some aspects of the data differ.
 
 from typing import Any, Optional, Tuple
 
+import chartjs
 from joblib import Memory
 import numpy as np
 import pandas as pd
@@ -83,6 +84,10 @@ class CSOAnalysisEEADP(CSOAnalysis):
         disk_engine = get_engine()
         data_cso = pd.read_sql_query(self.EEA_DP_CSO_QUERY, disk_engine)
         data_cso_trans = self.transform_data_cso(data_cso)
+        
+        # Save for use in `extra_plots`
+        self.data_cso_raw = data_cso
+        
         return data_cso_trans
 
     def transform_data_cso(self, data_cso: pd.DataFrame, pick_year: int=PICK_CSO_YEAR) -> pd.DataFrame:
@@ -98,7 +103,7 @@ class CSOAnalysisEEADP(CSOAnalysis):
         # Columns to be counted
         count_cols = ['incidentId']
         
-        # NOTE ther are tree possible eventTypes: 'CSO – Treated', 'CSO – UnTreated', 'Partially Treated – Blended', 'Partially Treated – Other'
+        # NOTE there are tree possible eventTypes: 'CSO – Treated', 'CSO – UnTreated', 'Partially Treated – Blended', 'Partially Treated – Other'
         # We choose to sum over all of them
         
         aggregators = {col: np.sum for col in sum_cols}
@@ -133,13 +138,32 @@ class CSOAnalysisEEADP(CSOAnalysis):
     # Extra plots of dataset characteristics
     # -------------------------
     
-    def plot_reports_per_day(self):
+    def plot_reports_per_day_by_event_type(self, outpath: str='../docs/_includes/charts/EEA_DP_CSO_counts_per_day.html'):
+        """Bar chart showing how many reports were made each day of different data types.
+        """        
+        print('Making map of CSO counts per day by event type')
+        mychart = chartjs.chart("CSO counts per day by event type", "Bar", 640, 480)
         
+        data_types = self.data_cso_raw['eventTypes'].unique()
+        all_days = pd.date_range(start=f'1/1/{self.cso_data_year}', end=f'12/31/{self.cso_data_year}')
+        cso_df_counts = self.data_cso_raw.groupby(['eventType', 'incidentDate']).size()
+        
+        cumulative_counts = pd.Series(index=all_days, data=np.zeros(len(all_days)))
+        for i, event_type in enumerate(data_types):
+            counts_per_day = cso_df_counts.loc[event_type].reindex(all_days)
+            mychart.add_dataset(counts_per_day.values.tolist(), 
+                event_type,
+                backgroundColor="'rgba({},0.8)'".format(", ".join([str(x) for x in hex2rgb(COLOR_CYCLE[i])])),
+                yAxisID= "'y-axis-0'")
+        mychart.set_params(JSinline = 0, ylabel = 'Number of discharges', xlabel='Date',
+            scaleBeginAtZero=1, x_autoskip=False)
+
+        mychart.jekyll_write(outpath)
     
     def extra_plots(self):
         """Generate all extra data plots for the EEA DP CSO data
         """
-        self.plot_reports_per_day()
+        self.plot_reports_per_day_by_event_type()
 
     
 # -------------------------

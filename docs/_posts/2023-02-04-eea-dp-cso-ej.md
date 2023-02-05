@@ -24,6 +24,10 @@ For more background information about CSO discharges and environmental justice, 
 
 ### How many reports were there?
 
+
+{% include /charts/EEA_DP_CSO_counts_per_day.html %}
+
+
 ### What fraction of reports have non-zero, non-modeled discharge volumes?
 
 ### How much discharge is reported as CSO versus other types?
