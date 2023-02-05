@@ -40,7 +40,7 @@ class CSOAnalysisEEADP(CSOAnalysis):
     def __init__(
         self, 
         fact_file: str='../docs/data/facts_EEA_DP_CSO.yml',
-        out_path: str='../docs/data/facts_EEA_DP_CSO.yml',
+        out_path: str='../docs/assets/maps/',
         fig_path: str='../docs/assets/figures/',
         stan_model_code: str='discharge_regression_model.stan',
         geo_towns_path: str='../docs/assets/geo_json/TOWNSSURVEY_POLYM_geojson_simple.json',
