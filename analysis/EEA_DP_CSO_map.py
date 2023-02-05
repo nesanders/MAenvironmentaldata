@@ -3,7 +3,7 @@ MA EEA Data Portal CSO data. This follows the same basic structure as NECIR_CSO_
 but is defined separately because some aspects of the data differ.
 """
 
-from typing import Any, Tuple
+from typing import Any, Optional, Tuple
 
 from joblib import Memory
 import numpy as np
@@ -78,7 +78,7 @@ class CSOAnalysisEEADP(CSOAnalysis):
             pick_year = self.cso_data_year
         print(f'Loading EEA Data Portal CSO data for {self.cso_data_year}')
         disk_engine = get_engine()
-        data_cso = pd.read_sql_query(EEA_DP_CSO_QUERY, disk_engine)
+        data_cso = pd.read_sql_query(self.EEA_DP_CSO_QUERY, disk_engine)
         data_cso_trans = self.transform_data_cso(data_cso)
         return data_cso
 
@@ -129,5 +129,5 @@ class CSOAnalysisEEADP(CSOAnalysis):
 # -------------------------
     
 if __name__ == '__main__':
-    csoa = CSOAnalysisEEADP(PICK_CSO_YEAR)
+    csoa = CSOAnalysisEEADP(cso_data_year=PICK_CSO_YEAR)
     csoa.run_analysis()
