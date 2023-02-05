@@ -24,7 +24,7 @@ For more background information about CSO discharges and environmental justice, 
 
 ## Locations of CSO discharges
 
-The map below shows the location of CSO outfalls in MA (points), with overlays showing the sum total of CSO discharge volume in 2011 by watershed, municipality, and Census block group (use the control at right to toggle these layers).  Watershed names are labeled in blue.
+The map below shows the location of CSO outfalls in MA (points), with overlays showing the sum total of CSO discharge volume in 2022 by watershed, municipality, and Census block group (use the control at right to toggle these layers).  Watershed names are labeled in blue.
 
 {% raw %}
 <iframe frameborder="no" border="0" marginwidth="0" marginheight="0" width="700" height="400" src="../../../assets/maps/MAEEADP_CSO_map_total.html"></iframe>
