@@ -4,20 +4,38 @@ The Archive of Mass ENvironmental Data (AMEND) is a project to assemble and anal
 
 The website for the project can be [viewed here](https://nesanders.github.io/MAenvironmentaldata/).
 
-This git repository contains code for data acquisition (see get_data subdirectory), analysis (see analysis subdirectory), and the [jekyll](https://jekyllrb.com/) site for this project (see docs subdirectory).
+This git repository contains code for data acquisition (see `get_data` subdirectory), analysis (see analysis subdirectory), and the [`jekyll`](https://jekyllrb.com/) site for this project (see docs subdirectory).
 
 
 ## Updating data from the sources
 
-You can run the single convenience script *update_all.sh* (for bash) to (re)generate all content associated with the site.
+You can run the single convenience script `update_all.sh` (for `bash`) to (re)generate all content associated with the site.
 
 ## Hosting the site
 
-The python3 scripts in this repository automatically feed content to a static website generated with jekyll.  The website is hosted via [GitHub Pages](https://help.github.com/articles/using-jekyll-as-a-static-site-generator-with-github-pages/) or can be [run locally with the proper Ruby configuration](https://help.github.com/articles/setting-up-your-github-pages-site-locally-with-jekyll/).
+The `python3` (3.7) scripts in this repository automatically feed content to a static website generated with `jekyll`.  The website is hosted via [GitHub Pages](https://help.github.com/articles/using-jekyll-as-a-static-site-generator-with-github-pages/) or can be [run locally with the proper Ruby configuration](https://help.github.com/articles/setting-up-your-github-pages-site-locally-with-jekyll/).
+
+To install the local `jekyll` server, you can 
+
+```
+conda create --name amend_jekyll
+conda activate amend_jekyll
+conda install -c conda-forge rb-bundler
+gem install commonmarker -v '0.17.13' --source 'https://rubygems.org/'
+conda install gxx_linux-64
+cd docs
+bundle install
+```
+
+To launch the server, run the following from the `docs` directory:
+
+```
+bundle exec jekyll serve
+```
 
 ## Python dependencies
 
-Several python3 packages are required to execute the scripts needed to generate this website, specified in `requirements.txt`.
+Several `python3` packages are required to execute the scripts needed to generate this website, specified in `requirements.txt`.
 
 ## Other tools used
 

@@ -28,6 +28,7 @@ data_csv['MAEEADP_Facility'] = pd.read_csv('../docs/data/EEADP_facility.csv')
 data_csv['MAEEADP_Inspection'] = pd.read_csv('../docs/data/EEADP_inspection.csv')
 data_csv['MAEEADP_Permit'] = pd.read_csv('../docs/data/EEADP_permit.csv')
 data_csv['EPA_EJSCREEN_2017'] = pd.read_csv('../docs/data/EPA_EJSCREEN_MA_2017.csv')
+data_csv['MAEEADP_CSO'] = pd.read_csv('../docs/data/EEADP_CSO.csv')
 
 ## Temporary insertion for 2022 assuming no inflation
 data_csv['SSAWages'] = pd.read_csv('../docs/data/SSAWages_2023-02-03.csv')
