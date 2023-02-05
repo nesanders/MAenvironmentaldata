@@ -94,7 +94,7 @@ Linguistic isolation is defined as the fraction of households with no adult who 
 
 {% include /charts/MAEEADP_EJSCREEN_correlation_bywatershed_LINGISOPCT.html %}
 
-We find a statistically significant and moderately strong relationship between CSO discharge volumes and linguistic isolation.  More linguistically isolated communities, like the Mystic River watershed, have much higher CSO discharge volumes.  On average, **watersheds that have twice the level of linguistic isolation tend to have {{ site.data.facts_MAEEADP_CSO.depend_cso_LINGISOPCT }} the level of CSO discharge.**
+We find a statistically significant and moderately strong relationship between CSO discharge volumes and linguistic isolation.  More linguistically isolated communities, like the Mystic River watershed, have much higher CSO discharge volumes.  On average, **watersheds that have twice the level of linguistic isolation tend to have {{ site.data.facts_EEA_DP_CSO.depend_cso_LINGISOPCT }} the level of CSO discharge.**
 
 
 ### Relationship with racial minority demographics
@@ -103,7 +103,7 @@ The plot below is similar to the one above for linguistic isolation, except the 
 
 {% include /charts/MAEEADP_EJSCREEN_correlation_bywatershed_MINORPCT.html %}
 
-Similar to the linguistic isolation trend, communities that are less predominantly white have much higher CSO discharge volumes.  On average, **watersheds that have twice the level of minority populations tend to have {{ site.data.facts_MAEEADP_CSO.depend_cso_MINORPCT }} the level of CSO discharge.**
+Similar to the linguistic isolation trend, communities that are less predominantly white have much higher CSO discharge volumes.  On average, **watersheds that have twice the level of minority populations tend to have {{ site.data.facts_EEA_DP_CSO.depend_cso_MINORPCT }} the level of CSO discharge.**
 
 
 ### Relationship with income
@@ -112,6 +112,6 @@ The plot below is similar to the one above for linguistic isolation, except the 
 
 {% include /charts/MAEEADP_EJSCREEN_correlation_bywatershed_LOWINCPCT.html %}
 
-Similar to the linguistic isolation trend, communities that are less predominantly white have much higher CSO discharge volumes.  On average, **watersheds that have twice the level of low income populations tend to have {{ site.data.facts_MAEEADP_CSO.depend_cso_LOWINCPCT }} the level of CSO discharge.**
+Similar to the linguistic isolation trend, communities that are less predominantly white have much higher CSO discharge volumes.  On average, **watersheds that have twice the level of low income populations tend to have {{ site.data.facts_EEA_DP_CSO.depend_cso_LOWINCPCT }} the level of CSO discharge.**
 
 
