@@ -10,7 +10,7 @@ from joblib import Memory
 import numpy as np
 import pandas as pd
 
-from NECIR_CSO_map import CSOAnalysis, get_engine
+from NECIR_CSO_map import COLOR_CYCLE, CSOAnalysis, get_engine, hex2rgb
 
 # Create a joblib cache
 memory = Memory('eea_dp_cso_data_cache', verbose=1)
@@ -83,6 +83,7 @@ class CSOAnalysisEEADP(CSOAnalysis):
         print(f'Loading EEA Data Portal CSO data for {self.cso_data_year}')
         disk_engine = get_engine()
         data_cso = pd.read_sql_query(self.EEA_DP_CSO_QUERY, disk_engine)
+        data_cso['incidentDate'] = pd.to_datetime(data_cso['incidentDate'])
         data_cso_trans = self.transform_data_cso(data_cso)
         
         # Save for use in `extra_plots`
@@ -144,21 +145,22 @@ class CSOAnalysisEEADP(CSOAnalysis):
         print('Making map of CSO counts per day by event type')
         mychart = chartjs.chart("CSO counts per day by event type", "Bar", 640, 480)
         
-        data_types = self.data_cso_raw['eventTypes'].unique()
+        data_types = self.data_cso_raw['eventType'].unique()
         all_days = pd.date_range(start=f'1/1/{self.cso_data_year}', end=f'12/31/{self.cso_data_year}')
         cso_df_counts = self.data_cso_raw.groupby(['eventType', 'incidentDate']).size()
         
         cumulative_counts = pd.Series(index=all_days, data=np.zeros(len(all_days)))
         for i, event_type in enumerate(data_types):
-            counts_per_day = cso_df_counts.loc[event_type].reindex(all_days)
+            counts_per_day = cso_df_counts.loc[event_type].reindex(all_days).fillna(0)
             mychart.add_dataset(counts_per_day.values.tolist(), 
                 event_type,
                 backgroundColor="'rgba({},0.8)'".format(", ".join([str(x) for x in hex2rgb(COLOR_CYCLE[i])])),
                 yAxisID= "'y-axis-0'")
-        mychart.set_params(JSinline = 0, ylabel = 'Number of discharges', xlabel='Date',
-            scaleBeginAtZero=1, x_autoskip=False)
+        mychart.set_params(JSinline=0, ylabel='Number of discharges', xlabel='Date',
+            scaleBeginAtZero=1)
 
         mychart.jekyll_write(outpath)
+        breakpoint()
     
     def extra_plots(self):
         """Generate all extra data plots for the EEA DP CSO data
