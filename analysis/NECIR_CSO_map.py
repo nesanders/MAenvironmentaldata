@@ -19,11 +19,11 @@ EEA_DP_CSO_map.py script.
 """
 
 import json
-from typing import Any, Optional, Tuple
+from typing import Any, Dict, List, Optional, Tuple
 
 import chartjs
 import folium
-from joblib import Parallel, delayed, Memory
+from joblib import Memory
 import matplotlib as mpl
 from matplotlib import pyplot as plt
 from matplotlib import cm
@@ -34,13 +34,15 @@ from shapely.strtree import STRtree
 import sqlalchemy
 import stan
 
+# Create a joblib cache
+memory = Memory('necir_cso_data_cache', verbose=1)
+
 # Colors to use in plots
 COLOR_CYCLE = [c['color'] for c in list(mpl.rcParams['axes.prop_cycle'])]
 
 DATABASE_URI = 'sqlite:///../get_data/AMEND.db'
 
-# Create a joblib cache
-memory = Memory('necir_cso_data_cache', verbose=1)
+GeoList = List[Dict[str, Any]]
 
 # -------------------------
 # Standalone functions
@@ -121,7 +123,7 @@ def pop_weighted_average(x, cols):
     return pd.Series(data = out, index=cols)
 
 @memory.cache
-def _assign_cso_data_to_census_blocks(data_cso: pd.DataFrame, geo_blockgroups_dict: dict, 
+def _assign_cso_data_to_census_blocks(data_cso: pd.DataFrame, geo_blockgroups_list: GeoList, 
     latitude_col: str, longitude_col: str) -> pd.DataFrame:
     """Add a new 'BlockGroup' column to `data_cso` assigning CSOs to Census block groups.
     """
@@ -132,7 +134,7 @@ def _assign_cso_data_to_census_blocks(data_cso: pd.DataFrame, geo_blockgroups_di
     ## Loop over CSO outfalls
     for cso_i in range(len(data_out)):
         point = Point(data_out.iloc[cso_i][longitude_col], data_out.iloc[cso_i][latitude_col])
-        for feature in geo_blockgroups_dict:
+        for feature in geo_blockgroups_list:
             polygon = shape(feature['geometry'])
             if polygon.contains(point):
                 data_out.loc[cso_i, 'BlockGroup'] = feature['properties']['GEOID'] 
@@ -141,17 +143,20 @@ def _assign_cso_data_to_census_blocks(data_cso: pd.DataFrame, geo_blockgroups_di
             print('No block group found for CSO #', str(cso_i))
     return data_out
 
-def _assign_cso_data_to_census_blocks_with_strtree(data_cso: pd.DataFrame, geo_blockgroups_dict: dict, 
+@memory.cache
+def _assign_cso_data_to_census_blocks_with_strtree(data_cso: pd.DataFrame, geo_blockgroups_list: GeoList, 
     latitude_col: str, longitude_col: str) -> pd.DataFrame:
     """Add a new 'BlockGroup' column to `data_cso` assigning CSOs to Census block groups using Shapely's
     STRTree class, based on a Sort-Tile-Recursive algorithm.
+    
+    This should be functionally equivalent to `_assign_cso_data_to_census_blocks`, but much faster.
     """
     print('Assigning CSO data to census blocks')
     data_out = data_cso.copy()
     # Loop over Census block groups
     data_out['BlockGroup'] = np.nan
     # Create STRTree
-    census_block_tree = STRtree([shape(feature['geometry']) for feature in geo_blockgroups_dict])
+    census_block_tree = STRtree([shape(feature['geometry']) for feature in geo_blockgroups_list])
     cso_points = [Point(data_out.iloc[cso_i][longitude_col], data_out.iloc[cso_i][latitude_col]) for cso_i in range(len(data_out))]
     # Query for containment
     result_indices = census_block_tree.query(cso_points, predicate='within')
@@ -165,40 +170,76 @@ def _assign_cso_data_to_census_blocks_with_strtree(data_cso: pd.DataFrame, geo_b
         ## Warn if multiple blockgroups were found
         if sum(cso_result_set) > 1:
             print(f'N={sum(cso_result_set)} block groups were found for CSO #{cso_i}; will pick the first')
-        data_out.loc[cso_i, 'BlockGroup'] = geo_blockgroups_dict[result_indices[1][cso_result_set][0]]['properties']['GEOID']
+        data_out.loc[cso_i, 'BlockGroup'] = geo_blockgroups_list[result_indices[1][cso_result_set][0]]['properties']['GEOID']
     return data_out
 
 @memory.cache
-def assign_ej_data_to_geo_bins(data_ejs: pd.DataFrame, geo_towns_dict: dict, geo_watersheds_dict: dict, 
-    geo_blockgroups_dict: dict) -> pd.DataFrame:
+def assign_ej_data_to_geo_bins(data_ejs: pd.DataFrame, geo_towns_list: GeoList, geo_watersheds_list: GeoList, 
+    geo_blockgroups_list: GeoList) -> pd.DataFrame:
     """Return a version of `data_ejs` with added 'Town' and 'Watershed' columns.
-    
-    NOTE: this runs in parallel with `joblib`
-    TODO joblib doesn't actually seem to be achieving a lot of speedup; it would probably work better if done in batches
     """
     print('Adding Town and Watershed labels to EJ data')
     ## Loop over Census block groups
     bg_mapping = pd.DataFrame(
-        index=[geo_blockgroups_dict[i]['properties']['GEOID'] for i in range(len(geo_blockgroups_dict))], 
+        index=[geo_blockgroups_list[i]['properties']['GEOID'] for i in range(len(geo_blockgroups_list))], 
         columns=['Town','Watershed'])
     ## Loop over block groups
-    for feature in geo_blockgroups_dict:
+    for feature in geo_blockgroups_list:
         polygon = shape(feature['geometry'])
         point = polygon.centroid
         ## Loop over towns
         bg_mapping.loc[feature['properties']['GEOID'], 'Town'] = pick_non_null(
-            Parallel(n_jobs=-1)(delayed(lookup_town_for_feature)(town_feature, point) for town_feature in geo_towns_dict))
+            lookup_town_for_feature(town_feature, point) for town_feature in geo_towns_list)
         ## Warn if a town was not found
         if is_nan(bg_mapping.loc[feature['properties']['GEOID'], 'Town']):
             print(f"No Town found for GEOID {feature['properties']['GEOID']}")
         ## Loop over watersheds
         bg_mapping.loc[feature['properties']['GEOID'], 'Watershed'] = pick_non_null(
-            Parallel(n_jobs=-1)(delayed(lookup_watershed_for_feature)(watershed_feature, point) for watershed_feature in geo_watersheds_dict))
+            lookup_watershed_for_feature(watershed_feature, point) for watershed_feature in geo_watersheds_list)
         ## Warn if a watershed was not found
         if is_nan(bg_mapping.loc[feature['properties']['GEOID'], 'Watershed']):
             print(f"No Watershed found for GEOID {feature['properties']['GEOID']}")
 
     data_ejs = pd.merge(data_ejs, bg_mapping, left_on = 'ID', right_index=True, how='left')
+    return data_ejs
+
+@memory.cache
+def assign_ej_data_to_geo_bins_with_strtree(data_ejs: pd.DataFrame, geo_towns_list: GeoList, geo_watersheds_list: GeoList, 
+    geo_blockgroups_list: GeoList) -> pd.DataFrame:
+    """Return a version of `data_ejs` with added 'Town' and 'Watershed' columns.
+    
+    This should be functionally equivalent to `assign_ej_data_to_geo_bins`, but much faster. But it still takes 
+    a few minutes to run over all block groups.
+    """    
+    print('Adding Town and Watershed labels to EJ data')
+    ## Loop over Census block groups
+    bg_mapping = pd.DataFrame(
+        index=[geo_blockgroups_list[i]['properties']['GEOID'] for i in range(len(geo_blockgroups_list))], 
+        columns=['Town','Watershed'])
+    
+    cbg_points = {feature['properties']['GEOID']: shape(feature['geometry']).centroid for feature in geo_blockgroups_list}
+    for geo_type, geo_list, geo_key in [
+            ('Town', geo_towns_list, 'TOWN'), 
+            ('Watershed', geo_watersheds_list, 'NAME')
+        ]:
+        # Create STRTrees
+        tree = STRtree([shape(feature['geometry']) for feature in geo_list])
+        # Query for containment
+        result_indices = tree.query(list(cbg_points.values()), predicate='within')
+        # Parse the results
+        for cbg_i, cbg_id in enumerate(cbg_points.keys()):
+            result_set = (np.array(result_indices[0]) == cbg_i)
+            ## Warn if a town was not found
+            if sum(result_set) == 0:
+                print(f'No {geo_type} found for Census Block Group #{cbg_id}')
+                continue
+            ## Warn if multiple towns were found
+            if sum(result_set) > 1:
+                print(f'N={sum(result_set)} {geo_type}s were found for Census Block Group #{cbg_id}; will pick the first')
+            bg_mapping.loc[cbg_id, geo_type] = geo_list[result_indices[1][result_set][0]]['properties'][geo_key]
+
+    data_ejs = pd.merge(data_ejs, bg_mapping, left_on='ID', right_index=True, how='left')
+    breakpoint()
     return data_ejs
 
 @memory.cache
@@ -309,13 +350,13 @@ class CSOAnalysis():
     # Data loading methods
     # -------------------------
     
-    def get_geo_files(self) -> Tuple[dict, dict, dict, dict]:
+    def get_geo_files(self) -> Tuple[GeoList, GeoList, GeoList, GeoList]:
         """Load and return geo json files.
         """
-        geo_towns_dict = json.load(open(self.geo_towns_path))['features']
-        geo_watersheds_dict = json.load(open(self.geo_watershed_path))['features']
-        geo_blockgroups_dict = json.load(open(self.geo_blockgroups_path))['features']
-        return geo_towns_dict, geo_watersheds_dict, geo_blockgroups_dict
+        geo_towns_list = json.load(open(self.geo_towns_path))['features']
+        geo_watersheds_list = json.load(open(self.geo_watershed_path))['features']
+        geo_blockgroups_list = json.load(open(self.geo_blockgroups_path))['features']
+        return geo_towns_list, geo_watersheds_list, geo_blockgroups_list
 
     
     def load_data_cso(self) -> pd.DataFrame:
@@ -350,23 +391,16 @@ class CSOAnalysis():
     # Data transforming methods
     # -------------------------
 
-    def assign_cso_data_to_census_blocks(self, data_cso: pd.DataFrame, geo_blockgroups_dict: dict) -> pd.DataFrame:
+    def assign_cso_data_to_census_blocks(self, data_cso: pd.DataFrame, geo_blockgroups_list: GeoList) -> pd.DataFrame:
         """Add a new 'BlockGroup' column to `data_cso` assigning CSOs to Census block groups.
-        
-        This is a thin wrapper around _assign_cso_data_to_census_blocks that facilitates using memory.cache by abstracting
-        the state-dependent attributes of self.
         """
-        res_1 = _assign_cso_data_to_census_blocks_with_strtree(data_cso.iloc[:20], geo_blockgroups_dict, self.latitude_col, self.longitude_col)
         # This is an older, much slower method, which should yield equivalent results
-        #_assign_cso_data_to_census_blocks(data_cso, geo_blockgroups_dict, self.latitude_col, self.longitude_col)
-        return _assign_cso_data_to_census_blocks_with_strtree(data_cso, geo_blockgroups_dict, self.latitude_col, self.longitude_col)
+        #_assign_cso_data_to_census_blocks(data_cso, geo_blockgroups_list, self.latitude_col, self.longitude_col)
+        return _assign_cso_data_to_census_blocks_with_strtree(data_cso, geo_blockgroups_list, self.latitude_col, self.longitude_col)
     
     def apply_pop_weighted_avg(self, data_cso: pd.DataFrame, data_ejs: pd.DataFrame
     ) -> Tuple[pd.DataFrame, pd.DataFrame, pd.DataFrame, pd.DataFrame, pd.DataFrame]:
         """Calculate population weighted averages for EJ characteristics, averaging over block group, watershed, and town.
-                
-        This is a thin wrapper around _apply_pop_weighted_avg that facilitates using memory.cache by abstracting
-        the state-dependent attributes of self.
         """
         return _apply_pop_weighted_avg(data_cso, data_ejs, self.discharge_vol_col, self.discharge_count_col)
 
@@ -374,7 +408,7 @@ class CSOAnalysis():
     # Mapping functions
     # -------------------------
     
-    def make_map_discharge_volumes(self, data_cso: pd.DataFrame, geo_watersheds_dict: dict, data_ins_g_bg: pd.DataFrame, 
+    def make_map_discharge_volumes(self, data_cso: pd.DataFrame, geo_watersheds_list: GeoList, data_ins_g_bg: pd.DataFrame, 
         data_ins_g_muni_j: pd.DataFrame, data_ins_g_ws_j: pd.DataFrame):
         """
         Map of discharge volumes with layers for watershed, town, and census block group with CSO points
@@ -456,7 +490,7 @@ class CSOAnalysis():
                 ).add_to(map_1)
 
         ## Add labels for watersheds
-        for feature in geo_watersheds_dict:
+        for feature in geo_watersheds_list:
             pos = shape(feature['geometry']).centroid.coords.xy
             pos = (pos[1][0], pos[0][0])
             folium.Marker(pos, icon=folium.features.DivIcon(
@@ -472,7 +506,7 @@ class CSOAnalysis():
         map_1.save(self.out_path + f'{self.output_slug}_map_total.html')
 
     def make_map_ej_characteristics(self, data_egs_merge: pd.DataFrame, data_cso: pd.DataFrame, 
-        df_town_level: pd.DataFrame, df_watershed_level: pd.DataFrame, geo_watersheds_dict: dict):
+        df_town_level: pd.DataFrame, df_watershed_level: pd.DataFrame, geo_watersheds_list: GeoList):
         """Map of EJ characteristics with layers for watershed, town, and census block group with CSO points
         """
         print('Making map of EJ characteristics')
@@ -556,7 +590,7 @@ class CSOAnalysis():
                     ).add_to(map_2)
 
             ## Add labels for watersheds
-            for feature in geo_watersheds_dict:
+            for feature in geo_watersheds_list:
                 pos = shape(feature['geometry']).centroid.coords.xy
                 pos = (pos[1][0], pos[0][0])
                 folium.Marker(pos, icon=folium.features.DivIcon(
@@ -811,20 +845,20 @@ class CSOAnalysis():
         open(self.fact_file, 'w').close()
         
         # Data ETL
-        self.geo_towns_dict, self.geo_watersheds_dict, self.geo_blockgroups_dict = self.get_geo_files()
+        self.geo_towns_list, self.geo_watersheds_list, self.geo_blockgroups_list = self.get_geo_files()
         self.data_cso, self.data_ejs = self.load_data()
-        # TODO should add these results to the database, not just the local (`memory`) cache
-        self.data_cso = self.assign_cso_data_to_census_blocks(self.data_cso, self.geo_blockgroups_dict)
-        self.data_ejs = assign_ej_data_to_geo_bins(self.data_ejs, self.geo_towns_dict, self.geo_watersheds_dict, self.geo_blockgroups_dict)
+        # TODO should add these results to the database
+        self.data_cso = self.assign_cso_data_to_census_blocks(self.data_cso, self.geo_blockgroups_list)
+        self.data_ejs = assign_ej_data_to_geo_bins_with_strtree(self.data_ejs, self.geo_towns_list, self.geo_watersheds_list, self.geo_blockgroups_list)
         self.data_ins_g_bg, self.data_ins_g_muni_j, self.data_ins_g_ws_j, self.data_egs_merge, self.df_watershed_level, self.df_town_level = \
             self.apply_pop_weighted_avg(self.data_cso, self.data_ejs)
         
         # Make maps
         if self.make_maps:
             self.make_map_discharge_volumes(
-                self.data_cso, self.geo_watersheds_dict, self.data_ins_g_bg, self.data_ins_g_muni_j, self.data_ins_g_ws_j)
+                self.data_cso, self.geo_watersheds_list, self.data_ins_g_bg, self.data_ins_g_muni_j, self.data_ins_g_ws_j)
             self.make_map_ej_characteristics(
-                self.data_egs_merge, self.data_cso, self.df_town_level, self.df_watershed_level, self.geo_watersheds_dict)
+                self.data_egs_merge, self.data_cso, self.df_town_level, self.df_watershed_level, self.geo_watersheds_list)
         
         # Make charts
         if self.make_charts:
