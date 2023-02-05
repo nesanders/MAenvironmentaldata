@@ -239,7 +239,6 @@ def assign_ej_data_to_geo_bins_with_strtree(data_ejs: pd.DataFrame, geo_towns_li
             bg_mapping.loc[cbg_id, geo_type] = geo_list[result_indices[1][result_set][0]]['properties'][geo_key]
 
     data_ejs = pd.merge(data_ejs, bg_mapping, left_on='ID', right_index=True, how='left')
-    breakpoint()
     return data_ejs
 
 @memory.cache

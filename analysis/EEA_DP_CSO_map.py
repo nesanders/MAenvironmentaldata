@@ -79,6 +79,7 @@ class CSOAnalysisEEADP(CSOAnalysis):
         disk_engine = get_engine()
         data_cso = pd.read_sql_query(self.EEA_DP_CSO_QUERY, disk_engine)
         data_cso['incidentDate'] = pd.to_datetime(data_cso['incidentDate'])
+        data_cso.rename(columns={'volumnOfEvent': self.discharge_vol_col}, inplace=True)
         
         print(f'Filtering CSO data for year {pick_year}')
         df_pick = data_cso[data_cso['Year'].astype(int) == pick_year]
@@ -102,7 +103,7 @@ class CSOAnalysisEEADP(CSOAnalysis):
         # NOTE we aggregate over lat/long because there are several outfalls named '001' that have different lat/longs
         agg_cols = ['reporterClass', 'outfallId', 'latitude', 'longitude']
         # Columns to be aggregated with a sum function
-        sum_cols = ['volumnOfEvent']
+        sum_cols = [self.discharge_vol_col]
         # Columns to be aggregated with a collapse function
         collapse_cols = ['Year', 'permiteeClass', 'permiteeName', 'permiteeId', 'municipality', 'location', 'waterBody', 'waterBodyDescription']
         # Columns to be counted
@@ -129,7 +130,7 @@ class CSOAnalysisEEADP(CSOAnalysis):
         df_per_outfall = df_agg.loc[self.pick_report_type].reset_index()
         
         # Rename some columns
-        df_per_outfall.rename(columns={'volumnOfEvent': 'DischargeVolume', 'incidentId': 'DischargeCount'}, inplace=True)
+        df_per_outfall.rename(columns={'incidentId': 'DischargeCount'}, inplace=True)
         # Convert to millions of gallons
         df_per_outfall['DischargeVolume'] /= 1e6
         
@@ -139,18 +140,17 @@ class CSOAnalysisEEADP(CSOAnalysis):
     # Extra plots of dataset characteristics
     # -------------------------
     
-    def plot_reports_per_day_by_event_type(self, outpath: str='../docs/_includes/charts/EEA_DP_CSO_counts_per_day.html'):
-        """Bar chart showing how many reports were made each day of different data types.
+    def plot_reports_per_month_by_event_type(self, outpath: str='../docs/_includes/charts/EEA_DP_CSO_counts_per_month.html'):
+        """Bar chart showing how many reports were made each day of different discharge types.
         """        
-        print('Making map of CSO counts per day by event type')
-        mychart = chartjs.chart("CSO counts per day by event type", "Bar", 640, 480)
+        print('Making chart of discharge counts per month by discharge type')
+        mychart = chartjs.chart("Discharge counts per month by discharge type", "Bar", 640, 480)
         
         data_types = self.data_cso_filtered_reports['eventType'].unique()
         all_months = pd.date_range(start=f'1/1/{self.cso_data_year}', end=f'12/31/{self.cso_data_year}', freq='MS')
         mychart.set_labels(all_months.tolist())
         cso_df_counts = self.data_cso_filtered_reports.groupby(['eventType', 'incidentDate']).size()
         
-        # cumulative_counts = pd.Series(index=all_months, data=np.zeros(len(all_months)))
         for i, event_type in enumerate(data_types):
             counts_per_month = cso_df_counts.loc[event_type].resample('MS').sum().reindex(all_months).fillna(0)
             mychart.add_dataset(counts_per_month.values.tolist(), 
@@ -162,12 +162,33 @@ class CSOAnalysisEEADP(CSOAnalysis):
         mychart.stacked = 'true'
 
         mychart.jekyll_write(outpath)
+
+    def plot_reports_non_zero_volume(self, outpath: str='../docs/_includes/charts/EEA_DP_CSO_non_zero_volume.html'):
+        """Bar chart showing how many reports of each discharge type have zero volume reported.
+        """        
+        print('Making chart of discharges with no volume reported by discharge type')
+        mychart = chartjs.chart("Discharges with no volume reported by discharge type", "Bar", 640, 480)
+        
+        data_types = self.data_cso_filtered_reports['eventType'].unique()
+        mychart.set_labels(data_types)
+        
+        def vol_gtr_0(x: float) -> float:
+            return 100 * np.mean(x > 0)
+        
+        nonzero_rates = self.data_cso_filtered_reports.groupby(['eventType'])[self.discharge_vol_col].apply(vol_gtr_0)
+        
+        mychart.add_dataset(nonzero_rates.reindex(data_types).tolist(), 'Discharges', yAxisID= "'y-axis-0'")
+        mychart.set_params(JSinline=0, ylabel='% of discharges with nonzero volume reported', 
+            xlabel='Discharge type', scaleBeginAtZero=1)
+
+        mychart.jekyll_write(outpath)
         breakpoint()
     
     def extra_plots(self):
         """Generate all extra data plots for the EEA DP CSO data
         """
-        self.plot_reports_per_day_by_event_type()
+        self.plot_reports_per_month_by_event_type()
+        self.plot_reports_non_zero_volume()
 
     
 # -------------------------
@@ -175,7 +196,7 @@ class CSOAnalysisEEADP(CSOAnalysis):
 # -------------------------
     
 if __name__ == '__main__':
-    # TODO debug
+    # TODO debug - remove 'False' flags below
     csoa = CSOAnalysisEEADP(cso_data_year=PICK_CSO_YEAR, make_maps=False, make_charts=False, make_regression=False)
     csoa.run_analysis()
     csoa.extra_plots()

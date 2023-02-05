@@ -29,10 +29,13 @@ The first sewage discharge report in the EEA Data Portal was from June 30th, 202
 ### How many reports were there?
 
 
-{% include /charts/EEA_DP_CSO_counts_per_day.html %}
+{% include /charts/EEA_DP_CSO_counts_per_month.html %}
 
 
 ### What fraction of reports have non-zero, non-modeled discharge volumes?
+
+{% include /charts/EEA_DP_CSO_non_zero_volume.html %}
+
 
 ### How much discharge is reported as CSO versus other types?
 

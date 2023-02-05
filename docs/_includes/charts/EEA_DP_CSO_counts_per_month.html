@@ -1,13 +1,13 @@
 {% raw  %}
 <html>
     <head>
-        <title>CSO counts per day by event type</title>
+        <title>Discharge counts per month by discharge type</title>
         <script src='https://cdn.jsdelivr.net/npm/chart.js@2.8.0/dist/Chart.bundle.min.js'></script>
     </head>
     <body>
         <div style="width: 640px; height: 480px; max-width: 99%" class="chartjs">
 
-            <canvas id="CSO counts per day by event type" height="480" width="640"></canvas>
+            <canvas id="Discharge counts per month by discharge type" height="480" width="640"></canvas>
             <script>
                 Chart.defaults.global.defaultFontSize = 12;
                 var chart_data = {
@@ -68,7 +68,7 @@
             </script>
             <script>
                 {{
-                    var ctx = document.getElementById("CSO counts per day by event type").getContext("2d");
+                    var ctx = document.getElementById("Discharge counts per month by discharge type").getContext("2d");
                     var mychart = new Chart(ctx, chart_data);
                 }}
             </script>
