@@ -38,7 +38,7 @@ Very few 'blended' discharges and SSOs are being reported.
 {% include /charts/EEA_DP_CSO_counts_per_month.html %}
 
 However, looking at the **volume** (i.e. severity) of discharges reported over time shows a very different picture.
-Still, the plurality of discharge volume each month is from untreated CSOs, whose effluent can be expected to varry the greatest risk to public health from bacterial load.
+Still, the plurality of discharge volume each month is from untreated CSOs, whose effluent can be expected to carry the greatest risk to public health from bacterial load.
 Still, only a small volume of discharges can be attributed to treated CSOs.
 However, while they are a small fraction of the count of discharges, the volume of partially treated CSO and 'blended' discharge is very high relative to their count.
 In December of 2022, the plurality of discharge was actually in the form of 'blended' discharge.
@@ -46,15 +46,15 @@ In December of 2022, the plurality of discharge was actually in the form of 'ble
 {% include /charts/EEA_DP_CSO_volume_per_month.html %}
 
 According to the [Massachusetts Water Resources Authority](https://www.mwra.com/harbor/html/blending_reporting.htm) (MWRA), 'blended' discharge from their system constitutes "excess primary-treated flow [that has been] diverted around the secondary process and then blended with the secondary effluent before being disinfected and discharged." 
-In other words, part of the effluent in this discharge skipped the stage where microbes are applied to break down solids and contaminants (the secondary treatment process).
+In other words, part of the effluent in this discharge skipped the stage where microbes are applied to break down solids and contaminants (the secondary treatment process), meaning that the toxicity of the discharge may be higher than fully treated sewage.
 The notification regulations [required](https://www.mass.gov/doc/314-cmr-1600-notification-requirements-to-promote-public-awareness-of-sewage-pollution-note-to-reviewers/download) reporting of 'blended' discharges following public comment from the [Massachusetts Rivers Alliance](https://www.massriversalliance.org/sewage-right-to-know) and other advocates.
 
 In the analysis below, we combine discharges of all types (i.e. we treat every gallon of discharge as equivalent).
 
 ### What fraction of reports have non-zero, non-modeled discharge volumes?
 
-The [final discharge notification regulations](https://www.mass.gov/doc/314-cmr-1600-notification-requirements-to-promote-public-awareness-of-sewage-pollution-1/download) require reporting of discharge volumes after the event have ceased, but give sewer operators some leeway in what they report.
-In particular, some sewer operators have not installed metering systems to directly measure the amount of sewage they discharge and, instead, are allowed to report the "Estimated volume of the discharge or overflow based on the average discharge or overflow from data reported to the Department and/orEPA for the prior three calendar years, taking into consideration historical information for the projected rainfall event, if possible, as set forth in the permittee’s CSO Public Notification Plan."
+The [final discharge notification regulations](https://www.mass.gov/doc/314-cmr-1600-notification-requirements-to-promote-public-awareness-of-sewage-pollution-1/download) require reporting of discharge volumes after the event has ceased, but give sewer operators some leeway in what they report.
+In particular, some sewer operators have not installed metering systems to directly measure the amount of sewage they discharge and, instead, are allowed to report the "Estimated volume of the discharge or overflow based on the average discharge or overflow from data reported to the Department and/o rEPA for the prior three calendar years, taking into consideration historical information for the projected rainfall event, if possible, as set forth in the permittee’s CSO Public Notification Plan."
 
 Unfortunately, the state Data Portal does not indicate which reports come from modeled (3-year average) data and which are directly metered.
 As a simplistic way to estimate the number of modeled (non-metered) reports, we look for reports that are rounded.
@@ -67,7 +67,7 @@ Roughly half of untreated CSO discharges seem to be based on modeled estimates. 
 ### How does this vary by sewer operator?
 
 Different sewer operators have vastly different patterns of discharge by effluent type.
-The six largest discharges by volume are Lowell Regional, the City of Fall River, the City of New Bedford, and Springfield Water & Sewer, and the MWRA (which encompasses many cities and towns in the Greater Boston area), and the City of Holyoke.
+The six largest dischargers by volume are Lowell Regional, the City of Fall River, the City of New Bedford, and Springfield Water & Sewer, the MWRA (which encompasses many cities and towns in the Greater Boston area), and the City of Holyoke.
 Among these, New Bedford and Springfield report almost entirely untreated CSO discharge.
 Lowell, meanwhile, reports primarily 'blended' discharge.
 The MWRA reports a fairly even mix of treated CSO and 'blended' discharge.
@@ -139,7 +139,7 @@ We aggregate the Census block group level EJSCREEN data to the watershed and mun
 
 ## Correlation between CSO discharge and EJ factors
 
-We explore the relationship between CSO discharge volumes within different geographic areas and their EJ population characteristics.  We use using bootstrap resampling to visualize the trend and uncertainty in the population-weighted mean discharge volume estimate in equal-sized bins of watersheds (figures below). We estimate the univariate dependence of CSO discharge on each EJ factor, and its 90% posterior (confidence) interval, with a population-weighted logarithmic regression model.  A detailed explanation of the methodology used in this analysis is provided [here]({% post_url 2019-03-23-necir-cso-ej_modeling %}) and additional model diagnostics are available [here]({% post_url 2023-02-04-eea-dp-cso-ej_modeling %}).
+We explore the relationship between CSO discharge volumes within different geographic areas and their EJ population characteristics.  We use bootstrap resampling to visualize the trend and uncertainty in the population-weighted mean discharge volume estimate in equal-sized bins of watersheds (figures below). We estimate the univariate dependence of CSO discharge on each EJ factor, and its 90% posterior (confidence) interval, with a population-weighted logarithmic regression model.  A detailed explanation of the methodology used in this analysis is provided [here]({% post_url 2019-03-23-necir-cso-ej_modeling %}) and additional model diagnostics are available [here]({% post_url 2023-02-04-eea-dp-cso-ej_modeling %}).
 
 
 ### Relationship with linguistic isolation
@@ -167,5 +167,13 @@ The plot below is similar to the one above for linguistic isolation, except the 
 {% include /charts/MAEEADP_EJSCREEN_correlation_bywatershed_LOWINCPCT.html %}
 
 Similar to the linguistic isolation trend, communities that are less predominantly white have much higher CSO discharge volumes.  On average, **watersheds that have twice the level of low income populations tend to have {{ site.data.facts_EEA_DP_CSO.depend_cso_LOWINCPCT }} the level of CSO discharge.**
+
+# Conclusions
+
+The new sewage discharge notification system and the data table of discharge reports now integrated with the MA EEA Data Portal provide a powerful tool for monitoring and understanding the effects of sewage pollution in Massachusetts.
+Although the analysis presented here represents only the first six months of data reported under this system, it helps us anticipate what we can seek to learn as monitoring continues over time.
+Unfortunately, these initial results suggest that the inequities in our water infrastructure have not been substantially mitigated in the past decade. 
+The significant overburdening of environmental justice communities by water pollution is an ongoing challenge.
+Watersheds with higher concentrations of low income, racial minority, and linguistically isolated residents continue to bear far higher levels of sewage pollution.
 
 
