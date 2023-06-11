@@ -21,6 +21,10 @@ API_TABLES = ['permit', 'facility', 'inspection', 'enforcement', 'drinkingWater'
 ## Function definitions
 ##########################
 
+# Generic user agent
+REQ_HEADER = {'User-Agent': 
+	'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/113.0.0.0 Safari/537.36'}
+
 def query_iterate(table_name: str, req_size: int=100000, verbose: bool=True):
 	"""
 	Query the EEA data portal to retrieve the entirety of a data table.
@@ -37,7 +41,7 @@ def query_iterate(table_name: str, req_size: int=100000, verbose: bool=True):
 	"""
 	# Get total table size
 	try:
-		r = requests.get(API_ROOT + table_name + '?_end=1&_start=0')
+		r = requests.get(API_ROOT + table_name + '?_end=1&_start=0', headers=REQ_HEADER)
 		table_size = r.json()['TotalCount']
 	except ValueError: 
 		raise ValueError("EEA Data Portal request returned error " + str(r.status_code) + '; perhaps table name is not valid\n\nFull response message:\n' + r.text)
@@ -54,7 +58,7 @@ def query_iterate(table_name: str, req_size: int=100000, verbose: bool=True):
 		if verbose: print(table_name + ': request ' + str(i + 1) + ' of ' + str(len(req_bins) - 1))
 		# Make request
 		url = API_ROOT + table_name + '?_end=' + str(req_bins[i+1]) + '&_start='+str(req_bins[i])
-		r = requests.get(url)
+		r = requests.get(url, headers=REQ_HEADER)
 		# Add chunk contents to dataframe list
 		dfs += [pd.DataFrame(r.json()['Items'])]
 
