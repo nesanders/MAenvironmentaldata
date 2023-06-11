@@ -78,7 +78,7 @@ class CSOAnalysisEEADP(CSOAnalysis):
         """
         if pick_year is None:
             pick_year = self.cso_data_year
-        print(f'Loading EEA Data Portal CSO data for {self.cso_data_year}')
+        print(f'Loading EEA Data Portal CSO data for {self.pick_year}')
         disk_engine = get_engine()
         data_cso = pd.read_sql_query(self.EEA_DP_CSO_QUERY, disk_engine)
         data_cso['incidentDate'] = pd.to_datetime(data_cso['incidentDate'])
@@ -99,8 +99,8 @@ class CSOAnalysisEEADP(CSOAnalysis):
         
         return data_cso_trans
 
-    def transform_data_cso(self, data_cso: pd.DataFrame, pick_year: int=PICK_CSO_YEAR) -> pd.DataFrame:
-        """Transform the loaded MA EEA DP CSO data by aggregating results for `pick_year` over outfalls.
+    def transform_data_cso(self, data_cso: pd.DataFrame) -> pd.DataFrame:
+        """Transform the loaded MA EEA DP CSO data by aggregating results over outfalls.
         """
         # Columns to be aggregated over
         # NOTE we aggregate over lat/long because there are several outfalls named '001' that have different lat/longs
