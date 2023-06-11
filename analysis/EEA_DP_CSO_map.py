@@ -269,8 +269,12 @@ class CSOAnalysisEEADP(CSOAnalysis):
 # -------------------------
     
 if __name__ == '__main__':
-    # NOTE for fast debugging of the `extra_plot`, try using these parameters:
-    # > make_maps=False, make_charts=False, make_regression=False
-    csoa = CSOAnalysisEEADP()
-    csoa.run_analysis()
-    csoa.extra_plots()
+    for start_date, end_date, run_name in (
+        (PICK_CSO_START, PICK_CSO_END, '2022'),
+        (date(2022, 6, 1), date(2023, 6, 30), 'first_year')
+        ):
+        # NOTE for fast debugging of the `extra_plot`, try using these parameters:
+        # > make_maps=False, make_charts=False, make_regression=False
+        csoa = CSOAnalysisEEADP(cso_data_start=start_date, cso_data_end=end_date, output_slug_dataset=f'MAEEADP_{run_name}')
+        csoa.run_analysis()
+        csoa.extra_plots()

@@ -654,8 +654,10 @@ class CSOAnalysis():
         mychart.jekyll_write(outpath)
     
     def make_chart_ej_cso_comparison(self, data_egs_merge: pd.DataFrame, data_ins_g_ws_j: pd.DataFrame, 
-        df_watershed_level: pd.DataFrame):
-        """Comparison of EJ and CSO characteristics by geographic areas
+        df_ej_variables: pd.DataFrame, level_name: str='watershed', lookup_col: str='Watershed'):
+        """Comparison of EJ and CSO characteristics by a geographic unit named `level_name` with discharge volumes reported in 
+        `data_ins_g_ws_j`, with EJ characteristics tabulated in `df_ej_variables`, corresponding to the column `lookup_col` 
+        in `data_egs_merge`.
         """
         print('Making comparison plot of EJ and CSO data')
         for i, col, col_label in (
@@ -664,11 +666,11 @@ class CSOAnalysis():
             (2, 'LINGISOPCT', 'Fraction of population in households whose adults speak English less than "very well"'),
             ):
             ## Lookup base values - Census group block level
-            l = data_egs_merge.Watershed.unique()
+            l = data_egs_merge[lookup_col].unique()
             l = l[pd.isnull(l) == 0]
-            pop = data_egs_merge.groupby('Watershed')['ACSTOTPOP'].sum().loc[l].values
-            x = df_watershed_level[col].loc[l].values
-            y = data_ins_g_ws_j[self.discharge_vol_col].loc[l].values
+            pop = data_egs_merge.groupby(lookup_col)['ACSTOTPOP'].sum().reindex(l).values
+            x = df_ej_variables[col].reindex(l).values
+            y = data_ins_g_ws_j[self.discharge_vol_col].reindex(l).values
 
             ## Calculate binned values
             x_bins = np.nanpercentile(x, list(np.linspace(0,100,5)))
@@ -679,12 +681,12 @@ class CSOAnalysis():
                 for i in range(len(x_bins) - 1)]).T
 
             ## Establish chart
-            mychart = chartjs.chart("CSO discharge volume vs EJ characteristics by watershed: "+col, "Scatter", 640, 480)
+            mychart = chartjs.chart(f"CSO discharge volume vs EJ characteristics by {level_name}: "+col, "Scatter", 640, 480)
 
             ## Add individual-level dataset
             mychart.add_dataset(
                 np.array([x, y]).T, 
-                dataset_label="Individual watersheds",
+                dataset_label=f"Individual {level_name}s",
                 backgroundColor="'rgba(50,50,50,0.125)'",
                 showLine = "false",
                 yAxisID= "'y-axis-0'",
@@ -753,7 +755,7 @@ class CSOAnalysis():
             mychart.add_extra_code(
                 'var ma_towns = ["' + '","'.join(l) + '"];')
 
-            mychart.jekyll_write(f'../docs/_includes/charts/{self.output_slug_dataset}_EJSCREEN_correlation_bywatershed_{col}.html')
+            mychart.jekyll_write(f'../docs/_includes/charts/{self.output_slug_dataset}_EJSCREEN_correlation_by{level_name}_{col}.html')
 
 
     # -------------------------
@@ -864,6 +866,12 @@ class CSOAnalysis():
             self.make_chart_summary_ej_characteristics_watershed(self.df_watershed_level)
             self.make_chart_summary_ej_characteristics_town(self.df_town_level)
             self.make_chart_ej_cso_comparison(self.data_egs_merge, self.data_ins_g_ws_j, self.df_watershed_level)
+            # Make town-level comparison XXXX
+            self.make_chart_ej_cso_comparison(self.data_egs_merge, self.data_ins_g_muni_j, self.df_town_level, 
+                                              level_name='municipality', lookup_col='Town')
+            # Make census block-level comparison
+            self.make_chart_ej_cso_comparison(self.data_egs_merge, self.data_ins_g_bg.set_index('ID'), self.data_egs_merge, 
+                                              level_name='Census block', lookup_col='ID')
         
         # Regression modeling
         if self.make_regression:
