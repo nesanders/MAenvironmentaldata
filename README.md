@@ -9,22 +9,29 @@ This git repository contains code for data acquisition (see `get_data` subdirect
 
 ## Updating data from the sources
 
-You can run the single convenience script `update_all.sh` (for `bash`) to (re)generate all content associated with the site.
+You can run the `bash` convenience script `update_all.sh` to (re)generate all content associated with the site.
 
 ## Hosting the site
 
 The `python3` (3.7) scripts in this repository automatically feed content to a static website generated with `jekyll`.  The website is hosted via [GitHub Pages](https://help.github.com/articles/using-jekyll-as-a-static-site-generator-with-github-pages/) or can be [run locally with the proper Ruby configuration](https://help.github.com/articles/setting-up-your-github-pages-site-locally-with-jekyll/).
 
-To install the local `jekyll` server, you can 
+To install the local `jekyll` server, you can follow this multi-step process:
 
 ```
 conda create --name amend_jekyll
 conda activate amend_jekyll
+conda install -c conda-forge ruby=3.2.2
 conda install -c conda-forge rb-bundler
 gem install commonmarker -v '0.17.13' --source 'https://rubygems.org/'
 conda install gxx_linux-64
 cd docs
 bundle install
+```
+
+Alternatively, use the premade `yml` file to instantiate teh conda environemnt like,
+
+```
+conda env create -f amend_jekyll_env.yml
 ```
 
 To launch the server, run the following from the `docs` directory:
@@ -35,7 +42,12 @@ bundle exec jekyll serve
 
 ## Python dependencies
 
-Several `python3` packages are required to execute the scripts needed to generate this website, specified in `requirements.txt`.
+Several `python3` packages are required to execute the `python` scripts needed to generate this website, specified in `amend_python_env.yml`. You can install this environment with,
+
+```
+conda env create -f amend_python_env.yml
+```
+
 
 ## Other tools used
 
