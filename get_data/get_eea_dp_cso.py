@@ -15,6 +15,8 @@ from typing import Optional
 import datetime
 import pandas as pd
 
+from get_EEA_data_portal import REQ_HEADER
+
 API_BASE_URL = 'https://eeaonline.eea.state.ma.us/dep/CSOAPI/api/Incident/GetIncidentsBySearchFields/?pageSize=50&'
 
 def update_query_time():
@@ -33,7 +35,7 @@ def _query_page(page: int, query_params: Optional[dict[str, str]]=None) -> Optio
         query_params = {}
     query_params['pageNumber'] = page
     query_string = '&'.join(f'{key}={val}' for key, val in query_params.items())
-    r = requests.get(API_BASE_URL + query_string)
+    r = requests.get(API_BASE_URL + query_string, headers=REQ_HEADER)
     if len(r.json()['results']) > 0:
         return pd.concat([pd.Series(c) for c in r.json()['results']], axis=1).T
     else:

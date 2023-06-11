@@ -33,7 +33,7 @@ data_csv['MAEEADP_CSO'] = pd.read_csv('../docs/data/EEADP_CSO.csv')
 ## Temporary insertion for 2022 assuming no inflation
 data_csv['SSAWages'] = pd.read_csv('../docs/data/SSAWages_2023-02-03.csv')
 for yr in [2022]:
-    data_csv['SSAWages'] = data_csv['SSAWages'].append(data_csv['SSAWages'].iloc[-1])
+    data_csv['SSAWages'] = data_csv['SSAWages']._append(data_csv['SSAWages'].iloc[-1])
     data_csv['SSAWages'].iloc[-1, 0] = yr
     data_csv['SSAWages'].iloc[-1, 2:] = 0
 
