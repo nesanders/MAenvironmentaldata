@@ -673,7 +673,7 @@ class CSOAnalysis():
             y = data_ins_g_ws_j[self.discharge_vol_col].reindex(l).values
 
             ## Calculate binned values
-            x_bins = np.nanpercentile(x, list(np.linspace(0,100,5)))
+            x_bins = np.unique(np.nanpercentile(x, list(np.linspace(0,100,5))))
             x_bin_cent = [np.mean([x_bins[i], x_bins[i+1]]) for i in range(len(x_bins) - 1)]
             x_bin_id = pd.cut(x, x_bins, labels=False)
             y_bin = np.array([
@@ -870,7 +870,7 @@ class CSOAnalysis():
             self.make_chart_ej_cso_comparison(self.data_egs_merge, self.data_ins_g_muni_j, self.df_town_level, 
                                               level_name='municipality', lookup_col='Town')
             # Make census block-level comparison
-            self.make_chart_ej_cso_comparison(self.data_egs_merge, self.data_ins_g_bg.set_index('ID'), self.data_egs_merge, 
+            self.make_chart_ej_cso_comparison(self.data_egs_merge, self.data_ins_g_bg, self.data_egs_merge.set_index('ID'), 
                                               level_name='Census block', lookup_col='ID')
         
         # Regression modeling
