@@ -722,20 +722,24 @@ class CSOAnalysis():
                 yaxis_type='linear',    
                 y2nd = 0,
                 scaleBeginAtZero=1,
-                custom_tooltips = """
+                custom_tooltips = f"""
                             mode: 'single',
-                            callbacks: {
-                                label: function(tooltipItems, data) { 
+                            callbacks: {{
+                                label: function(tooltipItems, data) {{ 
                                     var title = '';
                                     
-                                    if (tooltipItems.datasetIndex == 0) {
-                                        title = ma_towns[tooltipItems.index];
-                                    } else {
+                                    if (tooltipItems.datasetIndex == 0) {{
+                                        title = point_label[tooltipItems.index];
+                                    }} else {{
                                         title = data.datasets[tooltipItems.datasetIndex].label;
-                                    }
-                                    return [title, 'Total volume of discharge: ' + tooltipItems.yLabel, 'Linguistic isoluation: ' + tooltipItems.xLabel];
-                                }
-                            }
+                                    }}
+                                    return [title, 
+                                            'Total volume of discharge: ' + Number(tooltipItems.yLabel).toFixed(2) + ' Millions of gallons', 
+                                            '{col_label}: ' + Number(tooltipItems.xLabel).toFixed(2), 
+                                            'Population: ' + pop_data[tooltipItems.index]
+                                           ];
+                                }}
+                            }}
             """
                 ) 
             ## Update logarithm tick format as in https://github.com/chartjs/Chart.js/issues/3121
@@ -753,7 +757,9 @@ class CSOAnalysis():
             """)
             ## Add watershed dataset
             mychart.add_extra_code(
-                'var ma_towns = ["' + '","'.join(l) + '"];')
+                'var point_label = ["' + '","'.join(l) + '"];')
+            mychart.add_extra_code(
+                'var pop_data = [' + ', '.join('"{:,}"'.format(x) for x in pop) + '];')
 
             mychart.jekyll_write(f'../docs/_includes/charts/{self.output_slug_dataset}_EJSCREEN_correlation_by{level_name}_{col}.html')
 
