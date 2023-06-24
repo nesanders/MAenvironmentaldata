@@ -30,8 +30,6 @@ def collapse(x: list) -> Any:
 class CSOAnalysisEEADP(CSOAnalysis):
     """Class containing methods and attributes related to CSO EJ analysis using EEA DP CSO data.
     """
-        
-    output_slug_dataset: str = 'MAEEADP'
     output_slug: str = 'MAEEADP_CSO'
     discharge_vol_col: str = 'DischargeVolume'
     discharge_count_col: str = 'DischargeCount'
@@ -49,6 +47,7 @@ class CSOAnalysisEEADP(CSOAnalysis):
         cso_data_start: date=PICK_CSO_START,
         cso_data_end: date=PICK_CSO_END,
         pick_report_type: str='Verified Data Report',
+        output_slug: str='MAEEADP_CSO',
         **kwargs
     ):
         """Initialize parameters for CSOAnalysisEEADP.
@@ -69,6 +68,7 @@ class CSOAnalysisEEADP(CSOAnalysis):
         self.cso_data_end = cso_data_end
         # Pick one of two possible report types, 'Public Notification Report' or 'Verified Data Report'
         self.pick_report_type = pick_report_type
+        self.output_slug = output_slug
 
     # -------------------------
     # Data loading functions
@@ -275,6 +275,6 @@ if __name__ == '__main__':
         ):
         # NOTE for fast debugging of the `extra_plot`, try using these parameters:
         # > make_maps=False, make_charts=False, make_regression=False
-        csoa = CSOAnalysisEEADP(cso_data_start=start_date, cso_data_end=end_date, output_slug_dataset=f'MAEEADP_{run_name}')
+        csoa = CSOAnalysisEEADP(cso_data_start=start_date, cso_data_end=end_date, output_slug=f'MAEEADP_{run_name}')
         csoa.run_analysis()
         csoa.extra_plots()

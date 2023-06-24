@@ -278,7 +278,6 @@ class CSOAnalysis():
     """Class containing methods and attributes related to CSO EJ analysis.
     """
     
-    output_slug_dataset: str = 'NECIR'
     output_slug: str = 'NECIR_CSO'
     discharge_vol_col: str = '2011_Discharges_MGal'
     discharge_count_col: str = '2011_Discharge_N'
@@ -300,7 +299,7 @@ class CSOAnalysis():
         geo_blockgroups_path: str='../docs/assets/geo_json/cb_2017_25_bg_500k.json',
         make_maps: bool=True,
         make_charts: bool=True,
-        make_regression: bool=True
+        make_regression: bool=True,
     ):
         """Initialize parameters
         
@@ -761,7 +760,7 @@ class CSOAnalysis():
             mychart.add_extra_code(
                 'var pop_data = [' + ', '.join('"{:,}"'.format(x) for x in pop) + '];')
 
-            mychart.jekyll_write(f'../docs/_includes/charts/{self.output_slug_dataset}_EJSCREEN_correlation_by{level_name}_{col}.html')
+            mychart.jekyll_write(f'../docs/_includes/charts/{self.output_slug}_EJSCREEN_correlation_by{level_name}_{col}.html')
 
 
     # -------------------------
@@ -888,7 +887,7 @@ class CSOAnalysis():
                 ('LINGISOPCT', 'Fraction of population in households whose adults speak English less than "very well"'),
                 ):
                 fit, fit_par, stan_dat, pop_data = self.fit_stan_model(col, self.data_egs_merge, self.df_watershed_level, self.data_ins_g_ws_j)
-                self.regression_plot_beta_posterior(fit_par, col, plot_path=self.fig_path + f'{self.output_slug}_stanfit_beta_'+col+'.png')
+                self.regression_plot_beta_posterior(fit_par, col, plot_path=self.fig_path + f'{self.output_slug}XXXX_stanfit_beta_'+col+'.png')
                 self.regression_plot_model_draws(fit_par, col_label, self.fig_path + f'{self.output_slug}_stanfit_'+col+'.png', stan_dat, pop_data)
                 self.fits[col] = {'fit_par': fit_par, 'stan_dat': stan_dat, 'pop_data': pop_data}
     
