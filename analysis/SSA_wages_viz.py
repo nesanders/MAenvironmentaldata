@@ -3,7 +3,7 @@ import pandas as pd
 import chartjs
 
 ## Load dataset
-ssadata = pd.read_csv('../docs/data/SSAWages_2019-03-17.csv')
+ssadata = pd.read_csv('../docs/data/SSAWages_2023-02-03.csv')
 
 ## Establish chart
 mychart = chartjs.chart("SSA wage data", "Line", 640, 480)

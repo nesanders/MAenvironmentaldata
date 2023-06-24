@@ -10,6 +10,8 @@ from scipy.stats import pearsonr
 
 import matplotlib as mpl
 from six.moves import range
+from shapely.geometry import shape
+
 color_cycle = [c['color'] for c in list(mpl.rcParams['axes.prop_cycle'])]
 
 import locale
@@ -166,10 +168,12 @@ mychart.jekyll_write('../docs/_includes/charts/MADEP_enforcement_bytopic.html')
 with open(fact_file, 'a') as f:
 	f.write('yearly_ch91: %0.1f'%(s_data_g.sum()['law_chapter 91'][:-1].mean())+'\n')
 	f.write('yearly_npdes: %0.1f'%(s_data_g.sum()['law_npdes'][:-1].mean())+'\n')
-	f.write('yearly_avg_consentorder: %0.0f'%(s_data_g.mean()['order_consent order'][:-1].mean() * 100)+'\n')
-	f.write('yearly_avg_delta2016_wetlands: %0.0f'%((1 - s_data_g.mean()['order_wetlands'].loc[2016] / s_data_g.mean()['order_wetlands'].max()) * 100)+'\n')
-	f.write('yearly_2004_watersupply: %0.1f'%(s_data_g.mean()['order_water supply'].loc[2004] * 100)+'\n')
-	f.write('yearly_2016_watersupply: %0.1f'%(s_data_g.mean()['order_water supply'].loc[2016] * 100)+'\n')
+	f.write('yearly_avg_consentorder: %0.0f'%(s_data_g['order_consent order'].mean()[:-1].mean() * 100)+'\n')
+	f.write('yearly_avg_delta2016_wetlands: %0.0f'%(
+		(1 - s_data_g['order_wetlands'].mean().loc[2016] / s_data_g['order_wetlands'].mean().max()) * 100
+		)+'\n')
+	f.write('yearly_2004_watersupply: %0.1f'%(s_data_g['order_water supply'].mean().loc[2004] * 100)+'\n')
+	f.write('yearly_2016_watersupply: %0.1f'%(s_data_g['order_water supply'].mean().loc[2016] * 100)+'\n')
 	
 	#Water supply-related enforcement has grown from ~5% to ~25% of all enforcements since 2004
 	#Wetlands-related enforcement has declined from ~16% at peak to <10% in recent years.
@@ -186,7 +190,7 @@ fine_bin_edges = 200*2**(np.arange(19))
 ## Round down to 1 sig fig
 fine_bin_edges = [int('%0.0f'%(c/10**np.floor(np.log10(c))))*10**np.floor(np.log10(c)) for c in fine_bin_edges]
 fine_dist, fine_bins = np.histogram(s_data.Fine.values, bins=fine_bin_edges, range=[2,7])
-fine_bins_fmt = [locale.format("%d", c, grouping=True) for c in fine_bins]
+fine_bins_fmt = [locale.format_string("%d", c, grouping=True) for c in fine_bins]
 
 ## Establish chart
 mychart = chartjs.chart("Penalty distribution", "Bar", 640, 480)
@@ -326,15 +330,8 @@ for i in range(len(geo_towns_dict)):
 		top_enforcements = s_data[s_data.municipality.apply(lambda x: town in x)].sort_values('Fine', ascending=False)[['Date','Fine','Text']].values[:3]
 		enforcement_summary = '<br>'.join(['<b>'+c[0]+', $%0.0f'%(0 if np.isnan(c[1]) else c[1])+'</b>: '+c[2] for c in top_enforcements])
 		## Take average position of polygon points for marker center
-		raw_coords = geo_towns_dict[i]['geometry']['coordinates']
-		if np.ndim(raw_coords) == 2: # Take most complicated polygon if multiple are provided
-			j = np.argmax([np.shape(raw_coords[i][0])[0] for i in range(len(raw_coords))])
-			coords = raw_coords[j]
-		elif np.ndim(raw_coords) == 3:
-			coords = raw_coords
-		else: 
-			raise
-		mean_pos = list(np.mean(coords, axis=1)[0])[::-1]
+		raw_coords = shape(geo_towns_dict[i]['geometry'])
+		mean_pos = raw_coords.centroid.x, raw_coords.centroid.y
 		## Add marker
 		html="""
 		<h1>{town}</h1>

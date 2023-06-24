@@ -9,6 +9,7 @@
 
             <canvas id="Individual DEP Enforcement Penalties ($M)" height="480" width="640"></canvas>
             <script>
+                Chart.defaults.global.defaultFontSize = 12;
                 var chart_data = {
                 
                     data: {
@@ -25,7 +26,7 @@
                                     labelString: 'Sum of reported penalties ($M)'
                                 },
                                 ticks: {
-                                    beginAtZero: true
+                                    beginAtZero: true, min: 0
                                 },
                                 "id": "y-axis-0",
                                 "position": "left",
@@ -37,7 +38,7 @@
                                     labelString: ''
                                 },
                                 ticks: {
-                                    beginAtZero: true
+                                    beginAtZero: true, min: 0
                                 },
                                 "id": "y-axis-1",
                                 "position": "right"

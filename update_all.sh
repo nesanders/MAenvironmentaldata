@@ -11,7 +11,7 @@ python3 get_EPARegion1_NPDES_permits.py
 python3 get_MassBudget_environmental.py
 python3 get_DEP_staff_SODA.py
 python3 get_EEA_data_portal.py
-python get_eea_dp_cso.py
+python3 get_eea_dp_cso.py
 
 ## Historical data; does not need to be regularly updated
 ## Scripts could be updated manually to reference more recent years.

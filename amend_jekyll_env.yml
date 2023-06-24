@@ -1,0 +1,32 @@
+name: amend_jekyll
+channels:
+  - conda-forge
+  - defaults
+dependencies:
+  - _libgcc_mutex=0.1=conda_forge
+  - _openmp_mutex=4.5=2_gnu
+  - _sysroot_linux-64_curr_repodata_hack=3=haa98f57_10
+  - binutils_impl_linux-64=2.38=h2a08ee3_1
+  - binutils_linux-64=2.38.0=hc2dff05_0
+  - ca-certificates=2023.05.30=h06a4308_0
+  - gcc_impl_linux-64=11.2.0=h1234567_1
+  - gcc_linux-64=11.2.0=h5c386dc_0
+  - gdbm=1.18=h0a1914f_2
+  - gmp=6.2.1=h58526e2_0
+  - gxx_impl_linux-64=11.2.0=h1234567_1
+  - gxx_linux-64=11.2.0=hc2dff05_0
+  - kernel-headers_linux-64=3.10.0=h57e8cba_10
+  - ld_impl_linux-64=2.38=h1181459_1
+  - libffi=3.4.2=h7f98852_5
+  - libgcc-devel_linux-64=11.2.0=h1234567_1
+  - libgcc-ng=13.1.0=he5830b7_0
+  - libgomp=13.1.0=he5830b7_0
+  - libstdcxx-devel_linux-64=11.2.0=h1234567_1
+  - libstdcxx-ng=13.1.0=hfd8a6a1_0
+  - libzlib=1.2.13=h166bdaf_4
+  - ncurses=6.4=hcb278e6_0
+  - openssl=3.1.1=hd590300_1
+  - readline=8.2=h8228510_1
+  - ruby=3.2.2=hff50039_0
+  - sysroot_linux-64=2.17=h57e8cba_10
+  - yaml=0.2.5=h7f98852_2

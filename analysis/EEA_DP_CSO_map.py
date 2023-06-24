@@ -3,6 +3,7 @@ MA EEA Data Portal CSO data. This follows the same basic structure as NECIR_CSO_
 but is defined separately because some aspects of the data differ.
 """
 
+from datetime import date
 from typing import Any, Optional, Tuple
 
 import chartjs
@@ -15,7 +16,8 @@ from NECIR_CSO_map import COLOR_CYCLE, CSOAnalysis, get_engine, hex2rgb
 # Create a joblib cache
 memory = Memory('eea_dp_cso_data_cache', verbose=1)
 
-PICK_CSO_YEAR = 2022
+PICK_CSO_START = date(2022, 6, 1)
+PICK_CSO_END = date(2022, 12, 31)
 
 def collapse(x: list) -> Any:
     """Pick an arbitrary non-null value from a list.
@@ -44,7 +46,8 @@ class CSOAnalysisEEADP(CSOAnalysis):
     def __init__(
         self, 
         fact_file: str='../docs/data/facts_EEA_DP_CSO.yml',
-        cso_data_year: int=2022,
+        cso_data_start: date=PICK_CSO_START,
+        cso_data_end: date=PICK_CSO_END,
         pick_report_type: str='Verified Data Report',
         **kwargs
     ):
@@ -54,15 +57,16 @@ class CSOAnalysisEEADP(CSOAnalysis):
         ----------
         fact_file: str
             Path of yml file to write calculated results to, by default '../docs/data/facts_EEA_DP_CSO.yml'
-        cso_data_year: int
-            Year of the dataset to extract and do analysis on, by default 2022
+        cso_data_start, cso_data_end: date
+            Start and end date of the dataset to extract and do analysis on, by default PICK_CSO_START to PICK_CSO_END
         pick_report_type: str
             What type of `reporterClass` to extract and do analysis on, by default 'Verified Data Report'
         
         `kwargs` passed to `CSOAnalysis`
         """
         super().__init__(fact_file=fact_file, **kwargs)
-        self.cso_data_year = cso_data_year
+        self.cso_data_start = cso_data_start
+        self.cso_data_end = cso_data_end
         # Pick one of two possible report types, 'Public Notification Report' or 'Verified Data Report'
         self.pick_report_type = pick_report_type
 
@@ -72,21 +76,26 @@ class CSOAnalysisEEADP(CSOAnalysis):
 
     EEA_DP_CSO_QUERY = """SELECT * FROM MAEEADP_CSO"""
 
-    def load_data_cso(self, pick_year: Optional[int]=None) -> pd.DataFrame:
+    def load_data_cso(self, pick_start: Optional[date]=None, pick_end: Optional[date]=None) -> pd.DataFrame:
         """Load EEA Data Portal CSO data, adding latitude and longitude from the NECIR_CSO_2011 data table
         where possible.
         """
-        if pick_year is None:
-            pick_year = self.cso_data_year
-        print(f'Loading EEA Data Portal CSO data for {self.cso_data_year}')
+        if pick_start is None:
+            pick_start = self.cso_data_start
+        if pick_end is None:
+            pick_end = self.cso_data_end
+            
+        print(f'Loading EEA Data Portal CSO data')
         disk_engine = get_engine()
         data_cso = pd.read_sql_query(self.EEA_DP_CSO_QUERY, disk_engine)
         data_cso['incidentDate'] = pd.to_datetime(data_cso['incidentDate'])
         data_cso.rename(columns={'volumnOfEvent': self.discharge_vol_col}, inplace=True)
         
-        print(f'Filtering CSO data for year {pick_year}')
-        df_pick = data_cso[data_cso['Year'].astype(int) == pick_year]
-        print(f'N={len(df_pick)} total CSO records loaded from {pick_year}')
+        print(f'Filtering CSO data for year {self.cso_data_start} - {self.cso_data_end}')
+        df_pick = data_cso[(
+            data_cso['incidentDate'] >= pd.to_datetime(pick_start)) & 
+            (data_cso['incidentDate'] <= pd.to_datetime(pick_end))]
+        print(f'N={len(df_pick)} total CSO records loaded from {self.cso_data_start} - {self.cso_data_end}')
         
         print(f'Filtering CSO data for class {self.pick_report_type}')
         df_pick = df_pick[df_pick['reporterClass'] == self.pick_report_type]
@@ -99,8 +108,8 @@ class CSOAnalysisEEADP(CSOAnalysis):
         
         return data_cso_trans
 
-    def transform_data_cso(self, data_cso: pd.DataFrame, pick_year: int=PICK_CSO_YEAR) -> pd.DataFrame:
-        """Transform the loaded MA EEA DP CSO data by aggregating results for `pick_year` over outfalls.
+    def transform_data_cso(self, data_cso: pd.DataFrame) -> pd.DataFrame:
+        """Transform the loaded MA EEA DP CSO data by aggregating results over outfalls.
         """
         # Columns to be aggregated over
         # NOTE we aggregate over lat/long because there are several outfalls named '001' that have different lat/longs
@@ -150,7 +159,7 @@ class CSOAnalysisEEADP(CSOAnalysis):
         mychart = chartjs.chart("Discharge counts per month by discharge type", "Bar", 640, 480)
         
         data_types = self.data_cso_filtered_reports['eventType'].unique()
-        all_months = pd.date_range(start=f'1/1/{self.cso_data_year}', end=f'12/31/{self.cso_data_year}', freq='MS')
+        all_months = pd.date_range(start=self.cso_data_start, end=self.cso_data_end, freq='MS')
         mychart.set_labels(all_months.tolist())
         cso_df_counts = self.data_cso_filtered_reports.groupby(['eventType', 'incidentDate']).size()
         
@@ -173,7 +182,7 @@ class CSOAnalysisEEADP(CSOAnalysis):
         mychart = chartjs.chart("Discharge volume per month by discharge type", "Bar", 640, 480)
         
         data_types = self.data_cso_filtered_reports['eventType'].unique()
-        all_months = pd.date_range(start=f'1/1/{self.cso_data_year}', end=f'12/31/{self.cso_data_year}', freq='MS')
+        all_months = pd.date_range(start=self.cso_data_start, end=self.cso_data_end, freq='MS')
         mychart.set_labels(all_months.tolist())
         cso_df_vol = self.data_cso_filtered_reports.groupby(['eventType', 'incidentDate'])[self.discharge_vol_col].sum() / 1e6
         
@@ -260,8 +269,12 @@ class CSOAnalysisEEADP(CSOAnalysis):
 # -------------------------
     
 if __name__ == '__main__':
-    # NOTE for fast debugging of the `extra_plot`, try using these parameters:
-    # > make_maps=False, make_charts=False, make_regression=False
-    csoa = CSOAnalysisEEADP(cso_data_year=PICK_CSO_YEAR)
-    csoa.run_analysis()
-    csoa.extra_plots()
+    for start_date, end_date, run_name in (
+        (PICK_CSO_START, PICK_CSO_END, '2022'),
+        (date(2022, 6, 1), date(2023, 6, 30), 'first_year')
+        ):
+        # NOTE for fast debugging of the `extra_plot`, try using these parameters:
+        # > make_maps=False, make_charts=False, make_regression=False
+        csoa = CSOAnalysisEEADP(cso_data_start=start_date, cso_data_end=end_date, output_slug_dataset=f'MAEEADP_{run_name}')
+        csoa.run_analysis()
+        csoa.extra_plots()

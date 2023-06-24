@@ -9,11 +9,12 @@
 
             <canvas id="DEP Enforcements versus budget" height="480" width="640"></canvas>
             <script>
+                Chart.defaults.global.defaultFontSize = 12;
                 var chart_data = {
                 
                     data: {
                         labels: ['2004', '2005', '2006', '2007', '2008', '2009', '2010', '2011', '2012', '2013', '2014', '2015', '2016', '2017'],
-                        datasets: [{'data': [335, 357, 374, 487, 363, 354, 331, 255, 197, 327, 330, 277, 239, 122], 'label': 'Number of enforcements', 'backgroundColor': 'rgba(50,50,50,0.5)', 'type': 'line', 'fill': false, 'borderWidth': 2, 'stack': 'annual', 'yAxisID': 'y-axis-0'},{'data': [39.302333, 39.693074, 39.405161, 43.655253, 42.720337, 40.805528, 34.002597, 30.235506, 28.19408, 28.785389, 30.292173, 31.893205, 32.163079, 26.141125], 'label': 'DEP administrative budget', 'borderColor': '#ff7f0e', 'fill': false, 'borderWidth': 2, 'stack': 'annual', 'type': 'line', 'yAxisID': 'y-axis-1'}]
+                        datasets: [{'data': [335, 357, 374, 487, 363, 354, 331, 255, 197, 327, 330, 277, 239, 122], 'label': 'Number of enforcements', 'backgroundColor': 'rgba(50,50,50,0.5)', 'type': 'line', 'fill': false, 'borderWidth': 2, 'stack': 'annual', 'yAxisID': 'y-axis-0'},{'data': [47.196107, 47.665327, 47.319588, 52.4233, 51.300608, 49.001215, 40.831932, 36.30823, 33.85679, 34.566861, 36.374514, 38.297401, 38.624265, 31.390973], 'label': 'DEP administrative budget', 'borderColor': '#ff7f0e', 'fill': false, 'borderWidth': 2, 'stack': 'annual', 'type': 'line', 'yAxisID': 'y-axis-1'}]
                     },
                     type: 'line',
                     options: {
@@ -25,7 +26,7 @@
                                     labelString: 'Number of enforcements'
                                 },
                                 ticks: {
-                                    beginAtZero: false
+                                    
                                 },
                                 "id": "y-axis-0",
                                 "position": "left",
@@ -37,7 +38,7 @@
                                     labelString: 'Funding level ($M, 2016 dollars)'
                                 },
                                 ticks: {
-                                    beginAtZero: false
+                                    
                                 },
                                 "id": "y-axis-1",
                                 "position": "right"
