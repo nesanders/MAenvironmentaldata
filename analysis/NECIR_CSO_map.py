@@ -799,7 +799,7 @@ class CSOAnalysis():
         fit = sm.sample(num_samples=num_samples, num_chains=10)
         fit_par = fit.to_frame()
         
-        return fit, fit_par, stan_dat, pop
+        return fit, fit_par, stan_dat, pop[~sel_unpop]
         
     ## Stan fit diagnostic output
     #s = fit.summary()

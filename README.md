@@ -61,3 +61,9 @@ conda env create -f amend_python_env.yml
 
 * [Tabula](http://tabula.technology/) was used to extract tables from PDF files. 
 
+
+
+# TODO
+* Update figure references on Stan model page
+* Update Stan model explanation to reference dropping unpopulated levels
+
