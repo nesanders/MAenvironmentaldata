@@ -888,8 +888,8 @@ class CSOAnalysis():
                 ):
                 self.fits[col] = {}
                 for level_col, level_df in [
-                    ('Watershed', df_watershed_level), 
-                    ('Town', df_town_level), 
+                    ('Watershed', self.df_watershed_level), 
+                    ('Town', self.df_town_level), 
                     ('ID', self.data_egs_merge.set_index('ID'))]:
                     fit, fit_par, stan_dat, pop_data = self.fit_stan_model(col, self.data_egs_merge, level_df, 
                         self.data_ins_g_ws_j, level_col=level_col)
