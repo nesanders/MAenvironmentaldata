@@ -775,17 +775,19 @@ class CSOAnalysis():
         ## Lookup base values - Census group block level
         l = data_egs_merge[level_col].unique()
         l = l[pd.isnull(l) == 0]
-        # Note - we add 1 to avoid zero errors
-        pop = data_egs_merge.groupby(level_col)['ACSTOTPOP'].sum().loc[l].values + 1
+        pop = data_egs_merge.groupby(level_col)['ACSTOTPOP'].sum().loc[l].values
         x = level_df[col].loc[l].values
         y = df_cso_level[self.discharge_vol_col].reindex(l).fillna(0).values
+        # Filter out unpopulated blocks
+        sel_unpop = pop < 50
+        assert sum(y[sel_unpop]) < 0.1, "Unpopulated census blocks have significant discharge"
         
         ## Fit Stan model
         stan_dat = {
             'J': len(x),
-            'x': list(x),
-            'y': list(y),
-            'p': list(pop / np.mean(pop))
+            'x': list(x[~sel_unpop]),
+            'y': list(y[~sel_unpop]),
+            'p': list(pop[~sel_unpop] / np.mean(pop[~sel_unpop]))
             }
         
         sm = stan.build(open(self.stan_model_code).read(), data=stan_dat)
