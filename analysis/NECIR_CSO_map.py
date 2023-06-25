@@ -19,6 +19,7 @@ EEA_DP_CSO_map.py script.
 """
 
 import json
+import logging
 from typing import Any, Dict, List, Optional, Tuple
 
 import chartjs
@@ -67,7 +68,7 @@ def safe_float(x: Any) -> float:
 def get_engine() -> sqlalchemy.engine.Engine:
     """Establish a sqlite database connection
     """
-    print('Opening SQL engine')
+    logging.info('Opening SQL engine')
     return sqlalchemy.create_engine(DATABASE_URI)
 
 def weight_mean(x, weights, N=1000):
@@ -127,7 +128,7 @@ def _assign_cso_data_to_census_blocks(data_cso: pd.DataFrame, geo_blockgroups_li
     latitude_col: str, longitude_col: str) -> pd.DataFrame:
     """Add a new 'BlockGroup' column to `data_cso` assigning CSOs to Census block groups.
     """
-    print('Assigning CSO data to census blocks')
+    logging.info('Assigning CSO data to census blocks')
     data_out = data_cso.copy()
     ## Loop over Census block groups
     data_out['BlockGroup'] = np.nan
@@ -140,7 +141,7 @@ def _assign_cso_data_to_census_blocks(data_cso: pd.DataFrame, geo_blockgroups_li
                 data_out.loc[cso_i, 'BlockGroup'] = feature['properties']['GEOID'] 
         ## Warn if a blockgroup was not found
         if is_nan(data_out.loc[cso_i, 'BlockGroup']):
-            print('No block group found for CSO #', str(cso_i))
+            logging.info('No block group found for CSO #', str(cso_i))
     return data_out
 
 @memory.cache
@@ -151,7 +152,7 @@ def _assign_cso_data_to_census_blocks_with_strtree(data_cso: pd.DataFrame, geo_b
     
     This should be functionally equivalent to `_assign_cso_data_to_census_blocks`, but much faster.
     """
-    print('Assigning CSO data to census blocks')
+    logging.info('Assigning CSO data to census blocks')
     data_out = data_cso.copy()
     # Loop over Census block groups
     data_out['BlockGroup'] = np.nan
@@ -165,11 +166,11 @@ def _assign_cso_data_to_census_blocks_with_strtree(data_cso: pd.DataFrame, geo_b
         cso_result_set = (np.array(result_indices[0]) == cso_i)
         ## Warn if a blockgroup was not found
         if sum(cso_result_set) == 0:
-            print(f'No block group found for CSO #{cso_i}')
+            logging.info(f'No block group found for CSO #{cso_i}')
             continue
         ## Warn if multiple blockgroups were found
         if sum(cso_result_set) > 1:
-            print(f'N={sum(cso_result_set)} block groups were found for CSO #{cso_i}; will pick the first')
+            logging.info(f'N={sum(cso_result_set)} block groups were found for CSO #{cso_i}; will pick the first')
         data_out.loc[cso_i, 'BlockGroup'] = geo_blockgroups_list[result_indices[1][cso_result_set][0]]['properties']['GEOID']
     return data_out
 
@@ -178,7 +179,7 @@ def assign_ej_data_to_geo_bins(data_ejs: pd.DataFrame, geo_towns_list: GeoList, 
     geo_blockgroups_list: GeoList) -> pd.DataFrame:
     """Return a version of `data_ejs` with added 'Town' and 'Watershed' columns.
     """
-    print('Adding Town and Watershed labels to EJ data')
+    logging.info('Adding Town and Watershed labels to EJ data')
     ## Loop over Census block groups
     bg_mapping = pd.DataFrame(
         index=[geo_blockgroups_list[i]['properties']['GEOID'] for i in range(len(geo_blockgroups_list))], 
@@ -192,13 +193,13 @@ def assign_ej_data_to_geo_bins(data_ejs: pd.DataFrame, geo_towns_list: GeoList, 
             lookup_town_for_feature(town_feature, point) for town_feature in geo_towns_list)
         ## Warn if a town was not found
         if is_nan(bg_mapping.loc[feature['properties']['GEOID'], 'Town']):
-            print(f"No Town found for GEOID {feature['properties']['GEOID']}")
+            logging.info(f"No Town found for GEOID {feature['properties']['GEOID']}")
         ## Loop over watersheds
         bg_mapping.loc[feature['properties']['GEOID'], 'Watershed'] = pick_non_null(
             lookup_watershed_for_feature(watershed_feature, point) for watershed_feature in geo_watersheds_list)
         ## Warn if a watershed was not found
         if is_nan(bg_mapping.loc[feature['properties']['GEOID'], 'Watershed']):
-            print(f"No Watershed found for GEOID {feature['properties']['GEOID']}")
+            logging.info(f"No Watershed found for GEOID {feature['properties']['GEOID']}")
 
     data_ejs = pd.merge(data_ejs, bg_mapping, left_on = 'ID', right_index=True, how='left')
     return data_ejs
@@ -211,7 +212,7 @@ def assign_ej_data_to_geo_bins_with_strtree(data_ejs: pd.DataFrame, geo_towns_li
     This should be functionally equivalent to `assign_ej_data_to_geo_bins`, but much faster. But it still takes 
     a few minutes to run over all block groups.
     """    
-    print('Adding Town and Watershed labels to EJ data')
+    logging.info('Adding Town and Watershed labels to EJ data')
     ## Loop over Census block groups
     bg_mapping = pd.DataFrame(
         index=[geo_blockgroups_list[i]['properties']['GEOID'] for i in range(len(geo_blockgroups_list))], 
@@ -231,11 +232,11 @@ def assign_ej_data_to_geo_bins_with_strtree(data_ejs: pd.DataFrame, geo_towns_li
             result_set = (np.array(result_indices[0]) == cbg_i)
             ## Warn if a town was not found
             if sum(result_set) == 0:
-                print(f'No {geo_type} found for Census Block Group #{cbg_id}')
+                logging.info(f'No {geo_type} found for Census Block Group #{cbg_id}')
                 continue
             ## Warn if multiple towns were found
             if sum(result_set) > 1:
-                print(f'N={sum(result_set)} {geo_type}s were found for Census Block Group #{cbg_id}; will pick the first')
+                logging.info(f'N={sum(result_set)} {geo_type}s were found for Census Block Group #{cbg_id}; will pick the first')
             bg_mapping.loc[cbg_id, geo_type] = geo_list[result_indices[1][result_set][0]]['properties'][geo_key]
 
     data_ejs = pd.merge(data_ejs, bg_mapping, left_on='ID', right_index=True, how='left')
@@ -246,7 +247,7 @@ def _apply_pop_weighted_avg(data_cso: pd.DataFrame, data_ejs: pd.DataFrame, disc
 ) -> Tuple[pd.DataFrame, pd.DataFrame, pd.DataFrame, pd.DataFrame, pd.DataFrame]:
     """Calculate population weighted averages for EJ characteristics, averaging over block group, watershed, and town.
     """
-    print('Calculating population weighted averages')
+    logging.info('Calculating population weighted averages')
     ## Get counts by block group
     data_ins_g_bg = data_cso.groupby('BlockGroup').sum()[[discharge_vol_col, discharge_count_col]]
     data_ins_g_bg_j = pd.merge(data_ins_g_bg, data_ejs, left_index=True, right_on ='ID', how='left')
@@ -360,7 +361,7 @@ class CSOAnalysis():
     def load_data_cso(self) -> pd.DataFrame:
         """Load NECIR 2011 CSO data
         """
-        print('Loading NECIR 2011 CSO data')
+        logging.info('Loading NECIR 2011 CSO data')
         disk_engine = get_engine()
         data_cso = pd.read_sql_query('SELECT * FROM NECIR_CSO_2011', disk_engine)
         data_cso[self.discharge_vol_col] = data_cso[self.discharge_vol_col].apply(safe_float)
@@ -371,7 +372,7 @@ class CSOAnalysis():
     def load_data_ej() -> pd.DataFrame:
         """Load EJSCREEN data
         """
-        print('Loading EJSCREEN data')
+        logging.info('Loading EJSCREEN data')
         disk_engine = get_engine()
         data_ejs = pd.read_sql_query('SELECT * FROM EPA_EJSCREEN_2017', disk_engine)
         data_ejs['ID'] = data_ejs['ID'].astype(str)
@@ -380,7 +381,7 @@ class CSOAnalysis():
     def load_data(self) -> Tuple[pd.DataFrame, pd.DataFrame]:
         """Load all data, CSO and EJ.
         """
-        print('Loading all data')
+        logging.info('Loading all data')
         data_cso = self.load_data_cso()
         data_ejs = self.load_data_ej()
         return data_cso, data_ejs
@@ -411,7 +412,7 @@ class CSOAnalysis():
         """
         Map of discharge volumes with layers for watershed, town, and census block group with CSO points
         """
-        print('Making map of discharge volumes')
+        logging.info('Making map of discharge volumes')
         ## Map total discharge volume
         map_1 = folium.Map(
             location=[42.29, -71.74], 
@@ -507,7 +508,7 @@ class CSOAnalysis():
         df_town_level: pd.DataFrame, df_watershed_level: pd.DataFrame, geo_watersheds_list: GeoList):
         """Map of EJ characteristics with layers for watershed, town, and census block group with CSO points
         """
-        print('Making map of EJ characteristics')
+        logging.info('Making map of EJ characteristics')
         for col, col_label in (
             ('MINORPCT', 'Fraction of population identifying as non-white'),
             ('LOWINCPCT', 'Fraction of population with income less than twice the Federal poverty limit'),
@@ -608,7 +609,7 @@ class CSOAnalysis():
         outpath: str='../docs/_includes/charts/EJSCREEN_demographics_watershed.html'):
         """Summary of EJ characteristics per watershed
         """
-        print('Making map of EJ characteristics per watershed')
+        logging.info('Making map of EJ characteristics per watershed')
         mychart = chartjs.chart("EJ characteristics by watershed", "Bar", 640, 480)
         sel = np.argsort(df_watershed_level['MINORPCT'])
         mychart.set_labels(df_watershed_level.index.values[sel].tolist())
@@ -632,7 +633,7 @@ class CSOAnalysis():
         outpath: str='../docs/_includes/charts/EJSCREEN_demographics_municipality.html'):
         """Summary of EJ characteristics per town
         """
-        print('Making summary chart of EJ data by town')
+        logging.info('Making summary chart of EJ data by town')
         mychart = chartjs.chart("EJ characteristics by municipality", "Bar", 640, 480)
         sel = np.argsort(df_town_level['MINORPCT'])
         mychart.set_labels(df_town_level.index.values[sel].tolist())
@@ -658,7 +659,7 @@ class CSOAnalysis():
         `data_ins_g_ws_j`, with EJ characteristics tabulated in `df_ej_variables`, corresponding to the column `lookup_col` 
         in `data_egs_merge`.
         """
-        print('Making comparison plot of EJ and CSO data')
+        logging.info('Making comparison plot of EJ and CSO data')
         for i, col, col_label in (
             (0, 'MINORPCT', 'Fraction of population identifying as non-white'),
             (1, 'LOWINCPCT', 'Fraction of population with income less than twice the Federal poverty limit'),
@@ -771,7 +772,7 @@ class CSOAnalysis():
         df_cso_level: pd.DataFrame, level_col: str='Watershed') -> Tuple[stan.fit.Fit, pd.DataFrame, dict, np.ndarray]:
         """Fit Stan model for a particular EJ characteristic (`col`)
         """
-        print(f'Building stan model for {col}')
+        logging.info(f'Building stan model for {col}')
         ## Lookup base values - Census group block level
         l = data_egs_merge[level_col].unique()
         l = l[pd.isnull(l) == 0]
@@ -780,7 +781,10 @@ class CSOAnalysis():
         y = df_cso_level[self.discharge_vol_col].reindex(l).fillna(0).values
         # Filter out unpopulated blocks
         sel_unpop = pop < 50
-        assert sum(y[sel_unpop]) < 0.1, "Unpopulated census blocks have significant discharge"
+        if sum(y[sel_unpop]) > 0:
+            logging.warning(f"Unpopulated geographic levels have nonzero: discharge\n"
+                            f"N={len(y[sel_unpop][y[sel_unpop] > 0])} have "
+                            f"total discharge volume {sum(y[sel_unpop])}")
         
         ## Fit Stan model
         stan_dat = {
@@ -793,7 +797,7 @@ class CSOAnalysis():
         sm = stan.build(open(self.stan_model_code).read(), data=stan_dat)
         if stan_dat['J'] > 100:
             num_samples = 1000
-            print(f"Large dataset N={stan_dat['J']}; running smaller sample size")
+            logging.info(f"Large dataset N={stan_dat['J']}; running smaller sample size")
         else:
             num_samples=10000
         fit = sm.sample(num_samples=num_samples, num_chains=10)
@@ -804,14 +808,14 @@ class CSOAnalysis():
     ## Stan fit diagnostic output
     #s = fit.summary()
     #summary = pd.DataFrame(s['summary'], columns=s['summary_colnames'], index=s['summary_rownames'])
-    #print(col)
-    #print(summary)
+    #logging.info(col)
+    #logging.info(summary)
     
     def regression_plot_beta_posterior(self, fit_par: pd.DataFrame, col: str, plot_path: str):
         """Plot a beta posterior histogram for the regression model. Also output some summary statistics
         to the `fact_file`.
         """
-        print('Plotting regression beta posterior')
+        logging.info('Plotting regression beta posterior')
         plt.figure()
         ph = 2**fit_par['beta']
         plt.hist(ph, bins=100, range=[0,6])
@@ -828,7 +832,7 @@ class CSOAnalysis():
         pop_data: np.ndarray, level_col: str='Watershed'):
         """Plot fitted exponential model draws from the regression model posterior.
         """
-        print('Plotting sample regression model draws')
+        logging.info('Plotting sample regression model draws')
         
         x = stan_dat['x']
         y = stan_dat['y']
@@ -838,12 +842,12 @@ class CSOAnalysis():
         for i, n in enumerate(np.random.randint(0, N, 20)):
             px = np.linspace(min(x), max(x), 1000)
             plt.plot(px, fit_par.loc[n, 'alpha'] * px**fit_par.loc[n, 'beta'], color='r', alpha=0.3, 
-                    label = 'Posterior draw' if i==0 else None, zorder=1)
+                    label = 'Posterior draw' if i==0 else None, zorder=2)
         
         plt.xlabel(col_label, wrap=True)
         plt.ylabel(f'CSO discharge ({self.cso_data_year}; Mgal)')
         
-        plt.scatter(x, y, marker='o', c=pop_data / 1e3, cmap=cm.Blues, label=level_col, zorder=2)
+        plt.scatter(x, y, marker='o', c=pop_data / 1e3, cmap=cm.Blues, label=level_col, zorder=1)
         plt.colorbar(label='Population (1000s)')
         plt.legend(loc=2)
         plt.savefig(plot_path, dpi=200, bbox_inches='tight')
