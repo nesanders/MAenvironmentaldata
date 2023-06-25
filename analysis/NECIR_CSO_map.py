@@ -791,7 +791,12 @@ class CSOAnalysis():
             }
         
         sm = stan.build(open(self.stan_model_code).read(), data=stan_dat)
-        fit = sm.sample(num_samples=10000, num_chains=10)
+        if stan_dat['J'] > 100:
+            num_samples = 1000
+            print(f"Large dataset N={stan_dat['J']}; running smaller sample size")
+        else:
+            num_samples=10000
+        fit = sm.sample(num_samples=num_samples, num_chains=10)
         fit_par = fit.to_frame()
         
         return fit, fit_par, stan_dat, pop
