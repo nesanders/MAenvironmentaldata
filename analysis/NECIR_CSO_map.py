@@ -777,7 +777,7 @@ class CSOAnalysis():
         l = l[pd.isnull(l) == 0]
         pop = data_egs_merge.groupby(level_col)['ACSTOTPOP'].sum().loc[l].values
         x = level_df[col].loc[l].values
-        y = df_cso_level[self.discharge_vol_col].loc[l].values
+        y = df_cso_level[self.discharge_vol_col].reindex(l).fillna(0).values
         
         ## Fit Stan model
         stan_dat = {
