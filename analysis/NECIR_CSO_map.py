@@ -779,7 +779,7 @@ class CSOAnalysis():
         x = level_df[col].loc[l].values
         # NOTE - we are filling null values with '0.001' to avoid log-zero errors. 0.001 is consistent with the smallest observed
         # values per outfall.
-        y = df_cso_level[self.discharge_vol_col].reindex(l).fillna(0.001).values
+        y = df_cso_level[self.discharge_vol_col].reindex(l).fillna(0.001).replace(0, 0.001).values
         
         ## Fit Stan model
         stan_dat = {
