@@ -890,8 +890,7 @@ class CSOAnalysis():
                 for level_col in ['Watershed', 'Town', 'ID']:
                     fit, fit_par, stan_dat, pop_data = self.fit_stan_model(col, self.data_egs_merge, self.df_watershed_level, 
                         self.data_ins_g_ws_j, level_col=level_col)
-                    self.regression_plot_beta_posterior(fit_par, col, plot_path=self.fig_path + f'{self.output_slug}_{level_col}_stanfit_beta_'+col+'.png', 
-                        level_col=level_col)
+                    self.regression_plot_beta_posterior(fit_par, col, plot_path=self.fig_path + f'{self.output_slug}_{level_col}_stanfit_beta_'+col+'.png')
                     self.regression_plot_model_draws(fit_par, col_label, self.fig_path + f'{self.output_slug}_{level_col}_stanfit_'+col+'.png', stan_dat, 
                         pop_data)
                     self.fits[col][level_col] = {'fit_par': fit_par, 'stan_dat': stan_dat, 'pop_data': pop_data}
