@@ -823,7 +823,7 @@ class CSOAnalysis():
         plt.ylabel('Posterior samples')
         plt.savefig(plot_path, dpi=200)
     
-    def summary_statistics(fit_par: pd.DataFrame, col: str, level: str):
+    def summary_statistics(self, fit_par: pd.DataFrame, col: str, level: str):
         """Output summary dependence statistics."""
         ph = 2**fit_par['beta']
         with open(self.fact_file, 'a') as f:
