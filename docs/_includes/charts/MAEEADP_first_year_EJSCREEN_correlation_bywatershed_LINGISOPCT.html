@@ -1,0 +1,114 @@
+{% raw  %}
+<html>
+    <head>
+        <title>CSO discharge volume vs EJ characteristics by watershed: LINGISOPCT</title>
+        <script src='https://cdn.jsdelivr.net/npm/chart.js@2.8.0/dist/Chart.bundle.min.js'></script>
+    </head>
+    <body>
+        <div style="width: 640px; height: 480px; max-width: 99%" class="chartjs">
+
+            <canvas id="CSO discharge volume vs EJ characteristics by watershed: LINGISOPCT" height="480" width="640"></canvas>
+            <script>
+                Chart.defaults.global.defaultFontSize = 12;
+                var chart_data = {
+                
+                    data: {
+                        labels: [],
+                        datasets: [{'data': [{x: 0.08427088897358122, y: 494.03409500000004}, {x: 0.03843958549830679, y: 198.190592}, {x: 0.06456768322028296, y: 422.637155}, {x: 0.061399060473459804, y: 15.379}, {x: 0.08654439189129157, y: 641.862545}, {x: 0.03503382116988439, y: 2.5677}, {x: 0.06386044911071191, y: 566.100399}, {x: 0.029350409850168246, y: 24.771154}, {x: 0.019846128483259375, y: 18.528041}, {x: 0.05399011827742843, y: 6.54}, {x: 0.07076395197936275, y: 152.70399999999998}, {x: 0.11039553882065159, y: 7.85875}, {x: 0.00835498872985637, y: 1.0}, {x: 0.026332664150202897, y: 18.584756000000002}, {x: 0.07242749069435034, y: 58.231915}, {x: 0.014283261864042955, y: 0.0}, {x: 0.018861682089247944, y: 0.0}, {x: 0.015795413756141966, y: 0.0}, {x: 0.012270387430537147, y: 0.0}, {x: 0.002482234301328317, y: 0.0}, {x: 0.0, y: 0.0}, {x: 0.02699780666477304, y: 0.0}, {x: 0.012110582063411373, y: 0.0}, {x: 0.028663780250861703, y: 0.0}, {x: 0.01102748128965122, y: 0.0}, {x: 0.005283633615705785, y: 0.0}, {x: 0.006870756454214808, y: 0.0}, {x: 0.042445984262365115, y: 0.0}, {x: 0.06564656777504028, y: 0.0}, {x: 0.049808487965714396, y: 0.0}, {x: 0.025766268735952006, y: 0.0}], 'label': 'Individual watersheds', 'backgroundColor': 'rgba(50,50,50,0.125)', 'showLine': false, 'yAxisID': 'y-axis-0', 'fill': false, 'hidden': 'true'},{'data': [{x: 0.0066384123236450255, y: 0.34671086380491395}, {x: 0.020970302449075877, y: 6.827728241890872}, {x: 0.04564676752147378, y: 51.2292174055099}, {x: 0.08651264680636872, y: 256.4144287188855}], 'label': 'Average (population weighted & binned)', 'backgroundColor': 'rgba(50,50,200,1)', 'showLine': true, 'borderColor': 'rgba(50,50,200,1)', 'borderWidth': 3, 'yAxisID': 'y-axis-0', 'fill': false, 'pointRadius': 6},{'data': [{x: 0.0066384123236450255, y: -0.1064306852966373}, {x: 0.020970302449075877, y: 0.21612649826488273}, {x: 0.04564676752147378, y: -8.878742286503197}, {x: 0.08651264680636872, y: 108.38000406733923}], 'label': 'Average lower bound (5% limit)', 'backgroundColor': 'rgba(50,50,200,0.3)', 'showLine': true, 'yAxisID': 'y-axis-0', 'borderWidth': 1, 'fill': false, 'pointBackgroundColor': 'rgba(50,50,200,0.3)', 'pointBorderColor': 'rgba(50,50,200,0.3)'},{'data': [{x: 0.0066384123236450255, y: 0.7998524129064652}, {x: 0.020970302449075877, y: 13.439329985516862}, {x: 0.04564676752147378, y: 111.337177097523}, {x: 0.08651264680636872, y: 404.44885337043183}], 'label': 'Average upper bound (95% limit)', 'backgroundColor': 'rgba(50,50,200,0.3)', 'showLine': true, 'yAxisID': 'y-axis-0', 'borderWidth': 1, 'fill': '-1', 'pointBackgroundColor': 'rgba(50,50,200,0.3)', 'pointBorderColor': 'rgba(50,50,200,0.3)'}]
+                    },
+                    type: 'scatter',
+                    options: {
+                        scales: {
+                            yAxes: [{
+                                display: true,
+                                scaleLabel: {
+                                    display: true,
+                                    labelString: 'Total volume of discharge (2011; Millions of gallons)'
+                                },
+                                ticks: {
+                                    beginAtZero: true, min: 0
+                                },
+                                "id": "y-axis-0",
+                                "position": "left",
+                                stacked: false,
+type: "linear"
+                            }, {
+                                display: false,
+                                scaleLabel: {
+                                    display: true,
+                                    labelString: ''
+                                },
+                                ticks: {
+                                    beginAtZero: true, min: 0
+                                },
+                                "id": "y-axis-1",
+                                "position": "right"
+                            }],
+                            xAxes: [{
+                                scaleLabel: {
+                                    display: true,
+                                    labelString: 'Fraction of population in households whose adults speak English less than "very well"'
+                                },
+                                stacked: false,
+                                ticks: {
+                                    autoSkip: true
+                                }
+                            }]
+                        },
+                        legend: {
+                            display: true
+                            },
+                        tooltips: {
+                            display: true, 
+                            mode: 'single',
+                            callbacks: {
+                                label: function(tooltipItems, data) { 
+                                    var title = '';
+                                    
+                                    if (tooltipItems.datasetIndex == 0) {
+                                        title = point_label[tooltipItems.index];
+                                    } else {
+                                        title = data.datasets[tooltipItems.datasetIndex].label;
+                                    }
+                                    return [title, 
+                                            'Total volume of discharge: ' + Number(tooltipItems.yLabel).toFixed(2) + ' Millions of gallons', 
+                                            'Fraction of population in households whose adults speak English less than "very well": ' + Number(tooltipItems.xLabel).toFixed(2), 
+                                            'Population: ' + pop_data[tooltipItems.index]
+                                           ];
+                                }
+                            }
+            
+                            }
+                    },
+                }
+                
+                
+                
+
+
+            Chart.scaleService.updateScaleDefaults('linear', {
+            ticks: {
+                autoSkip: true,
+                autoSkipPadding: 100,
+                callback: function(tick, index, ticks) {
+                return tick.toLocaleString()
+                }
+            }
+            });
+            
+
+var point_label = ["MT HOPE BAY","TAUNTON","BUZZARDS BAY","NORTH COAST","MERRIMACK","SHAWSHEEN","CONNECTICUT","CHICOPEE","WESTFIELD","CONCORD","CHARLES","MYSTIC","SOUTH COASTAL","NASHUA","BLACKSTONE","CAPE COD","HOUSATONIC","HOOSIC","DEERFIELD","FARMINGTON","KINDERHOOK","TEN MILE","NARRAGANSETT BAY","ISLANDS","IPSWICH","PARKER","MILLERS","QUINEBAUG","NEPONSET","WEIR","FRENCH"];
+
+var pop_data = ["92,780", "463,937", "234,510", "471,362", "429,410", "123,108", "438,775", "177,080", "90,631", "432,399", "1,107,957", "521,147", "193,288", "208,925", "365,688", "206,204", "86,668", "34,470", "32,376", "5,699", "726", "68,705", "23,609", "27,604", "135,649", "35,464", "67,506", "47,073", "285,522", "242,762", "53,065"];
+            </script>
+            <script>
+                {{
+                    var ctx = document.getElementById("CSO discharge volume vs EJ characteristics by watershed: LINGISOPCT").getContext("2d");
+                    var mychart = new Chart(ctx, chart_data);
+                }}
+            </script>
+
+        </div>
+    </body>
+</html>
+{% endraw  %}

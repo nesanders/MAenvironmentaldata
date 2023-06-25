@@ -64,6 +64,4 @@ conda env create -f amend_python_env.yml
 
 
 # TODO
-* Update figure references on Stan model page
-* Update Stan model explanation to reference dropping unpopulated levels
-
+* Take average over nearby census blocks
