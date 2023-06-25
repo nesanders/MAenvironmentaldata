@@ -784,7 +784,7 @@ class CSOAnalysis():
         
         ## Fit Stan model
         stan_dat = {
-            'J': len(x),
+            'J': len(x[~sel_unpop]),
             'x': list(x[~sel_unpop]),
             'y': list(y[~sel_unpop]),
             'p': list(pop[~sel_unpop] / np.mean(pop[~sel_unpop]))
