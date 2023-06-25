@@ -768,7 +768,7 @@ class CSOAnalysis():
     # -------------------------
     
     def fit_stan_model(self, col: str, data_egs_merge: pd.DataFrame, level_df: pd.DataFrame, 
-        data_ins_g_ws_j: pd.DataFrame, level_col: str='Watershed') -> Tuple[stan.fit.Fit, pd.DataFrame, dict, np.ndarray]:
+        df_cso_level: pd.DataFrame, level_col: str='Watershed') -> Tuple[stan.fit.Fit, pd.DataFrame, dict, np.ndarray]:
         """Fit Stan model for a particular EJ characteristic (`col`)
         """
         print(f'Building stan model for {col}')
@@ -777,7 +777,7 @@ class CSOAnalysis():
         l = l[pd.isnull(l) == 0]
         pop = data_egs_merge.groupby(level_col)['ACSTOTPOP'].sum().loc[l].values
         x = level_df[col].loc[l].values
-        y = data_ins_g_ws_j[self.discharge_vol_col].loc[l].values
+        y = df_cso_level[self.discharge_vol_col].loc[l].values
         
         ## Fit Stan model
         stan_dat = {
@@ -887,12 +887,12 @@ class CSOAnalysis():
                 ('LINGISOPCT', 'Fraction of population in households whose adults speak English less than "very well"'),
                 ):
                 self.fits[col] = {}
-                for level_col, level_df in [
-                    ('Watershed', self.df_watershed_level), 
-                    ('Town', self.df_town_level), 
-                    ('ID', self.data_egs_merge.set_index('ID'))]:
-                    fit, fit_par, stan_dat, pop_data = self.fit_stan_model(col, self.data_egs_merge, level_df, 
-                        self.data_ins_g_ws_j, level_col=level_col)
+                for level_col, level_demo_df, level_cso_df in [
+                    ('Watershed', self.df_watershed_level, self.data_ins_g_ws_j), 
+                    ('Town', self.df_town_level, self.data_ins_g_muni_j), 
+                    ('ID', self.data_egs_merge.set_index('ID'), self.data_ins_g_bg)]:
+                    fit, fit_par, stan_dat, pop_data = self.fit_stan_model(col, self.data_egs_merge, level_demo_df, 
+                        level_cso_df, level_col=level_col)
                     self.regression_plot_beta_posterior(fit_par, col, plot_path=self.fig_path + f'{self.output_slug}_{level_col}_stanfit_beta_'+col+'.png')
                     self.regression_plot_model_draws(fit_par, col_label, self.fig_path + f'{self.output_slug}_{level_col}_stanfit_'+col+'.png', stan_dat, 
                         pop_data)
