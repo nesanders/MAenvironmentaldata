@@ -773,7 +773,7 @@ class CSOAnalysis():
         """
         print(f'Building stan model for {col}')
         ## Lookup base values - Census group block level
-        l = data_egs_merge.Watershed.unique()
+        l = data_egs_merge[level_col].unique()
         l = l[pd.isnull(l) == 0]
         pop = data_egs_merge.groupby(level_col)['ACSTOTPOP'].sum().loc[l].values
         x = df_watershed_level[col].loc[l].values
