@@ -242,7 +242,7 @@ def assign_ej_data_to_geo_bins_with_strtree(data_ejs: pd.DataFrame, geo_towns_li
     return data_ejs
 
 @memory.cache
-def _apply_pop_weighted_avg( data_cso: pd.DataFrame, data_ejs: pd.DataFrame, discharge_vol_col: str, discharge_count_col: str
+def _apply_pop_weighted_avg(data_cso: pd.DataFrame, data_ejs: pd.DataFrame, discharge_vol_col: str, discharge_count_col: str
 ) -> Tuple[pd.DataFrame, pd.DataFrame, pd.DataFrame, pd.DataFrame, pd.DataFrame]:
     """Calculate population weighted averages for EJ characteristics, averaging over block group, watershed, and town.
     """
@@ -768,14 +768,14 @@ class CSOAnalysis():
     # -------------------------
     
     def fit_stan_model(self, col: str, data_egs_merge: pd.DataFrame, df_watershed_level: pd.DataFrame, 
-        data_ins_g_ws_j: pd.DataFrame) -> Tuple[stan.fit.Fit, pd.DataFrame, dict, np.ndarray]:
+        data_ins_g_ws_j: pd.DataFrame, level_col: str='Watershed') -> Tuple[stan.fit.Fit, pd.DataFrame, dict, np.ndarray]:
         """Fit Stan model for a particular EJ characteristic (`col`)
         """
         print(f'Building stan model for {col}')
         ## Lookup base values - Census group block level
         l = data_egs_merge.Watershed.unique()
         l = l[pd.isnull(l) == 0]
-        pop = data_egs_merge.groupby('Watershed')['ACSTOTPOP'].sum().loc[l].values
+        pop = data_egs_merge.groupby(level_col)['ACSTOTPOP'].sum().loc[l].values
         x = df_watershed_level[col].loc[l].values
         y = data_ins_g_ws_j[self.discharge_vol_col].loc[l].values
         
@@ -817,7 +817,7 @@ class CSOAnalysis():
                     f'{np.percentile(ph, 5):0.1f} to {np.percentile(ph, 95):0.1f} times)\n')
     
     def regression_plot_model_draws(self, fit_par: pd.DataFrame, col_label: str, plot_path: str, stan_dat: dict, 
-        pop_data: np.ndarray):
+        pop_data: np.ndarray, level_col: str='Watershed'):
         """Plot fitted exponential model draws from the regression model posterior.
         """
         print('Plotting sample regression model draws')
@@ -835,7 +835,7 @@ class CSOAnalysis():
         plt.xlabel(col_label, wrap=True)
         plt.ylabel(f'CSO discharge ({self.cso_data_year}; Mgal)')
         
-        plt.scatter(x, y, marker='o', c=pop_data / 1e3, cmap=cm.Blues, label='Watersheds', zorder=2)
+        plt.scatter(x, y, marker='o', c=pop_data / 1e3, cmap=cm.Blues, label=level_col, zorder=2)
         plt.colorbar(label='Population (1000s)')
         plt.legend(loc=2)
         plt.savefig(plot_path, dpi=200, bbox_inches='tight')
@@ -871,7 +871,7 @@ class CSOAnalysis():
             self.make_chart_summary_ej_characteristics_watershed(self.df_watershed_level)
             self.make_chart_summary_ej_characteristics_town(self.df_town_level)
             self.make_chart_ej_cso_comparison(self.data_egs_merge, self.data_ins_g_ws_j, self.df_watershed_level)
-            # Make town-level comparison XXXX
+            # Make town-level comparison
             self.make_chart_ej_cso_comparison(self.data_egs_merge, self.data_ins_g_muni_j, self.df_town_level, 
                                               level_name='municipality', lookup_col='Town')
             # Make census block-level comparison
@@ -886,10 +886,15 @@ class CSOAnalysis():
                 ('LOWINCPCT', 'Fraction of population with income less than twice the Federal poverty limit'),
                 ('LINGISOPCT', 'Fraction of population in households whose adults speak English less than "very well"'),
                 ):
-                fit, fit_par, stan_dat, pop_data = self.fit_stan_model(col, self.data_egs_merge, self.df_watershed_level, self.data_ins_g_ws_j)
-                self.regression_plot_beta_posterior(fit_par, col, plot_path=self.fig_path + f'{self.output_slug}XXXX_stanfit_beta_'+col+'.png')
-                self.regression_plot_model_draws(fit_par, col_label, self.fig_path + f'{self.output_slug}_stanfit_'+col+'.png', stan_dat, pop_data)
-                self.fits[col] = {'fit_par': fit_par, 'stan_dat': stan_dat, 'pop_data': pop_data}
+                self.fits[col] = {}
+                for level_col in ['Watershed', 'Town', 'ID']
+                    fit, fit_par, stan_dat, pop_data = self.fit_stan_model(col, self.data_egs_merge, self.df_watershed_level, 
+                        self.data_ins_g_ws_j, level_col=level_col)
+                    self.regression_plot_beta_posterior(fit_par, col, plot_path=self.fig_path + f'{self.output_slug}_{level_col}_stanfit_beta_'+col+'.png', 
+                        level_col=level_col)
+                    self.regression_plot_model_draws(fit_par, col_label, self.fig_path + f'{self.output_slug}_{level_col}_stanfit_'+col+'.png', stan_dat, 
+                        pop_data)
+                    self.fits[col][level_col] = {'fit_par': fit_par, 'stan_dat': stan_dat, 'pop_data': pop_data}
     
 if __name__ == '__main__':
     csoa = CSOAnalysis()
