@@ -822,10 +822,12 @@ class CSOAnalysis():
         plt.xlabel("2x growth ratio -- " + col)
         plt.ylabel('Posterior samples')
         plt.savefig(plot_path, dpi=200)
-        
-        ## Output summary dependence statistics
+    
+    def summary_statistics(fit_par: pd.DataFrame, col: str, level: str):
+        """Output summary dependence statistics."""
+        ph = 2**fit_par['beta']
         with open(self.fact_file, 'a') as f:
-            f.write(f'depend_cso_{col}: {np.median(ph):0.1f} times (90% confidence interval '
+            f.write(f'depend_cso_{col}_{level}: {np.median(ph):0.1f} times (90% confidence interval '
                     f'{np.percentile(ph, 5):0.1f} to {np.percentile(ph, 95):0.1f} times)\n')
     
     def regression_plot_model_draws(self, fit_par: pd.DataFrame, col_label: str, plot_path: str, stan_dat: dict, 
@@ -906,6 +908,7 @@ class CSOAnalysis():
                     fit, fit_par, stan_dat, pop_data = self.fit_stan_model(col, self.data_egs_merge, level_demo_df, 
                         level_cso_df, level_col=level_col)
                     self.regression_plot_beta_posterior(fit_par, col, plot_path=self.fig_path + f'{self.output_slug}_{level_col}_stanfit_beta_'+col+'.png')
+                    self.summary_statistics(fit_par, col, level_col)
                     self.regression_plot_model_draws(fit_par, col_label, self.fig_path + f'{self.output_slug}_{level_col}_stanfit_'+col+'.png', stan_dat, 
                         pop_data)
                     self.fits[col][level_col] = {'fit_par': fit_par, 'stan_dat': stan_dat, 'pop_data': pop_data}
