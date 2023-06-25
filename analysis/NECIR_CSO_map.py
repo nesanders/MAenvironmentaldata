@@ -827,7 +827,7 @@ class CSOAnalysis():
         """Output summary dependence statistics."""
         ph = 2**fit_par['beta']
         with open(self.fact_file, 'a') as f:
-            f.write(f'depend_cso_{col}_{level}: {np.median(ph):0.1f} times (90% confidence interval '
+            f.write(f'depend_cso_{col}_{level}: {np.median(ph):0.1f} times (90% probability interval '
                     f'{np.percentile(ph, 5):0.1f} to {np.percentile(ph, 95):0.1f} times)\n')
     
     def regression_plot_model_draws(self, fit_par: pd.DataFrame, col_label: str, plot_path: str, stan_dat: dict, 
