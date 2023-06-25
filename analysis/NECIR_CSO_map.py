@@ -887,7 +887,7 @@ class CSOAnalysis():
                 ('LINGISOPCT', 'Fraction of population in households whose adults speak English less than "very well"'),
                 ):
                 self.fits[col] = {}
-                for level_col in ['Watershed', 'Town', 'ID']
+                for level_col in ['Watershed', 'Town', 'ID']:
                     fit, fit_par, stan_dat, pop_data = self.fit_stan_model(col, self.data_egs_merge, self.df_watershed_level, 
                         self.data_ins_g_ws_j, level_col=level_col)
                     self.regression_plot_beta_posterior(fit_par, col, plot_path=self.fig_path + f'{self.output_slug}_{level_col}_stanfit_beta_'+col+'.png', 
