@@ -37,18 +37,21 @@ We assign weakly informative priors (see e.g. [Sanders & Lei 2018](https://www.t
 
 where sd is the standard deviation function.
 
-The model is fit using the [pystan](https://mc-stan.org/) probabilistic programming language and inference tool using Hamiltonian Monte Carlo.  The exact Stan code for the model described above is available in the [{{ site.data.site_config.site_abbrev }} repository](https://github.com/nesanders/MAenvironmentaldata/blob/main/analysis/NECIR_CSO_map.py).
+The model is fit using the [pystan](https://mc-stan.org/) probabilistic programming language and inference tool using Hamiltonian Monte Carlo.  
+The exact Stan code for the model described above is available in the [{{ site.data.site_config.site_abbrev }} repository](https://github.com/nesanders/MAenvironmentaldata/blob/main/analysis/NECIR_CSO_map.py).
 
-The plots below illustrate the functional form of the fitted model for each EJ indicator.  A sample of random draws from the Markov Chain posterior are shown in red.  The actual watershed data points are shown in blue, colored according to the watershed population used to weight the model fit.
+The plots below illustrate the functional form of the fitted model for each EJ indicator.  
+A sample of random draws from the Markov Chain posterior are shown in red.  
+The actual watershed data points are shown in blue, colored according to the watershed population used to weight the model fit.
 
-![My helpful screenshot](/assets/figures/NECIR_CSO_stanfit_LINGISOPCT.png)
-![My helpful screenshot](/assets/figures/NECIR_CSO_stanfit_LOWINCPCT.png)
-![My helpful screenshot](/assets/figures/NECIR_CSO_stanfit_MINORPCT.png)
+![My helpful screenshot](/assets/figures/NECIR_CSO_Watershed_stanfit_LINGISOPCT.png)
+![My helpful screenshot](/assets/figures/NECIR_CSO_Watershed_stanfit_LOWINCPCT.png)
+![My helpful screenshot](/assets/figures/NECIR_CSO_Watershed_stanfit_MINORPCT.png)
 
 The plots below show the posterior probability distribution of the dependence measurement *&beta;* for each EH indicator, transformed as {% raw %}$$2^\beta$${% endraw %} to represent the growth of the dependent variable corresponding to a 2x increase in the independent variable.
 
-![My helpful screenshot](/assets/figures/NECIR_CSO_stanfit_beta_LINGISOPCT.png)
-![My helpful screenshot](/assets/figures/NECIR_CSO_stanfit_beta_LOWINCPCT.png)
-![My helpful screenshot](/assets/figures/NECIR_CSO_stanfit_beta_MINORPCT.png)
+![My helpful screenshot](/assets/figures/NECIR_CSO_Watershed_stanfit_beta_LINGISOPCT.png)
+![My helpful screenshot](/assets/figures/NECIR_CSO_Watershed_stanfit_beta_LOWINCPCT.png)
+![My helpful screenshot](/assets/figures/NECIR_CSO_Watershed_stanfit_beta_MINORPCT.png)
 
 The 90th percentile posterior (confidence) interval of these distributions are quoted in the analysis page.

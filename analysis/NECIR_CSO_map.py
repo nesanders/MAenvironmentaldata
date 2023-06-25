@@ -910,7 +910,7 @@ class CSOAnalysis():
                     self.regression_plot_beta_posterior(fit_par, col, plot_path=self.fig_path + f'{self.output_slug}_{level_col}_stanfit_beta_'+col+'.png')
                     self.summary_statistics(fit_par, col, level_col)
                     self.regression_plot_model_draws(fit_par, col_label, self.fig_path + f'{self.output_slug}_{level_col}_stanfit_'+col+'.png', stan_dat, 
-                        pop_data)
+                        pop_data, level_col=level_col)
                     self.fits[col][level_col] = {'fit_par': fit_par, 'stan_dat': stan_dat, 'pop_data': pop_data}
     
 if __name__ == '__main__':
