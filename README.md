@@ -20,10 +20,9 @@ To install the local `jekyll` server, you can follow this multi-step process:
 ```
 conda create --name amend_jekyll
 conda activate amend_jekyll
-conda install -c conda-forge ruby=3.2.2
-conda install -c conda-forge rb-bundler
-gem install commonmarker -v '0.17.13' --source 'https://rubygems.org/'
-conda install gxx_linux-64
+conda install -c conda-forge c-compiler compilers cxx-compiler
+conda install -c conda-forge ruby
+gem install jekyll bundler
 cd docs
 bundle install
 ```
