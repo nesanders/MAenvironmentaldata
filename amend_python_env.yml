@@ -34,15 +34,20 @@ dependencies:
     - census==0.8.20
     - certifi==2023.5.7
     - charset-normalizer==3.1.0
+    - click==8.1.7
+    - click-plugins==1.1.1
+    - cligj==0.7.2
     - clikit==0.6.2
     - contourpy==1.0.7
     - crashtest==0.3.1
     - cycler==0.11.0
     - et-xmlfile==1.1.0
+    - fiona==1.9.4.post1
     - folium==0.14.0
     - fonttools==4.39.4
     - frozenlist==1.3.3
     - fsspec==2023.6.0
+    - geopandas==0.13.2
     - greenlet==2.0.2
     - httpstan==4.10.1
     - idna==3.4
@@ -63,6 +68,7 @@ dependencies:
     - pillow==9.5.0
     - pylev==1.4.0
     - pyparsing==3.0.9
+    - pyproj==3.6.0
     - pysimdjson==5.0.2
     - pystan==3.7.0
     - python-dateutil==2.8.2
@@ -80,3 +86,4 @@ dependencies:
     - us==3.1.1
     - webargs==8.2.0
     - yarl==1.9.2
+prefix: /home/nes/miniconda3/envs/amend_python

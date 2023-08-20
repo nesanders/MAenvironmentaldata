@@ -23,6 +23,7 @@ import logging
 from typing import Any, Dict, List, Optional, Tuple
 
 import chartjs
+import geopandas as gpd
 import folium
 from joblib import Memory
 import matplotlib as mpl
@@ -123,25 +124,78 @@ def pop_weighted_average(x, cols):
         out += [np.sum(w * x[col].values) / np.sum(w)]
     return pd.Series(data = out, index=cols)
 
+def group_containing_point(point: Point, blockgroups: GeoList) -> float | str:
+    """For a given input `point`, identify an element of a GeoList `blockgroups` and 
+    return its ID.
+    """
+    output = np.nan
+    for feature in blockgroups:
+        polygon = shape(feature['geometry'])
+        if polygon.contains(point):
+           output = feature['properties']['GEOID'] 
+    if is_nan(output):
+        logging.info('No block group found for CSO #', str(cso_i))
+    return output
+
+# This CRS as defined in the .prj file obtained from 
+# https://www.census.gov/geographies/mapping-files/time-series/geo/carto-boundary-file.html
+DEFAULT_BLOCKGROUP_CRS = ('GEOGCS["GCS_North_American_1983",DATUM["D_North_American_1983",'
+    'SPHEROID["GRS_1980",6378137,298.257222101]],PRIMEM["Greenwich",0],UNIT["Degree",'
+    '0.017453292519943295]]')
+def apportion_point_to_groups(
+    point: Point, 
+    blockgroups: GeoList, 
+    radius_miles: float=7
+) -> pd.Series:
+    """For a given input `point`, apportion percent credit across multiple blockgroups.
+    
+    The output is a Series with elements corresponding to groups within `radius_miles`,
+    with an index of the group ID and values corresponding to an apportionment (adds to 
+    100%) proportional to the square root of the distance (equal area).
+    """
+    output = np.nan
+    gpdf = gpd.GeoDataFrame(data=blockgroups, crs=DEFAULT_BLOCKGROUP_CRS)
+    buffer = radius_miles * 1.60934 * 10**4 # TODO make this into miles
+    gdfbuf = gdfp.copy()
+    gdfbuf.geometry = gdfp.geometry.to_crs(gdfp.estimate_utm_crs()).buffer(buffer).to_crs("DEFAULT_BLOCKGROUP_CRS")
+    # TODO - need not do this pointwise, could join whole vector?
+    gdfbuf = gpd.sjoin(gdfbuf, [point], how='left')
+    breakpoint()
+                
+    if is_nan(output):
+        logging.info('No block group found for CSO #', str(cso_i))
+    return output
+
 @memory.cache
-def _assign_cso_data_to_census_blocks(data_cso: pd.DataFrame, geo_blockgroups_list: GeoList, 
-    latitude_col: str, longitude_col: str) -> pd.DataFrame:
+def _assign_cso_data_to_census_blocks(
+    data_cso: pd.DataFrame, 
+    geo_blockgroups_list: GeoList, 
+    latitude_col: str, 
+    longitude_col: str,
+    smoothing_radius_miles: Optional[float]=7
+) -> pd.DataFrame:
     """Add a new 'BlockGroup' column to `data_cso` assigning CSOs to Census block groups.
+    
+    If smoothing_radius_miles is not None, then also create a 'BlockGroup_fraction' column
+    that apportions a percentage of the CSO to all block groups within this radius (in miles) 
+    according to the distance between the CSO and the blog group centroid. The 
+    'BlockGroup_fraction' column contains
     """
     logging.info('Assigning CSO data to census blocks')
     data_out = data_cso.copy()
     ## Loop over Census block groups
     data_out['BlockGroup'] = np.nan
+    if smoothing_radius_miles is not None:
+        data_out['BlockGroup_fraction'] = np.nan
     ## Loop over CSO outfalls
     for cso_i in range(len(data_out)):
         point = Point(data_out.iloc[cso_i][longitude_col], data_out.iloc[cso_i][latitude_col])
-        for feature in geo_blockgroups_list:
-            polygon = shape(feature['geometry'])
-            if polygon.contains(point):
-                data_out.loc[cso_i, 'BlockGroup'] = feature['properties']['GEOID'] 
-        ## Warn if a blockgroup was not found
-        if is_nan(data_out.loc[cso_i, 'BlockGroup']):
-            logging.info('No block group found for CSO #', str(cso_i))
+        data_out.loc[cso_i, 'BlockGroup'] = group_containing_point(point, geo_blockgroups_list)
+        if smoothing_radius_miles is not None:
+            # TODO
+            data_out.loc[cso_i, 'BlockGroup_fraction'] = apportion_point_to_groups(
+                point, geo_blockgroups_list, smoothing_radius_miles)
+            breakpoint()
     return data_out
 
 @memory.cache
@@ -320,6 +374,7 @@ class CSOAnalysis():
             Path to geojson file with watershed polygons, by default '../docs/assets/geo_json/watshdp1_geojson_simple.json',
         geo_blockgroups_path: str
             Path to geojson file with Census block group polygons, by default '../docs/assets/geo_json/cb_2017_25_bg_500k.json',
+            NOTE: These can be downloaded from e.g. https://www.census.gov/geographies/mapping-files/time-series/geo/carto-boundary-file.html
         make_maps: bool
             Whether or not to execute the functions to generate maps, by default True,
         make_charts: bool
