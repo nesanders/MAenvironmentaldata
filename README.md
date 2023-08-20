@@ -28,7 +28,7 @@ cd docs
 bundle install
 ```
 
-Alternatively, use the premade `yml` file to instantiate teh conda environemnt like,
+Alternatively, use the premade `yml` file to instantiate the conda environemnt like,
 
 ```
 conda env create -f amend_jekyll_env.yml
