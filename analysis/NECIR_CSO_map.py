@@ -44,8 +44,6 @@ COLOR_CYCLE = [c['color'] for c in list(mpl.rcParams['axes.prop_cycle'])]
 
 DATABASE_URI = 'sqlite:///../get_data/AMEND.db'
 
-GeoList = List[Dict[str, Any]]
-
 # -------------------------
 # Standalone functions
 # -------------------------
@@ -124,97 +122,168 @@ def pop_weighted_average(x, cols):
         out += [np.sum(w * x[col].values) / np.sum(w)]
     return pd.Series(data = out, index=cols)
 
-def group_containing_point(point: Point, blockgroups: GeoList) -> float | str:
-    """For a given input `point`, identify an element of a GeoList `blockgroups` and 
-    return its ID.
-    """
-    output = np.nan
-    for feature in blockgroups:
-        polygon = shape(feature['geometry'])
-        if polygon.contains(point):
-           output = feature['properties']['GEOID'] 
-    if is_nan(output):
-        logging.info('No block group found for CSO #', str(cso_i))
-    return output
+# def group_containing_point(point: Point, blockgroups: gpd.GeoDataFrame) -> float | str:
+#     """For a given input `point`, identify an element of a gpd.GeoDataFrame `blockgroups` and 
+#     return its ID.
+#     """
+#     output = np.nan
+#     for feature in blockgroups:
+#         polygon = shape(feature['geometry'])
+#         if polygon.contains(point):
+#            output = feature['properties']['GEOID'] 
+#     if is_nan(output):
+#         logging.info('No block group found for CSO #', str(cso_i))
+#     return output
 
 # This CRS as defined in the .prj file obtained from 
 # https://www.census.gov/geographies/mapping-files/time-series/geo/carto-boundary-file.html
-DEFAULT_BLOCKGROUP_CRS = ('GEOGCS["GCS_North_American_1983",DATUM["D_North_American_1983",'
-    'SPHEROID["GRS_1980",6378137,298.257222101]],PRIMEM["Greenwich",0],UNIT["Degree",'
-    '0.017453292519943295]]')
-def apportion_point_to_groups(
-    point: Point, 
-    blockgroups: GeoList, 
-    radius_miles: float=7
-) -> pd.Series:
-    """For a given input `point`, apportion percent credit across multiple blockgroups.
-    
-    The output is a Series with elements corresponding to groups within `radius_miles`,
-    with an index of the group ID and values corresponding to an apportionment (adds to 
-    100%) proportional to the square root of the distance (equal area).
+# It is provided as ('GEOGCS["GCS_North_American_1983",DATUM["D_North_American_1983",'
+    # 'SPHEROID["GRS_1980",6378137,298.257222101]],PRIMEM["Greenwich",0],UNIT["Degree",'
+    # '0.017453292519943295]]')
+# Per the following resource, this corresponds to "EPSG:4326": https://gis.stackexchange.com/a/248081
+DEFAULT_BLOCKGROUP_CRS = "EPSG:4326"
+
+# def apportion_point_to_groups(
+#     point: Point, 
+#     blockgroups: gpd.GeoDataFrame, 
+#     radius_miles: float=7
+# ) -> pd.Series:
+#     """For a given input `point`, apportion percent credit across multiple blockgroups.
+#     
+#     The output is a Series with elements corresponding to groups within `radius_miles`,
+#     with an index of the group ID and values corresponding to an apportionment (adds to 
+#     100%) proportional to the square root of the distance (equal area).
+#     """
+#     output = np.nan
+#     gpdf = gpd.GeoDataFrame(data=blockgroups, crs=DEFAULT_BLOCKGROUP_CRS)
+#     buffer = radius_miles * 1.60934 * 10**4 # TODO make this into miles
+#     gdfbuf = gdfp.copy()
+#     gdfbuf.geometry = gdfp.geometry.to_crs(gdfp.estimate_utm_crs()).buffer(buffer).to_crs("DEFAULT_BLOCKGROUP_CRS")
+#     # TODO - need not do this pointwise, could join whole vector?
+#     gdfbuf = gpd.sjoin(gdfbuf, [point], how='left')
+#     breakpoint()
+#                 
+#     if is_nan(output):
+#         logging.info('No block group found for CSO #', str(cso_i))
+#     return output
+# 
+# @memory.cache
+# def _assign_cso_data_to_census_blocks(
+#     data_cso: pd.DataFrame, 
+#     geo_blockgroups_df: gpd.GeoDataFrame, 
+#     latitude_col: str, 
+#     longitude_col: str,
+#     smoothing_radius_miles: Optional[float]=7
+# ) -> pd.DataFrame:
+#     """Add a new 'BlockGroup' column to `data_cso` assigning CSOs to Census block groups.
+#     
+#     If smoothing_radius_miles is not None, then also create a 'BlockGroup_fraction' column
+#     that apportions a percentage of the CSO to all block groups within this radius (in miles) 
+#     according to the distance between the CSO and the blog group centroid. The 
+#     'BlockGroup_fraction' column contains
+#     """
+#     logging.info('Assigning CSO data to census blocks')
+#     data_out = data_cso.copy()
+#     ## Loop over Census block groups
+#     data_out['BlockGroup'] = np.nan
+#     if smoothing_radius_miles is not None:
+#         data_out['BlockGroup_fraction'] = np.nan
+#     ## Loop over CSO outfalls
+#     for cso_i in range(len(data_out)):
+#         point = Point(data_out.iloc[cso_i][longitude_col], data_out.iloc[cso_i][latitude_col])
+#         data_out.loc[cso_i, 'BlockGroup'] = group_containing_point(point, geo_blockgroups_df)
+#         if smoothing_radius_miles is not None:
+#             # TODO
+#             data_out.loc[cso_i, 'BlockGroup_fraction'] = apportion_point_to_groups(
+#                 point, geo_blockgroups_df, smoothing_radius_miles)
+#             breakpoint()
+#     return data_out
+# 
+# def distance_in_miles(lat1: float, long1: float, lat2: float, long2: float, crs_unit: float=0.01745
+# ) -> float:
+#     """Convert a distance provided in miles to the units of a CRS at the position
+#     of Massachusetts. 
+# 
+#     Constants estimated using this calculator: http://edwilliams.org/gccalc.htm
+#     
+#     0.5 deg of latitude is 34.51 mi
+#     0.5 deg of longitude is 26.47 mi
+#     
+#     The CRS unit provided corresponds to the distance unit in the US Census shapefiles.
+#     """
+#     lat_dist = ((lat2 - lat1) / crs_unit) * (26.47 / 0.5)
+#     long_dist = ((long2 - long1) / crs_unit) * (26.47 / 0.5)
+#     return np.sqrt(lat_dist**2 + long_dist**2)
+
+def smooth_discharge(x: pd.DataFrame, avg_cols: list[str]):
+    """Calculate a smoothed discharge value by taking a weighted average of rows in a `df` for 
+    each col in `avg_cols` weighting by the number of times a CSO appears across BlockGroups 
+    (to avoid double counting).
     """
-    output = np.nan
-    gpdf = gpd.GeoDataFrame(data=blockgroups, crs=DEFAULT_BLOCKGROUP_CRS)
-    buffer = radius_miles * 1.60934 * 10**4 # TODO make this into miles
-    gdfbuf = gdfp.copy()
-    gdfbuf.geometry = gdfp.geometry.to_crs(gdfp.estimate_utm_crs()).buffer(buffer).to_crs("DEFAULT_BLOCKGROUP_CRS")
-    # TODO - need not do this pointwise, could join whole vector?
-    gdfbuf = gpd.sjoin(gdfbuf, [point], how='left')
+    output = {}
+    for col in avg_cols:
+        output[col] = np.average(x[col], weight=x['cso_duplication'])
+    return pd.Series(output)
+
+METERS_PER_MILE = 1609.34
+def _assign_cso_data_to_census_blocks_with_geopandas(data_cso: pd.DataFrame, geo_blockgroups_df: gpd.GeoDataFrame, 
+    latitude: str='Latitude', longitude: str='Longitude', use_radius: Optional[float]=None) -> pd.DataFrame:
+    """Add a new 'BlockGroup' column to `data_cso` assigning CSOs to Census block groups using geopandas
+    operations.
+    """
+    # Using EPSG:4326 as a default CRS used by e.g. Google Maps, https://gis.stackexchange.com/a/327036
+    data_cso_gdf = gpd.GeoDataFrame(
+        data_cso, geometry=gpd.points_from_xy(data_cso[longitude], data_cso[latitude]), 
+        crs="EPSG:4326")
+    # Convert both to metric projects
+    utm_cso_df = data_cso_gdf.to_crs(epsg=3310)
+    utm_bg_df = geo_blockgroups_df.to_crs(epsg=3310)
+    
+    if use_radius is not None:
+        # We create a use_radius-sized buffer around the CSO, then match on the overlap with the BGs
+        utm_cso_buf_geom = utm_cso_df.buffer(use_radius * METERS_PER_MILE)
+        utm_cso_buf_df = utm_cso_df.set_geometry(utm_cso_buf_geom)
+        utm_merge_df = utm_bg_df.sjoin(utm_cso_buf_df, how='left', predicate='intersects')
+        cso_duplication = utm_merge_df.groupby('index')['GEOID'].count()
+        utm_merge_df['cso_duplication'] = cso_duplication.reindex(utm_merge_df['index']).values
+        # NOTE - need to make these averaging columns user editable
+        smoothed_discharge_df = utm_merge_df.groupby('GEOID').apply(smooth_discharge), ['2011_Discharges_MGal', '2011_Discharge_N']
+        
+        # Some statistics - 
+        # when using a 0.5 mile radius, CSOs overlap on average with 9.4 BGs, with a min of 3 and max of 18
+        # when using a 2 mile radius, CSOs overlap on average with 27 BGs, with a min of 10 and max of 71
+    else:
+        # Note - the resulting distance will be zero if the CSO lies within the BG
+        # This ends up being zero for 96% of CSOs.
+        # For CSOs outside a defined BG, the maximum observed distance is ~24 meters (0.015 miles)
+        utm_merge_df = utm_cso_df.sjoin(utm_bg_df, how='left', distance_col='bg_distance')
+        utm_merge_df['bg_distance_miles'] = utm_merge_df['bg_distance'] / METERS_PER_MILE
+    
     breakpoint()
-                
-    if is_nan(output):
-        logging.info('No block group found for CSO #', str(cso_i))
-    return output
+
 
 @memory.cache
-def _assign_cso_data_to_census_blocks(
-    data_cso: pd.DataFrame, 
-    geo_blockgroups_list: GeoList, 
-    latitude_col: str, 
-    longitude_col: str,
-    smoothing_radius_miles: Optional[float]=7
-) -> pd.DataFrame:
-    """Add a new 'BlockGroup' column to `data_cso` assigning CSOs to Census block groups.
-    
-    If smoothing_radius_miles is not None, then also create a 'BlockGroup_fraction' column
-    that apportions a percentage of the CSO to all block groups within this radius (in miles) 
-    according to the distance between the CSO and the blog group centroid. The 
-    'BlockGroup_fraction' column contains
-    """
-    logging.info('Assigning CSO data to census blocks')
-    data_out = data_cso.copy()
-    ## Loop over Census block groups
-    data_out['BlockGroup'] = np.nan
-    if smoothing_radius_miles is not None:
-        data_out['BlockGroup_fraction'] = np.nan
-    ## Loop over CSO outfalls
-    for cso_i in range(len(data_out)):
-        point = Point(data_out.iloc[cso_i][longitude_col], data_out.iloc[cso_i][latitude_col])
-        data_out.loc[cso_i, 'BlockGroup'] = group_containing_point(point, geo_blockgroups_list)
-        if smoothing_radius_miles is not None:
-            # TODO
-            data_out.loc[cso_i, 'BlockGroup_fraction'] = apportion_point_to_groups(
-                point, geo_blockgroups_list, smoothing_radius_miles)
-            breakpoint()
-    return data_out
-
-@memory.cache
-def _assign_cso_data_to_census_blocks_with_strtree(data_cso: pd.DataFrame, geo_blockgroups_list: GeoList, 
-    latitude_col: str, longitude_col: str) -> pd.DataFrame:
+def _assign_cso_data_to_census_blocks_with_strtree(data_cso: pd.DataFrame, geo_blockgroups_df: gpd.GeoDataFrame, 
+    latitude_col: str, longitude_col: str, use_radius: Optional[float]=None) -> pd.DataFrame:
     """Add a new 'BlockGroup' column to `data_cso` assigning CSOs to Census block groups using Shapely's
     STRTree class, based on a Sort-Tile-Recursive algorithm.
     
-    This should be functionally equivalent to `_assign_cso_data_to_census_blocks`, but much faster.
+    Set `use_radius` to a number of miles to use a distance buffer when assigning CSOs to blocks,
+    which can be used to do spatial smooting.
     """
     logging.info('Assigning CSO data to census blocks')
     data_out = data_cso.copy()
     # Loop over Census block groups
     data_out['BlockGroup'] = np.nan
     # Create STRTree
-    census_block_tree = STRtree([shape(feature['geometry']) for feature in geo_blockgroups_list])
+    census_block_tree = STRtree([shape(feature['geometry']) for feature in geo_blockgroups_df])
     cso_points = [Point(data_out.iloc[cso_i][longitude_col], data_out.iloc[cso_i][latitude_col]) for cso_i in range(len(data_out))]
     # Query for containment
-    result_indices = census_block_tree.query(cso_points, predicate='within')
+    if use_radius is None:
+        predicate, distance = 'within', None
+    else:
+        predicate, distance = 'dwithin', convert_from_miles(use_radius)
+    result_indices = census_block_tree.query(cso_points, predicate=predicate, distance=distance)
     # Parse the results
     for cso_i in range(len(data_out)):
         cso_result_set = (np.array(result_indices[0]) == cso_i)
@@ -225,32 +294,32 @@ def _assign_cso_data_to_census_blocks_with_strtree(data_cso: pd.DataFrame, geo_b
         ## Warn if multiple blockgroups were found
         if sum(cso_result_set) > 1:
             logging.info(f'N={sum(cso_result_set)} block groups were found for CSO #{cso_i}; will pick the first')
-        data_out.loc[cso_i, 'BlockGroup'] = geo_blockgroups_list[result_indices[1][cso_result_set][0]]['properties']['GEOID']
+        data_out.loc[cso_i, 'BlockGroup'] = geo_blockgroups_df[result_indices[1][cso_result_set][0]]['properties']['GEOID']
     return data_out
 
 @memory.cache
-def assign_ej_data_to_geo_bins(data_ejs: pd.DataFrame, geo_towns_list: GeoList, geo_watersheds_list: GeoList, 
-    geo_blockgroups_list: GeoList) -> pd.DataFrame:
+def assign_ej_data_to_geo_bins(data_ejs: pd.DataFrame, geo_towns_df: gpd.GeoDataFrame, geo_watersheds_df: gpd.GeoDataFrame, 
+    geo_blockgroups_df: gpd.GeoDataFrame) -> pd.DataFrame:
     """Return a version of `data_ejs` with added 'Town' and 'Watershed' columns.
     """
     logging.info('Adding Town and Watershed labels to EJ data')
     ## Loop over Census block groups
     bg_mapping = pd.DataFrame(
-        index=[geo_blockgroups_list[i]['properties']['GEOID'] for i in range(len(geo_blockgroups_list))], 
+        index=[geo_blockgroups_df[i]['properties']['GEOID'] for i in range(len(geo_blockgroups_df))], 
         columns=['Town','Watershed'])
     ## Loop over block groups
-    for feature in geo_blockgroups_list:
+    for feature in geo_blockgroups_df:
         polygon = shape(feature['geometry'])
         point = polygon.centroid
         ## Loop over towns
         bg_mapping.loc[feature['properties']['GEOID'], 'Town'] = pick_non_null(
-            lookup_town_for_feature(town_feature, point) for town_feature in geo_towns_list)
+            lookup_town_for_feature(town_feature, point) for town_feature in geo_towns_df)
         ## Warn if a town was not found
         if is_nan(bg_mapping.loc[feature['properties']['GEOID'], 'Town']):
             logging.info(f"No Town found for GEOID {feature['properties']['GEOID']}")
         ## Loop over watersheds
         bg_mapping.loc[feature['properties']['GEOID'], 'Watershed'] = pick_non_null(
-            lookup_watershed_for_feature(watershed_feature, point) for watershed_feature in geo_watersheds_list)
+            lookup_watershed_for_feature(watershed_feature, point) for watershed_feature in geo_watersheds_df)
         ## Warn if a watershed was not found
         if is_nan(bg_mapping.loc[feature['properties']['GEOID'], 'Watershed']):
             logging.info(f"No Watershed found for GEOID {feature['properties']['GEOID']}")
@@ -259,8 +328,8 @@ def assign_ej_data_to_geo_bins(data_ejs: pd.DataFrame, geo_towns_list: GeoList, 
     return data_ejs
 
 @memory.cache
-def assign_ej_data_to_geo_bins_with_strtree(data_ejs: pd.DataFrame, geo_towns_list: GeoList, geo_watersheds_list: GeoList, 
-    geo_blockgroups_list: GeoList) -> pd.DataFrame:
+def assign_ej_data_to_geo_bins_with_strtree(data_ejs: pd.DataFrame, geo_towns_df: gpd.GeoDataFrame, geo_watersheds_df: gpd.GeoDataFrame, 
+    geo_blockgroups_df: gpd.GeoDataFrame) -> pd.DataFrame:
     """Return a version of `data_ejs` with added 'Town' and 'Watershed' columns.
     
     This should be functionally equivalent to `assign_ej_data_to_geo_bins`, but much faster. But it still takes 
@@ -269,13 +338,13 @@ def assign_ej_data_to_geo_bins_with_strtree(data_ejs: pd.DataFrame, geo_towns_li
     logging.info('Adding Town and Watershed labels to EJ data')
     ## Loop over Census block groups
     bg_mapping = pd.DataFrame(
-        index=[geo_blockgroups_list[i]['properties']['GEOID'] for i in range(len(geo_blockgroups_list))], 
+        index=[geo_blockgroups_df[i]['properties']['GEOID'] for i in range(len(geo_blockgroups_df))], 
         columns=['Town','Watershed'])
     
-    cbg_points = {feature['properties']['GEOID']: shape(feature['geometry']).centroid for feature in geo_blockgroups_list}
+    cbg_points = {feature['properties']['GEOID']: shape(feature['geometry']).centroid for feature in geo_blockgroups_df}
     for geo_type, geo_list, geo_key in [
-            ('Town', geo_towns_list, 'TOWN'), 
-            ('Watershed', geo_watersheds_list, 'NAME')
+            ('Town', geo_towns_df, 'TOWN'), 
+            ('Watershed', geo_watersheds_df, 'NAME')
         ]:
         # Create STRTrees
         tree = STRtree([shape(feature['geometry']) for feature in geo_list])
@@ -404,13 +473,16 @@ class CSOAnalysis():
     # Data loading methods
     # -------------------------
     
-    def get_geo_files(self) -> Tuple[GeoList, GeoList, GeoList, GeoList]:
+    def get_geo_files(self) -> Tuple[gpd.GeoDataFrame, gpd.GeoDataFrame, gpd.GeoDataFrame, gpd.GeoDataFrame]:
         """Load and return geo json files.
         """
-        geo_towns_list = json.load(open(self.geo_towns_path))['features']
-        geo_watersheds_list = json.load(open(self.geo_watershed_path))['features']
-        geo_blockgroups_list = json.load(open(self.geo_blockgroups_path))['features']
-        return geo_towns_list, geo_watersheds_list, geo_blockgroups_list
+        geo_towns_df = gpd.GeoDataFrame.from_file(self.geo_towns_path)
+        geo_watersheds_df = gpd.GeoDataFrame.from_file(self.geo_watershed_path)
+        geo_blockgroups_df = gpd.GeoDataFrame.from_file(self.geo_blockgroups_path)
+        geo_dfs = (geo_towns_df, geo_watersheds_df, geo_blockgroups_df)
+        for gdf in geo_dfs:
+            gdf.set_crs(DEFAULT_BLOCKGROUP_CRS)
+        return geo_dfs
 
     
     def load_data_cso(self) -> pd.DataFrame:
@@ -445,12 +517,12 @@ class CSOAnalysis():
     # Data transforming methods
     # -------------------------
 
-    def assign_cso_data_to_census_blocks(self, data_cso: pd.DataFrame, geo_blockgroups_list: GeoList) -> pd.DataFrame:
+    def assign_cso_data_to_census_blocks(self, 
+        data_cso: pd.DataFrame, geo_blockgroups_df: gpd.GeoDataFrame, use_radius: Optional[float]
+    ) -> pd.DataFrame:
         """Add a new 'BlockGroup' column to `data_cso` assigning CSOs to Census block groups.
         """
-        # This is an older, much slower method, which should yield equivalent results
-        #_assign_cso_data_to_census_blocks(data_cso, geo_blockgroups_list, self.latitude_col, self.longitude_col)
-        return _assign_cso_data_to_census_blocks_with_strtree(data_cso, geo_blockgroups_list, self.latitude_col, self.longitude_col)
+        return _assign_cso_data_to_census_blocks_with_geopandas(data_cso, geo_blockgroups_df, self.latitude_col, self.longitude_col, use_radius)
     
     def apply_pop_weighted_avg(self, data_cso: pd.DataFrame, data_ejs: pd.DataFrame
     ) -> Tuple[pd.DataFrame, pd.DataFrame, pd.DataFrame, pd.DataFrame, pd.DataFrame]:
@@ -462,7 +534,7 @@ class CSOAnalysis():
     # Mapping functions
     # -------------------------
     
-    def make_map_discharge_volumes(self, data_cso: pd.DataFrame, geo_watersheds_list: GeoList, data_ins_g_bg: pd.DataFrame, 
+    def make_map_discharge_volumes(self, data_cso: pd.DataFrame, geo_watersheds_df: gpd.GeoDataFrame, data_ins_g_bg: pd.DataFrame, 
         data_ins_g_muni_j: pd.DataFrame, data_ins_g_ws_j: pd.DataFrame):
         """
         Map of discharge volumes with layers for watershed, town, and census block group with CSO points
@@ -544,7 +616,7 @@ class CSOAnalysis():
                 ).add_to(map_1)
 
         ## Add labels for watersheds
-        for feature in geo_watersheds_list:
+        for feature in geo_watersheds_df:
             pos = shape(feature['geometry']).centroid.coords.xy
             pos = (pos[1][0], pos[0][0])
             folium.Marker(pos, icon=folium.features.DivIcon(
@@ -560,7 +632,7 @@ class CSOAnalysis():
         map_1.save(self.out_path + f'{self.output_slug}_map_total.html')
 
     def make_map_ej_characteristics(self, data_egs_merge: pd.DataFrame, data_cso: pd.DataFrame, 
-        df_town_level: pd.DataFrame, df_watershed_level: pd.DataFrame, geo_watersheds_list: GeoList):
+        df_town_level: pd.DataFrame, df_watershed_level: pd.DataFrame, geo_watersheds_df: gpd.GeoDataFrame):
         """Map of EJ characteristics with layers for watershed, town, and census block group with CSO points
         """
         logging.info('Making map of EJ characteristics')
@@ -644,7 +716,7 @@ class CSOAnalysis():
                     ).add_to(map_2)
 
             ## Add labels for watersheds
-            for feature in geo_watersheds_list:
+            for feature in geo_watersheds_df:
                 pos = shape(feature['geometry']).centroid.coords.xy
                 pos = (pos[1][0], pos[0][0])
                 folium.Marker(pos, icon=folium.features.DivIcon(
@@ -920,20 +992,20 @@ class CSOAnalysis():
         open(self.fact_file, 'w').close()
         
         # Data ETL
-        self.geo_towns_list, self.geo_watersheds_list, self.geo_blockgroups_list = self.get_geo_files()
+        self.geo_towns_df, self.geo_watersheds_df, self.geo_blockgroups_df = self.get_geo_files()
         self.data_cso, self.data_ejs = self.load_data()
         # TODO should add these results to the database
-        self.data_cso = self.assign_cso_data_to_census_blocks(self.data_cso, self.geo_blockgroups_list)
-        self.data_ejs = assign_ej_data_to_geo_bins_with_strtree(self.data_ejs, self.geo_towns_list, self.geo_watersheds_list, self.geo_blockgroups_list)
+        self.data_cso = self.assign_cso_data_to_census_blocks(self.data_cso, self.geo_blockgroups_df)
+        self.data_ejs = assign_ej_data_to_geo_bins_with_strtree(self.data_ejs, self.geo_towns_df, self.geo_watersheds_df, self.geo_blockgroups_df)
         self.data_ins_g_bg, self.data_ins_g_muni_j, self.data_ins_g_ws_j, self.data_egs_merge, self.df_watershed_level, self.df_town_level = \
             self.apply_pop_weighted_avg(self.data_cso, self.data_ejs)
         
         # Make maps
         if self.make_maps:
             self.make_map_discharge_volumes(
-                self.data_cso, self.geo_watersheds_list, self.data_ins_g_bg, self.data_ins_g_muni_j, self.data_ins_g_ws_j)
+                self.data_cso, self.geo_watersheds_df, self.data_ins_g_bg, self.data_ins_g_muni_j, self.data_ins_g_ws_j)
             self.make_map_ej_characteristics(
-                self.data_egs_merge, self.data_cso, self.df_town_level, self.df_watershed_level, self.geo_watersheds_list)
+                self.data_egs_merge, self.data_cso, self.df_town_level, self.df_watershed_level, self.geo_watersheds_df)
         
         # Make charts
         if self.make_charts:
@@ -957,8 +1029,8 @@ class CSOAnalysis():
                 ):
                 self.fits[col] = {}
                 for level_col, level_demo_df, level_cso_df in [
-                    ('Watershed', self.df_watershed_level, self.data_ins_g_ws_j), 
-                    ('Town', self.df_town_level, self.data_ins_g_muni_j), 
+                    # ('Watershed', self.df_watershed_level, self.data_ins_g_ws_j), 
+                    # ('Town', self.df_town_level, self.data_ins_g_muni_j), 
                     ('ID', self.data_egs_merge.set_index('ID'), self.data_ins_g_bg)]:
                     fit, fit_par, stan_dat, pop_data = self.fit_stan_model(col, self.data_egs_merge, level_demo_df, 
                         level_cso_df, level_col=level_col)
