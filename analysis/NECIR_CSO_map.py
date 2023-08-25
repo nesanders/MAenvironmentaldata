@@ -122,19 +122,6 @@ def pop_weighted_average(x, cols):
         out += [np.sum(w * x[col].values) / np.sum(w)]
     return pd.Series(data = out, index=cols)
 
-# def group_containing_point(point: Point, blockgroups: gpd.GeoDataFrame) -> float | str:
-#     """For a given input `point`, identify an element of a gpd.GeoDataFrame `blockgroups` and 
-#     return its ID.
-#     """
-#     output = np.nan
-#     for feature in blockgroups:
-#         polygon = shape(feature['geometry'])
-#         if polygon.contains(point):
-#            output = feature['properties']['GEOID'] 
-#     if is_nan(output):
-#         logging.info('No block group found for CSO #', str(cso_i))
-#     return output
-
 # This CRS as defined in the .prj file obtained from 
 # https://www.census.gov/geographies/mapping-files/time-series/geo/carto-boundary-file.html
 # It is provided as ('GEOGCS["GCS_North_American_1983",DATUM["D_North_American_1983",'
@@ -143,86 +130,17 @@ def pop_weighted_average(x, cols):
 # Per the following resource, this corresponds to "EPSG:4326": https://gis.stackexchange.com/a/248081
 DEFAULT_BLOCKGROUP_CRS = "EPSG:4326"
 
-# def apportion_point_to_groups(
-#     point: Point, 
-#     blockgroups: gpd.GeoDataFrame, 
-#     radius_miles: float=7
-# ) -> pd.Series:
-#     """For a given input `point`, apportion percent credit across multiple blockgroups.
-#     
-#     The output is a Series with elements corresponding to groups within `radius_miles`,
-#     with an index of the group ID and values corresponding to an apportionment (adds to 
-#     100%) proportional to the square root of the distance (equal area).
-#     """
-#     output = np.nan
-#     gpdf = gpd.GeoDataFrame(data=blockgroups, crs=DEFAULT_BLOCKGROUP_CRS)
-#     buffer = radius_miles * 1.60934 * 10**4 # TODO make this into miles
-#     gdfbuf = gdfp.copy()
-#     gdfbuf.geometry = gdfp.geometry.to_crs(gdfp.estimate_utm_crs()).buffer(buffer).to_crs("DEFAULT_BLOCKGROUP_CRS")
-#     # TODO - need not do this pointwise, could join whole vector?
-#     gdfbuf = gpd.sjoin(gdfbuf, [point], how='left')
-#     breakpoint()
-#                 
-#     if is_nan(output):
-#         logging.info('No block group found for CSO #', str(cso_i))
-#     return output
-# 
-# @memory.cache
-# def _assign_cso_data_to_census_blocks(
-#     data_cso: pd.DataFrame, 
-#     geo_blockgroups_df: gpd.GeoDataFrame, 
-#     latitude_col: str, 
-#     longitude_col: str,
-#     smoothing_radius_miles: Optional[float]=7
-# ) -> pd.DataFrame:
-#     """Add a new 'BlockGroup' column to `data_cso` assigning CSOs to Census block groups.
-#     
-#     If smoothing_radius_miles is not None, then also create a 'BlockGroup_fraction' column
-#     that apportions a percentage of the CSO to all block groups within this radius (in miles) 
-#     according to the distance between the CSO and the blog group centroid. The 
-#     'BlockGroup_fraction' column contains
-#     """
-#     logging.info('Assigning CSO data to census blocks')
-#     data_out = data_cso.copy()
-#     ## Loop over Census block groups
-#     data_out['BlockGroup'] = np.nan
-#     if smoothing_radius_miles is not None:
-#         data_out['BlockGroup_fraction'] = np.nan
-#     ## Loop over CSO outfalls
-#     for cso_i in range(len(data_out)):
-#         point = Point(data_out.iloc[cso_i][longitude_col], data_out.iloc[cso_i][latitude_col])
-#         data_out.loc[cso_i, 'BlockGroup'] = group_containing_point(point, geo_blockgroups_df)
-#         if smoothing_radius_miles is not None:
-#             # TODO
-#             data_out.loc[cso_i, 'BlockGroup_fraction'] = apportion_point_to_groups(
-#                 point, geo_blockgroups_df, smoothing_radius_miles)
-#             breakpoint()
-#     return data_out
-# 
-# def distance_in_miles(lat1: float, long1: float, lat2: float, long2: float, crs_unit: float=0.01745
-# ) -> float:
-#     """Convert a distance provided in miles to the units of a CRS at the position
-#     of Massachusetts. 
-# 
-#     Constants estimated using this calculator: http://edwilliams.org/gccalc.htm
-#     
-#     0.5 deg of latitude is 34.51 mi
-#     0.5 deg of longitude is 26.47 mi
-#     
-#     The CRS unit provided corresponds to the distance unit in the US Census shapefiles.
-#     """
-#     lat_dist = ((lat2 - lat1) / crs_unit) * (26.47 / 0.5)
-#     long_dist = ((long2 - long1) / crs_unit) * (26.47 / 0.5)
-#     return np.sqrt(lat_dist**2 + long_dist**2)
-
 def smooth_discharge(x: pd.DataFrame, avg_cols: list[str]):
     """Calculate a smoothed discharge value by taking a weighted average of rows in a `df` for 
-    each col in `avg_cols` weighting by the number of times a CSO appears across BlockGroups 
+    each col in `avg_cols`, weighting by the number of times a CSO appears across BlockGroups 
     (to avoid double counting).
+    
+    The input df `x` should be a set of CSO rows falling within a given Census BG.
     """
     output = {}
     for col in avg_cols:
         output[col] = np.average(x[col], weight=x['cso_duplication'])
+    output['num_buffered_csos'] = len(x)
     return pd.Series(output)
 
 METERS_PER_MILE = 1609.34
@@ -238,28 +156,26 @@ def _assign_cso_data_to_census_blocks_with_geopandas(data_cso: pd.DataFrame, geo
     # Convert both to metric projects
     utm_cso_df = data_cso_gdf.to_crs(epsg=3310)
     utm_bg_df = geo_blockgroups_df.to_crs(epsg=3310)
+    discharge_cols = ['2011_Discharges_MGal', '2011_Discharge_N']
     
     if use_radius is not None:
         # We create a use_radius-sized buffer around the CSO, then match on the overlap with the BGs
+        # Some statistics - 
+        # when using a 0.5 mile radius, CSOs overlap on average with 9.4 BGs, with a min of 3 and max of 18
+        # when using a 2 mile radius, CSOs overlap on average with 27 BGs, with a min of 10 and max of 71
         utm_cso_buf_geom = utm_cso_df.buffer(use_radius * METERS_PER_MILE)
         utm_cso_buf_df = utm_cso_df.set_geometry(utm_cso_buf_geom)
         utm_merge_df = utm_bg_df.sjoin(utm_cso_buf_df, how='left', predicate='intersects')
         cso_duplication = utm_merge_df.groupby('index')['GEOID'].count()
         utm_merge_df['cso_duplication'] = cso_duplication.reindex(utm_merge_df['index']).values
         # NOTE - need to make these averaging columns user editable
-        smoothed_discharge_df = utm_merge_df.groupby('GEOID').apply(smooth_discharge), ['2011_Discharges_MGal', '2011_Discharge_N']
-        
-        # Some statistics - 
-        # when using a 0.5 mile radius, CSOs overlap on average with 9.4 BGs, with a min of 3 and max of 18
-        # when using a 2 mile radius, CSOs overlap on average with 27 BGs, with a min of 10 and max of 71
+        smoothed_discharge_df = utm_merge_df.groupby('GEOID').apply(smooth_discharge), discharge_cols)
+        for col in discharge_cols:
+            utm_cso_df[col] = smoothed_discharge_df[col].reindex(utm_cso_df['GEOID'])
     else:
-        # Note - the resulting distance will be zero if the CSO lies within the BG
-        # This ends up being zero for 96% of CSOs.
-        # For CSOs outside a defined BG, the maximum observed distance is ~24 meters (0.015 miles)
-        utm_merge_df = utm_cso_df.sjoin(utm_bg_df, how='left', distance_col='bg_distance')
-        utm_merge_df['bg_distance_miles'] = utm_merge_df['bg_distance'] / METERS_PER_MILE
+        utm_merge_df = utm_bg_df.sjoin_nearest(utm_cso_df, how='left', predicate='within')
     
-    breakpoint()
+    return utm_merge_df
 
 
 @memory.cache
