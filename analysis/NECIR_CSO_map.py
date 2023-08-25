@@ -166,82 +166,16 @@ def _assign_cso_data_to_census_blocks_with_geopandas(data_cso: pd.DataFrame, geo
         utm_cso_buf_geom = utm_cso_df.buffer(use_radius * METERS_PER_MILE)
         utm_cso_buf_df = utm_cso_df.set_geometry(utm_cso_buf_geom)
         utm_merge_df = utm_bg_df.sjoin(utm_cso_buf_df, how='left', predicate='intersects')
-        cso_duplication = utm_merge_df.groupby('index')['GEOID'].count()
-        utm_merge_df['cso_duplication'] = cso_duplication.reindex(utm_merge_df['index']).values
+        cso_duplication = utm_merge_df.groupby('cso_index')['GEOID'].count()
+        utm_merge_df['cso_duplication'] = cso_duplication.reindex(utm_merge_df['cso_index']).values
         # NOTE - need to make these averaging columns user editable
-        smoothed_discharge_df = utm_merge_df.groupby('GEOID').apply(smooth_discharge), discharge_cols)
+        smoothed_discharge_df = utm_merge_df.groupby('GEOID').apply(smooth_discharge, discharge_cols)
         for col in discharge_cols:
             utm_cso_df[col] = smoothed_discharge_df[col].reindex(utm_cso_df['GEOID'])
     else:
-        utm_merge_df = utm_bg_df.sjoin_nearest(utm_cso_df, how='left', predicate='within')
+        utm_merge_df = utm_bg_df.sjoin(utm_cso_df, how='left', predicate='within')
     
     return utm_merge_df
-
-
-@memory.cache
-def _assign_cso_data_to_census_blocks_with_strtree(data_cso: pd.DataFrame, geo_blockgroups_df: gpd.GeoDataFrame, 
-    latitude_col: str, longitude_col: str, use_radius: Optional[float]=None) -> pd.DataFrame:
-    """Add a new 'BlockGroup' column to `data_cso` assigning CSOs to Census block groups using Shapely's
-    STRTree class, based on a Sort-Tile-Recursive algorithm.
-    
-    Set `use_radius` to a number of miles to use a distance buffer when assigning CSOs to blocks,
-    which can be used to do spatial smooting.
-    """
-    logging.info('Assigning CSO data to census blocks')
-    data_out = data_cso.copy()
-    # Loop over Census block groups
-    data_out['BlockGroup'] = np.nan
-    # Create STRTree
-    census_block_tree = STRtree([shape(feature['geometry']) for feature in geo_blockgroups_df])
-    cso_points = [Point(data_out.iloc[cso_i][longitude_col], data_out.iloc[cso_i][latitude_col]) for cso_i in range(len(data_out))]
-    # Query for containment
-    if use_radius is None:
-        predicate, distance = 'within', None
-    else:
-        predicate, distance = 'dwithin', convert_from_miles(use_radius)
-    result_indices = census_block_tree.query(cso_points, predicate=predicate, distance=distance)
-    # Parse the results
-    for cso_i in range(len(data_out)):
-        cso_result_set = (np.array(result_indices[0]) == cso_i)
-        ## Warn if a blockgroup was not found
-        if sum(cso_result_set) == 0:
-            logging.info(f'No block group found for CSO #{cso_i}')
-            continue
-        ## Warn if multiple blockgroups were found
-        if sum(cso_result_set) > 1:
-            logging.info(f'N={sum(cso_result_set)} block groups were found for CSO #{cso_i}; will pick the first')
-        data_out.loc[cso_i, 'BlockGroup'] = geo_blockgroups_df[result_indices[1][cso_result_set][0]]['properties']['GEOID']
-    return data_out
-
-@memory.cache
-def assign_ej_data_to_geo_bins(data_ejs: pd.DataFrame, geo_towns_df: gpd.GeoDataFrame, geo_watersheds_df: gpd.GeoDataFrame, 
-    geo_blockgroups_df: gpd.GeoDataFrame) -> pd.DataFrame:
-    """Return a version of `data_ejs` with added 'Town' and 'Watershed' columns.
-    """
-    logging.info('Adding Town and Watershed labels to EJ data')
-    ## Loop over Census block groups
-    bg_mapping = pd.DataFrame(
-        index=[geo_blockgroups_df[i]['properties']['GEOID'] for i in range(len(geo_blockgroups_df))], 
-        columns=['Town','Watershed'])
-    ## Loop over block groups
-    for feature in geo_blockgroups_df:
-        polygon = shape(feature['geometry'])
-        point = polygon.centroid
-        ## Loop over towns
-        bg_mapping.loc[feature['properties']['GEOID'], 'Town'] = pick_non_null(
-            lookup_town_for_feature(town_feature, point) for town_feature in geo_towns_df)
-        ## Warn if a town was not found
-        if is_nan(bg_mapping.loc[feature['properties']['GEOID'], 'Town']):
-            logging.info(f"No Town found for GEOID {feature['properties']['GEOID']}")
-        ## Loop over watersheds
-        bg_mapping.loc[feature['properties']['GEOID'], 'Watershed'] = pick_non_null(
-            lookup_watershed_for_feature(watershed_feature, point) for watershed_feature in geo_watersheds_df)
-        ## Warn if a watershed was not found
-        if is_nan(bg_mapping.loc[feature['properties']['GEOID'], 'Watershed']):
-            logging.info(f"No Watershed found for GEOID {feature['properties']['GEOID']}")
-
-    data_ejs = pd.merge(data_ejs, bg_mapping, left_on = 'ID', right_index=True, how='left')
-    return data_ejs
 
 @memory.cache
 def assign_ej_data_to_geo_bins_with_strtree(data_ejs: pd.DataFrame, geo_towns_df: gpd.GeoDataFrame, geo_watersheds_df: gpd.GeoDataFrame, 
@@ -409,6 +343,7 @@ class CSOAnalysis():
         data_cso = pd.read_sql_query('SELECT * FROM NECIR_CSO_2011', disk_engine)
         data_cso[self.discharge_vol_col] = data_cso[self.discharge_vol_col].apply(safe_float)
         data_cso[self.discharge_count_col] = data_cso[self.discharge_count_col].apply(safe_float)
+        data_cso.rename({'index': 'cso_index'}, inplace=True)
         return data_cso
     
     @staticmethod
@@ -911,7 +846,9 @@ class CSOAnalysis():
         self.geo_towns_df, self.geo_watersheds_df, self.geo_blockgroups_df = self.get_geo_files()
         self.data_cso, self.data_ejs = self.load_data()
         # TODO should add these results to the database
-        self.data_cso = self.assign_cso_data_to_census_blocks(self.data_cso, self.geo_blockgroups_df)
+        self.data_cso = self.assign_cso_data_to_census_blocks(self.data_cso, self.geo_blockgroups_df, None)
+        self.data_cso_smoothed = self.assign_cso_data_to_census_blocks(self.data_cso, self.geo_blockgroups_df, 0.5)
+        breakpoint()
         self.data_ejs = assign_ej_data_to_geo_bins_with_strtree(self.data_ejs, self.geo_towns_df, self.geo_watersheds_df, self.geo_blockgroups_df)
         self.data_ins_g_bg, self.data_ins_g_muni_j, self.data_ins_g_ws_j, self.data_egs_merge, self.df_watershed_level, self.df_town_level = \
             self.apply_pop_weighted_avg(self.data_cso, self.data_ejs)
