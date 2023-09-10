@@ -139,7 +139,7 @@ def smooth_discharge(x: pd.DataFrame, avg_cols: list[str]):
     """
     output = {}
     for col in avg_cols:
-        output[col] = np.average(x[col], weight=x['cso_duplication'])
+        output[col] = np.average(x[col], weights=x['cso_duplication'])
     output['num_buffered_csos'] = len(x)
     return pd.Series(output)
 
@@ -148,7 +148,12 @@ def _assign_cso_data_to_census_blocks_with_geopandas(data_cso: pd.DataFrame, geo
     latitude: str='Latitude', longitude: str='Longitude', use_radius: Optional[float]=None) -> pd.DataFrame:
     """Add a new 'BlockGroup' column to `data_cso` assigning CSOs to Census block groups using geopandas
     operations.
+    
+    When using `use_radius` (not `None`), the output will instead be `geo_blockgroups_df` with columns added for the smoothed
+    sum of CSO discharges from CSOs within the specified radius for each blockgroup, via `smooth_discharge`.
     """
+    logging.info(f'Assigning CSO data to Census Blocks with {use_radiu=s}')
+    data_cso = data_cso.copy()
     # Using EPSG:4326 as a default CRS used by e.g. Google Maps, https://gis.stackexchange.com/a/327036
     data_cso_gdf = gpd.GeoDataFrame(
         data_cso, geometry=gpd.points_from_xy(data_cso[longitude], data_cso[latitude]), 
@@ -166,16 +171,24 @@ def _assign_cso_data_to_census_blocks_with_geopandas(data_cso: pd.DataFrame, geo
         utm_cso_buf_geom = utm_cso_df.buffer(use_radius * METERS_PER_MILE)
         utm_cso_buf_df = utm_cso_df.set_geometry(utm_cso_buf_geom)
         utm_merge_df = utm_bg_df.sjoin(utm_cso_buf_df, how='left', predicate='intersects')
+        
+        logging.info(f'Total number of CSOs: N={len(data_cso)}')
+        logging.info(f'Total number of CSOs-BlockGroup pairs within {use_radius=}: N={len(utm_merge_df)}')
+        
         cso_duplication = utm_merge_df.groupby('index')['GEOID'].count()
         utm_merge_df['cso_duplication'] = cso_duplication.reindex(utm_merge_df['index']).values
         # NOTE - need to make these averaging columns user editable
-        smoothed_discharge_df = utm_merge_df.groupby('GEOID').apply(smooth_discharge), discharge_cols)
+        smoothed_discharge_df = utm_merge_df.groupby('GEOID').apply(smooth_discharge, discharge_cols)
+        
         for col in discharge_cols:
-            utm_cso_df[col] = smoothed_discharge_df[col].reindex(utm_cso_df['GEOID'])
-    else:
-        utm_merge_df = utm_bg_df.sjoin_nearest(utm_cso_df, how='left', predicate='within')
+            utm_bg_df[col] = smoothed_discharge_df[col].reindex(utm_bg_df['GEOID']).values
+        
+        return utm_merge_df
     
-    return utm_merge_df
+    else:
+        utm_merge_df = utm_cso_df.sjoin(utm_bg_df, how='left', predicate='intersects')
+        data_cso['BlockGroup'] = utm_merge_df['GEOID'].values
+        return data_cso
 
 
 @memory.cache
@@ -409,6 +422,7 @@ class CSOAnalysis():
         data_cso = pd.read_sql_query('SELECT * FROM NECIR_CSO_2011', disk_engine)
         data_cso[self.discharge_vol_col] = data_cso[self.discharge_vol_col].apply(safe_float)
         data_cso[self.discharge_count_col] = data_cso[self.discharge_count_col].apply(safe_float)
+        data_cso.reindex(columns={'index': 'cso_id'}, inplace=True)
         return data_cso
     
     @staticmethod
@@ -434,7 +448,7 @@ class CSOAnalysis():
     # -------------------------
 
     def assign_cso_data_to_census_blocks(self, 
-        data_cso: pd.DataFrame, geo_blockgroups_df: gpd.GeoDataFrame, use_radius: Optional[float]
+        data_cso: pd.DataFrame, geo_blockgroups_df: gpd.GeoDataFrame, use_radius: Optional[float]=None
     ) -> pd.DataFrame:
         """Add a new 'BlockGroup' column to `data_cso` assigning CSOs to Census block groups.
         """
@@ -911,7 +925,7 @@ class CSOAnalysis():
         self.geo_towns_df, self.geo_watersheds_df, self.geo_blockgroups_df = self.get_geo_files()
         self.data_cso, self.data_ejs = self.load_data()
         # TODO should add these results to the database
-        self.data_cso = self.assign_cso_data_to_census_blocks(self.data_cso, self.geo_blockgroups_df)
+        self.data_cso = self.assign_cso_data_to_census_blocks(self.data_cso, self.geo_blockgroups_df, use_radius=0.5)
         self.data_ejs = assign_ej_data_to_geo_bins_with_strtree(self.data_ejs, self.geo_towns_df, self.geo_watersheds_df, self.geo_blockgroups_df)
         self.data_ins_g_bg, self.data_ins_g_muni_j, self.data_ins_g_ws_j, self.data_egs_merge, self.df_watershed_level, self.df_town_level = \
             self.apply_pop_weighted_avg(self.data_cso, self.data_ejs)
