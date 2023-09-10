@@ -176,7 +176,7 @@ def _assign_cso_data_to_census_blocks_with_geopandas(data_cso: pd.DataFrame, geo
         logging.info(f'Total number of CSOs-BlockGroup pairs within {use_radius=}: N={len(utm_merge_df)}')
         
         cso_duplication = utm_merge_df.groupby('cso_id')['GEOID'].count()
-        utm_merge_df['cso_duplication'] = cso_duplication.reindex(utm_merge_df['index']).values
+        utm_merge_df['cso_duplication'] = cso_duplication.reindex(utm_merge_df['cso_id']).values
         # NOTE - need to make these averaging columns user editable
         smoothed_discharge_df = utm_merge_df.groupby('GEOID').apply(smooth_discharge, discharge_cols)
         
