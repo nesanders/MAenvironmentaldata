@@ -152,7 +152,7 @@ def _assign_cso_data_to_census_blocks_with_geopandas(data_cso: pd.DataFrame, geo
     When using `use_radius` (not `None`), the output will instead be `geo_blockgroups_df` with columns added for the smoothed
     sum of CSO discharges from CSOs within the specified radius for each blockgroup, via `smooth_discharge`.
     """
-    logging.info(f'Assigning CSO data to Census Blocks with {use_radiu=s}')
+    logging.info(f'Assigning CSO data to Census Blocks with {use_radius=}')
     data_cso = data_cso.copy()
     # Using EPSG:4326 as a default CRS used by e.g. Google Maps, https://gis.stackexchange.com/a/327036
     data_cso_gdf = gpd.GeoDataFrame(
@@ -422,7 +422,7 @@ class CSOAnalysis():
         data_cso = pd.read_sql_query('SELECT * FROM NECIR_CSO_2011', disk_engine)
         data_cso[self.discharge_vol_col] = data_cso[self.discharge_vol_col].apply(safe_float)
         data_cso[self.discharge_count_col] = data_cso[self.discharge_count_col].apply(safe_float)
-        data_cso.reindex(columns={'index': 'cso_id'}, inplace=True)
+        data_cso.rename(columns={'index': 'cso_id'}, inplace=True)
         return data_cso
     
     @staticmethod
