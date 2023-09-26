@@ -222,11 +222,11 @@ def assign_ej_data_to_geo_bins_with_geopandas(data_ejs: pd.DataFrame, geo_towns_
             elif len(result_set) > 1:
                 logging.info(f'N={len(result_set)} {geo_type}s were found for Census Block Group #{cbg_id}; will pick the first')
             
-            # TODO fix beyond here
-            breakpoint()
-        
-            bg_mapping.loc[cbg_id, geo_type] = geo_df[result_indices[1][result_set][0]]['properties'][geo_key]
+            bg_mapping.loc[cbg_id, geo_type] = result_set.iloc[0][geo_key]
 
+    # TODO fix beyond here
+    breakpoint()
+        
     data_ejs = pd.merge(data_ejs, bg_mapping, left_on='ID', right_index=True, how='left')
     return data_ejs
 
