@@ -196,25 +196,25 @@ def _assign_cso_data_to_census_blocks_with_geopandas(data_cso: pd.DataFrame, geo
 
 @memory.cache
 def assign_ej_data_to_geo_bins_with_geopandas(data_ejs: pd.DataFrame, geo_towns_df: gpd.GeoDataFrame, 
-    geo_watersheds_df: gpd.GeoDataFrame, geo_blockgroups_df: gpd.GeoDataFrame) -> pd.DataFrame:
+    geo_watersheds_df: gpd.GeoDataFrame, geo_blockgroups_df: gpd.GeoDataFrame, latitude: str='Latitude', 
+    longitude: str='Longitude') -> pd.DataFrame:
     """Return a version of `data_ejs` with added 'Town' and 'Watershed' columns.
     """    
     logging.info('Adding Town and Watershed labels to EJ data')
     # Convert both to metric projects
-    utm_ejs_df = cast_df_to_epsg_3310(data_ejs, latitude, longitude)
     utm_towns_df = geo_towns_df.to_crs(epsg=3310)
     utm_watersheds_df = geo_watersheds_df.to_crs(epsg=3310)
     utm_blockgroups_df = geo_blockgroups_df.to_crs(epsg=3310)
-    cbg_points = geo_blockgroups_df.centroid
+    cbg_points = gpd.GeoDataFrame(geometry=utm_blockgroups_df.centroid, index=utm_blockgroups_df.index)
     
     for geo_type, geo_df, geo_key in [
             ('Town', utm_towns_df, 'TOWN'), 
             ('Watershed', utm_watersheds_df, 'NAME')
         ]:
-        result_df = geo_df.sjoin(cbg_points, predicate='within')
+        result_df = cbg_points.sjoin(geo_df, predicate='within')
         # Parse the results
         for cbg_id in cbg_points.index:
-            result_set = result_df.loc[result_df.index == geo_id]
+            result_set = result_df.loc[result_df.index == cbg_id]
             if len(result_set) == 0:
                 logging.info(f'No {geo_type} found for Census Block Group #{cbg_id}')
                 continue
