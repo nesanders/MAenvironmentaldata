@@ -198,23 +198,32 @@ def _assign_cso_data_to_census_blocks_with_geopandas(data_cso: pd.DataFrame, geo
 def assign_ej_data_to_geo_bins_with_geopandas(data_ejs: pd.DataFrame, geo_towns_df: gpd.GeoDataFrame, 
     geo_watersheds_df: gpd.GeoDataFrame, geo_blockgroups_df: gpd.GeoDataFrame, latitude: str='Latitude', 
     longitude: str='Longitude') -> pd.DataFrame:
-    """Return a version of `data_ejs` with added 'Town' and 'Watershed' columns.
+    """Return a version of `data_ejs` with added 'Town', 'Watershed', and 'Census Block' columns.
+    
+    The EJ dataframe is indexed on census blockgroups, so we first merge in the block group geometry and
+    then lookup the town and watershed info.
     """    
     logging.info('Adding Town and Watershed labels to EJ data')
     # Convert both to metric projects
     utm_towns_df = geo_towns_df.to_crs(epsg=3310)
     utm_watersheds_df = geo_watersheds_df.to_crs(epsg=3310)
     utm_blockgroups_df = geo_blockgroups_df.to_crs(epsg=3310)
-    cbg_points = gpd.GeoDataFrame(geometry=utm_blockgroups_df.centroid, index=utm_blockgroups_df.index)
+    # cbg_points = gpd.GeoDataFrame(geometry=utm_blockgroups_df.centroid, index=utm_blockgroups_df.index)
     
+    data_ejs_cbg_merge = utm_blockgroups_df.merge(data_ejs, left_on='GEOID', right_on='ID', how='right')
+    # Not sure why there are 2 duplicates, but this dedupe is needed to create the centroid dataframe
+    # Not actually needed?
+    # data_ejs_cbg_merge = data_ejs_cbg_merge.drop_duplicates('GEOID')
+    data_ejs_centroids = gpd.GeoDataFrame(geometry=data_ejs_cbg_merge.centroid.values, index=data_ejs_cbg_merge['GEOID'])
+
     for geo_type, geo_df, geo_key in [
             ('Town', utm_towns_df, 'TOWN'), 
             ('Watershed', utm_watersheds_df, 'NAME')
         ]:
-        result_df = cbg_points.sjoin(geo_df, predicate='within')
+        result_df = geo_df.sjoin(data_ejs_centroids, predicate='contains')
         # Parse the results
-        for cbg_id in cbg_points.index:
-            result_set = result_df.loc[result_df.index == cbg_id]
+        for cbg_id in data_ejs_cbg_merge['GEOID']:
+            result_set = result_df.loc[result_df['index_right'] == cbg_id]
             if len(result_set) == 0:
                 logging.info(f'No {geo_type} found for Census Block Group #{cbg_id}')
                 continue
@@ -222,13 +231,13 @@ def assign_ej_data_to_geo_bins_with_geopandas(data_ejs: pd.DataFrame, geo_towns_
             elif len(result_set) > 1:
                 logging.info(f'N={len(result_set)} {geo_type}s were found for Census Block Group #{cbg_id}; will pick the first')
             
-            bg_mapping.loc[cbg_id, geo_type] = result_set.iloc[0][geo_key]
+            # TODO fix this - - assign to data_ejs[geo_type]
+            data_ejs_cbg_merge.loc[(cbg_id,), geo_type] = result_set.iloc[0][geo_key]
 
     # TODO fix beyond here
     breakpoint()
-        
-    data_ejs = pd.merge(data_ejs, bg_mapping, left_on='ID', right_index=True, how='left')
-    return data_ejs
+    # TODO don't output all the added cols?
+    return data_ejs_cbg_merge
 
 @memory.cache
 def _apply_pop_weighted_avg(data_cso: pd.DataFrame, data_ejs: pd.DataFrame, discharge_vol_col: str, discharge_count_col: str
