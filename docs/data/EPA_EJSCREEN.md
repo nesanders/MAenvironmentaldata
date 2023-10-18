@@ -11,15 +11,16 @@ The US Environmental Protection Agency (EPA) provides a tabulated environmental 
 
 The US EPA provides extensive [documentation](https://www.epa.gov/sites/production/files/2017-09/documents/2017_ejscreen_technical_document.pdf) and a description of [limitations and caveats](https://www.epa.gov/ejscreen/limitations-and-caveats-using-ejscreen) for this data on their website.
 
-The US EPA makes the tabulated EJSCREEN data available on an [FTP site](ftp://newftp.epa.gov/EJSCREEN/).  The 2017 version of these records have been filtered to MA Census block groups and archived on this site, last updated on **{{ site.data.ts_update_EPA_EJSCREEN_MA_2017.updated | date: "%-d %B %Y" }}**.
+The US EPA makes the tabulated EJSCREEN data available on an [FTP site](ftp://newftp.epa.gov/EJSCREEN/).  The 2017 and 2023 versions of these records have been filtered to MA Census block groups and archived on this site, last updated on **{{ site.data.ts_update_EPA_EJSCREEN_MA_2017.updated | date: "%-d %B %Y" }}**.
 
-A [data dictionary for the EJSCREEN data](https://catalog.data.gov/harvest/object/77fc38d8-0d52-45e8-91ef-86bde657aae5/original) is avaiable at [data.gov](https://data.gov/).
+A [data dictionary for the EJSCREEN data](https://catalog.data.gov/harvest/object/77fc38d8-0d52-45e8-91ef-86bde657aae5/original) is available at [data.gov](https://data.gov/).
 
 ## Download archive
 
 In addition to including this data in the integrated {{ site.data.site_config.site_abbrev }} Database, we provide them in CSV format below.
 
 * 2017 US EPA EJSCREEN data for MA [CSV format](EPA_EJSCREEN_MA_2017.csv)
+* 2023 US EPA EJSCREEN data for MA [CSV format](EPA_EJSCREEN_MA_2023.csv)
 * 2017 US EPA EJSCREEN technical documentation [PDF format](../assets/PDFs/EPA_EJSCREEN_2017_Documentation.pdf)
 
 ## Data table: 2017 MA EJSCREEN Data
@@ -30,6 +31,17 @@ For brevity, a random sample of 10 rows from the enforcement table is shown belo
 
 | Block Group ID | State | Ozone | Racial Minority Pct | Land Area|
 | --- | --- | --- |{% for row in site.data.EPA_EJSCREEN_MA_2017_sample %}
+| {{ row.ID }} | {{ row.ST_ABBREV }} | {{ row.OZONE }} | {{ row.MINORPCT }} | {{ row.AREALAND }} |{% endfor %}
+{: .sortable}
+
+## Data table: 2023 MA EJSCREEN Data
+
+For brevity, a random sample of 10 rows from the enforcement table is shown below for illustration as to the table's form and content.  Because there are more than 100 columns in this dataset, only a few are shown here for illustration.
+
+<!-- Note: need to have the for loop markup on the same line as the table rows as described here: http://stackoverflow.com/questions/35642820/jekyll-how-to-use-for-loop-to-generate-table-row-within-the-same-table-inside-m -->
+
+| Block Group ID | State | Ozone | Racial Minority Pct | Land Area|
+| --- | --- | --- |{% for row in site.data.EPA_EJSCREEN_MA_2023_sample %}
 | {{ row.ID }} | {{ row.ST_ABBREV }} | {{ row.OZONE }} | {{ row.MINORPCT }} | {{ row.AREALAND }} |{% endfor %}
 {: .sortable}
 

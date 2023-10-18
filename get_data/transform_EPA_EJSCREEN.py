@@ -1,23 +1,39 @@
-from __future__ import absolute_import
-import pandas as pd
-import numpy as np
+"""This script downloads EPA EJSCREEN data from the EPA ftp site, filters it to MA census
+block groups, and saves it to a local file.
+"""
+
 import datetime
+from pathlib import Path
 
-## Get dataset
-# Remote
-# df_ejs = pd.read_csv('ftp://newftp.epa.gov/EJSCREEN/2017/EJSCREEN_2017_USPR_Public.csv')
-# Local
-df_ejs = pd.read_csv('EJSCREEN_2017_USPR_Public.csv')
+import numpy as np
+import pandas as pd
 
-## Filter to state level
-df_ejs_ma = df_ejs[df_ejs['STATE_NAME'] == "Massachusetts"]
-## Write out
-df_ejs_ma.to_csv('../docs/data/EPA_EJSCREEN_MA_2017.csv', index=0)
+DATASET_URLS = {
+	2017: 'ftp://gaftp.epa.gov/EJScreen/2017/EJSCREEN_2017_USPR_Public.csv',
+	2023: 'ftp://gaftp.epa.gov/EJScreen/2023/2.22_September_UseMe/EJSCREEN_2023_BG_StatePct_with_AS_CNMI_GU_VI.csv.zip'
+}
 
 
-## Print a sample of the file as an example
-df_ejs_ma.sample(n=10).to_csv('../docs/data/EPA_EJSCREEN_MA_2017_sample.csv', index=False)
+if __name__ == '__main__':
+	for year, file_url in DATASET_URLS.items():
+		local_name = file_url.split('/')[-1]
+		## Get dataset
+		if not Path(local_name).exists():
+			# Remote - only need to download once
+			df_ejs = pd.read_csv(file_url, encoding='latin-1')
+			df_ejs.to_csv(local_name)
+		else:
+			# Local
+			df_ejs = pd.read_csv(local_name, encoding='latin-1')
 
-## Report last update
-with open('../docs/data/ts_update_EPA_EJSCREEN_MA_2017.yml', 'w') as f:
-	f.write('updated: '+str(datetime.datetime.now()).split('.')[0]+'\n')
+		## Filter to state level
+		df_ejs_ma = df_ejs[df_ejs['STATE_NAME'] == "Massachusetts"]
+		## Write out
+		df_ejs_ma.to_csv(f'../docs/data/EPA_EJSCREEN_MA_{year}.csv', index=0)
+
+		## Print a sample of the file as an example
+		df_ejs_ma.sample(n=10).to_csv(f'../docs/data/EPA_EJSCREEN_MA_{year}_sample.csv', index=False)
+
+		## Report last update
+		with open(f'../docs/data/ts_update_EPA_EJSCREEN_MA_{year}.yml', 'w') as f:
+			f.write('updated: '+str(datetime.datetime.now()).split('.')[0]+'\n')
