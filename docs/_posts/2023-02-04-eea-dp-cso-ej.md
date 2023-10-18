@@ -81,8 +81,8 @@ Holyoke reports mostly untrteated CSO and some treated CSO discharge.
 The map below shows the location of CSO outfalls in MA (points), with overlays showing the sum total of CSO discharge volume in 2022 by watershed, municipality, and Census block group (use the control at right to toggle these layers).  Watershed names are labeled in blue.
 
 {% raw %}
-<iframe frameborder="no" border="0" marginwidth="0" marginheight="0" width="700" height="400" src="../../../assets/maps/MAEEADP_CSO_map_total.html"></iframe>
-<p><em><a target="_blank" href="../../../assets/maps/MAEEADP_CSO_map_total.html">Click here to view map in a separate page</a></em></p>
+<iframe frameborder="no" border="0" marginwidth="0" marginheight="0" width="700" height="400" src="../../../assets/maps/MAEEADP_2022_map_total.html"></iframe>
+<p><em><a target="_blank" href="../../../assets/maps/MAEEADP_2022_map_total.html">Click here to view map in a separate page</a></em></p>
 {% endraw %}
 
 You can click on each CSO outfall point to report information about its location, discharge frequency, and volume.

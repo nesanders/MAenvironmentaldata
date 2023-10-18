@@ -102,7 +102,7 @@ def lookup_town_for_feature(town_feature, point) -> Optional[str]:
     """
     town_polygon = shape(town_feature['geometry'])
     if town_polygon.contains(point):
-        return town_feature['properties']['TOWN'] 
+        return town_feature['TOWN'] 
     else:
         return None
 
@@ -111,7 +111,7 @@ def lookup_watershed_for_feature(watershed_feature, point) -> Optional[str]:
     """
     town_polygon = shape(watershed_feature['geometry'])
     if town_polygon.contains(point):
-        return watershed_feature['properties']['NAME']
+        return watershed_feature['NAME']
     else:
         return None
 
@@ -187,6 +187,9 @@ def _assign_cso_data_to_census_blocks_with_geopandas(data_cso: pd.DataFrame, geo
         for col in discharge_cols:
             utm_bg_df[col] = smoothed_discharge_df[col].reindex(utm_bg_df['GEOID']).values
         
+        # Preserve lat / long
+        utm_merge_df[['Latitude', 'Longitude']] = utm_merge_df.centroid.to_crs('WGS 84').get_coordinates()[['y', 'x']].values
+        
         return utm_merge_df
     
     else:
@@ -204,7 +207,7 @@ def assign_ej_data_to_geo_bins_with_geopandas(data_ejs: pd.DataFrame, geo_towns_
     then lookup the town and watershed info.
     """    
     logging.info('Adding Town and Watershed labels to EJ data')
-    # Convert both to metric projects
+    # Convert both to metric projections
     utm_towns_df = geo_towns_df.to_crs(epsg=3310)
     utm_watersheds_df = geo_watersheds_df.to_crs(epsg=3310)
     utm_blockgroups_df = geo_blockgroups_df.to_crs(epsg=3310)
@@ -216,10 +219,12 @@ def assign_ej_data_to_geo_bins_with_geopandas(data_ejs: pd.DataFrame, geo_towns_
     # data_ejs_cbg_merge = data_ejs_cbg_merge.drop_duplicates('GEOID')
     data_ejs_centroids = gpd.GeoDataFrame(geometry=data_ejs_cbg_merge.centroid.values, index=data_ejs_cbg_merge['GEOID'])
 
+    data_ejs_out = data_ejs.copy().set_index('ID')
     for geo_type, geo_df, geo_key in [
             ('Town', utm_towns_df, 'TOWN'), 
             ('Watershed', utm_watersheds_df, 'NAME')
         ]:
+        data_ejs_out[geo_type] = '[UNKNOWN]'
         result_df = geo_df.sjoin(data_ejs_centroids, predicate='contains')
         # Parse the results
         for cbg_id in data_ejs_cbg_merge['GEOID']:
@@ -231,13 +236,9 @@ def assign_ej_data_to_geo_bins_with_geopandas(data_ejs: pd.DataFrame, geo_towns_
             elif len(result_set) > 1:
                 logging.info(f'N={len(result_set)} {geo_type}s were found for Census Block Group #{cbg_id}; will pick the first')
             
-            # TODO fix this - - assign to data_ejs[geo_type]
-            data_ejs_cbg_merge.loc[(cbg_id,), geo_type] = result_set.iloc[0][geo_key]
+            data_ejs_out.loc[(cbg_id,), geo_type] = result_set.iloc[0][geo_key]
 
-    # TODO fix beyond here
-    breakpoint()
-    # TODO don't output all the added cols?
-    return data_ejs_cbg_merge
+    return data_ejs_out.reset_index()
 
 @memory.cache
 def _apply_pop_weighted_avg(data_cso: pd.DataFrame, data_ejs: pd.DataFrame, discharge_vol_col: str, discharge_count_col: str
@@ -246,19 +247,19 @@ def _apply_pop_weighted_avg(data_cso: pd.DataFrame, data_ejs: pd.DataFrame, disc
     """
     logging.info('Calculating population weighted averages')
     ## Get counts by block group
-    data_ins_g_bg = data_cso.groupby('BlockGroup').sum()[[discharge_vol_col, discharge_count_col]]
+    data_ins_g_bg = data_cso.groupby('GEOID')[[discharge_vol_col, discharge_count_col]].sum()
     data_ins_g_bg_j = pd.merge(data_ins_g_bg, data_ejs, left_index=True, right_on ='ID', how='left')
     data_egs_merge = pd.merge(
         data_ins_g_bg_j.groupby('ID')[[discharge_count_col, discharge_vol_col]].sum(),
         data_ejs, left_index = True, right_on='ID', how='outer')
 
     ## Get counts by municipality
-    data_ins_g_muni_j = pd.merge(data_cso, data_ejs, left_on='BlockGroup', right_on='ID', how='outer')\
-                        .groupby('Town').sum()[[discharge_vol_col, discharge_count_col]].fillna(0)
+    data_ins_g_muni_j = pd.merge(data_cso, data_ejs, left_on='GEOID', right_on='ID', how='outer')\
+                        .groupby('Town')[[discharge_vol_col, discharge_count_col]].sum().fillna(0)
 
     ## Get counts by watershed
-    data_ins_g_ws_j = pd.merge(data_cso, data_ejs, left_on='BlockGroup', right_on='ID', how='outer')\
-                        .groupby('Watershed').sum()[[discharge_vol_col, discharge_count_col]].fillna(0)
+    data_ins_g_ws_j = pd.merge(data_cso, data_ejs, left_on='GEOID', right_on='ID', how='outer')\
+                        .groupby('Watershed')[[discharge_vol_col, discharge_count_col]].sum().fillna(0)
 
     df_watershed_level = data_egs_merge.groupby('Watershed').apply(
         lambda x: pop_weighted_average(x, ['MINORPCT', 'LOWINCPCT', 'LINGISOPCT', 'OVER64PCT', 'VULSVI6PCT']))
@@ -371,12 +372,12 @@ class CSOAnalysis():
         return data_cso
     
     @staticmethod
-    def load_data_ej() -> pd.DataFrame:
-        """Load EJSCREEN data
+    def load_data_ej(ejscreen_year: int=2017) -> pd.DataFrame:
+        """Load EJSCREEN data for a specified year.
         """
         logging.info('Loading EJSCREEN data')
         disk_engine = get_engine()
-        data_ejs = pd.read_sql_query('SELECT * FROM EPA_EJSCREEN_2017', disk_engine)
+        data_ejs = pd.read_sql_query(f'SELECT * FROM EPA_EJSCREEN_{ejscreen_year}', disk_engine)
         data_ejs['ID'] = data_ejs['ID'].astype(str)
         return data_ejs
 
@@ -491,13 +492,13 @@ class CSOAnalysis():
                 ).add_to(map_1)
 
         ## Add labels for watersheds
-        for feature in geo_watersheds_df:
-            pos = shape(feature['geometry']).centroid.coords.xy
+        for fid, feature in geo_watersheds_df.iterrows():
+            pos = feature['geometry'].centroid.coords.xy
             pos = (pos[1][0], pos[0][0])
             folium.Marker(pos, icon=folium.features.DivIcon(
                 icon_size=(150,36),
                 icon_anchor=(7,20),
-                html='<div style="font-size: 12pt; color: blue; opacity: 0.3">{}</div>'.format(feature['properties']['NAME']),
+                html='<div style="font-size: 12pt; color: blue; opacity: 0.3">{}</div>'.format(feature['NAME']),
                 )).add_to(map_1)
 
         ## Add a layer control
@@ -591,13 +592,13 @@ class CSOAnalysis():
                     ).add_to(map_2)
 
             ## Add labels for watersheds
-            for feature in geo_watersheds_df:
+            for fid, feature in geo_watersheds_df.iterrows():
                 pos = shape(feature['geometry']).centroid.coords.xy
                 pos = (pos[1][0], pos[0][0])
                 folium.Marker(pos, icon=folium.features.DivIcon(
                     icon_size=(150,36),
                     icon_anchor=(7,20),
-                    html='<div style="font-size: 12pt; color: blue; opacity: 0.3">{}</div>'.format(feature['properties']['NAME']),
+                    html='<div style="font-size: 12pt; color: blue; opacity: 0.3">{}</div>'.format(feature['NAME']),
                     )).add_to(map_2)
 
             ## Add a layer control
@@ -699,9 +700,9 @@ class CSOAnalysis():
             mychart.add_dataset(
                 np.array([x_bin_cent, y_bin[0]]).T, 
                 dataset_label="Average (population weighted & binned)",
-                backgroundColor="'rgba(50,50,200,1)'",
+                pointColor="'rgba(50,50,200,1)'",
                 showLine = "true",
-                borderColor="'rgba(50,50,200,1)'",
+                pointStrokeColor="'rgba(50,50,200,1)'",
                 borderWidth=3,
                 yAxisID= "'y-axis-0'",
                 fill="false",
@@ -710,11 +711,11 @@ class CSOAnalysis():
             ## Add uncertainty contour
             mychart.add_dataset(np.array([x_bin_cent, y_bin[0] - 1.65 * y_bin[1]]).T, 
                 "Average lower bound (5% limit)",
-                backgroundColor="'rgba(50,50,200,0.3)'", showLine = "true", yAxisID= "'y-axis-0'", borderWidth = 1, 
+                pointColor="'rgba(50,50,200,0.3)'", showLine = "true", yAxisID= "'y-axis-0'", borderWidth = 1, 
                 fill = 'false', pointBackgroundColor="'rgba(50,50,200,0.3)'", pointBorderColor="'rgba(50,50,200,0.3)'")
             mychart.add_dataset(np.array([x_bin_cent, y_bin[0] + 1.65 * y_bin[1]]).T, 
                 "Average upper bound (95% limit)",
-                backgroundColor="'rgba(50,50,200,0.3)'", showLine = "true", yAxisID= "'y-axis-0'", borderWidth = 1, fill = "'-1'", pointBackgroundColor="'rgba(50,50,200,0.3)'", pointBorderColor="'rgba(50,50,200,0.3)'")
+                pointColor="'rgba(50,50,200,0.3)'", showLine = "true", yAxisID= "'y-axis-0'", borderWidth = 1, fill = "'-1'", pointBackgroundColor="'rgba(50,50,200,0.3)'", pointBorderColor="'rgba(50,50,200,0.3)'")
 
             ## Set overall chart parameters
             mychart.set_params(
