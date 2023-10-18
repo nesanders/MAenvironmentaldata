@@ -123,7 +123,7 @@ The following maps visualize major EJ population characteristics by similar wate
 
 ## Aggregate level EJ population statistics
 
-We aggregate the Census block group level EJSCREEN data (2017 edition) to the watershed and municipality level to understand how these geographic areas vary in their EJ populations.  
+We aggregate the Census block group level EJSCREEN data (2017 edition) to the watershed and municipality level to understand how these geographic areas vary in their EJ populations.
 
 ## By watershed
 
@@ -139,7 +139,7 @@ We aggregate the Census block group level EJSCREEN data (2017 edition) to the wa
 
 ## Correlation between CSO discharge and EJ factors
 
-We explore the relationship between CSO discharge volumes within different geographic areas and their EJ population characteristics.  We use bootstrap resampling to visualize the trend and uncertainty in the population-weighted mean discharge volume estimate in equal-sized bins of watersheds (figures below). We estimate the univariate dependence of CSO discharge on each EJ factor, and its 90% posterior (confidence) interval, with a population-weighted logarithmic regression model.  A detailed explanation of the methodology used in this analysis is provided [here]({% post_url 2019-03-23-necir-cso-ej_modeling %}) and additional model diagnostics are available [here]({% post_url 2023-02-04-eea-dp-cso-ej_modeling %}).
+We explore the relationship between CSO discharge volumes within different geographic areas and their EJ population characteristics.  We use bootstrap resampling to visualize the trend and uncertainty in the population-weighted mean discharge volume estimate in equal-sized bins of watersheds (figures below). We estimate the univariate dependence of CSO discharge on each EJ factor, and its 90% posterior (confidence) interval, with a population-weighted logarithmic regression model.  For the purpose of this correlation analysis, 2023 EPA EJSCREEN demographic data is used. A detailed explanation of the methodology used in this analysis is provided [here]({% post_url 2019-03-23-necir-cso-ej_modeling %}) and additional model diagnostics are available [here]({% post_url 2023-02-04-eea-dp-cso-ej_modeling %}).
 
 
 ### Relationship with linguistic isolation
