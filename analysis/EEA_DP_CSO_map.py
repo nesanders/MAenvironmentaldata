@@ -76,7 +76,7 @@ class CSOAnalysisEEADP(CSOAnalysis):
 
     EEA_DP_CSO_QUERY = """SELECT * FROM MAEEADP_CSO"""
     
-    def load_data_ej(ejscreen_year: int=2023):
+    def load_data_ej(self, ejscreen_year: int=2023):
         """Overwrites the base class load_data_ej function with the updated year, 2023.
         """
         super().load_data_ej(ejscreen_year)
@@ -94,7 +94,10 @@ class CSOAnalysisEEADP(CSOAnalysis):
         disk_engine = get_engine()
         data_cso = pd.read_sql_query(self.EEA_DP_CSO_QUERY, disk_engine)
         data_cso['incidentDate'] = pd.to_datetime(data_cso['incidentDate'])
-        data_cso.rename(columns={'volumnOfEvent': self.discharge_vol_col}, inplace=True)
+        data_cso.rename(columns={
+            'volumnOfEvent': self.discharge_vol_col,
+            'outfallId': 'cso_id'
+        }, inplace=True)
         
         print(f'Filtering CSO data for year {self.cso_data_start} - {self.cso_data_end}')
         df_pick = data_cso[(
@@ -118,7 +121,7 @@ class CSOAnalysisEEADP(CSOAnalysis):
         """
         # Columns to be aggregated over
         # NOTE we aggregate over lat/long because there are several outfalls named '001' that have different lat/longs
-        agg_cols = ['reporterClass', 'outfallId', 'latitude', 'longitude']
+        agg_cols = ['reporterClass', 'cso_id', 'latitude', 'longitude']
         # Columns to be aggregated with a sum function
         sum_cols = [self.discharge_vol_col]
         # Columns to be aggregated with a collapse function
@@ -138,7 +141,7 @@ class CSOAnalysisEEADP(CSOAnalysis):
         print(f"Missing N={sum(sel_missing)} outfall lat/longs")
         print(f'Loading missing lat/long data from {self.cso_lat_long_data_file}')
         df_lat_long_cso = pd.read_excel(self.cso_lat_long_data_file, 'CSO Outfalls').set_index('Outfall ID')
-        missing_lat_long_ids = data_cso[sel_missing]['outfallId']
+        missing_lat_long_ids = data_cso[sel_missing]['cso_id']
         missing_lat_long_coords = df_lat_long_cso.reindex(missing_lat_long_ids)[['Lat', 'Long']]
         data_cso.loc[sel_missing, ['latitude', 'longitude']] = missing_lat_long_coords.values
         print(f"Missing N={sum(data_cso['latitude'].isnull())} outfall lat/longs after replacement")
