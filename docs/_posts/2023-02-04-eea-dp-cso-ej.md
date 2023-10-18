@@ -97,8 +97,8 @@ The following maps visualize major EJ population characteristics by similar wate
 ### Minority Racial Demographics
 
 {% raw %}
-<iframe frameborder="no" border="0" marginwidth="0" marginheight="0" width="700" height="400" src="../../../assets/maps/MAEEADP_CSO_map_EJ_MINORPCT.html"></iframe>
-<p><em><a target="_blank" href="../../../assets/maps/MAEEADP_CSO_map_EJ_MINORPCT.html">Click here to view map in a separate page</a></em></p>
+<iframe frameborder="no" border="0" marginwidth="0" marginheight="0" width="700" height="400" src="../../../assets/maps/MAEEADP_2022_CSO_map_EJ_MINORPCT.html"></iframe>
+<p><em><a target="_blank" href="../../../assets/maps/MAEEADP_2022_CSO_map_EJ_MINORPCT.html">Click here to view map in a separate page</a></em></p>
 {% endraw %}
 
 
@@ -106,8 +106,8 @@ The following maps visualize major EJ population characteristics by similar wate
 ### Linguistic Isolation
 
 {% raw %}
-<iframe frameborder="no" border="0" marginwidth="0" marginheight="0" width="700" height="400" src="../../../assets/maps/MAEEADP_CSO_map_EJ_LINGISOPCT.html"></iframe>
-<p><em><a target="_blank" href="../../../assets/maps/MAEEADP_CSO_map_EJ_LINGISOPCT.html">Click here to view map in a separate page</a></em></p>
+<iframe frameborder="no" border="0" marginwidth="0" marginheight="0" width="700" height="400" src="../../../assets/maps/MAEEADP_2022_CSO_map_EJ_LINGISOPCT.html"></iframe>
+<p><em><a target="_blank" href="../../../assets/maps/MAEEADP_2022_CSO_map_EJ_LINGISOPCT.html">Click here to view map in a separate page</a></em></p>
 {% endraw %}
 
 
@@ -115,15 +115,15 @@ The following maps visualize major EJ population characteristics by similar wate
 ### Low Income Status
 
 {% raw %}
-<iframe frameborder="no" border="0" marginwidth="0" marginheight="0" width="700" height="400" src="../../../assets/maps/MAEEADP_CSO_map_EJ_LOWINCPCT.html"></iframe>
-<p><em><a target="_blank" href="../../../assets/maps/MAEEADP_CSO_map_EJ_LOWINCPCT.html">Click here to view map in a separate page</a></em></p>
+<iframe frameborder="no" border="0" marginwidth="0" marginheight="0" width="700" height="400" src="../../../assets/maps/MAEEADP_2022_CSO_map_EJ_LOWINCPCT.html"></iframe>
+<p><em><a target="_blank" href="../../../assets/maps/MAEEADP_2022_CSO_map_EJ_LOWINCPCT.html">Click here to view map in a separate page</a></em></p>
 {% endraw %}
 
 
 
 ## Aggregate level EJ population statistics
 
-We aggregate the Census block group level EJSCREEN data to the watershed and municipality level to understand how these geographic areas vary in their EJ populations.  
+We aggregate the Census block group level EJSCREEN data (2017 edition) to the watershed and municipality level to understand how these geographic areas vary in their EJ populations.  
 
 ## By watershed
 
