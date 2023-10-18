@@ -75,7 +75,12 @@ class CSOAnalysisEEADP(CSOAnalysis):
     # -------------------------
 
     EEA_DP_CSO_QUERY = """SELECT * FROM MAEEADP_CSO"""
-
+    
+    def load_data_ej(ejscreen_year: int=2023):
+        """Overwrites the base class load_data_ej function with the updated year, 2023.
+        """
+        super().load_data_ej(ejscreen_year)
+    
     def load_data_cso(self, pick_start: Optional[date]=None, pick_end: Optional[date]=None) -> pd.DataFrame:
         """Load EEA Data Portal CSO data, adding latitude and longitude from the NECIR_CSO_2011 data table
         where possible.
@@ -152,9 +157,12 @@ class CSOAnalysisEEADP(CSOAnalysis):
     # Extra plots of dataset characteristics
     # -------------------------
     
-    def plot_reports_per_month_by_event_type(self, outpath: str='../docs/_includes/charts/EEA_DP_CSO_counts_per_month.html'):
+    def plot_reports_per_month_by_event_type(self, outpath: Optional[str]=None):
         """Bar chart showing how many reports were made each day of different discharge types.
-        """        
+        """
+        if outpath is None:
+            outpath = f'../docs/_includes/charts/{output_slug}_counts_per_month.html'
+        
         print('Making chart of discharge counts per month by discharge type')
         mychart = chartjs.chart("Discharge counts per month by discharge type", "Bar", 640, 480)
         
@@ -175,9 +183,12 @@ class CSOAnalysisEEADP(CSOAnalysis):
 
         mychart.jekyll_write(outpath)
 
-    def plot_volume_per_month_by_event_type(self, outpath: str='../docs/_includes/charts/EEA_DP_CSO_volume_per_month.html'):
+    def plot_volume_per_month_by_event_type(self, outpath: Optional[str]=None):
         """Bar chart showing how many reports were made each month of different discharge types.
         """        
+        if outpath is None:
+            outpath = f'../docs/_includes/charts/{output_slug}_volume_per_month.html'
+        
         print('Making chart of discharge volume per month by discharge type')
         mychart = chartjs.chart("Discharge volume per month by discharge type", "Bar", 640, 480)
         
@@ -198,9 +209,12 @@ class CSOAnalysisEEADP(CSOAnalysis):
 
         mychart.jekyll_write(outpath)
 
-    def plot_volume_per_operator_by_event_type(self, outpath: str='../docs/_includes/charts/EEA_DP_CSO_volume_per_operator.html'):
+    def plot_volume_per_operator_by_event_type(self, outpath: Optional[str]=None):
         """Bar chart showing how many reports were made each day of different discharge types.
         """        
+        if outpath is None:
+            outpath = f'../docs/_includes/charts/{output_slug}_volume_per_operator.html'
+        
         print('Making chart of discharge volume per operator by discharge type')
         mychart = chartjs.chart("Discharge volume per operator by discharge type", "Bar", 640, 480)
         
@@ -221,12 +235,15 @@ class CSOAnalysisEEADP(CSOAnalysis):
 
         mychart.jekyll_write(outpath)
 
-    def plot_reports_non_zero_volume(self, outpath: str='../docs/_includes/charts/EEA_DP_CSO_non_zero_volume.html'):
+    def plot_reports_non_zero_volume(self, outpath: Optional[str]=None):
         """Bar chart showing how many reports of each discharge type have zero volume reported.
         
         NOTE: We use a very simplistic assumption to decide if a volume report is likely modeled rather than
         metered; we simply look to see if the reported volume was rounded to the nearest 1000.
         """        
+        if outpath is None:
+            outpath = f'../docs/_includes/charts/{output_slug}_non_zero_volume.html'
+        
         print('Making chart of discharges with no volume reported by discharge type')
         mychart = chartjs.chart("Discharges with no volume reported by discharge type", "Bar", 640, 480)
         
