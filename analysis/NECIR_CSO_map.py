@@ -194,7 +194,7 @@ def _assign_cso_data_to_census_blocks_with_geopandas(data_cso: pd.DataFrame, geo
     
     else:
         utm_merge_df = utm_cso_df.sjoin(utm_bg_df, how='left', predicate='intersects')
-        data_cso['BlockGroup'] = utm_merge_df['GEOID'].values
+        data_cso['GEOID'] = utm_merge_df['GEOID'].values
         return data_cso
 
 @memory.cache
@@ -211,12 +211,8 @@ def assign_ej_data_to_geo_bins_with_geopandas(data_ejs: pd.DataFrame, geo_towns_
     utm_towns_df = geo_towns_df.to_crs(epsg=3310)
     utm_watersheds_df = geo_watersheds_df.to_crs(epsg=3310)
     utm_blockgroups_df = geo_blockgroups_df.to_crs(epsg=3310)
-    # cbg_points = gpd.GeoDataFrame(geometry=utm_blockgroups_df.centroid, index=utm_blockgroups_df.index)
     
     data_ejs_cbg_merge = utm_blockgroups_df.merge(data_ejs, left_on='GEOID', right_on='ID', how='right')
-    # Not sure why there are 2 duplicates, but this dedupe is needed to create the centroid dataframe
-    # Not actually needed?
-    # data_ejs_cbg_merge = data_ejs_cbg_merge.drop_duplicates('GEOID')
     data_ejs_centroids = gpd.GeoDataFrame(geometry=data_ejs_cbg_merge.centroid.values, index=data_ejs_cbg_merge['GEOID'])
 
     data_ejs_out = data_ejs.copy().set_index('ID')
@@ -246,19 +242,22 @@ def _apply_pop_weighted_avg(data_cso: pd.DataFrame, data_ejs: pd.DataFrame, disc
     """Calculate population weighted averages for EJ characteristics, averaging over block group, watershed, and town.
     """
     logging.info('Calculating population weighted averages')
+    
+    id_col = 'GEOID'
+    
     ## Get counts by block group
-    data_ins_g_bg = data_cso.groupby('GEOID')[[discharge_vol_col, discharge_count_col]].sum()
+    data_ins_g_bg = data_cso.groupby(id_col)[[discharge_vol_col, discharge_count_col]].sum()
     data_ins_g_bg_j = pd.merge(data_ins_g_bg, data_ejs, left_index=True, right_on ='ID', how='left')
     data_egs_merge = pd.merge(
         data_ins_g_bg_j.groupby('ID')[[discharge_count_col, discharge_vol_col]].sum(),
         data_ejs, left_index = True, right_on='ID', how='outer')
 
     ## Get counts by municipality
-    data_ins_g_muni_j = pd.merge(data_cso, data_ejs, left_on='GEOID', right_on='ID', how='outer')\
+    data_ins_g_muni_j = pd.merge(data_cso, data_ejs, left_on=id_col, right_on='ID', how='outer')\
                         .groupby('Town')[[discharge_vol_col, discharge_count_col]].sum().fillna(0)
 
     ## Get counts by watershed
-    data_ins_g_ws_j = pd.merge(data_cso, data_ejs, left_on='GEOID', right_on='ID', how='outer')\
+    data_ins_g_ws_j = pd.merge(data_cso, data_ejs, left_on=id_col, right_on='ID', how='outer')\
                         .groupby('Watershed')[[discharge_vol_col, discharge_count_col]].sum().fillna(0)
 
     df_watershed_level = data_egs_merge.groupby('Watershed').apply(

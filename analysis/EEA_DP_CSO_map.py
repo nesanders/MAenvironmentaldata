@@ -297,6 +297,6 @@ if __name__ == '__main__':
         ):
         # NOTE for fast debugging of the `extra_plot`, try using these parameters:
         # > make_maps=False, make_charts=False, make_regression=False
-        csoa = CSOAnalysisEEADP(cso_data_start=start_date, cso_data_end=end_date, output_slug=f'MAEEADP_{run_name}', cbg_smooth_radius)
+        csoa = CSOAnalysisEEADP(cso_data_start=start_date, cso_data_end=end_date, output_slug=f'MAEEADP_{run_name}', cbg_smooth_radius=cbg_smooth_radius)
         csoa.run_analysis()
         csoa.extra_plots()
