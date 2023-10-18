@@ -16,6 +16,9 @@ DATASET_URLS = {
 
 if __name__ == '__main__':
 	for year, file_url in DATASET_URLS.items():
+		
+		print(f'Working on year {year}')
+		
 		local_name = file_url.split('/')[-1]
 		## Get dataset
 		if not Path(local_name).exists():
@@ -28,6 +31,10 @@ if __name__ == '__main__':
 
 		## Filter to state level
 		df_ejs_ma = df_ejs[df_ejs['STATE_NAME'] == "Massachusetts"]
+		
+		## Standardize on the variable name 'MINORPCT' versus 'PEOPCOLORPCT'
+		df_ejs_ma.rename(columns={'PEOPCOLORPCT': 'MINORPCT'}, inplace=True)
+		
 		## Write out
 		df_ejs_ma.to_csv(f'../docs/data/EPA_EJSCREEN_MA_{year}.csv', index=0)
 

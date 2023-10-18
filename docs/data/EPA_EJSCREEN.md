@@ -25,7 +25,7 @@ In addition to including this data in the integrated {{ site.data.site_config.si
 
 ## Data table: 2017 MA EJSCREEN Data
 
-For brevity, a random sample of 10 rows from the enforcement table is shown below for illustration as to the table's form and content.  Because there are more than 100 columns in this dataset, only a few are shown here for illustration.
+For brevity, a random sample of 10 rows from the EJSCREEN table is shown below for illustration as to the table's form and content.  Because there are more than 100 columns in this dataset, only a few are shown here for illustration.
 
 <!-- Note: need to have the for loop markup on the same line as the table rows as described here: http://stackoverflow.com/questions/35642820/jekyll-how-to-use-for-loop-to-generate-table-row-within-the-same-table-inside-m -->
 
@@ -33,15 +33,3 @@ For brevity, a random sample of 10 rows from the enforcement table is shown belo
 | --- | --- | --- |{% for row in site.data.EPA_EJSCREEN_MA_2017_sample %}
 | {{ row.ID }} | {{ row.ST_ABBREV }} | {{ row.OZONE }} | {{ row.MINORPCT }} | {{ row.AREALAND }} |{% endfor %}
 {: .sortable}
-
-## Data table: 2023 MA EJSCREEN Data
-
-For brevity, a random sample of 10 rows from the enforcement table is shown below for illustration as to the table's form and content.  Because there are more than 100 columns in this dataset, only a few are shown here for illustration.
-
-<!-- Note: need to have the for loop markup on the same line as the table rows as described here: http://stackoverflow.com/questions/35642820/jekyll-how-to-use-for-loop-to-generate-table-row-within-the-same-table-inside-m -->
-
-| Block Group ID | State | Ozone | Racial Minority Pct | Land Area|
-| --- | --- | --- |{% for row in site.data.EPA_EJSCREEN_MA_2023_sample %}
-| {{ row.ID }} | {{ row.ST_ABBREV }} | {{ row.OZONE }} | {{ row.MINORPCT }} | {{ row.AREALAND }} |{% endfor %}
-{: .sortable}
-
