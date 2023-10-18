@@ -33,3 +33,13 @@ For brevity, a random sample of 10 rows from the EJSCREEN table is shown below f
 | --- | --- | --- |{% for row in site.data.EPA_EJSCREEN_MA_2017_sample %}
 | {{ row.ID }} | {{ row.ST_ABBREV }} | {{ row.OZONE }} | {{ row.MINORPCT }} | {{ row.AREALAND }} |{% endfor %}
 {: .sortable}
+
+
+## Data table: 2023 MA EJSCREEN Data
+
+For brevity, a random sample of 10 rows from the EJSCREEN table is shown below for illustration as to the table's form and content.  Because there are more than 100 columns in this dataset, only a few are shown here for illustration.
+
+| Block Group ID | State | Ozone | Racial Minority Pct | Land Area|
+| --- | --- | --- |{% for row in site.data.EPA_EJSCREEN_MA_2023_sample %}
+| {{ row.ID }} | {{ row.ST_ABBREV }} | {{ row.OZONE }} | {{ row.MINORPCT }} | {{ row.AREALAND }} |{% endfor %}
+{: .sortable}
