@@ -299,6 +299,7 @@ class CSOAnalysis():
         make_maps: bool=True,
         make_charts: bool=True,
         make_regression: bool=True,
+        cbg_smooth_radius: Optional[float]=None
     ):
         """Initialize parameters
         
@@ -325,6 +326,8 @@ class CSOAnalysis():
             Whether or not to execute the functions to generate charts, by default True,
         make_regression: bool
             Whether or not to execute the functions to generate regression models, by default True
+        cbg_smooth_radius: Optional[float]
+            If not None, then the CSO discharge data for each census block group will be smoothed over this radius in miles, by default=None
         """
         # Establish file to export facts
         self.fact_file = fact_file
@@ -342,7 +345,9 @@ class CSOAnalysis():
         self.make_maps = make_maps
         self.make_charts = make_charts
         self.make_regression = make_regression
-   
+        self.cbg_smooth_radius: Optional[bool]=None
+ 
+ 
     
     # -------------------------
     # Data loading methods
@@ -872,7 +877,7 @@ class CSOAnalysis():
         self.geo_towns_df, self.geo_watersheds_df, self.geo_blockgroups_df = self.get_geo_files()
         self.data_cso, self.data_ejs = self.load_data()
         # TODO should add these results to the database
-        self.data_cso = self.assign_cso_data_to_census_blocks(self.data_cso, self.geo_blockgroups_df, use_radius=0.5)
+        self.data_cso = self.assign_cso_data_to_census_blocks(self.data_cso, self.geo_blockgroups_df, use_radius=self.cbg_smooth_radius)
         self.data_ejs = assign_ej_data_to_geo_bins_with_geopandas(self.data_ejs, self.geo_towns_df, self.geo_watersheds_df, self.geo_blockgroups_df)
         self.data_ins_g_bg, self.data_ins_g_muni_j, self.data_ins_g_ws_j, self.data_egs_merge, self.df_watershed_level, self.df_town_level = \
             self.apply_pop_weighted_avg(self.data_cso, self.data_ejs)

@@ -164,7 +164,7 @@ class CSOAnalysisEEADP(CSOAnalysis):
         """Bar chart showing how many reports were made each day of different discharge types.
         """
         if outpath is None:
-            outpath = f'../docs/_includes/charts/{output_slug}_counts_per_month.html'
+            outpath = f'../docs/_includes/charts/{self.output_slug}_counts_per_month.html'
         
         print('Making chart of discharge counts per month by discharge type')
         mychart = chartjs.chart("Discharge counts per month by discharge type", "Bar", 640, 480)
@@ -190,7 +190,7 @@ class CSOAnalysisEEADP(CSOAnalysis):
         """Bar chart showing how many reports were made each month of different discharge types.
         """        
         if outpath is None:
-            outpath = f'../docs/_includes/charts/{output_slug}_volume_per_month.html'
+            outpath = f'../docs/_includes/charts/{self.output_slug}_volume_per_month.html'
         
         print('Making chart of discharge volume per month by discharge type')
         mychart = chartjs.chart("Discharge volume per month by discharge type", "Bar", 640, 480)
@@ -216,7 +216,7 @@ class CSOAnalysisEEADP(CSOAnalysis):
         """Bar chart showing how many reports were made each day of different discharge types.
         """        
         if outpath is None:
-            outpath = f'../docs/_includes/charts/{output_slug}_volume_per_operator.html'
+            outpath = f'../docs/_includes/charts/{self.output_slug}_volume_per_operator.html'
         
         print('Making chart of discharge volume per operator by discharge type')
         mychart = chartjs.chart("Discharge volume per operator by discharge type", "Bar", 640, 480)
@@ -245,7 +245,7 @@ class CSOAnalysisEEADP(CSOAnalysis):
         metered; we simply look to see if the reported volume was rounded to the nearest 1000.
         """        
         if outpath is None:
-            outpath = f'../docs/_includes/charts/{output_slug}_non_zero_volume.html'
+            outpath = f'../docs/_includes/charts/{self.output_slug}_non_zero_volume.html'
         
         print('Making chart of discharges with no volume reported by discharge type')
         mychart = chartjs.chart("Discharges with no volume reported by discharge type", "Bar", 640, 480)
@@ -289,13 +289,14 @@ class CSOAnalysisEEADP(CSOAnalysis):
 # -------------------------
     
 if __name__ == '__main__':
-    for start_date, end_date, run_name in (
-        (PICK_CSO_START, PICK_CSO_END, '2022'),
-        (date(2022, 6, 1), date(2023, 6, 30), 'first_year'),
-        (date(2022, 6, 1), date(2023, 9, 30), 'through_sept_2023')
+    for start_date, end_date, run_name, cbg_smooth_radius in (
+        (PICK_CSO_START, PICK_CSO_END, '2022', None),
+        (date(2022, 6, 1), date(2023, 6, 30), 'first_year', None),
+        (date(2022, 6, 1), date(2023, 6, 30), 'first_year_smooth', 0.5),
+        (date(2022, 6, 1), date(2023, 9, 30), 'through_sept_2023', None)
         ):
         # NOTE for fast debugging of the `extra_plot`, try using these parameters:
         # > make_maps=False, make_charts=False, make_regression=False
-        csoa = CSOAnalysisEEADP(cso_data_start=start_date, cso_data_end=end_date, output_slug=f'MAEEADP_{run_name}')
+        csoa = CSOAnalysisEEADP(cso_data_start=start_date, cso_data_end=end_date, output_slug=f'MAEEADP_{run_name}', cbg_smooth_radius)
         csoa.run_analysis()
         csoa.extra_plots()
