@@ -153,7 +153,8 @@ def cast_df_to_epsg_3310(gdf: gpd.GeoDataFrame, latitude: str='Latitude', longit
 
 METERS_PER_MILE = 1609.34
 def _assign_cso_data_to_census_blocks_with_geopandas(data_cso: pd.DataFrame, geo_blockgroups_df: gpd.GeoDataFrame, 
-    latitude: str='Latitude', longitude: str='Longitude', use_radius: Optional[float]=None) -> pd.DataFrame:
+    latitude: str='Latitude', longitude: str='Longitude', use_radius: Optional[float]=None,
+    discharge_cols: tuple[str, str]=('2011_Discharges_MGal', '2011_Discharge_N')) -> pd.DataFrame:
     """Add a new 'BlockGroup' column to `data_cso` assigning CSOs to Census block groups using geopandas
     operations.
     
@@ -165,7 +166,6 @@ def _assign_cso_data_to_census_blocks_with_geopandas(data_cso: pd.DataFrame, geo
     # Convert both to metric projects
     utm_cso_df = cast_df_to_epsg_3310(data_cso, latitude, longitude)
     utm_bg_df = geo_blockgroups_df.to_crs(epsg=3310)
-    discharge_cols = ['2011_Discharges_MGal', '2011_Discharge_N']
     
     if use_radius is not None:
         # We create a use_radius-sized buffer around the CSO, then match on the overlap with the BGs
@@ -188,7 +188,7 @@ def _assign_cso_data_to_census_blocks_with_geopandas(data_cso: pd.DataFrame, geo
             utm_bg_df[col] = smoothed_discharge_df[col].reindex(utm_bg_df['GEOID']).values
         
         # Preserve lat / long
-        utm_merge_df[['Latitude', 'Longitude']] = utm_merge_df.centroid.to_crs('WGS 84').get_coordinates()[['y', 'x']].values
+        utm_merge_df[[latitude, longitude]] = utm_merge_df.centroid.to_crs('WGS 84').get_coordinates()[['y', 'x']].values
         
         return utm_merge_df
     
@@ -262,10 +262,10 @@ def _apply_pop_weighted_avg(data_cso: pd.DataFrame, data_ejs: pd.DataFrame, disc
                         .groupby('Watershed')[[discharge_vol_col, discharge_count_col]].sum().fillna(0)
 
     df_watershed_level = data_egs_merge.groupby('Watershed').apply(
-        lambda x: pop_weighted_average(x, ['MINORPCT', 'LOWINCPCT', 'LINGISOPCT', 'OVER64PCT', 'VULSVI6PCT']))
+        lambda x: pop_weighted_average(x, ['MINORPCT', 'LOWINCPCT', 'LINGISOPCT']))
 
     df_town_level = data_egs_merge.groupby('Town').apply(
-        lambda x: pop_weighted_average(x, ['MINORPCT', 'LOWINCPCT', 'LINGISOPCT', 'OVER64PCT', 'VULSVI6PCT']))
+        lambda x: pop_weighted_average(x, ['MINORPCT', 'LOWINCPCT', 'LINGISOPCT']))
     
     return data_ins_g_bg, data_ins_g_muni_j, data_ins_g_ws_j, data_egs_merge, df_watershed_level, df_town_level
 
@@ -398,7 +398,8 @@ class CSOAnalysis():
     ) -> pd.DataFrame:
         """Add a new 'BlockGroup' column to `data_cso` assigning CSOs to Census block groups.
         """
-        return _assign_cso_data_to_census_blocks_with_geopandas(data_cso, geo_blockgroups_df, self.latitude_col, self.longitude_col, use_radius)
+        return _assign_cso_data_to_census_blocks_with_geopandas(data_cso, geo_blockgroups_df, self.latitude_col, self.longitude_col, use_radius,
+            discharge_cols=(self.discharge_vol_col, self.discharge_count_col))
     
     def apply_pop_weighted_avg(self, data_cso: pd.DataFrame, data_ejs: pd.DataFrame
     ) -> Tuple[pd.DataFrame, pd.DataFrame, pd.DataFrame, pd.DataFrame, pd.DataFrame]:

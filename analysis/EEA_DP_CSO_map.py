@@ -79,7 +79,7 @@ class CSOAnalysisEEADP(CSOAnalysis):
     def load_data_ej(self, ejscreen_year: int=2023):
         """Overwrites the base class load_data_ej function with the updated year, 2023.
         """
-        super().load_data_ej(ejscreen_year)
+        return super().load_data_ej(ejscreen_year)
     
     def load_data_cso(self, pick_start: Optional[date]=None, pick_end: Optional[date]=None) -> pd.DataFrame:
         """Load EEA Data Portal CSO data, adding latitude and longitude from the NECIR_CSO_2011 data table
