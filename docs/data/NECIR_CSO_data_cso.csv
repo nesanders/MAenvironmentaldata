@@ -1,0 +1,182 @@
+,cso_id,Latitude,Longitude,Nearest_Pipe_Address,Municipality,DischargesBody,2011_Discharges_MGal,2011_Discharge_N,Notes,GEOID
+0,0,41.8805425498,-71.0923419214,500 West Water St.,Taunton,Taunton River,3.66,2.0,loc. from DES DES draft data,250056139022
+1,1,42.2466365031,-71.8019968665,Quinsigamond Ave.,Worcester,Mill Brook to Blackstone River,,,loc. from DES DES draft data,250277325001
+2,2,42.5811467749,-71.8218996722,Cleghorn St at Oakhill Rd.,Fitchburg,Nashua River,0.16,7.0,loc. from DES draft data,250277103001
+3,3,42.5734765373,-71.789371552,479 Water St. at Burnett St.,Fitchburg,Birch Brook,0.17,8.0,loc. from DES draft data,250277106001
+4,4,42.5855845964,-71.7777258006,Boutelle St. at Lunenburg St.,Fitchburg,Baker Brook,0.38,11.0,loc. from DES draft data,250277101001
+5,5,42.5857490028,-71.8063374517,Main St. at Post Office,Fitchburg,Nashua River,2.14,22.0,loc. from DES draft data,250277108003
+6,6,42.571303,-71.774551,265 Summer St.,Fitchburg,Nashua River,8.42,18.0,approx.; loc n/a.,250277101001
+7,7,42.5661840025,-71.7721784731,Summer St. grit chamber,Fitchburg,Nashua River,4.09,16.0,loc. from DES draft data,250277101001
+8,8,42.5807201475,-71.796760673,98 Laurel St.,Fitchburg,Nashua River,11.5,17.0,loc. from DES draft data,250277106003
+9,9,42.5815929045,-71.8185182154,Daniel St. at Allen Pl.,Fitchburg,Nashua River,1.11,6.0,loc. from DES draft data,250277105001
+10,10,42.5748758973,-71.7905381528,405 Water St.,Fitchburg,Birch Brook,0.42,8.0,loc. from DES draft data,250277106002
+11,11,42.581724,-71.820633,Clarendon St,Fitchburg,Nashua River,0.98,24.0,approx.; loc n/a.,250277103001
+12,12,42.6468283879,-71.3334058981,Walker St.,Lowell,Merrimack River,3.4,6.0,loc. from DES draft data,250173107002
+13,13,42.6597558187,-71.3187381025,Beaver St.,Lowell,Beaver Brook,10.7,17.0,loc. from DES draft data,250173105001
+14,14,42.6520069611,-71.3108416531,West St.,Lowell,Merrimack River,73.8,29.0,loc. from DES draft data,250173104002
+15,15,42.6435081197,-71.3052364737,Warren St.,Lowell,Concord River,42.3,30.0,loc. from DES draft data,250173101001
+16,16,42.6500854149,-71.3103208494,Tilden St.,Lowell,Merrimack River,28.4,40.0,loc. from DES draft data,250173101003
+17,17,42.6451835481,-71.2879793849,Barasford Ave.,Lowell,Merrimack River,22.0,27.0,loc. from DES draft data,250173125013
+18,18,42.6486316059,-71.290927737,Merrimack Station,Lowell,Merrimack River,109.4,37.0,loc. from DES draft data,250173102002
+19,19,42.7699967652,-71.0642285765,Buttonwood Ave.,Haverhill,Merrimack River,3.19,3.0,loc. from DES draft data,250092603012
+20,20,42.7727603542,-71.0822307401,Essex St.,Haverhill,Merrimack River,14.1,29.0,loc. from DES draft data,250092601002
+21,21,42.7755201127,-71.0850561169,Little River N.,Haverhill,Merrimack River,5.79,36.0,loc. from DES draft data,250092601003
+22,22,42.7751012638,-71.0850944292,Little River S.,Haverhill,Merrimack River,1.11,19.0,loc. from DES draft data,250092601003
+23,23,42.777685,-71.086822,Winter & Hale St.,Haverhill,Merrimack River,0.09,1.0,approx.; loc n/a.,250092601003
+24,24,42.7664888688,-71.0933258214,Varnum St.,Haverhill,Merrimack River,1.57,1.0,loc. from DES draft data,250092608002
+25,25,42.7703361684,-71.0853391523,Bradford Ave,Haverhill,Merrimack River,8.89,38.0,loc. from DES draft data,250092610002
+26,26,42.7710623598,-71.083379438,S. Prospect St.,Haverhill,Merrimack River,0.16,2.0,loc. from DES draft data,250092610002
+27,27,42.7725655938,-71.0790685388,Middlesex St.,Haverhill,Merrimack River,1.28,2.0,loc. from DES draft data,250092610002
+28,28,42.7731561977,-71.0758655108,So. Main St.,Haverhill,Merrimack River,0.19,2.0,loc. from DES draft data,250092610001
+29,29,42.7040342331,-71.1502300214,Osgood St.,Lawrence,Merrimack River,7.69,2.0,loc. from DES draft data,250092516001
+30,30,42.7061062532,-71.1468732155,Island St.,Lawrence,Merrimack River,34.5,8.0,loc. from DES draft data,250092501001
+31,31,42.6096821712,-70.6696989748,Mansfield St.,Gloucester,Gloucester Harbor,0.18,3.0,loc. from DES draft data,250092215002
+32,32,42.610790372,-70.6640590225,Rogers St.,Gloucester,Harbor Cove,0.11,2.0,loc. from DES draft data,250092215002
+33,33,42.6108369508,-70.6636286313,off Fishermans Wharf,Gloucester,Harbor Cove,0.04,1.0,loc. from DES draft data,250092215002
+34,34,42.6132373389,-70.65731621,109 Rogers St.,Gloucester,Inner Harbor,1.16,4.0,loc. from DES draft data,250092215002
+35,35,42.6164325403,-70.6512941763,E. Main St.,Gloucester,Inner Harbor,0.2,7.0,loc. from DES draft data,250092214003
+36,36,42.6140265685,-70.6485369198,E. Main St.,Gloucester,Inner Harbor,0.86,14.0,loc. from DES draft data,250092213001
+37,37,42.4573841447,-70.9751373303,Summer St. and Saugus River,Lynn,Saugus River,3.6,25.0,loc. from DES draft data,250092058003
+38,38,42.4587622564,-70.9459688337,254 Lynnway & Pleasant,Lynn,Lynn Harbor,22.23,25.0,loc. from DES draft data,250092070001
+39,39,42.4596331059,-70.9441799068,180 Lynnway,Lynn,Lynn Harbor,20.14,11.0,loc. from DES draft data,250092069003
+40,40,42.401130572,-71.13608329,Mass Ave. & Alewife,Cambridge,Alewife Brook,0.13,2.0,source: MWRA,250173550002
+41,41,42.397102022,-71.144062427,97 Camb. Pk Dr.,Cambridge,Alewife Brook,5.33,10.0,source: MWRA,250173549003
+42,42,42.39564834,-71.143970872,97 Camb. Pk Dr.,Cambridge,Alewife Brook,1.14,3.0,source: MWRA,250173549003
+43,43,42.40088632,-71.136368632,Mass.  Ave & Alewife Bk,Cambridge,Alewife Brook,14.39,27.0,source: MWRA,250173550001
+44,44,42.402706623,-71.13478564,Matignon Rd.,Somerville,Alewife Brook,6.52,6.0,source: MWRA,250173550002
+45,45,42.398243697,-71.083419244,Assmbly Sq. & 28,Somerville,Upper Mystic,9.24,6.0,source: MWRA,250173501031
+46,46,42.394053038,-71.076056756,150 ft sw of MDC locks,Somerville,Mystic River,105.16,36.0,source: MWRA,250173501031
+47,47,42.382306394,-71.026972761,bet 338 and S70 E. Eagle St.,Boston,Chelsea River,0.15,1.0,source: MWRA,250250509013
+48,48,42.370314582,-71.04412892,Corner of Sumner & New,Boston,Upper Inner Harbor,0.21,2.0,source: MWRA,250250503001
+49,49,42.377807936,-71.042215281,310 Border St.,Boston,Upper Inner Harbor,0.11,1.0,source: MWRA,250250503001
+50,50,42.379753064,-71.051688514,NW of Tobin Br & 16th,Boston,Upper Inner Harbor,1.14,1.0,source: MWRA,250250408013
+51,51,42.364072811,-71.049382869,near Pilot Hs Park,Boston,Upper Inner Harbor,3.6,6.0,source: MWRA,250250303001
+52,52,42.368951332,-71.060903405,Prison Point,Boston,Upper Inner Harbor,413.76,23.0,source: MWRA,250250404012
+53,53,42.357853629,-71.027748763,SW Corner of Logan,Boston,Lower Inner Harbor,3.18,5.0,source: MWRA,250250512001
+54,54,42.36477221,-71.026880425,Tomahawk St,Boston,Lower Inner Harbor,2.4,10.0,source: MWRA,250259813002
+55,55,42.351336438,-71.05268835,Dorchester & Summer,Boston,Fort Point Channel,0.08,1.0,source: MWRA,250250701011
+56,56,42.348681028,-71.054504388,W. Bank Ft. Pt Chan.,Boston,Fort Point Channel,1.1,1.0,source: MWRA,250250701011
+57,57,42.344980694,-71.059401212,Int. 90 & 93,Boston,Fort Point Channel,0.65,1.0,source: MWRA,250250701011
+58,58,42.342858621,-71.060975542,W. 4th & Frontage,Boston,Fort Point Channel,37.78,20.0,source: MWRA,250250612001
+59,59,42.339594272,-71.042009157,off Pappas Was,Boston,Reserved Channel,10.0,27.0,source: MWRA,250259812021
+60,60,42.338537265,-71.039996088,n of E 1st & I,Boston,Reserved Channel,4.51,16.0,source: MWRA,250259812021
+61,61,42.342043141,-71.035628947,n of Powerhs & Summer,Boston,Reserved Channel,0.71,10.0,source: MWRA,250259812021
+62,62,42.341787852,-71.025193781,Massport Conway facility off Day Rd.,Boston,Reserved Channel,0.23,6.0,source: MWRA,250259812021
+63,63,42.332530691,-71.025050574,Day Blvd & Farragut,Boston,N. Dorchester Bay,0.04,1.0,source: MWRA,250259812011
+64,64,42.329653769,-71.030294692,off Day Blvd,Boston,N. Dorchester Bay,0.02,1.0,source: MWRA,250259812011
+65,65,42.373600778,-71.132742607,SE of Mt. Aub. Hosp.,Cambridge,Upper Charles River,1.77,3.0,source: MWRA,250173542002
+66,66,42.373242421,-71.126873865,Hawthorne & Mem. Dr.,Cambridge,Upper Charles River,2.15,2.0,source: MWRA,250173541002
+67,67,42.364648782,-71.076257386,bridge,Cambridge,Lower Charles River,2.04,2.0,source: MWRA,250173521021
+68,68,42.352377043,-71.11114878,nr BU,Boston,Lower Charles River,47.3,6.0,source: MWRA,250259815011
+69,69,42.5801316731,-72.5732032373,Greenfield Rd.,Montague,Connecticut River,0.26,13.0,only 2010 avail.; loc. from DES draft data,250110407022
+70,70,42.604325406,-72.5606416421,Avenue A,Montague,Connecticut River,0.2,2.0,only 2010 avail.; loc. from DES draft data,250110407013
+71,71,42.604325406,-72.5606416421,Ave. A.,Montague,Connecticut River,0.04,3.0,only 2010 avail.; loc. from DES draft data,250110407013
+72,72,42.1675235596,-72.6301648958,Prov Hospital,Holyoke,Connecticut River,0.15,22.0,only 2010 avail.; loc. from DES draft data,250138121032
+73,73,42.1717230563,-72.6297918539,Jones Ferry,Holyoke,Connecticut River,0.1,12.0,only 2010 avail.; loc. from DES draft data,250138121032
+74,74,42.1861181287,-72.6235953652,Northhampton & G,Holyoke,Connecticut River,1.38,28.0,only 2010 avail.; loc. from DES draft data,250138121031
+75,75,42.1881515217,-72.6182195128,Springdale,Holyoke,Connecticut River,27.96,50.0,only 2010 avail.; loc. from DES draft data,250138121031
+76,76,42.1899089959,-72.6124873641,Berkshire St,Holyoke,Connecticut River,31.98,12.0,only 2010 avail.; loc. from DES draft data,250138121031
+77,77,42.1932210058,-72.6061160872,Jackson St.,Holyoke,Connecticut River,10.19,57.0,only 2010 avail.; loc. from DES draft data,250138115002
+78,78,42.1978387408,-72.5987496453,Appleton St.,Holyoke,Connecticut River,4.47,37.0,only 2010 avail.; loc. from DES draft data,250138115002
+79,79,42.2036673234,-72.6077878335,Front and Appleton St.,Holyoke,First Level Canal,0.86,12.0,only 2010 avail.; loc. from DES draft data,250138116002
+80,80,42.2129976651,-72.6094042684,Walnut St.,Holyoke,Connecticut River,20.3,53.0,only 2010 avail.; loc. from DES draft data,250138117001
+81,81,42.214232,-72.606733,Essex and Walnut,Holyoke,Connecticut River,7.63,33.0,"approx., loc n/a; 2010 data",250138117001
+82,82,42.2196074517,-72.6130206149,Yale St.,Holyoke,Connecticut River,0.16,22.0,only 2010 avail.; loc. from DES draft data,250138119001
+83,83,42.2258115844,-72.6175997146,Cleveland St.,Holyoke,Connecticut River,7.51,58.0,only 2010 avail.; loc. from DES draft data,250138119001
+84,84,42.2291715182,-72.6238981427,River Terrace,Holyoke,Connecticut River,6.63,37.0,only 2010 avail.; loc. from DES draft data,250138119001
+85,85,42.2211416321,-72.6237436744,Jefferson St.,Holyoke,Dry Dingle,0.7,32.0,only 2010 avail.; loc. from DES draft data,250138119002
+86,86,42.2064010383,-72.5893427979,James St.,Chicopee,Connecticut River,9.4,34.0,only 2010 avail.; loc. from DES draft data,250138113013
+87,87,42.1918716325,-72.6031866886,River View,Chicopee,Connecticut River,8.39,20.0,only 2010 avail.; loc. from DES draft data,250138111011
+88,88,42.1898198886,-72.6068074336,Lesley St. Power Station,Chicopee,Connecticut River,2.56,38.0,only 2010 avail.; loc. from DES draft data,250138111011
+89,89,42.1864821944,-72.6158171576,Call St. PS,Chicopee,Connecticut River,32.74,36.0,only 2010 avail.; loc. from DES draft data,250138111012
+90,90,42.1711572475,-72.6269010582,Jones Ferry,Chicopee,Connecticut River,1.48,4.0,only 2010 avail.; loc. from DES draft data,250138111022
+91,91,42.171891,-72.628027,N. of Jones Ferry,Chicopee,Connecticut River,0.96,29.0,"only 2010 avail., loc. Approx, not avail",250138111021
+92,92,42.1547612842,-72.6259685805,Paderewski PS,Chicopee,Connecticut River,3.93,40.0,only 2010 avail.; loc. from DES draft data,250138111023
+93,93,42.142260397,-72.6152696687,Leonard and West St.,Chicopee,Connecticut River,6.69,55.0,only 2010 avail.; loc. from DES draft data,250138109011
+94,94,42.143503,-72.616904,Exchange and Bullns,Chicopee,Connecticut River,0.01,32.0,"approx., loc n/a; 2010 data",250138109011
+95,95,42.143964,-72.616603,Exchange and Depot,Chicopee,Connecticut River,8.0,42.0,"approx., loc n/a; 2010 data",250138109011
+96,96,42.1505930173,-72.58578345,Front and Dept,Chicopee,Connecticut River,17.23,51.0,only 2010 avail.; loc. from DES draft data,250138108001
+97,97,42.193436,-72.585101,Irene St. Roberts Pond,Chicopee,Wllmnst Bk.,0.64,15.0,"loc. n/a, estimated, 2010 data",250138113014
+98,98,42.1492377942,-72.5994933362,Bell and Front St.,Chicopee,Chicopee River,0.06,15.0,only 2010 avail.; loc. from DES draft data,250138108001
+99,99,42.1494166825,-72.5967982097,Topors Front St.,Chicopee,Chicopee River,8.4,27.0,only 2010 avail.; loc. from DES draft data,250138108001
+100,100,42.14962,-72.59815,River View West,Chicopee,Chicopee River,0.02,6.0,loc n/a; 210 data,250138108001
+101,101,42.1486484864,-72.5904931891,Electric Light West,Chicopee,Chicopee River,0.24,37.0,approx.; loc n/a 2010 data,250138108001
+102,102,42.1486484864,-72.5904931891,Electric Light South,Chicopee,Chicopee River,5.72,34.0,only 2010 avail.; loc. from DES draft data,250138108001
+103,103,42.149835,-72.599738,Esmnt Northwest Front,Chicopee,Chicopee River,21.67,49.0,approx.; loc n/a 2010 data,250138110005
+104,104,42.1562115932,-72.5886143916,Grove and Oak St.,Chicopee,Chicopee River,6.68,30.0,only 2010 avail.; loc. from DES draft data,250138110004
+105,105,42.153637,-72.588623,Walnut and Broadway,Chicopee,Chicopee River,4.51,39.0,approx.; loc n/a 2010 data,250138110005
+106,106,42.159449,-72.580512,Broadway and Belcher,Chicopee,Chicopee River,0.2,39.0,approx.; loc n/a 2010 data,250138107001
+107,107,42.159347,-72.579117,Maple and Belcher,Chicopee,Chicopee River,0.14,29.0,approx.; loc n/a 2010 data,250138106011
+108,108,42.1595354095,-72.58180982,Church and Walnut,Chicopee,Chicopee River,0.04,40.0,"approx., loc n/a; 2010 data",250138107001
+109,109,42.1608969898,-72.5863591155,Grtn and Hrthstn,Chicopee,Chicopee River,4.54,37.0,only 2010 avail.,250138110004
+110,110,42.160604,-72.585726,Hrthstn Terrace,Chicopee,Chicopee River,0.11,16.0,"approx., loc n/a; 2010 data",250138110004
+111,111,42.160509,-72.584996,Deady Bridge and Montgomery St.,Chicopee,Chicopee River,21.49,23.0,"approx., loc n/a; 2010 data",250138110004
+112,112,42.1586594376,-72.5773052694,East Main St.,Chicopee,Chicopee River,0.23,26.0,only 2010 avail.; loc. from DES draft data,250138107001
+113,113,42.150583,-72.61023,Chic St/391 Exit Ramp,Chicopee,Chicopee River,,,"approx., loc n/a; 2010 data",250138111023
+114,114,42.1188419251,-72.6198047557,Rowland St.,Springfield,Connecticut River,31.22,50.0,only 2010 avail.; loc. from DES draft data,250138007002
+115,115,42.111896864,-72.615498271,Washburn St.,Springfield,Connecticut River,132.63,12.0,only 2010 avail.; loc. from DES draft data,250138007001
+116,116,42.1045596662,-72.602371432,Clinton St.,Springfield,Connecticut River,29.41,48.0,only 2010 avail.; loc. from DES draft data,250138011011
+117,117,42.1034366322,-72.5993050309,Liberty St.,Springfield,Connecticut River,16.75,18.0,only 2010 avail.; loc. from DES draft data,250138011011
+118,118,42.1017572141,-72.5960356877,Worthington St.,Springfield,Connecticut River,141.31,63.0,only 2010 avail.; loc. from DES draft data,250138011011
+119,119,42.1010305739,-72.5948141047,Bridge St.,Springfield,Connecticut River,51.65,39.0,only 2010 avail.; loc. from DES draft data,250138011011
+120,120,42.0985504978,-72.5914587078,Elm St.,Springfield,Connecticut River,11.8,32.0,only 2010 avail.; loc. from DES draft data,250138011011
+121,121,42.095707,-72.588859,Union and Main St.,Springfield,Connecticut River,24.16,54.0,"approx., loc n/a; 2010 data",250138011022
+122,122,42.0956887722,-72.5884597198,Union and Columbus St.,Springfield,Connecticut River,0.85,9.0,only 2010 avail.; loc. from DES draft data,250138011022
+123,123,42.0900058348,-72.583865494,York St,Springfield,Connecticut River,0.01,6.0,only 2010 avail.,250138020001
+124,124,42.0781748947,-72.580980577,Long Hill St.,Springfield,Connecticut River,0.02,8.0,only 2010 avail.,250138021005
+125,125,42.1188239202,-72.6198044382,Springfield and Baystate,Springfield,Connecticut River,40.4,18.0,only 2010 avail.,250138007002
+126,126,42.10943,-72.562294,SRWTF Bypass,Springfield,Connecticut River,5.68,10.0,only 2010 avail.;loc. n/a,250138018001
+127,127,42.1604177925,-72.5097594166,Main St. and Indian Orchard,Springfield,Chicopee River,0.74,10.0,only 2010 avail.,250138001022
+128,128,42.1611751264,-72.5024620127,Front and Oak St.,Springfield,Chicopee River,0.85,17.0,only 2010 avail.,250138001022
+129,129,42.1610205905,-72.50160035,Pineveil and Water St.,Springfield,Chicopee River,0.01,1.0,only 2010 avail.,250138001022
+130,130,42.1606161242,-72.4984233391,Cedar St.,Springfield,Chicopee River,0.04,3.0,only 2010 avail.,250138001022
+131,131,42.0899061766,-72.5772514937,Fort Pleasant St.,Springfield,Mill River,2.38,12.0,only 2010 avail.,250138019011
+132,132,42.0966561099,-72.5640916186,Central St.,Springfield,Mill River,0.05,14.0,only 2010 avail.,250138022001
+133,133,42.0968292915,-72.5638648174,Allen and Oakland St.,Springfield,Mill River,0.44,18.0,only 2010 avail.,250138022001
+134,134,42.0899061766,-72.5772514937,Fort Pleasant St.,Springfield,Mill River,1.14,12.0,only 2010 avail.,250138019011
+135,135,42.0900058864,-72.5771806545,Belmont St.,Springfield,Mill River,0.17,3.0,only 2010 avail.,250138019011
+136,136,42.0970541298,-72.5638927623,Allen and Rifle St.,Springfield,Mill River,4.0,12.0,only 2010 avail.,250138019012
+137,137,42.0933883812,-72.5698153948,East Side of Mill St. Bridge,Springfield,Mill River,,,only 2010 avail.,250138019012
+138,138,41.733292,-71.14137,Alton St.,Fall River,Taunton River,64.0,42.0,based on model of annual disch.,250056421001
+139,139,41.726663,-71.148975,Cove St.,Fall River,Taunton River,50.0,40.0,based on model of annual disch.,250056421001
+140,140,41.716733,-71.158472,President Ave.,Fall River,Taunton River,71.0,51.0,based on model of annual disch.,250056420002
+141,141,41.712056,-71.158492,City Pier,Fall River,Taunton,185.0,52.0,based on model of annual disch.,250056420003
+142,142,41.704847,-71.161283,Central St.,Fall River,Taunton,5.0,38.0,based on model of annual disch.,250056420003
+143,143,41.704847,-71.161283,Canal St.,Fall River,Taunton,1.0,2.0,based on model of annual disch.,250056420003
+144,144,41.701403,-71.170703,Ferry St.,Fall River,Mt Hope Bay,12.0,8.0,based on model of annual disch.,250056405004
+145,145,41.699561,-71.173276,William St.,Fall River,Mt Hope Bay,2.0,2.0,based on model of annual disch.,250056405004
+146,146,41.696541,-71.180271,Middle St.,Fall River,Mt Hope Bay,14.0,13.0,based on model of annual disch.,250056405004
+147,147,41.69046,-71.185466,Riverview St.,Fall River,Mt Hope Bay,16.0,2.0,based on model of annual disch.,250056405004
+148,148,41.68663,-71.189736,Birch St.,Fall River,Mt Hope Bay,23.0,22.0,based on model of annual disch.,250056404003
+149,149,41.685044,-71.190723,Charles St.,Fall River,Mt Hope Bay,6.0,2.0,based on model of annual disch.,250056403003
+150,150,41.679956,-71.19527,Mt. Hope Ave.,Fall River,Mt Hope Bay,21.0,23.0,based on model of annual disch.,250056403003
+151,151,41.700338,-71.154361,Third St.,Fall River,Quequechan River,1.0,4.0,based on model of annual disch.,250056411011
+152,152,41.696981,-71.149769,Plymouth Ae. No.,Fall River,Quequechan River,26.0,2.0,based on model of annual disch.,250056412002
+153,153,41.696645,-71.150381,Plymouth Ave. So.,Fall River,Quequechan River,1.0,2.0,based on model of annual disch.,250056412002
+154,154,41.695187,-71.147441,Lowell St.,Fall River,Quequechan River,1.0,2.0,based on model of annual disch.,250056412002
+155,155,41.688593,-71.139352,Quequechan St.,Fall River,Quequechan River,1.0,2.0,based on model of annual disch.,250056414003
+156,156,41.612827,-70.930098,Cove Rd & Padnaram Ave,New Bedford,Clark's Cove,15.1,23.0,based on model of annual disch.,250056524002
+157,157,41.613646,-70.926754,Cove & Bonney,New Bedford,Clark's Cove,83.0,20.0,based on model of annual disch.,250056524002
+158,158,41.608464,-70.917653,Dudley & RFB,New Bedford,Clark's Cove,5.4,16.0,based on model of annual disch.,250056527003
+159,159,41.604388,-70.915142,Lucas & RFB,New Bedford,Clark's Cove,6.4,27.0,based on model of annual disch.,250056528002
+160,160,41.603763,-70.915099,Capital and RFB,New Bedford,Clark's Cove,0.4,6.0,based on model of annual disch.,250056528002
+161,161,41.603256525,-70.9135789367,Calumet St & RFB,New Bedford,Clark's Cove,1.4,16.0,based on model of annual disch.,250056528002
+162,162,41.601115,-70.912996,Bellevue St & RFB,New Bedford,Clark's Cove,2.1,15.0,based on model of annual disch.,250056528002
+163,163,41.680356,-70.917393,Truro St at Acushnet R,New Bedford,Inner Harbor,26.1,48.0,based on model of annual disch.,250056503002
+164,164,41.681254,-70.918423,Hamlin St.,New Bedford,Inner Harbor,30.3,38.0,based on model of annual disch.,250056503002
+165,165,41.666052,-70.918627,Hathaway St at Acushnet R,New Bedford,Inner Harbor,4.6,32.0,based on model of annual disch.,250056506001
+166,166,41.663086,-70.918146,Coffin Ave,New Bedford,Inner Harbor,54.4,48.0,based on model of annual disch.,250056507001
+167,167,41.657267,-70.919198,Sawyer St at Acushnet R,New Bedford,Inner Harbor,4.3,44.0,based on model of annual disch.,250056512001
+168,168,41.669145,-70.919014,Belleville Rd at Acushnet R,New Bedford,Inner Harbor,17.1,38.0,based on model of annual disch.,250056504001
+169,169,41.644873,-70.921365,Hervey Tichon Ave at Bussards bay,New Bedford,Inner Harbor,40.7,48.0,based on model of annual disch.,250056513001
+170,170,41.643478,-70.921362,Maxfield St at Buzzards Bay,New Bedford,Inner Harbor,0.5,25.0,based on model of annual disch.,250056513001
+171,171,41.635716,-70.920687,near Ferry Terminal,New Bedford,Inner Harbor,0.4,5.0,based on model of annual disch.,250056518002
+172,172,41.632156,-70.920271,Homers Wharf,New Bedford,Inner Harbor,1.9,23.0,based on model of annual disch.,250056519001
+173,173,41.628243,-70.916387,Conway St at Buzzards Bay,New Bedford,Inner Harbor,31.9,42.0,based on model of annual disch.,250056519001
+174,174,41.625789,-70.915078,South St at Buzzards Bay,New Bedford,Inner Harbor,17.9,40.0,based on model of annual disch.,250056519001
+175,175,41.617047,-70.913061,Cove & East RFB,New Bedford,New Bed. Outer Hrbr,9.0,29.0,based on model of annual disch.,250056527001
+176,176,41.613662,-70.90834,David St & RFB,New Bedford,New Bed. Outer Hrbr,11.2,37.0,based on model of annual disch.,250056527002
+177,177,41.611015,-70.906066,Frederick St & RFB,New Bedford,New Bed. Outer Hrbr,0.1,8.0,based on model of annual disch.,250056527003
+178,178,41.60925,-70.90454,Butler St. & RFB,New Bedford,New Bed. Outer Hrbr,1.1,9.0,based on model of annual disch.,250056528003
+179,179,41.6041,-70.902427,Aquidneck & RFB,New Bedford,New Bed. Outer Hrbr,0.0,1.0,based on model of annual disch.,250056528001
+180,180,41.602932,-70.902002,Ricketson & RFB,New Bedford,New Bed. Outer Hrbr,1.2,9.0,based on model of annual disch.,250056528001

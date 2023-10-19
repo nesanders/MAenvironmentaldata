@@ -242,9 +242,25 @@ def assign_ej_data_to_geo_bins_with_geopandas(data_ejs: pd.DataFrame, geo_towns_
     return data_ejs_out.reset_index()
 
 @memory.cache
-def _apply_pop_weighted_avg(data_cso: pd.DataFrame, data_ejs: pd.DataFrame, discharge_vol_col: str, discharge_count_col: str
-) -> Tuple[pd.DataFrame, pd.DataFrame, pd.DataFrame, pd.DataFrame, pd.DataFrame]:
+def _apply_pop_weighted_avg(data_cso: pd.DataFrame, data_ejs: pd.DataFrame, discharge_vol_col: str, discharge_count_col: str,
+    output_prefix: Optional[str]=None
+) -> Tuple[pd.DataFrame, pd.DataFrame, pd.DataFrame, pd.DataFrame, pd.DataFrame, pd.DataFrame]:
     """Calculate population weighted averages for EJ characteristics, averaging over block group, watershed, and town.
+    
+    Returns
+    -------
+    pd.DataFrame
+        Table of discharge volumes and counts per outfall.
+    pd.DataFrame
+        Table of discharge volumes and counts per Town.
+    pd.DataFrame
+        Table of discharge volumes and counts per Watershed.
+    pd.DataFrame
+        Table of discharge volumes and counts per outfall with EJ statistics.
+    pd.DataFrame
+        Table of discharge volumes and counts per Town with population weighted average.
+    pd.DataFrame
+        Table of discharge volumes and counts per Watershed with population weighted average.
     """
     logging.info('Calculating population weighted averages')
     
@@ -264,8 +280,10 @@ def _apply_pop_weighted_avg(data_cso: pd.DataFrame, data_ejs: pd.DataFrame, disc
     ## Get counts by watershed
     data_ins_g_ws_j = pd.merge(data_cso, data_ejs, left_on=id_col, right_on='ID', how='outer')\
                         .groupby('Watershed')[[discharge_vol_col, discharge_count_col]].sum().fillna(0)
-    # TODO save out this view of waterbodies per watershed
-    # pd.merge(data_cso, data_ejs, left_on=id_col, right_on='ID', how='outer').groupby(['Watershed', 'waterBody', 'cso_id'])['DischargeVolume'].sum()
+    # If requested, save out a file
+    if output_prefix is not None and 'waterBody' in data_ejs:
+        pd.merge(data_cso, data_ejs, left_on=id_col, right_on='ID', how='outer').groupby(['Watershed', 'waterBody', 'cso_id'])['DischargeVolume'].sum()\
+            .to_csv(output_prefix+'_discharge_per_waterbody.csv')
     # NOTE you can check that MWR205 exists with code like
     # pd.merge(data_cso, data_ejs, left_on=id_col, right_on='ID', how='outer').set_index('cso_id').loc['MWR205']
     # 250173501031 is the preferred census block, but does not exist in the EJ data file, so we end up with the nearby 250250406001 instead
@@ -299,7 +317,8 @@ class CSOAnalysis():
     
     def __init__(
         self, 
-        fact_file: str='../docs/data/facts_NECIR_CSO.yml',
+        fact_file: Optional[str]=None,
+        data_path: str='../docs/data/',
         out_path: str='../docs/assets/maps/',
         fig_path: str='../docs/assets/figures/',
         stan_model_code: str='discharge_regression_model.stan',
@@ -315,8 +334,10 @@ class CSOAnalysis():
         
         Parameters
         ----------
-        fact_file: str
-            Path of yml file to write calculated results to, by default '../docs/data/facts_NECIR_CSO.yml',
+        fact_file: Optional[str]
+            Path of yml file to write calculated results to, by default '../docs/data/facts_{output_slug}.yml',
+        data_path: str,
+            Path of dirctory to write data outputs to, by default 'fact_file: str='../docs/data/'
         out_path: str
             Path of directory to write map outputs to, by default '../docs/assets/maps/',
         fig_path: str
@@ -340,8 +361,12 @@ class CSOAnalysis():
             If not None, then the CSO discharge data for each census block group will be smoothed over this radius in miles, by default=None
         """
         # Establish file to export facts
-        self.fact_file = fact_file
+        if fact_file is None:
+            self.fact_file = f'../docs/data/facts_{self.output_slug}.yml'
+        else:
+            self.fact_file = fact_file
         # Location to write out map and figure assets
+        self.data_path = data_path
         self.out_path = out_path
         self.fig_path = fig_path
         # Location of Stan regression model code
@@ -419,7 +444,7 @@ class CSOAnalysis():
     ) -> Tuple[pd.DataFrame, pd.DataFrame, pd.DataFrame, pd.DataFrame, pd.DataFrame]:
         """Calculate population weighted averages for EJ characteristics, averaging over block group, watershed, and town.
         """
-        return _apply_pop_weighted_avg(data_cso, data_ejs, self.discharge_vol_col, self.discharge_count_col)
+        return _apply_pop_weighted_avg(data_cso, data_ejs, self.discharge_vol_col, self.discharge_count_col, output_prefix=self.data_path + f'{self.output_slug}')
 
     # -------------------------
     # Mapping functions
@@ -811,13 +836,15 @@ class CSOAnalysis():
             'y': list(y[~sel_unpop]),
             'p': list(pop[~sel_unpop] / np.mean(pop[~sel_unpop]))
             }
+        assert np.isnan(stan_dat['x']).sum() + np.isnan(stan_dat['y']).sum() == 0,\
+            "NaN values appeared in input x or y"
         
         sm = stan.build(open(self.stan_model_code).read(), data=stan_dat)
         if stan_dat['J'] > 100:
-            num_samples = 5000
+            num_samples = 1000 # WARNING set to 5000 for full run
             logging.info(f"Large dataset N={stan_dat['J']}; running smaller sample size")
         else:
-            num_samples = 5000
+            num_samples = 1000 # WARNING set to 5000 for full run
         fit = sm.sample(num_samples=num_samples, num_chains=10)
         fit_par = fit.to_frame()
         
@@ -890,6 +917,13 @@ class CSOAnalysis():
         self.data_ejs = assign_ej_data_to_geo_bins_with_geopandas(self.data_ejs, self.geo_towns_df, self.geo_watersheds_df, self.geo_blockgroups_df)
         self.data_ins_g_bg, self.data_ins_g_muni_j, self.data_ins_g_ws_j, self.data_egs_merge, self.df_watershed_level, self.df_town_level = \
             self.apply_pop_weighted_avg(self.data_cso, self.data_ejs)
+        
+        self.data_cso.to_csv(self.data_path + f'{self.output_slug}_data_cso.csv')
+        self.data_ins_g_bg.to_csv(self.data_path + f'{self.output_slug}_data_ins_g_bg.csv')
+        self.data_ins_g_muni_j.to_csv(self.data_path + f'{self.output_slug}_data_ins_g_muni_j.csv')
+        self.data_egs_merge.to_csv(self.data_path + f'{self.output_slug}_data_egs_merge.csv.gz')
+        self.df_watershed_level.to_csv(self.data_path + f'{self.output_slug}_df_watershed_level.csv')
+        self.df_town_level.to_csv(self.data_path + f'{self.output_slug}_df_town_level.csv')
         
         # Make maps
         if self.make_maps:
