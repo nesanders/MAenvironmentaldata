@@ -7,14 +7,10 @@ from datetime import date
 from typing import Any, Optional, Tuple
 
 import chartjs
-from joblib import Memory
 import numpy as np
 import pandas as pd
 
 from NECIR_CSO_map import COLOR_CYCLE, CSOAnalysis, get_engine, hex2rgb
-
-# Create a joblib cache
-memory = Memory('eea_dp_cso_data_cache', verbose=1)
 
 PICK_CSO_START = date(2022, 6, 1)
 PICK_CSO_END = date(2022, 12, 31)
@@ -40,6 +36,7 @@ class CSOAnalysisEEADP(CSOAnalysis):
     longitude_col: str = 'longitude'
     # Path to file with lat long data from the state
     cso_lat_long_data_file: str = '../docs/data/ma_permittee-and-outfall-lists.xlsx'
+    geo_blockgroups_path: str='../docs/assets/geo_json/cb_2022_25_bg_500k.json'
     
     def __init__(
         self, 
@@ -322,10 +319,10 @@ class CSOAnalysisEEADP(CSOAnalysis):
     
 if __name__ == '__main__':
     for start_date, end_date, run_name, cbg_smooth_radius in (
-        (PICK_CSO_START, PICK_CSO_END, '2022', None),
-        (date(2022, 6, 1), date(2023, 6, 30), 'first_year', None),
-        (date(2022, 6, 1), date(2023, 6, 30), 'first_year_smooth', 0.5),
-        (date(2022, 6, 1), date(2023, 9, 30), 'through_sept_2023', None)
+        # (PICK_CSO_START, PICK_CSO_END, '2022', None),
+        # (date(2022, 6, 1), date(2023, 6, 30), 'first_year', None),
+        # (date(2022, 6, 1), date(2023, 6, 30), 'first_year_smooth', 0.5),
+        (date(2022, 6, 1), date(2023, 9, 30), 'through_sept_2023', None),
         ):
         # NOTE for fast debugging of the `extra_plot`, try using these parameters:
         # > make_maps=False, make_charts=False, make_regression=False
@@ -333,8 +330,6 @@ if __name__ == '__main__':
             cso_data_start=start_date, 
             cso_data_end=end_date, 
             output_slug=f'MAEEADP_{run_name}', 
-            cbg_smooth_radius=cbg_smooth_radius,
-            make_regression=False
-        )
+            cbg_smooth_radius=cbg_smooth_radius        )
         csoa.run_analysis()
         csoa.extra_plots()

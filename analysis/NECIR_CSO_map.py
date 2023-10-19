@@ -152,7 +152,7 @@ def cast_df_to_epsg_3310(gdf: gpd.GeoDataFrame, latitude: str='Latitude', longit
     return gpd.GeoDataFrame(gdf, geometry=gpd.points_from_xy(gdf[longitude], gdf[latitude]), crs=crs).to_crs(epsg=3310)
 
 METERS_PER_MILE = 1609.34
-def _assign_cso_data_to_census_blocks_with_geopandas(data_cso: pd.DataFrame, geo_blockgroups_df: gpd.GeoDataFrame, 
+def _assign_cso_data_to_census_blocks_with_geopandas(data_cso: pd.DataFrame, data_ejs: pd.DataFrame, geo_blockgroups_df: gpd.GeoDataFrame, 
     latitude: str='Latitude', longitude: str='Longitude', use_radius: Optional[float]=None,
     discharge_cols: tuple[str, str]=('2011_Discharges_MGal', '2011_Discharge_N')) -> pd.DataFrame:
     """Add a new 'BlockGroup' column to `data_cso` assigning CSOs to Census block groups using geopandas
@@ -166,6 +166,8 @@ def _assign_cso_data_to_census_blocks_with_geopandas(data_cso: pd.DataFrame, geo
     # Convert both to metric projects
     utm_cso_df = cast_df_to_epsg_3310(data_cso, latitude, longitude)
     utm_bg_df = geo_blockgroups_df.to_crs(epsg=3310)
+    # Limit assignment to BGs with EJ data
+    utm_bg_df = utm_bg_df[utm_bg_df['GEOID'].isin(data_ejs['ID'])]
     
     if use_radius is not None:
         # We create a use_radius-sized buffer around the CSO, then match on the overlap with the BGs
@@ -193,7 +195,9 @@ def _assign_cso_data_to_census_blocks_with_geopandas(data_cso: pd.DataFrame, geo
         return utm_merge_df
     
     else:
-        utm_merge_df = utm_cso_df.sjoin(utm_bg_df, how='left', predicate='intersects')
+        # We do a nearest join to allow or the small number of cases where there is not a direct intersection in the geometries,
+        # i.e. as in MWR205 outfall at the dam.
+        utm_merge_df = utm_cso_df.sjoin_nearest(utm_bg_df, how='left')
         data_cso['GEOID'] = utm_merge_df['GEOID'].values
         return data_cso
 
@@ -212,6 +216,7 @@ def assign_ej_data_to_geo_bins_with_geopandas(data_ejs: pd.DataFrame, geo_towns_
     utm_watersheds_df = geo_watersheds_df.to_crs(epsg=3310)
     utm_blockgroups_df = geo_blockgroups_df.to_crs(epsg=3310)
     
+    # Only assign to Census BGs with EJ data (right join). This retains 85% of BGs. 
     data_ejs_cbg_merge = utm_blockgroups_df.merge(data_ejs, left_on='GEOID', right_on='ID', how='right')
     data_ejs_centroids = gpd.GeoDataFrame(geometry=data_ejs_cbg_merge.centroid.values, index=data_ejs_cbg_merge['GEOID'])
 
@@ -261,6 +266,10 @@ def _apply_pop_weighted_avg(data_cso: pd.DataFrame, data_ejs: pd.DataFrame, disc
                         .groupby('Watershed')[[discharge_vol_col, discharge_count_col]].sum().fillna(0)
     # TODO save out this view of waterbodies per watershed
     # pd.merge(data_cso, data_ejs, left_on=id_col, right_on='ID', how='outer').groupby(['Watershed', 'waterBody', 'cso_id'])['DischargeVolume'].sum()
+    # NOTE you can check that MWR205 exists with code like
+    # pd.merge(data_cso, data_ejs, left_on=id_col, right_on='ID', how='outer').set_index('cso_id').loc['MWR205']
+    # 250173501031 is the preferred census block, but does not exist in the EJ data file, so we end up with the nearby 250250406001 instead
+    # pd.merge(data_cso, data_ejs, left_on=id_col, right_on='ID', how='outer').set_index('GEOID').loc['250173501031']
 
     df_watershed_level = data_egs_merge.groupby('Watershed').apply(
         lambda x: pop_weighted_average(x, ['MINORPCT', 'LOWINCPCT', 'LINGISOPCT']))
@@ -399,11 +408,11 @@ class CSOAnalysis():
     # -------------------------
 
     def assign_cso_data_to_census_blocks(self, 
-        data_cso: pd.DataFrame, geo_blockgroups_df: gpd.GeoDataFrame, use_radius: Optional[float]=None
+        data_cso: pd.DataFrame, data_ejs: pd.DataFrame, geo_blockgroups_df: gpd.GeoDataFrame, use_radius: Optional[float]=None
     ) -> pd.DataFrame:
         """Add a new 'BlockGroup' column to `data_cso` assigning CSOs to Census block groups.
         """
-        return _assign_cso_data_to_census_blocks_with_geopandas(data_cso, geo_blockgroups_df, self.latitude_col, self.longitude_col, use_radius,
+        return _assign_cso_data_to_census_blocks_with_geopandas(data_cso, data_ejs, geo_blockgroups_df, self.latitude_col, self.longitude_col, use_radius,
             discharge_cols=(self.discharge_vol_col, self.discharge_count_col))
     
     def apply_pop_weighted_avg(self, data_cso: pd.DataFrame, data_ejs: pd.DataFrame
@@ -805,10 +814,10 @@ class CSOAnalysis():
         
         sm = stan.build(open(self.stan_model_code).read(), data=stan_dat)
         if stan_dat['J'] > 100:
-            num_samples = 1000
+            num_samples = 5000
             logging.info(f"Large dataset N={stan_dat['J']}; running smaller sample size")
         else:
-            num_samples=10000
+            num_samples=1000 # WARNING change to 10000 for final run
         fit = sm.sample(num_samples=num_samples, num_chains=10)
         fit_par = fit.to_frame()
         
@@ -877,7 +886,7 @@ class CSOAnalysis():
         self.geo_towns_df, self.geo_watersheds_df, self.geo_blockgroups_df = self.get_geo_files()
         self.data_cso, self.data_ejs = self.load_data()
         # TODO should add these results to the database
-        self.data_cso = self.assign_cso_data_to_census_blocks(self.data_cso, self.geo_blockgroups_df, use_radius=self.cbg_smooth_radius)
+        self.data_cso = self.assign_cso_data_to_census_blocks(self.data_cso, self.data_ejs, self.geo_blockgroups_df, use_radius=self.cbg_smooth_radius)
         self.data_ejs = assign_ej_data_to_geo_bins_with_geopandas(self.data_ejs, self.geo_towns_df, self.geo_watersheds_df, self.geo_blockgroups_df)
         self.data_ins_g_bg, self.data_ins_g_muni_j, self.data_ins_g_ws_j, self.data_egs_merge, self.df_watershed_level, self.df_town_level = \
             self.apply_pop_weighted_avg(self.data_cso, self.data_ejs)
