@@ -817,7 +817,7 @@ class CSOAnalysis():
             num_samples = 5000
             logging.info(f"Large dataset N={stan_dat['J']}; running smaller sample size")
         else:
-            num_samples=1000 # WARNING change to 10000 for final run
+            num_samples = 5000
         fit = sm.sample(num_samples=num_samples, num_chains=10)
         fit_par = fit.to_frame()
         

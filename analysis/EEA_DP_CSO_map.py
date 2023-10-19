@@ -319,9 +319,9 @@ class CSOAnalysisEEADP(CSOAnalysis):
     
 if __name__ == '__main__':
     for start_date, end_date, run_name, cbg_smooth_radius in (
-        # (PICK_CSO_START, PICK_CSO_END, '2022', None),
-        # (date(2022, 6, 1), date(2023, 6, 30), 'first_year', None),
-        # (date(2022, 6, 1), date(2023, 6, 30), 'first_year_smooth', 0.5),
+        (PICK_CSO_START, PICK_CSO_END, '2022', None),
+        (date(2022, 6, 1), date(2023, 6, 30), 'first_year', None),
+        (date(2022, 6, 1), date(2023, 6, 30), 'first_year_smooth', 0.5),
         (date(2022, 6, 1), date(2023, 9, 30), 'through_sept_2023', None),
         ):
         # NOTE for fast debugging of the `extra_plot`, try using these parameters:
