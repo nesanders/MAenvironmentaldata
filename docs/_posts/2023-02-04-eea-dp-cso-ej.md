@@ -35,7 +35,7 @@ We can also see that the vast majority of reports are for untreated CSOs.
 A smaller fraction of reports are for treated CSOs.
 Very few 'blended' discharges and SSOs are being reported.
 
-{% include /charts/EEA_DP_CSO_counts_per_month.html %}
+{% include /charts/MAEEADP_2022_counts_per_month.html %}
 
 However, looking at the **volume** (i.e. severity) of discharges reported over time shows a very different picture.
 Still, the plurality of discharge volume each month is from untreated CSOs, whose effluent can be expected to carry the greatest risk to public health from bacterial load.
@@ -43,7 +43,7 @@ Still, only a small volume of discharges can be attributed to treated CSOs.
 However, while they are a small fraction of the count of discharges, the volume of partially treated CSO and 'blended' discharge is very high relative to their count.
 In December of 2022, the plurality of discharge was actually in the form of 'blended' discharge.
 
-{% include /charts/EEA_DP_CSO_volume_per_month.html %}
+{% include /charts/MAEEADP_2022_volume_per_month.html %}
 
 According to the [Massachusetts Water Resources Authority](https://www.mwra.com/harbor/html/blending_reporting.htm) (MWRA), 'blended' discharge from their system constitutes "excess primary-treated flow [that has been] diverted around the secondary process and then blended with the secondary effluent before being disinfected and discharged." 
 In other words, part of the effluent in this discharge skipped the stage where microbes are applied to break down solids and contaminants (the secondary treatment process), meaning that the toxicity of the discharge may be higher than fully treated sewage.
@@ -62,7 +62,7 @@ To generate the plot below, any report rounded to the nearest 1,000 gallons is a
 
 Roughly half of untreated CSO discharges seem to be based on modeled estimates. The number of treated and blended CSO discharges that are modeled is much lower. Furthermore, a small fraction (a few percent) of 'final validated reports' contain no volume information about the discharge.
 
-{% include /charts/EEA_DP_CSO_non_zero_volume.html %}
+{% include /charts/MAEEADP_2022_non_zero_volume.html %}
 
 ### How does this vary by sewer operator?
 
@@ -74,7 +74,7 @@ The MWRA reports a fairly even mix of treated CSO and 'blended' discharge.
 Fall River, meanwhile, reports mostly non-'blended' partially treated discharge.
 Holyoke reports mostly untrteated CSO and some treated CSO discharge.
 
-{% include /charts/EEA_DP_CSO_volume_per_operator.html %}
+{% include /charts/MAEEADP_2022_volume_per_operator.html %}
 
 ## Locations of CSO discharges
 
