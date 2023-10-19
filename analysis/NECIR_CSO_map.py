@@ -344,7 +344,7 @@ class CSOAnalysis():
         self.make_maps = make_maps
         self.make_charts = make_charts
         self.make_regression = make_regression
-        self.cbg_smooth_radius: Optional[bool]=None
+        self.cbg_smooth_radius = cbg_smooth_radius
  
  
     
