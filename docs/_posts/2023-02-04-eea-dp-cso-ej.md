@@ -49,6 +49,10 @@ According to the [Massachusetts Water Resources Authority](https://www.mwra.com/
 In other words, part of the effluent in this discharge skipped the stage where microbes are applied to break down solids and contaminants (the secondary treatment process), meaning that the toxicity of the discharge may be higher than fully treated sewage.
 The notification regulations [required](https://www.mass.gov/doc/314-cmr-1600-notification-requirements-to-promote-public-awareness-of-sewage-pollution-note-to-reviewers/download) reporting of 'blended' discharges following public comment from the [Massachusetts Rivers Alliance](https://www.massriversalliance.org/sewage-right-to-know) and other advocates.
 
+We can also visualize the distribution of discharge volumes across receiving water bodies. The following chart shows only the top 20 water bodies by sewage volume for clarity.
+
+{% include /charts/MAEEADP_2022_volume_per_waterbody.html %}
+
 In the analysis below, we combine discharges of all types (i.e. we treat every gallon of discharge as equivalent).
 
 ### What fraction of reports have non-zero, non-modeled discharge volumes?

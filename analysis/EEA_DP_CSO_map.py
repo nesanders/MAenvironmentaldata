@@ -99,6 +99,9 @@ class CSOAnalysisEEADP(CSOAnalysis):
             'outfallId': 'cso_id'
         }, inplace=True)
         
+        ambig_data = data_cso[data_cso['cso_id'].isnull()]
+        print(f'After some manual fixing, these are the remaining reports with ambiguous names: {ambig_data}')
+        
         print(f'Filtering CSO data for year {self.cso_data_start} - {self.cso_data_end}')
         df_pick = data_cso[(
             data_cso['incidentDate'] >= pd.to_datetime(pick_start)) & 
@@ -129,7 +132,7 @@ class CSOAnalysisEEADP(CSOAnalysis):
         # Columns to be counted
         count_cols = ['incidentId']
         
-        # NOTE there are tree possible eventTypes: 'CSO – Treated', 'CSO – UnTreated', 'Partially Treated – Blended', 'Partially Treated – Other'
+        # NOTE there are a variety of possible eventTypes: 'CSO – Treated', 'CSO – UnTreated', 'Partially Treated – Blended', 'Partially Treated – Other'
         # We choose to sum over all of them
         
         aggregators = {col: np.sum for col in sum_cols}
@@ -238,6 +241,34 @@ class CSOAnalysisEEADP(CSOAnalysis):
 
         mychart.jekyll_write(outpath)
 
+    def plot_volume_per_waterbody_by_event_type(self, outpath: Optional[str]=None, top_n: int=20):
+        """Bar chart showingvolume of discharge for each waterbody.
+        
+        Only the top_n by volume are shown for clarity.
+        """        
+        if outpath is None:
+            outpath = f'../docs/_includes/charts/{self.output_slug}_volume_per_waterbody.html'
+        
+        print('Making chart of discharge volume per waterbody by discharge type')
+        mychart = chartjs.chart("Discharge volume per waterbody by discharge type", "Bar", 640, 480)
+        
+        data_types = self.data_cso_filtered_reports['eventType'].unique()
+        cso_df_vol = self.data_cso_filtered_reports.groupby(['eventType', self.water_body_col])[self.discharge_vol_col].sum() / 1e6
+        all_waterbodies = self.data_cso_filtered_reports.groupby([self.water_body_col])[self.discharge_vol_col].sum().sort_values(ascending=False).index[:top_n]
+        mychart.set_labels(all_waterbodies)
+        
+        for i, event_type in enumerate(data_types):
+            vol_per_waterbody = cso_df_vol.loc[event_type].reindex(all_waterbodies).fillna(0)
+            mychart.add_dataset(vol_per_waterbody.values.tolist(), 
+                event_type,
+                backgroundColor="'rgba({},0.8)'".format(", ".join([str(x) for x in hex2rgb(COLOR_CYCLE[i])])),
+                yAxisID= "'y-axis-0'")
+        mychart.set_params(JSinline=0, ylabel='Volume of discharges (millions of gallons)', xlabel='Water body',
+            scaleBeginAtZero=1)
+        mychart.stacked = 'true'
+
+        mychart.jekyll_write(outpath)
+
     def plot_reports_non_zero_volume(self, outpath: Optional[str]=None):
         """Bar chart showing how many reports of each discharge type have zero volume reported.
         
@@ -282,6 +313,7 @@ class CSOAnalysisEEADP(CSOAnalysis):
         self.plot_volume_per_month_by_event_type()
         self.plot_volume_per_operator_by_event_type()
         self.plot_reports_non_zero_volume()
+        self.plot_volume_per_waterbody_by_event_type()
 
     
 # -------------------------
@@ -297,6 +329,12 @@ if __name__ == '__main__':
         ):
         # NOTE for fast debugging of the `extra_plot`, try using these parameters:
         # > make_maps=False, make_charts=False, make_regression=False
-        csoa = CSOAnalysisEEADP(cso_data_start=start_date, cso_data_end=end_date, output_slug=f'MAEEADP_{run_name}', cbg_smooth_radius=cbg_smooth_radius)
+        csoa = CSOAnalysisEEADP(
+            cso_data_start=start_date, 
+            cso_data_end=end_date, 
+            output_slug=f'MAEEADP_{run_name}', 
+            cbg_smooth_radius=cbg_smooth_radius,
+            make_regression=False
+        )
         csoa.run_analysis()
         csoa.extra_plots()

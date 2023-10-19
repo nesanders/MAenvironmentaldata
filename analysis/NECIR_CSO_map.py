@@ -259,6 +259,8 @@ def _apply_pop_weighted_avg(data_cso: pd.DataFrame, data_ejs: pd.DataFrame, disc
     ## Get counts by watershed
     data_ins_g_ws_j = pd.merge(data_cso, data_ejs, left_on=id_col, right_on='ID', how='outer')\
                         .groupby('Watershed')[[discharge_vol_col, discharge_count_col]].sum().fillna(0)
+    # TODO save out this view of waterbodies per watershed
+    # pd.merge(data_cso, data_ejs, left_on=id_col, right_on='ID', how='outer').groupby(['Watershed', 'waterBody', 'cso_id'])['DischargeVolume'].sum()
 
     df_watershed_level = data_egs_merge.groupby('Watershed').apply(
         lambda x: pop_weighted_average(x, ['MINORPCT', 'LOWINCPCT', 'LINGISOPCT']))
@@ -345,7 +347,6 @@ class CSOAnalysis():
         self.make_charts = make_charts
         self.make_regression = make_regression
         self.cbg_smooth_radius = cbg_smooth_radius
- 
  
     
     # -------------------------
@@ -705,9 +706,9 @@ class CSOAnalysis():
             mychart.add_dataset(
                 np.array([x_bin_cent, y_bin[0]]).T, 
                 dataset_label="Average (population weighted & binned)",
-                pointColor="'rgba(50,50,200,1)'",
+                backgroundColor="'rgba(50,50,200,1)'",
                 showLine = "true",
-                pointStrokeColor="'rgba(50,50,200,1)'",
+                borderColor="'rgba(50,50,200,1)'",
                 borderWidth=3,
                 yAxisID= "'y-axis-0'",
                 fill="false",
@@ -716,11 +717,11 @@ class CSOAnalysis():
             ## Add uncertainty contour
             mychart.add_dataset(np.array([x_bin_cent, y_bin[0] - 1.65 * y_bin[1]]).T, 
                 "Average lower bound (5% limit)",
-                pointColor="'rgba(50,50,200,0.3)'", showLine = "true", yAxisID= "'y-axis-0'", borderWidth = 1, 
+                backgroundColor="'rgba(50,50,200,0.3)'", showLine = "true", yAxisID= "'y-axis-0'", borderWidth = 1, 
                 fill = 'false', pointBackgroundColor="'rgba(50,50,200,0.3)'", pointBorderColor="'rgba(50,50,200,0.3)'")
             mychart.add_dataset(np.array([x_bin_cent, y_bin[0] + 1.65 * y_bin[1]]).T, 
                 "Average upper bound (95% limit)",
-                pointColor="'rgba(50,50,200,0.3)'", showLine = "true", yAxisID= "'y-axis-0'", borderWidth = 1, fill = "'-1'", pointBackgroundColor="'rgba(50,50,200,0.3)'", pointBorderColor="'rgba(50,50,200,0.3)'")
+                backgroundColor="'rgba(50,50,200,0.3)'", showLine = "true", yAxisID= "'y-axis-0'", borderWidth = 1, fill = "'-1'", pointBackgroundColor="'rgba(50,50,200,0.3)'", pointBorderColor="'rgba(50,50,200,0.3)'")
 
             ## Set overall chart parameters
             mychart.set_params(
@@ -910,8 +911,8 @@ class CSOAnalysis():
                 ):
                 self.fits[col] = {}
                 for level_col, level_demo_df, level_cso_df in [
-                    # ('Watershed', self.df_watershed_level, self.data_ins_g_ws_j), 
-                    # ('Town', self.df_town_level, self.data_ins_g_muni_j), 
+                    ('Watershed', self.df_watershed_level, self.data_ins_g_ws_j), 
+                    ('Town', self.df_town_level, self.data_ins_g_muni_j), 
                     ('ID', self.data_egs_merge.set_index('ID'), self.data_ins_g_bg)]:
                     fit, fit_par, stan_dat, pop_data = self.fit_stan_model(col, self.data_egs_merge, level_demo_df, 
                         level_cso_df, level_col=level_col)
@@ -920,7 +921,7 @@ class CSOAnalysis():
                     self.regression_plot_model_draws(fit_par, col_label, self.fig_path + f'{self.output_slug}_{level_col}_stanfit_'+col+'.png', stan_dat, 
                         pop_data, level_col=level_col)
                     self.fits[col][level_col] = {'fit_par': fit_par, 'stan_dat': stan_dat, 'pop_data': pop_data}
-    
+
 if __name__ == '__main__':
     csoa = CSOAnalysis()
     csoa.run_analysis()
