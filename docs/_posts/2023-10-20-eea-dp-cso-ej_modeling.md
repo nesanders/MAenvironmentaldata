@@ -1,8 +1,10 @@
 ---
 layout: post
-title: Revisiting the environmental justice implications of CSOs with 2022 data
+title: The first year of data from MA's new sewage pollution notification system.
 ancillary: 0
 ---
+
+*This background information is largely repeated from our earlier post, ["% post_title 2023-02-04-eea-dp-cso-ej_modeling %"]({% post_url 2023-02-04-eea-dp-cso-ej_modeling %})*
 
 In 2018, AMEND [featured]({% post_url 2018-04-25-necir-cso-ej %}) the first analysis of the distributional impacts of [combined sewer overflows (CSOs)](https://www.epa.gov/npdes/combined-sewer-overflows-csos) in Massachusetts, demonstrating that there were severe inequities in the extent to which different communities are burdened with sewage pollution based on race, language isolation, and income. This work was later published in the journal [Media and Communication](https://doi.org/10.17645/mac.v7i3.2136).
 
@@ -10,9 +12,7 @@ The analysis in 2018 was limited to [CSO data from 2011]({{ site.url }}{{ site.b
 
 In 2021, Massachusetts [enacted a new law](https://malegislature.gov/Laws/SessionLaws/Acts/2020/Chapter322), the [Sewage Notification Act](https://www.wbur.org/news/2021/01/06/cso-notification-bill-sewage-river-baker), which [requires public notification](https://www.mass.gov/regulations/314-CMR-1600-notification-requirements-to-promote-public-awareness-of-sewage-pollution) of CSO discharges. This law generated a new data resource, a table in the [MA EEA Data Portal]({{ site.url }}{{ site.baseurl }}/data/EEADP_all.html) for CSO discharge events. 
 
-The availability of this new dataset allows us to revisit the distributional impacts of CSO discharges in MA a decade after the dataset collected by NECIR in 2011. In particular, in this post, we examine the first five months of data collected under the new law, from the second half of 2022.  As we will see below, this new dataset has limitations, but it does allow us to draw some insight into how the water pollution conditions in the Commonwealth have changed over a decade that has seen the culmination of hundreds of millions of dollars of [sewage pollution mitigation work by MWRA](https://www.mwra.com/cso/pcmapa.html) and other sewer operators.
-
-When comparing results in this analysis to the previous analysis of 2011 data, keep in mind that the 2022 data is available only for July through December and does not constitute a full year of reporting.
+The availability of this new dataset allows us to revisit the distributional impacts of CSO discharges in MA a decade after the dataset collected by NECIR in 2011. In our earlier post, ["% post_title 2023-02-04-eea-dp-cso-ej_modeling %"]({% post_url 2023-02-04-eea-dp-cso-ej_modeling %}), we explored the first six months of data reported through this platform. In this post, we update that analysis to report on the first full year (actually, the first 15 months) of sewage pollution data using the same methodology.
 
 The [environmental justice data used in this analysis]({{ site.url }}{{ site.baseurl }}/data/EPA_EJSCREEN.html) comes from the [US EPA EJSCREEN tool](https://www.epa.gov/ejscreen/what-ejscreen) (2023 demographics). Latitude and longitude coordinates for the CSO outfalls were retrieved from [a state publication](https://www.mass.gov/doc/permittee-and-outfall-lists/download), also [archived on this site]({{ site.url }}{{ site.baseurl }}/data/ma_permittee-and-outfall-lists.xlsx).  Both the EJ SCREEN and CSO data are available in the [{{ site.data.site_config.site_abbrev }} database]({{ site.url }}{{ site.baseurl }}/data/index.html)
 
@@ -24,7 +24,7 @@ For more background information about CSO discharges and environmental justice, 
 
 ## Characteristics of new CSO discharge dataset
 
-The first sewage discharge report in the EEA Data Portal was from June 30th, 2022.  In this analysis, we consider only final validated reports (i.e. `reporterClass == 'Verified Data Report'`), not initial public notifications (i.e. we exclude reports of class `Public Notification Report`) reported through end of 2022.
+The first sewage discharge report in the EEA Data Portal was from June 30th, 2022.  In this analysis, we consider only final validated reports (i.e. `reporterClass == 'Verified Data Report'`), not initial public notifications (i.e. we exclude reports of class `Public Notification Report`), reported through the end of September 2023.
 
 ### How many reports were there?
 
@@ -35,7 +35,7 @@ We can also see that the vast majority of reports are for untreated CSOs.
 A smaller fraction of reports are for treated CSOs.
 Very few 'blended' discharges and SSOs are being reported.
 
-{% include /charts/MAEEADP_2022_counts_per_month.html %}
+{% include /charts/MAEEADP_through_sept_2023_counts_per_month.html %}
 
 However, looking at the **volume** (i.e. severity) of discharges reported over time shows a very different picture.
 Still, the plurality of discharge volume each month is from untreated CSOs, whose effluent can be expected to carry the greatest risk to public health from bacterial load.
@@ -43,7 +43,7 @@ Still, only a small volume of discharges can be attributed to treated CSOs.
 However, while they are a small fraction of the count of discharges, the volume of partially treated CSO and 'blended' discharge is very high relative to their count.
 In December of 2022, the plurality of discharge was actually in the form of 'blended' discharge.
 
-{% include /charts/MAEEADP_2022_volume_per_month.html %}
+{% include /charts/MAEEADP_through_sept_2023_volume_per_month.html %}
 
 According to the [Massachusetts Water Resources Authority](https://www.mwra.com/harbor/html/blending_reporting.htm) (MWRA), 'blended' discharge from their system constitutes "excess primary-treated flow [that has been] diverted around the secondary process and then blended with the secondary effluent before being disinfected and discharged." 
 In other words, part of the effluent in this discharge skipped the stage where microbes are applied to break down solids and contaminants (the secondary treatment process), meaning that the toxicity of the discharge may be higher than fully treated sewage.
@@ -51,7 +51,7 @@ The notification regulations [required](https://www.mass.gov/doc/314-cmr-1600-no
 
 We can also visualize the distribution of discharge volumes across receiving water bodies. The following chart shows only the top 20 water bodies by sewage volume for clarity.
 
-{% include /charts/MAEEADP_2022_volume_per_waterbody.html %}
+{% include /charts/MAEEADP_through_sept_2023_volume_per_waterbody.html %}
 
 In the analysis below, we combine discharges of all types (i.e. we treat every gallon of discharge as equivalent).
 
@@ -66,7 +66,7 @@ To generate the plot below, any report rounded to the nearest 1,000 gallons is a
 
 Roughly half of untreated CSO discharges seem to be based on modeled estimates. The number of treated and blended CSO discharges that are modeled is much lower. Furthermore, a small fraction (a few percent) of 'final validated reports' contain no volume information about the discharge.
 
-{% include /charts/MAEEADP_2022_non_zero_volume.html %}
+{% include /charts/MAEEADP_through_sept_2023_non_zero_volume.html %}
 
 ### How does this vary by sewer operator?
 
@@ -78,15 +78,15 @@ The MWRA reports a fairly even mix of treated CSO and 'blended' discharge.
 Fall River, meanwhile, reports mostly non-'blended' partially treated discharge.
 Holyoke reports mostly untrteated CSO and some treated CSO discharge.
 
-{% include /charts/MAEEADP_2022_volume_per_operator.html %}
+{% include /charts/MAEEADP_through_sept_2023_volume_per_operator.html %}
 
 ## Locations of CSO discharges
 
 The map below shows the location of CSO outfalls in MA (points), with overlays showing the sum total of CSO discharge volume in 2022 by watershed, municipality, and Census block group (use the control at right to toggle these layers).  Watershed names are labeled in blue.
 
 {% raw %}
-<iframe frameborder="no" border="0" marginwidth="0" marginheight="0" width="700" height="400" src="../../../assets/maps/MAEEADP_2022_map_total.html"></iframe>
-<p><em><a target="_blank" href="../../../assets/maps/MAEEADP_2022_map_total.html">Click here to view map in a separate page</a></em></p>
+<iframe frameborder="no" border="0" marginwidth="0" marginheight="0" width="700" height="400" src="../../../assets/maps/MAEEADP_through_sept_2023_map_total.html"></iframe>
+<p><em><a target="_blank" href="../../../assets/maps/MAEEADP_through_sept_2023_map_total.html">Click here to view map in a separate page</a></em></p>
 {% endraw %}
 
 You can click on each CSO outfall point to report information about its location, discharge frequency, and volume.
@@ -101,8 +101,8 @@ The following maps visualize major EJ population characteristics by similar wate
 ### Minority Racial Demographics
 
 {% raw %}
-<iframe frameborder="no" border="0" marginwidth="0" marginheight="0" width="700" height="400" src="../../../assets/maps/MAEEADP_2022_map_EJ_MINORPCT.html"></iframe>
-<p><em><a target="_blank" href="../../../assets/maps/MAEEADP_2022_map_EJ_MINORPCT.html">Click here to view map in a separate page</a></em></p>
+<iframe frameborder="no" border="0" marginwidth="0" marginheight="0" width="700" height="400" src="../../../assets/maps/MAEEADP_through_sept_2023_map_EJ_MINORPCT.html"></iframe>
+<p><em><a target="_blank" href="../../../assets/maps/MAEEADP_through_sept_2023_map_EJ_MINORPCT.html">Click here to view map in a separate page</a></em></p>
 {% endraw %}
 
 
@@ -110,8 +110,8 @@ The following maps visualize major EJ population characteristics by similar wate
 ### Linguistic Isolation
 
 {% raw %}
-<iframe frameborder="no" border="0" marginwidth="0" marginheight="0" width="700" height="400" src="../../../assets/maps/MAEEADP_2022_map_EJ_LINGISOPCT.html"></iframe>
-<p><em><a target="_blank" href="../../../assets/maps/MAEEADP_2022_map_EJ_LINGISOPCT.html">Click here to view map in a separate page</a></em></p>
+<iframe frameborder="no" border="0" marginwidth="0" marginheight="0" width="700" height="400" src="../../../assets/maps/MAEEADP_through_sept_2023_map_EJ_LINGISOPCT.html"></iframe>
+<p><em><a target="_blank" href="../../../assets/maps/MAEEADP_through_sept_2023_map_EJ_LINGISOPCT.html">Click here to view map in a separate page</a></em></p>
 {% endraw %}
 
 
@@ -119,8 +119,8 @@ The following maps visualize major EJ population characteristics by similar wate
 ### Low Income Status
 
 {% raw %}
-<iframe frameborder="no" border="0" marginwidth="0" marginheight="0" width="700" height="400" src="../../../assets/maps/MAEEADP_2022_map_EJ_LOWINCPCT.html"></iframe>
-<p><em><a target="_blank" href="../../../assets/maps/MAEEADP_2022_map_EJ_LOWINCPCT.html">Click here to view map in a separate page</a></em></p>
+<iframe frameborder="no" border="0" marginwidth="0" marginheight="0" width="700" height="400" src="../../../assets/maps/MAEEADP_through_sept_2023_map_EJ_LOWINCPCT.html"></iframe>
+<p><em><a target="_blank" href="../../../assets/maps/MAEEADP_through_sept_2023_map_EJ_LOWINCPCT.html">Click here to view map in a separate page</a></em></p>
 {% endraw %}
 
 
@@ -150,27 +150,27 @@ We explore the relationship between CSO discharge volumes within different geogr
 
 Linguistic isolation is defined as the fraction of households with no adult who is a "very good" or better English speaker.  Click on the label in the plot legend to toggle display of the individual watershed points, which display detailed annotation when hovering your cursor.
 
-{% include /charts/MAEEADP_2022_EJSCREEN_correlation_bywatershed_LINGISOPCT.html %}
+{% include /charts/MAEEADP_through_sept_2023_EJSCREEN_correlation_bywatershed_LINGISOPCT.html %}
 
-We find a statistically significant and moderately strong relationship between CSO discharge volumes and linguistic isolation.  More linguistically isolated communities, like the Mystic River watershed, have much higher CSO discharge volumes.  On average, **watersheds that have twice the level of linguistic isolation tend to have {{ site.data.facts_MAEEADP_2022.depend_cso_LINGISOPCT_Watershed }} the level of CSO discharge.**
+We find a statistically significant and moderately strong relationship between CSO discharge volumes and linguistic isolation.  More linguistically isolated communities, like the Mystic River watershed, have much higher CSO discharge volumes.  On average, **watersheds that have twice the level of linguistic isolation tend to have {{ site.data.facts_MAEEADP_through_sept_2023.depend_cso_LINGISOPCT_Watershed }} the level of CSO discharge.**
 
 
 ### Relationship with racial minority demographics
 
 The plot below is similar to the one above for linguistic isolation, except the x-axis reflects the fraction of the population identifying as non-white.
 
-{% include /charts/MAEEADP_2022_EJSCREEN_correlation_bywatershed_MINORPCT.html %}
+{% include /charts/MAEEADP_through_sept_2023_EJSCREEN_correlation_bywatershed_MINORPCT.html %}
 
-Similar to the linguistic isolation trend, communities that are less predominantly white have much higher CSO discharge volumes.  On average, **watersheds that have twice the level of minority populations tend to have {{ site.data.facts_MAEEADP_2022.depend_cso_MINORPCT_Watershed }} the level of CSO discharge.**
+Similar to the linguistic isolation trend, communities that are less predominantly white have much higher CSO discharge volumes.  On average, **watersheds that have twice the level of minority populations tend to have {{ site.data.facts_MAEEADP_through_sept_2023.depend_cso_MINORPCT_Watershed }} the level of CSO discharge.**
 
 
 ### Relationship with income
 
 The plot below is similar to the one above for linguistic isolation, except the x-axis reflects the fraction of the population with an income level less than twice the federal poverty limit.
 
-{% include /charts/MAEEADP_2022_EJSCREEN_correlation_bywatershed_LOWINCPCT.html %}
+{% include /charts/MAEEADP_through_sept_2023_EJSCREEN_correlation_bywatershed_LOWINCPCT.html %}
 
-Similar to the linguistic isolation trend, communities that are less predominantly white have much higher CSO discharge volumes.  On average, **watersheds that have twice the level of low income populations tend to have {{ site.data.facts_MAEEADP_2022.depend_cso_LOWINCPCT_Watershed }} the level of CSO discharge.**
+Similar to the linguistic isolation trend, communities that are less predominantly white have much higher CSO discharge volumes.  On average, **watersheds that have twice the level of low income populations tend to have {{ site.data.facts_MAEEADP_through_sept_2023.depend_cso_LOWINCPCT_Watershed }} the level of CSO discharge.**
 
 # Conclusions
 
