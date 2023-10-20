@@ -4,7 +4,7 @@ title: The first year of data from MA's new sewage pollution notification system
 ancillary: 0
 ---
 
-*This background information is largely repeated from our earlier post, ["% post_title 2023-02-04-eea-dp-cso-ej %"]({% post_url 2023-02-04-eea-dp-cso-ej %})*
+*This background information is largely repeated from our earlier post, ["Revisiting the environmental justice implications of CSOs with 2022 data"]({% post_url 2023-02-04-eea-dp-cso-ej %})*
 
 In 2018, AMEND [featured]({% post_url 2018-04-25-necir-cso-ej %}) the first analysis of the distributional impacts of [combined sewer overflows (CSOs)](https://www.epa.gov/npdes/combined-sewer-overflows-csos) in Massachusetts, demonstrating that there were severe inequities in the extent to which different communities are burdened with sewage pollution based on race, language isolation, and income. This work was later published in the journal [Media and Communication](https://doi.org/10.17645/mac.v7i3.2136).
 
@@ -12,7 +12,7 @@ The analysis in 2018 was limited to [CSO data from 2011]({{ site.url }}{{ site.b
 
 In 2021, Massachusetts [enacted a new law](https://malegislature.gov/Laws/SessionLaws/Acts/2020/Chapter322), the [Sewage Notification Act](https://www.wbur.org/news/2021/01/06/cso-notification-bill-sewage-river-baker), which [requires public notification](https://www.mass.gov/regulations/314-CMR-1600-notification-requirements-to-promote-public-awareness-of-sewage-pollution) of CSO discharges. This law generated a new data resource, a table in the [MA EEA Data Portal]({{ site.url }}{{ site.baseurl }}/data/EEADP_all.html) for CSO discharge events. 
 
-The availability of this new dataset allows us to revisit the distributional impacts of CSO discharges in MA a decade after the dataset collected by NECIR in 2011. In our earlier post, ["% post_title 2023-02-04-eea-dp-cso-ej %"]({% post_url 2023-02-04-eea-dp-cso-ej %}), we explored the first six months of data reported through this platform. In this post, we update that analysis to report on the first full year (actually, the first 15 months) of sewage pollution data using the same methodology.
+The availability of this new dataset allows us to revisit the distributional impacts of CSO discharges in MA a decade after the dataset collected by NECIR in 2011. In our earlier post, ["Revisiting the environmental justice implications of CSOs with 2022 data"]({% post_url 2023-02-04-eea-dp-cso-ej %}), we explored the first six months of data reported through this platform. In this post, we update that analysis to report on the first full year (actually, the first 15 months) of sewage pollution data using the same methodology.
 
 The [environmental justice data used in this analysis]({{ site.url }}{{ site.baseurl }}/data/EPA_EJSCREEN.html) comes from the [US EPA EJSCREEN tool](https://www.epa.gov/ejscreen/what-ejscreen) (2023 demographics). Latitude and longitude coordinates for the CSO outfalls were retrieved from [a state publication](https://www.mass.gov/doc/permittee-and-outfall-lists/download), also [archived on this site]({{ site.url }}{{ site.baseurl }}/data/ma_permittee-and-outfall-lists.xlsx).  Both the EJ SCREEN and CSO data are available in the [{{ site.data.site_config.site_abbrev }} database]({{ site.url }}{{ site.baseurl }}/data/index.html)
 
