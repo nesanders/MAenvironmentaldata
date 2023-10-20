@@ -40,7 +40,6 @@ class CSOAnalysisEEADP(CSOAnalysis):
     
     def __init__(
         self, 
-        fact_file: str='../docs/data/facts_EEA_DP_CSO.yml',
         cso_data_start: date=PICK_CSO_START,
         cso_data_end: date=PICK_CSO_END,
         pick_report_type: str='Verified Data Report',
@@ -51,8 +50,6 @@ class CSOAnalysisEEADP(CSOAnalysis):
         
         Parameters
         ----------
-        fact_file: str
-            Path of yml file to write calculated results to, by default '../docs/data/facts_EEA_DP_CSO.yml'
         cso_data_start, cso_data_end: date
             Start and end date of the dataset to extract and do analysis on, by default PICK_CSO_START to PICK_CSO_END
         pick_report_type: str
@@ -60,13 +57,13 @@ class CSOAnalysisEEADP(CSOAnalysis):
         
         `kwargs` passed to `CSOAnalysis`
         """
-        super().__init__(fact_file=fact_file, **kwargs)
+        self.output_slug = output_slug
+        super().__init__(**kwargs)
         self.cso_data_start = cso_data_start
         self.cso_data_end = cso_data_end
         # Pick one of two possible report types, 'Public Notification Report' or 'Verified Data Report'
         self.pick_report_type = pick_report_type
-        self.output_slug = output_slug
-
+        
     # -------------------------
     # Data loading functions
     # -------------------------
