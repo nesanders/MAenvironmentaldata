@@ -63,6 +63,7 @@ class CSOAnalysisEEADP(CSOAnalysis):
         self.cso_data_end = cso_data_end
         # Pick one of two possible report types, 'Public Notification Report' or 'Verified Data Report'
         self.pick_report_type = pick_report_type
+        self.cso_data_year: int = cso_data_end.year
         
     # -------------------------
     # Data loading functions

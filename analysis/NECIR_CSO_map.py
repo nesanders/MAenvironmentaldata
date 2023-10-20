@@ -375,8 +375,6 @@ class CSOAnalysis():
         self.geo_towns_path = geo_towns_path
         self.geo_watershed_path = geo_watershed_path
         self.geo_blockgroups_path = geo_blockgroups_path
-        # Year represented by the CSO dataset
-        self.cso_data_year = 2011
         self.make_maps = make_maps
         self.make_charts = make_charts
         self.make_regression = make_regression
