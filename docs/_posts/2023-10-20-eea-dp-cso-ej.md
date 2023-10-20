@@ -4,7 +4,7 @@ title: The first year of data from MA's new sewage pollution notification system
 ancillary: 0
 ---
 
-*This background information is largely repeated from our earlier post, ["Revisiting the environmental justice implications of CSOs with 2022 data"]({% post_url 2023-02-04-eea-dp-cso-ej %})*
+*This background information is largely repeated from our earlier post, ["Revisiting the environmental justice implications of CSOs with 2022 data"]({% post_url 2023-02-04-eea-dp-cso-ej %}). The charts and figures below update the earlier analysis to include sewage data through September of 2023.*
 
 In 2018, AMEND [featured]({% post_url 2018-04-25-necir-cso-ej %}) the first analysis of the distributional impacts of [combined sewer overflows (CSOs)](https://www.epa.gov/npdes/combined-sewer-overflows-csos) in Massachusetts, demonstrating that there were severe inequities in the extent to which different communities are burdened with sewage pollution based on race, language isolation, and income. This work was later published in the journal [Media and Communication](https://doi.org/10.17645/mac.v7i3.2136).
 
