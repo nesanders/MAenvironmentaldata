@@ -1,0 +1,79 @@
+{% raw  %}
+<html>
+    <head>
+        <title>Discharge volume per month by discharge type</title>
+        <script src='https://cdn.jsdelivr.net/npm/chart.js@2.8.0/dist/Chart.bundle.min.js'></script>
+    </head>
+    <body>
+        <div style="width: 640px; height: 480px; max-width: 99%" class="chartjs">
+
+            <canvas id="Discharge volume per month by discharge type" height="480" width="640"></canvas>
+            <script>
+                Chart.defaults.global.defaultFontSize = 12;
+                var chart_data = {
+                
+                    data: {
+                        labels: ['2022-06-01 00:00:00', '2022-07-01 00:00:00', '2022-08-01 00:00:00', '2022-09-01 00:00:00', '2022-10-01 00:00:00', '2022-11-01 00:00:00', '2022-12-01 00:00:00', '2023-01-01 00:00:00', '2023-02-01 00:00:00', '2023-03-01 00:00:00', '2023-04-01 00:00:00', '2023-05-01 00:00:00', '2023-06-01 00:00:00', '2023-07-01 00:00:00', '2023-08-01 00:00:00', '2023-09-01 00:00:00'],
+                        datasets: [{'data': [0.0, 115.48201, 86.804743, 228.829067, 128.183779, 101.631736, 144.556502, 212.025588, 16.328601, 130.954413, 158.93552599999998, 92.215631, 188.666702, 628.6150180000001, 445.670681, 380.96648899999997], 'label': 'CSO – UnTreated', 'backgroundColor': 'rgba(31, 119, 180,0.8)', 'yAxisID': 'y-axis-0'},{'data': [0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.409, 3.392968, 0.00375, 1.37406, 0.0, 0.0, 0.00566, 1.679925, 0.10667599999999999, 0.575398], 'label': 'SSO – System Surcharging Under High Flow Conditions', 'backgroundColor': 'rgba(255, 127, 14,0.8)', 'yAxisID': 'y-axis-0'},{'data': [0.0, 10.568458, 6.568397, 31.293090000000003, 34.771, 31.424915, 38.858, 75.5506, 0.31, 101.55400000000002, 56.135999999999996, 61.836999999999996, 11.651, 270.41, 117.89999999999999, 108.91887], 'label': 'CSO – Treated', 'backgroundColor': 'rgba(44, 160, 44,0.8)', 'yAxisID': 'y-axis-0'},{'data': [0.0, 14.889, 18.080000000000002, 138.09709999999998, 63.33, 33.160000000000004, 211.6397, 302.302, 1.7000000000000002, 608.0799999999999, 150.9451, 117.8727, 78.71000000000001, 410.707, 330.46799999999996, 241.73399999999998], 'label': 'Partially Treated – Blended', 'backgroundColor': 'rgba(214, 39, 40,0.8)', 'yAxisID': 'y-axis-0'},{'data': [0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.029500000000000002, 1.016, 0.336, 0.381, 0.0, 0.0, 0.0, 0.0, 0.02, 0.0], 'label': 'SSO – Failure of Pump Station or Associated Force Main', 'backgroundColor': 'rgba(148, 103, 189,0.8)', 'yAxisID': 'y-axis-0'},{'data': [0.0, 0.0, 3.91, 0.39, 0.0, 0.0, 0.0, 0.0, 0.89, 0.0, 0.0, 6.54005, 0.45, 0.016676, 0.0, 0.12300799999999999], 'label': 'Partially Treated – Other', 'backgroundColor': 'rgba(140, 86, 75,0.8)', 'yAxisID': 'y-axis-0'},{'data': [0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 1.812515, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0], 'label': 'SSO – Discharge Through Wastewater Outfall', 'backgroundColor': 'rgba(227, 119, 194,0.8)', 'yAxisID': 'y-axis-0'}]
+                    },
+                    type: 'bar',
+                    options: {
+                        scales: {
+                            yAxes: [{
+                                display: true,
+                                scaleLabel: {
+                                    display: true,
+                                    labelString: 'Volume of discharges (millions of gallons)'
+                                },
+                                ticks: {
+                                    beginAtZero: true, min: 0
+                                },
+                                "id": "y-axis-0",
+                                "position": "left",
+                                stacked: true
+                            }, {
+                                display: false,
+                                scaleLabel: {
+                                    display: true,
+                                    labelString: ''
+                                },
+                                ticks: {
+                                    beginAtZero: true, min: 0
+                                },
+                                "id": "y-axis-1",
+                                "position": "right"
+                            }],
+                            xAxes: [{
+                                scaleLabel: {
+                                    display: true,
+                                    labelString: 'Date'
+                                },
+                                stacked: true,
+                                ticks: {
+                                    autoSkip: true
+                                }
+                            }]
+                        },
+                        legend: {
+                            display: true
+                            },
+                        tooltips: {
+                            display: true
+                            }
+                    },
+                }
+                
+                
+                
+            </script>
+            <script>
+                {{
+                    var ctx = document.getElementById("Discharge volume per month by discharge type").getContext("2d");
+                    var mychart = new Chart(ctx, chart_data);
+                }}
+            </script>
+
+        </div>
+    </body>
+</html>
+{% endraw  %}

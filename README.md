@@ -20,15 +20,14 @@ To install the local `jekyll` server, you can follow this multi-step process:
 ```
 conda create --name amend_jekyll
 conda activate amend_jekyll
-conda install -c conda-forge ruby=3.2.2
-conda install -c conda-forge rb-bundler
-gem install commonmarker -v '0.17.13' --source 'https://rubygems.org/'
-conda install gxx_linux-64
+conda install -c conda-forge c-compiler compilers cxx-compiler
+conda install -c conda-forge ruby
+gem install jekyll bundler
 cd docs
 bundle install
 ```
 
-Alternatively, use the premade `yml` file to instantiate teh conda environemnt like,
+Alternatively, use the premade `yml` file to instantiate the conda environemnt like,
 
 ```
 conda env create -f amend_jekyll_env.yml
@@ -61,3 +60,7 @@ conda env create -f amend_python_env.yml
 
 * [Tabula](http://tabula.technology/) was used to extract tables from PDF files. 
 
+
+
+# TODO
+* Take average over nearby census blocks

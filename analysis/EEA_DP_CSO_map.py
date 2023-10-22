@@ -7,14 +7,10 @@ from datetime import date
 from typing import Any, Optional, Tuple
 
 import chartjs
-from joblib import Memory
 import numpy as np
 import pandas as pd
 
 from NECIR_CSO_map import COLOR_CYCLE, CSOAnalysis, get_engine, hex2rgb
-
-# Create a joblib cache
-memory = Memory('eea_dp_cso_data_cache', verbose=1)
 
 PICK_CSO_START = date(2022, 6, 1)
 PICK_CSO_END = date(2022, 12, 31)
@@ -30,8 +26,6 @@ def collapse(x: list) -> Any:
 class CSOAnalysisEEADP(CSOAnalysis):
     """Class containing methods and attributes related to CSO EJ analysis using EEA DP CSO data.
     """
-        
-    output_slug_dataset: str = 'MAEEADP'
     output_slug: str = 'MAEEADP_CSO'
     discharge_vol_col: str = 'DischargeVolume'
     discharge_count_col: str = 'DischargeCount'
@@ -42,21 +36,20 @@ class CSOAnalysisEEADP(CSOAnalysis):
     longitude_col: str = 'longitude'
     # Path to file with lat long data from the state
     cso_lat_long_data_file: str = '../docs/data/ma_permittee-and-outfall-lists.xlsx'
+    geo_blockgroups_path: str='../docs/assets/geo_json/cb_2022_25_bg_500k.json'
     
     def __init__(
         self, 
-        fact_file: str='../docs/data/facts_EEA_DP_CSO.yml',
         cso_data_start: date=PICK_CSO_START,
         cso_data_end: date=PICK_CSO_END,
         pick_report_type: str='Verified Data Report',
+        output_slug: str='MAEEADP_CSO',
         **kwargs
     ):
         """Initialize parameters for CSOAnalysisEEADP.
         
         Parameters
         ----------
-        fact_file: str
-            Path of yml file to write calculated results to, by default '../docs/data/facts_EEA_DP_CSO.yml'
         cso_data_start, cso_data_end: date
             Start and end date of the dataset to extract and do analysis on, by default PICK_CSO_START to PICK_CSO_END
         pick_report_type: str
@@ -64,18 +57,25 @@ class CSOAnalysisEEADP(CSOAnalysis):
         
         `kwargs` passed to `CSOAnalysis`
         """
-        super().__init__(fact_file=fact_file, **kwargs)
+        self.output_slug = output_slug
+        super().__init__(**kwargs)
         self.cso_data_start = cso_data_start
         self.cso_data_end = cso_data_end
         # Pick one of two possible report types, 'Public Notification Report' or 'Verified Data Report'
         self.pick_report_type = pick_report_type
-
+        self.cso_data_year: int = cso_data_end.year
+        
     # -------------------------
     # Data loading functions
     # -------------------------
 
     EEA_DP_CSO_QUERY = """SELECT * FROM MAEEADP_CSO"""
-
+    
+    def load_data_ej(self, ejscreen_year: int=2023):
+        """Overwrites the base class load_data_ej function with the updated year, 2023.
+        """
+        return super().load_data_ej(ejscreen_year)
+    
     def load_data_cso(self, pick_start: Optional[date]=None, pick_end: Optional[date]=None) -> pd.DataFrame:
         """Load EEA Data Portal CSO data, adding latitude and longitude from the NECIR_CSO_2011 data table
         where possible.
@@ -89,7 +89,13 @@ class CSOAnalysisEEADP(CSOAnalysis):
         disk_engine = get_engine()
         data_cso = pd.read_sql_query(self.EEA_DP_CSO_QUERY, disk_engine)
         data_cso['incidentDate'] = pd.to_datetime(data_cso['incidentDate'])
-        data_cso.rename(columns={'volumnOfEvent': self.discharge_vol_col}, inplace=True)
+        data_cso.rename(columns={
+            'volumnOfEvent': self.discharge_vol_col,
+            'outfallId': 'cso_id'
+        }, inplace=True)
+        
+        ambig_data = data_cso[data_cso['cso_id'].isnull()]
+        print(f'After some manual fixing, these are the remaining reports with ambiguous names: {ambig_data}')
         
         print(f'Filtering CSO data for year {self.cso_data_start} - {self.cso_data_end}')
         df_pick = data_cso[(
@@ -113,7 +119,7 @@ class CSOAnalysisEEADP(CSOAnalysis):
         """
         # Columns to be aggregated over
         # NOTE we aggregate over lat/long because there are several outfalls named '001' that have different lat/longs
-        agg_cols = ['reporterClass', 'outfallId', 'latitude', 'longitude']
+        agg_cols = ['reporterClass', 'cso_id', 'latitude', 'longitude']
         # Columns to be aggregated with a sum function
         sum_cols = [self.discharge_vol_col]
         # Columns to be aggregated with a collapse function
@@ -121,7 +127,7 @@ class CSOAnalysisEEADP(CSOAnalysis):
         # Columns to be counted
         count_cols = ['incidentId']
         
-        # NOTE there are tree possible eventTypes: 'CSO – Treated', 'CSO – UnTreated', 'Partially Treated – Blended', 'Partially Treated – Other'
+        # NOTE there are a variety of possible eventTypes: 'CSO – Treated', 'CSO – UnTreated', 'Partially Treated – Blended', 'Partially Treated – Other'
         # We choose to sum over all of them
         
         aggregators = {col: np.sum for col in sum_cols}
@@ -133,7 +139,7 @@ class CSOAnalysisEEADP(CSOAnalysis):
         print(f"Missing N={sum(sel_missing)} outfall lat/longs")
         print(f'Loading missing lat/long data from {self.cso_lat_long_data_file}')
         df_lat_long_cso = pd.read_excel(self.cso_lat_long_data_file, 'CSO Outfalls').set_index('Outfall ID')
-        missing_lat_long_ids = data_cso[sel_missing]['outfallId']
+        missing_lat_long_ids = data_cso[sel_missing]['cso_id']
         missing_lat_long_coords = df_lat_long_cso.reindex(missing_lat_long_ids)[['Lat', 'Long']]
         data_cso.loc[sel_missing, ['latitude', 'longitude']] = missing_lat_long_coords.values
         print(f"Missing N={sum(data_cso['latitude'].isnull())} outfall lat/longs after replacement")
@@ -152,9 +158,12 @@ class CSOAnalysisEEADP(CSOAnalysis):
     # Extra plots of dataset characteristics
     # -------------------------
     
-    def plot_reports_per_month_by_event_type(self, outpath: str='../docs/_includes/charts/EEA_DP_CSO_counts_per_month.html'):
+    def plot_reports_per_month_by_event_type(self, outpath: Optional[str]=None):
         """Bar chart showing how many reports were made each day of different discharge types.
-        """        
+        """
+        if outpath is None:
+            outpath = f'../docs/_includes/charts/{self.output_slug}_counts_per_month.html'
+        
         print('Making chart of discharge counts per month by discharge type')
         mychart = chartjs.chart("Discharge counts per month by discharge type", "Bar", 640, 480)
         
@@ -175,9 +184,12 @@ class CSOAnalysisEEADP(CSOAnalysis):
 
         mychart.jekyll_write(outpath)
 
-    def plot_volume_per_month_by_event_type(self, outpath: str='../docs/_includes/charts/EEA_DP_CSO_volume_per_month.html'):
+    def plot_volume_per_month_by_event_type(self, outpath: Optional[str]=None):
         """Bar chart showing how many reports were made each month of different discharge types.
         """        
+        if outpath is None:
+            outpath = f'../docs/_includes/charts/{self.output_slug}_volume_per_month.html'
+        
         print('Making chart of discharge volume per month by discharge type')
         mychart = chartjs.chart("Discharge volume per month by discharge type", "Bar", 640, 480)
         
@@ -198,9 +210,12 @@ class CSOAnalysisEEADP(CSOAnalysis):
 
         mychart.jekyll_write(outpath)
 
-    def plot_volume_per_operator_by_event_type(self, outpath: str='../docs/_includes/charts/EEA_DP_CSO_volume_per_operator.html'):
+    def plot_volume_per_operator_by_event_type(self, outpath: Optional[str]=None):
         """Bar chart showing how many reports were made each day of different discharge types.
         """        
+        if outpath is None:
+            outpath = f'../docs/_includes/charts/{self.output_slug}_volume_per_operator.html'
+        
         print('Making chart of discharge volume per operator by discharge type')
         mychart = chartjs.chart("Discharge volume per operator by discharge type", "Bar", 640, 480)
         
@@ -221,12 +236,43 @@ class CSOAnalysisEEADP(CSOAnalysis):
 
         mychart.jekyll_write(outpath)
 
-    def plot_reports_non_zero_volume(self, outpath: str='../docs/_includes/charts/EEA_DP_CSO_non_zero_volume.html'):
+    def plot_volume_per_waterbody_by_event_type(self, outpath: Optional[str]=None, top_n: int=20):
+        """Bar chart showingvolume of discharge for each waterbody.
+        
+        Only the top_n by volume are shown for clarity.
+        """        
+        if outpath is None:
+            outpath = f'../docs/_includes/charts/{self.output_slug}_volume_per_waterbody.html'
+        
+        print('Making chart of discharge volume per waterbody by discharge type')
+        mychart = chartjs.chart("Discharge volume per waterbody by discharge type", "Bar", 640, 480)
+        
+        data_types = self.data_cso_filtered_reports['eventType'].unique()
+        cso_df_vol = self.data_cso_filtered_reports.groupby(['eventType', self.water_body_col])[self.discharge_vol_col].sum() / 1e6
+        all_waterbodies = self.data_cso_filtered_reports.groupby([self.water_body_col])[self.discharge_vol_col].sum().sort_values(ascending=False).index[:top_n]
+        mychart.set_labels(all_waterbodies)
+        
+        for i, event_type in enumerate(data_types):
+            vol_per_waterbody = cso_df_vol.loc[event_type].reindex(all_waterbodies).fillna(0)
+            mychart.add_dataset(vol_per_waterbody.values.tolist(), 
+                event_type,
+                backgroundColor="'rgba({},0.8)'".format(", ".join([str(x) for x in hex2rgb(COLOR_CYCLE[i])])),
+                yAxisID= "'y-axis-0'")
+        mychart.set_params(JSinline=0, ylabel='Volume of discharges (millions of gallons)', xlabel='Water body',
+            scaleBeginAtZero=1)
+        mychart.stacked = 'true'
+
+        mychart.jekyll_write(outpath)
+
+    def plot_reports_non_zero_volume(self, outpath: Optional[str]=None):
         """Bar chart showing how many reports of each discharge type have zero volume reported.
         
         NOTE: We use a very simplistic assumption to decide if a volume report is likely modeled rather than
         metered; we simply look to see if the reported volume was rounded to the nearest 1000.
         """        
+        if outpath is None:
+            outpath = f'../docs/_includes/charts/{self.output_slug}_non_zero_volume.html'
+        
         print('Making chart of discharges with no volume reported by discharge type')
         mychart = chartjs.chart("Discharges with no volume reported by discharge type", "Bar", 640, 480)
         
@@ -262,6 +308,7 @@ class CSOAnalysisEEADP(CSOAnalysis):
         self.plot_volume_per_month_by_event_type()
         self.plot_volume_per_operator_by_event_type()
         self.plot_reports_non_zero_volume()
+        self.plot_volume_per_waterbody_by_event_type()
 
     
 # -------------------------
@@ -269,12 +316,18 @@ class CSOAnalysisEEADP(CSOAnalysis):
 # -------------------------
     
 if __name__ == '__main__':
-    for start_date, end_date, run_name in (
-        (PICK_CSO_START, PICK_CSO_END, '2022'),
-        (date(2022, 6, 1), date(2023, 6, 30), 'first_year')
+    for start_date, end_date, run_name, cbg_smooth_radius in (
+        (PICK_CSO_START, PICK_CSO_END, '2022', None),
+        (date(2022, 6, 1), date(2023, 6, 30), 'first_year', None),
+        (date(2022, 6, 1), date(2023, 6, 30), 'first_year_smooth', 0.5),
+        (date(2022, 6, 1), date(2023, 9, 30), 'through_sept_2023', None),
         ):
         # NOTE for fast debugging of the `extra_plot`, try using these parameters:
         # > make_maps=False, make_charts=False, make_regression=False
-        csoa = CSOAnalysisEEADP(cso_data_start=start_date, cso_data_end=end_date, output_slug_dataset=f'MAEEADP_{run_name}')
+        csoa = CSOAnalysisEEADP(
+            cso_data_start=start_date, 
+            cso_data_end=end_date, 
+            output_slug=f'MAEEADP_{run_name}', 
+            cbg_smooth_radius=cbg_smooth_radius        )
         csoa.run_analysis()
         csoa.extra_plots()

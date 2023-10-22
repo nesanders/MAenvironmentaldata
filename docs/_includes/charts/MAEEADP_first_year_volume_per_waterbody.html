@@ -1,0 +1,79 @@
+{% raw  %}
+<html>
+    <head>
+        <title>Discharge volume per waterbody by discharge type</title>
+        <script src='https://cdn.jsdelivr.net/npm/chart.js@2.8.0/dist/Chart.bundle.min.js'></script>
+    </head>
+    <body>
+        <div style="width: 640px; height: 480px; max-width: 99%" class="chartjs">
+
+            <canvas id="Discharge volume per waterbody by discharge type" height="480" width="640"></canvas>
+            <script>
+                Chart.defaults.global.defaultFontSize = 12;
+                var chart_data = {
+                
+                    data: {
+                        labels: ['MERRIMACK RIVER', 'CONNECTICUT R.', 'MOUNT HOPE BAY', 'ACUSHNET RIVER', 'TAUNTON RIVER', 'CHARLES RIVER', 'OUTER NEW BEDFORD HARBOR', 'CLARK COVE', 'MYSTIC RIVER', 'MERIMACK RIVER', 'CONCORD RIVER', 'MILL BROOK TO BLACKSTONE RIVER', 'INNER NEW BEDFORD HARBOR', 'LYNN HARBOR', 'CONNECTICUT RIVER', 'MILL R.', 'NORTH NASHUA RIVER', 'CHARLES RIVER BASIN', 'CHICOPEE R.', 'BEAVER BROOK'],
+                        datasets: [{'data': [208.140492, 475.623217, 35.561446, 239.637165, 137.001992, 0.08, 114.99741, 88.3706, 0.0, 67.042, 56.79, 0.0, 52.8126, 27.920689, 13.43667, 19.395715, 0.0, 0.01, 12.326381, 11.7], 'label': 'CSO – UnTreated', 'backgroundColor': 'rgba(31, 119, 180,0.8)', 'yAxisID': 'y-axis-0'},{'data': [0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0], 'label': 'SSO – System Surcharging Under High Flow Conditions', 'backgroundColor': 'rgba(255, 127, 14,0.8)', 'yAxisID': 'y-axis-0'},{'data': [0.010803, 97.267747, 0.78, 0.0, 87.7306, 128.42, 0.0, 0.0, 70.95, 0.0, 0.0, 61.190915, 0.0, 0.0, 0.0, 0.0, 0.0, 13.9, 0.0, 0.0], 'label': 'CSO – Treated', 'backgroundColor': 'rgba(44, 160, 44,0.8)', 'yAxisID': 'y-axis-0'},{'data': [0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0], 'label': 'SSO – Failure of Pump Station or Associated Force Main', 'backgroundColor': 'rgba(214, 39, 40,0.8)', 'yAxisID': 'y-axis-0'},{'data': [505.8389, 0.0, 488.25, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 9.706, 0.0, 16.1307, 0.0, 0.0, 0.0], 'label': 'Partially Treated – Blended', 'backgroundColor': 'rgba(148, 103, 189,0.8)', 'yAxisID': 'y-axis-0'},{'data': [0.39, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 6.54, 0.0, 0.0, 0.0, 4.36005, 0.0, 0.0, 0.0, 0.0, 0.0], 'label': 'Partially Treated – Other', 'backgroundColor': 'rgba(140, 86, 75,0.8)', 'yAxisID': 'y-axis-0'},{'data': [0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0], 'label': 'SSO – Discharge Through Wastewater Outfall', 'backgroundColor': 'rgba(227, 119, 194,0.8)', 'yAxisID': 'y-axis-0'}]
+                    },
+                    type: 'bar',
+                    options: {
+                        scales: {
+                            yAxes: [{
+                                display: true,
+                                scaleLabel: {
+                                    display: true,
+                                    labelString: 'Volume of discharges (millions of gallons)'
+                                },
+                                ticks: {
+                                    beginAtZero: true, min: 0
+                                },
+                                "id": "y-axis-0",
+                                "position": "left",
+                                stacked: true
+                            }, {
+                                display: false,
+                                scaleLabel: {
+                                    display: true,
+                                    labelString: ''
+                                },
+                                ticks: {
+                                    beginAtZero: true, min: 0
+                                },
+                                "id": "y-axis-1",
+                                "position": "right"
+                            }],
+                            xAxes: [{
+                                scaleLabel: {
+                                    display: true,
+                                    labelString: 'Water body'
+                                },
+                                stacked: true,
+                                ticks: {
+                                    autoSkip: true
+                                }
+                            }]
+                        },
+                        legend: {
+                            display: true
+                            },
+                        tooltips: {
+                            display: true
+                            }
+                    },
+                }
+                
+                
+                
+            </script>
+            <script>
+                {{
+                    var ctx = document.getElementById("Discharge volume per waterbody by discharge type").getContext("2d");
+                    var mychart = new Chart(ctx, chart_data);
+                }}
+            </script>
+
+        </div>
+    </body>
+</html>
+{% endraw  %}

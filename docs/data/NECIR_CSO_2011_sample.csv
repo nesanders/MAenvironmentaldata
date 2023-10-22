@@ -1,11 +1,11 @@
 Latitude,Longitude,Nearest_Pipe_Address,Municipality,DischargesBody,2011_Discharges_MGal,2011_Discharge_N,Notes
-42.1604177925,-72.5097594166,Main St. and Indian Orchard,Springfield,Chicopee River,0.74,10,only 2010 avail.
-42.6486316059,-71.290927737,Merrimack Station,Lowell,Merrimack River,109.40,37,loc. from DES draft data
+42.1861181287,-72.6235953652,Northhampton & G,Holyoke,Connecticut River,1.38,28,only 2010 avail.; loc. from DES draft data
+42.1717230563,-72.6297918539,Jones Ferry,Holyoke,Connecticut River,0.10,12,only 2010 avail.; loc. from DES draft data
+42.095707,-72.588859,Union and Main St.,Springfield,Connecticut River,24.16,54,"approx., loc n/a; 2010 data"
+42.342043141,-71.035628947,n of Powerhs & Summer,Boston,Reserved Channel,0.71,10,source: MWRA
+42.5734765373,-71.789371552,479 Water St. at Burnett St.,Fitchburg,Birch Brook,0.17,8,loc. from DES draft data
 41.700338,-71.154361,Third St.,Fall River,Quequechan River,1,4,based on model of annual disch.
-42.1010305739,-72.5948141047,Bridge St.,Springfield,Connecticut River,51.65,39,only 2010 avail.; loc. from DES draft data
-42.159535409499995,-72.58180982,Church and Walnut,Chicopee,Chicopee River,0.04,40,"approx., loc n/a; 2010 data"
-42.777685,-71.086822,Winter & Hale St.,Haverhill,Merrimack River,0.09,1,approx.; loc n/a.
-42.6108369508,-70.6636286313,off Fishermans Wharf,Gloucester,Harbor Cove,0.04,1,loc. from DES draft data
-42.14962,-72.59815,River View West,Chicopee,Chicopee River,0.02,6,loc n/a; 210 data
-42.203667323400005,-72.6077878335,Front and Appleton St.,Holyoke,First Level Canal,0.86,12,only 2010 avail.; loc. from DES draft data
-42.6096821712,-70.6696989748,Mansfield St.,Gloucester,Gloucester Harbor,0.18,3,loc. from DES draft data
+42.142260397,-72.6152696687,Leonard and West St.,Chicopee,Connecticut River,6.69,55,only 2010 avail.; loc. from DES draft data
+42.5661840025,-71.7721784731,Summer St. grit chamber,Fitchburg,Nashua River,4.09,16,loc. from DES draft data
+41.716733,-71.158472,President Ave.,Fall River,Taunton River,71,51,based on model of annual disch.
+42.7040342331,-71.1502300214,Osgood St.,Lawrence,Merrimack River,7.69,2,loc. from DES draft data

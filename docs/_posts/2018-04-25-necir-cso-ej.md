@@ -6,7 +6,7 @@ ancillary: 0
 
 Many of the sewer systems throughout Massachusetts are designed to discharge raw or partially treated sewage into rivers and other public waters when the sewers become overwhelmed, for example during rainstorm events.  These [combined sewer overflow (CSO)](https://www.epa.gov/npdes/combined-sewer-overflows-csos) discharges can endanger public health by exposing people to elevated levels of bacteria in waters they may use for recreation, and have ecological impacts including the introduction of chemical contaminants to the ecosystem and contributing to eutrophication (excessive nutrient).  This analysis seeks to understand if and how the spatial distribution of these CSO discharges in Massachusetts differentially impacts vulnerable populations, in order to interpret the [Environmental Justice](https://www.epa.gov/environmentaljustice) (EJ) implications of these systems.
 
-The [CSO data used in this analysis]({{ site.url }}{{ site.baseurl }}/data/NECIR_CSO.html) comes from the [New England Center for Investigative Reporting](https://www.necir.org/) based on a survey of New England CSOs they performed in 2011.  Unfortunately, more recent data is not available statewide because there is not a standardized reporting system for these discharges.  The [environmental justice data used in this analysis]({{ site.url }}{{ site.baseurl }}/data/EPA_EJSCREEN.html) comes from the [US EPA EJSCREEN tool](https://www.epa.gov/ejscreen/what-ejscreen).  Both are available in the [{{ site.data.site_config.site_abbrev }} database]({{ site.url }}{{ site.baseurl }}/data/index.html)
+The [CSO data used in this analysis]({{ site.url }}{{ site.baseurl }}/data/NECIR_CSO.html) comes from the [New England Center for Investigative Reporting](https://www.necir.org/) based on a survey of New England CSOs they performed in 2011.  Unfortunately, more recent data is not available statewide because there is not a standardized reporting system for these discharges.  The [environmental justice data used in this analysis]({{ site.url }}{{ site.baseurl }}/data/EPA_EJSCREEN.html) comes from the [US EPA EJSCREEN tool](https://www.epa.gov/ejscreen/what-ejscreen) (2017 demographics).  Both are available in the [{{ site.data.site_config.site_abbrev }} database]({{ site.url }}{{ site.baseurl }}/data/index.html)
 
 *[The code needed to reproduce this analysis using {{ site.data.site_config.site_abbrev }} data can be viewed and downloaded here](https://github.com/nesanders/MAenvironmentaldata/blob/master/analysis/NECIR_CSO_map.py)*
 
@@ -92,26 +92,26 @@ We explore the relationship between CSO discharge volumes within different geogr
 
 Linguistic isolation is defined as the fraction of households with no adult who is a "very good" or better English speaker.  Click on the label in the plot legend to toggle display of the individual watershed points, which display detailed annotation when hovering your cursor.
 
-{% include /charts/NECIR_EJSCREEN_correlation_bywatershed_LINGISOPCT.html %}
+{% include /charts/NECIR_CSO_EJSCREEN_correlation_bywatershed_LINGISOPCT.html %}
 
-We find a statistically significant and moderately strong relationship between CSO discharge volumes and linguistic isolation.  More linguistically isolated communities, like the Mystic River watershed, have much higher CSO discharge volumes.  On average, **watersheds that have twice the level of linguistic isolation tend to have {{ site.data.facts_NECIR_CSO.depend_cso_LINGISOPCT }} the level of CSO discharge.**
+We find a statistically significant and moderately strong relationship between CSO discharge volumes and linguistic isolation.  More linguistically isolated communities, like the Mystic River watershed, have much higher CSO discharge volumes.  On average, **watersheds that have twice the level of linguistic isolation tend to have {{ site.data.facts_NECIR_CSO.depend_cso_LINGISOPCT_Watershed }} the level of CSO discharge.**
 
 
 ### Relationship with racial minority demographics
 
 The plot below is similar to the one above for linguistic isolation, except the x-axis reflects the fraction of the population identifying as non-white.
 
-{% include /charts/NECIR_EJSCREEN_correlation_bywatershed_MINORPCT.html %}
+{% include /charts/NECIR_CSO_EJSCREEN_correlation_bywatershed_MINORPCT.html %}
 
-Similar to the linguistic isolation trend, communities that are less predominantly white have much higher CSO discharge volumes.  On average, **watersheds that have twice the level of minority populations tend to have {{ site.data.facts_NECIR_CSO.depend_cso_MINORPCT }} the level of CSO discharge.**
+Similar to the linguistic isolation trend, communities that are less predominantly white have much higher CSO discharge volumes.  On average, **watersheds that have twice the level of minority populations tend to have {{ site.data.facts_NECIR_CSO.depend_cso_MINORPCT_Watershed }} the level of CSO discharge.**
 
 
 ### Relationship with income
 
 The plot below is similar to the one above for linguistic isolation, except the x-axis reflects the fraction of the population with an income level less than twice the federal poverty limit.
 
-{% include /charts/NECIR_EJSCREEN_correlation_bywatershed_LOWINCPCT.html %}
+{% include /charts/NECIR_CSO_EJSCREEN_correlation_bywatershed_LOWINCPCT.html %}
 
-Similar to the linguistic isolation trend, communities that are less predominantly white have much higher CSO discharge volumes.  On average, **watersheds that have twice the level of low income populations tend to have {{ site.data.facts_NECIR_CSO.depend_cso_LOWINCPCT }} the level of CSO discharge.**
+Similar to the linguistic isolation trend, communities that are less predominantly white have much higher CSO discharge volumes.  On average, **watersheds that have twice the level of low income populations tend to have {{ site.data.facts_NECIR_CSO.depend_cso_LOWINCPCT_Watershed }} the level of CSO discharge.**
 
 

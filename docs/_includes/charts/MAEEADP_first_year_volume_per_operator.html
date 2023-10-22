@@ -1,0 +1,79 @@
+{% raw  %}
+<html>
+    <head>
+        <title>Discharge volume per operator by discharge type</title>
+        <script src='https://cdn.jsdelivr.net/npm/chart.js@2.8.0/dist/Chart.bundle.min.js'></script>
+    </head>
+    <body>
+        <div style="width: 640px; height: 480px; max-width: 99%" class="chartjs">
+
+            <canvas id="Discharge volume per operator by discharge type" height="480" width="640"></canvas>
+            <script>
+                Chart.defaults.global.defaultFontSize = 12;
+                var chart_data = {
+                
+                    data: {
+                        labels: ['AMHERST WASTEWATER TREATMENT PLANT', 'BILLERICA WASTEWATER TREATMENT FACILITY', 'BOSTON WATER & SEWER COMMISSION', 'BRAINTREE, TOWN OF', 'CITY OF CAMBRIDGE', 'CITY OF CHELSEA', 'CITY OF CHICOPEE', 'CITY OF FALL RIVER', 'CITY OF FITCHBURG', 'CITY OF GLOUCESTER', 'CITY OF HAVERHILL', 'CITY OF HOLYOKE', 'CITY OF NEW BEDFORD', 'CITY OF SOMERVILLE', 'CITY OF WORCESTER', 'EASTHAMPTON WASTEWATER TREATMENT PLANT', 'GREATER LAWRENCE SANITARY DISTRICT', 'LOWELL REGIONAL WASTEWATER UTILITY', 'LYNN WATER & SEWER COMMISSION', 'MASSACHUSETTS WATER RESOURCES AUTHORITY', 'ROCKLAND WASTEWATER TREATMENT FACILITY', 'ROCKPORT WASTE WATER TREATMENT PLANT', 'SHREWSBURY DEPARTMENT OF PUBLIC WORKS', 'SPRINGFIELD WATER & SEWER COMMISSION', 'TOWN OF MONTAGUE', 'WEST SPRINGFIELD DEPARTMENT OF PUBLIC WORKS', 'WEYMOUTH, CITY OF'],
+                        datasets: [{'data': [0.0, 0.0, 15.44935, 0.0, 2.752, 0.286, 53.834776, 176.224553, 4.992356, 0.105, 16.805817, 125.806674, 495.817775, 1.209, 0.0, 0.0, 27.5837, 305.162, 36.462006, 0.04, 0.0, 0.0, 0.0, 341.769251, 0.31404, 0.0, 0.0], 'label': 'CSO – UnTreated', 'backgroundColor': 'rgba(31, 119, 180,0.8)', 'yAxisID': 'y-axis-0'},{'data': [0.0, 0.0, 0.0, 4.63881, 0.0, 0.0, 0.0, 0.0, 0.0, 0.080218, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.00566, 0.457, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.00375, 0.0], 'label': 'SSO – System Surcharging Under High Flow Conditions', 'backgroundColor': 'rgba(255, 127, 14,0.8)', 'yAxisID': 'y-axis-0'},{'data': [0.0, 0.0, 0.16, 0.0, 0.0, 0.0, 5.631747, 88.5106, 0.012, 0.0, 0.047198, 91.474, 0.0, 18.89, 61.190915, 0.0, 0.0, 0.0, 0.064, 194.38, 0.0, 0.0, 0.0, 0.162, 0.0, 0.0, 0.0], 'label': 'CSO – Treated', 'backgroundColor': 'rgba(44, 160, 44,0.8)', 'yAxisID': 'y-axis-0'},{'data': [0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.336, 0.0, 0.0, 0.028, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 1.016, 0.0015, 0.066, 0.0, 0.0, 0.315], 'label': 'SSO – Failure of Pump Station or Associated Force Main', 'backgroundColor': 'rgba(214, 39, 40,0.8)', 'yAxisID': 'y-axis-0'},{'data': [0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 2.91, 488.25, 16.1307, 0.0, 4.2382, 0.0, 0.0, 0.0, 0.0, 0.0, 2.5687, 499.032, 0.0, 717.88, 1.0, 0.0, 0.0, 6.767, 0.029, 0.0, 0.0], 'label': 'Partially Treated – Blended', 'backgroundColor': 'rgba(148, 103, 189,0.8)', 'yAxisID': 'y-axis-0'},{'data': [0.45, 6.54, 0.0, 0.0, 0.0, 0.0, 3.91, 0.0, 0.0, 0.89, 0.0, 0.0, 0.0, 0.0, 0.0, 5e-05, 0.0, 0.39, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0], 'label': 'Partially Treated – Other', 'backgroundColor': 'rgba(140, 86, 75,0.8)', 'yAxisID': 'y-axis-0'},{'data': [0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 1.812515, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0], 'label': 'SSO – Discharge Through Wastewater Outfall', 'backgroundColor': 'rgba(227, 119, 194,0.8)', 'yAxisID': 'y-axis-0'}]
+                    },
+                    type: 'bar',
+                    options: {
+                        scales: {
+                            yAxes: [{
+                                display: true,
+                                scaleLabel: {
+                                    display: true,
+                                    labelString: 'Volume of discharges (millions of gallons)'
+                                },
+                                ticks: {
+                                    beginAtZero: true, min: 0
+                                },
+                                "id": "y-axis-0",
+                                "position": "left",
+                                stacked: true
+                            }, {
+                                display: false,
+                                scaleLabel: {
+                                    display: true,
+                                    labelString: ''
+                                },
+                                ticks: {
+                                    beginAtZero: true, min: 0
+                                },
+                                "id": "y-axis-1",
+                                "position": "right"
+                            }],
+                            xAxes: [{
+                                scaleLabel: {
+                                    display: true,
+                                    labelString: 'Sewer operator (permittee)'
+                                },
+                                stacked: true,
+                                ticks: {
+                                    autoSkip: true
+                                }
+                            }]
+                        },
+                        legend: {
+                            display: true
+                            },
+                        tooltips: {
+                            display: true
+                            }
+                    },
+                }
+                
+                
+                
+            </script>
+            <script>
+                {{
+                    var ctx = document.getElementById("Discharge volume per operator by discharge type").getContext("2d");
+                    var mychart = new Chart(ctx, chart_data);
+                }}
+            </script>
+
+        </div>
+    </body>
+</html>
+{% endraw  %}
