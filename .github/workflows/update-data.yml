@@ -1,0 +1,89 @@
+name: Update Data
+
+on:
+  schedule:
+    - cron: '0 6 * * 1'  # Every Monday at 6am UTC
+  workflow_dispatch:       # Allow manual trigger from GitHub UI
+
+jobs:
+  update-data:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write   # to commit updated CSVs
+      issues: write     # to open failure issues
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+          cache: pip
+
+      - name: Install dependencies
+        run: pip install -r requirements-ci.txt
+
+      - name: Authenticate to Google Cloud
+        uses: google-github-actions/auth@v2
+        with:
+          credentials_json: ${{ secrets.GCP_SA_KEY }}
+
+      - name: Set up Cloud SDK (provides gsutil)
+        uses: google-github-actions/setup-gcloud@v2
+
+      - name: Write SODA credentials
+        run: |
+          printf '%s\n%s\n' "${{ secrets.SODA_APP_TOKEN }}" "${{ secrets.SODA_SECRET_TOKEN }}" \
+            > get_data/SECRET_SODA_token
+
+      - name: Fetch data
+        working-directory: get_data
+        run: |
+          python get_EPARegion1_NPDES_permits.py
+          # get_MassBudget_environmental.py is currently broken: massbudget.org
+          # blocks the CSV endpoint (403) as of early 2026. The existing CSVs
+          # from June 2023 remain in the repo. Re-enable once a working source
+          # is found (consider contacting MassBudget for API access).
+          python get_DEP_staff_SODA.py
+          python get_EEA_data_portal.py
+          python get_eea_dp_cso.py
+
+      - name: Validate data
+        working-directory: get_data
+        run: python validate_data.py
+
+      - name: Assemble database
+        working-directory: get_data
+        run: python assemble_db.py
+
+      - name: Commit changes
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add docs/data/
+          git diff --staged --quiet \
+            || git commit -m "Auto-update data $(date -u +%Y-%m-%d)" \
+            && git push
+
+      - name: Open issue on failure
+        if: failure()
+        uses: actions/github-script@v7
+        with:
+          script: |
+            github.rest.issues.create({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              title: `Data update failed: ${new Date().toISOString().split('T')[0]}`,
+              body: [
+                '## Scheduled data update failed',
+                '',
+                `**Run:** ${context.serverUrl}/${context.repo.owner}/${context.repo.repo}/actions/runs/${context.runId}`,
+                '',
+                'Check the run logs above for details. Common causes:',
+                '- EPA or EEA website structure changed (scraper broke)',
+                '- API returned unexpected data (caught by validate_data.py)',
+                '- Row count decreased vs. previous run',
+                '- GCS credentials expired',
+              ].join('\n'),
+              labels: ['data-update-failure'],
+            })

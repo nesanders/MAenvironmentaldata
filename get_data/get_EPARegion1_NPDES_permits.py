@@ -1,4 +1,21 @@
-"""Download all NPDES permits from EPA region 1 and post them to the Google Cloud storage location.
+"""Download all NPDES permits from EPA Region 1 (CT, ME, NH, MA, RI, VT) and upload PDFs to GCS.
+
+Scrapes the EPA NPDES permit listing pages for both draft and final permits in all six
+New England states.  For each state/stage combination the page may serve either an
+AJAX-loaded JSON table (the newer format) or a static HTML table; both are handled.
+
+Key known EPA page changes that have been worked around:
+  - ~2025: JSON payload switched from orient='split' to {"data": [...]}
+  - ~2025: Column renamed from 'Facility Name' to 'Applicant / Facility Name'
+
+PDF sync is incremental: a single `gsutil ls` call lists what is already in GCS and
+only newly-discovered PDFs are downloaded and uploaded.  This makes both local runs
+and GitHub Actions runs efficient.
+
+Outputs:
+  ../docs/data/EPARegion1_NPDES_permit_data.csv  — permit metadata table
+  gs://openamend-data/EPA_Region1_NPDES_permits/ — permit PDFs
+  ../docs/data/ts_update_EPARegion1_NPDES_permit.yml — timestamp of last run
 """
 
 from io import StringIO
@@ -7,7 +24,6 @@ from urllib import request
 import pickle
 import pandas as pd
 from unidecode import unidecode,unidecode_expect_nonascii
-import re
 import os
 import datetime
 import numpy as np
@@ -17,7 +33,7 @@ import numpy as np
 # ------------------------------
 
 PERMIT_DIR = 'EPA_Region1_NPDES_permits/{}/{}/{}_'
-GS_URL = 'http://storage.googleapis.com/ns697-amend/EPA_Region1_NPDES_permits/{}/{}/{}_'
+GS_URL = 'https://storage.googleapis.com/openamend-data/EPA_Region1_NPDES_permits/{}/{}/{}_'
 
 ALL_STATES = {'ct':'connecticut','me':'maine','nh':'new-hampshire','ma':'massachusetts','ri':'rhode-island','vt':'vermont'}
  
@@ -58,26 +74,42 @@ if __name__ == '__main__':
         ## ajax/json table
         if "'ajax': jsonURL" in content:
             print('Parsing json table')
-            
+
             ## Construct URL
+            if "jsonURL = '" not in content:
+                raise ValueError(f"Expected 'jsonURL' JS variable not found in page for {state}/{stage}. EPA page structure may have changed.")
             jsonfn = content.split("jsonURL = '")[1].split("';")[0].split("?\'")[0].lstrip('/')
             jsonURL = '/'.join(all_urls[ci].split('/')[:-2]) + '/' + jsonfn
-            
+
             ## Request content
             json_raw = opener.open(request.Request(jsonURL)).read()
-            
+
             ## Decode content
             jsoncontent = unidecode_expect_nonascii(json_raw.decode('utf-8'))
-            
+
             ## Convert to dataframe
-            pdf = pd.read_json(StringIO(jsoncontent), orient='split')
-            
+            ## EPA changed JSON format from orient='split' to {"data": [...]} around 2025
+            import json as _json
+            raw = _json.loads(jsoncontent)
+            if isinstance(raw, dict) and 'data' in raw:
+                pdf = pd.DataFrame(raw['data'])
+            else:
+                pdf = pd.read_json(StringIO(jsoncontent), orient='split')
+
             ## Clean up dataframe content
-            city_col_name = pdf.columns[pdf.columns.str.startswith('City / Town')].values[0]
+            city_col_matches = pdf.columns[pdf.columns.str.startswith('City / Town')]
+            if len(city_col_matches) == 0:
+                raise ValueError(f"Expected 'City / Town' column not found in JSON table for {state}/{stage}. Columns: {list(pdf.columns)}")
+            city_col_name = city_col_matches.values[0]
             pdf['City/Town'] = pdf[city_col_name].apply(lambda x: x.split(' (')[0].strip())
+            ## EPA renamed 'Facility Name' to 'Applicant / Facility Name' around 2025
+            facility_col = 'Facility Name' if 'Facility Name' in pdf.columns else 'Applicant / Facility Name'
+            if facility_col not in pdf.columns:
+                raise ValueError(f"Expected facility name column not found for {state}/{stage}. Columns: {list(pdf.columns)}")
+            pdf['Facility Name'] = pdf[facility_col]
             pdf['Facility_name_clean'] = pdf['Facility Name'].apply(lambda x: BeautifulSoup(x).text.split(' (PDF')[0].split('\n')[0].split("in new window.'>")[-1])
             pdf['Permit_URL'] = pdf['Facility Name'].apply(lambda x: [
-                BeautifulSoup(x).findAll('a')[j].get('href') 
+                BeautifulSoup(x).findAll('a')[j].get('href')
                 for j in range(len(BeautifulSoup(x, features="lxml").findAll('a')))
             ])
             pdf['Stage'] = stage
@@ -156,9 +188,21 @@ if __name__ == '__main__':
 
     permit_df = pd.DataFrame(permit_data)
 
+    if len(permit_df) < 500:
+        raise ValueError(f"Only {len(permit_df)} permits parsed — expected at least 500. Aborting to avoid overwriting good data.")
+
     os.system('mkdir '+PERMIT_DIR.split('/')[0])
 
+    ## Build a set of PDF filenames already in GCS with a single listing call.
+    ## This lets us skip both the download and upload for existing PDFs, keeping
+    ## the sync incremental whether running locally or in CI.
+    print('Listing existing PDFs in GCS...')
+    gs_ls = os.popen('gsutil ls "gs://openamend-data/EPA_Region1_NPDES_permits/**"').read()
+    existing_in_gcs = set(os.path.basename(p) for p in gs_ls.splitlines() if p.strip())
+    print(f'Found {len(existing_in_gcs)} files already in GCS.')
+
     out_files = []
+    new_pdf_count = 0
     for i in range(len(permit_df)):
         row = permit_df.iloc[i]
         state = row['State']
@@ -167,23 +211,31 @@ if __name__ == '__main__':
         if row['Permit_URL'] is not np.nan:
             out_files += [[]]
             for permit in row['Permit_URL']:
+                # Skip anything that isn't a direct PDF link (avoids downloading
+                # HTML listing pages, anchor fragments, etc.)
+                if not permit.lower().split('?')[0].split('#')[0].endswith('.pdf'):
+                    continue
                 out_path = PERMIT_DIR.format(state, stage, permitID)
                 for i in range(1,len(out_path.split('/'))):
                     check_path = '/'.join(out_path.split('/')[:i])
                     if os.path.exists(check_path) == 0:
                         os.system('mkdir '+check_path)
-                out_files[-1] += [GS_URL.format(state, stage, permitID) + permit.split('/')[-1]]
-                os.system('wget '+permit+' --no-clobber -O ' + out_path + permit.split('/')[-1])
+                filename = permit.split('/')[-1]
+                local_file = out_path + filename
+                gs_file = GS_URL.format(state, stage, permitID) + filename
+                out_files[-1] += [gs_file]
+                # Check by the stored filename (includes permitID prefix from out_path)
+                stored_filename = os.path.basename(local_file)
+                if stored_filename not in existing_in_gcs:
+                    os.system('wget '+permit+' --no-clobber --timeout=30 --tries=3 -O ' + local_file)
+                    if os.path.exists(local_file):
+                        os.system('gsutil cp ' + local_file + ' gs://openamend-data/' + local_file)
+                        new_pdf_count += 1
         else:
             out_files += [['']]
 
-    permit_df['gs_path'] = ['<br>'.join(['[Permit PDF]('+xx+')' for xx in x if xx!= '']) for x in out_files]
-
-    permit_df = permit_df.sort_values(by = ['State','Watershed','Stage','Facility_name_clean'])
-
-    ## Push PDFs to Google Cloud
-    os.system('gsutil rsync -r '+PERMIT_DIR.split('/{}/')[0]+' gs://ns697-amend/'+PERMIT_DIR.split('/{}/')[0])
-    ## access at e.g. http://storage.googleapis.com/ns697-amend/EPA_Region1_NPDES_permits/nh/final/NH0000116_finalnh0000116permit.pdf
+    print(f'Uploaded {new_pdf_count} new PDFs to GCS.')
+    ## access at e.g. https://storage.googleapis.com/openamend-data/EPA_Region1_NPDES_permits/nh/final/NH0000116_finalnh0000116permit.pdf
 
     ## Write out data
     permit_df.to_pickle('EPARegion1_NPDES_permit_data.p')

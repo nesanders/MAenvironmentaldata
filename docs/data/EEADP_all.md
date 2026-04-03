@@ -18,8 +18,9 @@ Definitions, FAQs, disclaimers, and other information related to these datasets 
 
 One of these datasets, the historical drinking water quality measurement dataset, is significantly larger than the other (>200 MB in total).  Because this measurement-level drinking water quality reporting is not instrumental to the goals of {{ site.data.site_config.site_abbrev }}, we do not include it in our integrated database.  We do provide an archived version of the complete drinking water dataset below.
 
-The data from this portal has been archived on this site, last updated on **{{ site.data.ts_update_EEADP.updated | date: "%-d %B %Y %I:%M %P" }}**. 
+The data from this portal has been archived on this site, last updated on **{{ site.data.ts_update_EEADP.updated | date: "%-d %B %Y %I:%M %P" }}**.
 The CSO data is queried using a separate script and was last updated on **{{ site.data.ts_update_EEADP_CSO.updated | date: "%-d %B %Y %I:%M %P" }}**.
+Both datasets are refreshed automatically on a weekly basis.
 
 ## Download archive
 
@@ -31,7 +32,7 @@ In addition to including them in them in the integrated {{ site.data.site_config
 * [Permits](EEADP_permit.csv)
 * [Combined sewer overflows](EEADP_CSO.csv)
 
-* [Complete drinking water quality measurement (>200 MB, not included in database)](https://storage.googleapis.com/ns697-amend/EEADP_drinkingWater.csv)
+* [Complete drinking water quality measurement (>200 MB, not included in database)](https://storage.googleapis.com/openamend-data/EEADP_drinkingWater.csv)
 * [Annualized drinking water quality measurement counts](EEADP_drinkingWater_annual.csv)
 
 ## Data visualization

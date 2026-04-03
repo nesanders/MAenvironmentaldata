@@ -23,3 +23,18 @@
 # Features
 
 ### Interactive plotting features to allow users to visualize interactive SQL queries
+
+### "Ask AI" tab alongside the SQL query feature
+Allow users to ask natural-language questions about the data, with the AI translating
+them into SQL queries and/or summarizing results.  Should integrate with the existing
+SQL demo interface.
+
+### Restore MassBudget environmental budget data
+Source: `massbudget.org` — blocked as of early 2026 (Cloudflare on `spreadsheet.php`).
+Contact MassBudget directly for API access or a direct CSV export.
+Script: `get_data/get_MassBudget_environmental.py`.
+
+### Optimize geospatial performance in analysis scripts
+The EJ/EJSCREEN correlation analyses and CSO map scripts are slow due to shapefile
+loading and per-feature spatial joins.  Consider pre-simplifying geometries, caching
+dissolved boundaries, or switching to vectorized `geopandas.sjoin`.

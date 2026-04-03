@@ -126,7 +126,7 @@ var editor = CodeMirror.fromTextArea(commandsElm, {
 
 dbFileElm.onclick = function() {
 	var xhr = new XMLHttpRequest();
-	xhr.open('GET', 'https://storage.googleapis.com/ns697-amend/amend.db', true);
+	xhr.open('GET', 'https://storage.googleapis.com/openamend-data/amend.db', true);
 	// Note: CORS needs to be enabled on the target bucket as in https://cloud.google.com/storage/docs/cross-origin
 	xhr.responseType = 'arraybuffer';
 

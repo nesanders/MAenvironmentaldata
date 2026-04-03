@@ -1,0 +1,25 @@
+# Dependencies for CI data fetching and chart generation.
+# Excludes heavy deps only needed for local PySTAN analysis (pystan, geopandas, scipy, joblib).
+
+# HTTP / scraping
+requests==2.31.0
+beautifulsoup4==4.12.2
+lxml==4.9.2
+unidecode==1.3.6
+
+# Data
+pandas==2.0.2
+numpy==1.24.3
+openpyxl==3.1.2
+sqlalchemy==1.4.46
+
+# APIs
+sodapy==2.2.0
+us==3.1.1
+
+# Visualization (charts + maps; no pystan/geopandas)
+matplotlib==3.7.1
+folium==0.14.0
+
+# Misc
+six==1.16.0

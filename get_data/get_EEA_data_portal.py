@@ -1,11 +1,30 @@
-"""
-This script queries the MA Energy and Environmental Affairs Data Portal, publicly viewable at:
-http://eeaonline.eea.state.ma.us/portal#!/home
+"""Query the MA EEA Enterprise Data Portal for permit, facility, inspection, enforcement,
+and drinking-water records.
+
+Portal home: http://eeaonline.eea.state.ma.us/portal#!/home
+
+Queries five tables via the DataLake REST API using paginated GET requests.  Results are
+written to CSV files under docs/data/.  The large drinkingWater table (>200 MB) is also
+uploaded to GCS; an annualized summary is kept locally.
+
+HTTP requests use a session with automatic retries (5 attempts, exponential backoff) to
+tolerate transient 5xx / 429 errors from the portal.
+
+CSO data is handled separately in get_eea_dp_cso.py because it uses a different API.
+
+Outputs (per table, e.g. 'permit'):
+  ../docs/data/EEADP_permit.csv         — full table
+  ../docs/data/EEADP_permit_sample.csv  — 10-row sample
+  gs://openamend-data/EEADP_drinkingWater.csv — full drinking water table (GCS only)
+  ../docs/data/EEADP_drinkingWater_annual.csv — annualized summary
+  ../docs/data/ts_update_EEADP.yml      — timestamp of last run
 """
 
 import os
 import datetime
 import requests
+from requests.adapters import HTTPAdapter
+from urllib3.util.retry import Retry
 import pandas as pd
 import numpy as np
 
@@ -22,28 +41,42 @@ API_TABLES = ['permit', 'facility', 'inspection', 'enforcement', 'drinkingWater'
 ##########################
 
 # Generic user agent
-REQ_HEADER = {'User-Agent': 
+REQ_HEADER = {'User-Agent':
 	'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/113.0.0.0 Safari/537.36'}
+
+def _make_session() -> requests.Session:
+	"""Return a requests Session with automatic retries on transient errors."""
+	session = requests.Session()
+	retry = Retry(
+		total=5,
+		backoff_factor=2,
+		status_forcelist=[429, 500, 502, 503, 504],
+	)
+	session.mount('http://', HTTPAdapter(max_retries=retry))
+	session.mount('https://', HTTPAdapter(max_retries=retry))
+	return session
 
 def query_iterate(table_name: str, req_size: int=100000, verbose: bool=True):
 	"""
 	Query the EEA data portal to retrieve the entirety of a data table.
-	
-	Returns 
-	
+
+	Returns
+
 	Args:
 		table_name (str): EEA data portal table to query
 		req_size (int): Request chunksize
 		verbose (bool): Print chunk position while iterating
-	
+
 	Returns:
 		df: Pandas DataFrame with table contents
 	"""
+	session = _make_session()
+
 	# Get total table size
 	try:
-		r = requests.get(API_ROOT + table_name + '?_end=1&_start=0', headers=REQ_HEADER)
+		r = session.get(API_ROOT + table_name + '?_end=1&_start=0', headers=REQ_HEADER)
 		table_size = r.json()['TotalCount']
-	except ValueError: 
+	except ValueError:
 		raise ValueError("EEA Data Portal request returned error " + str(r.status_code) + '; perhaps table name is not valid\n\nFull response message:\n' + r.text)
 
 	# Iterate through requests
@@ -58,13 +91,13 @@ def query_iterate(table_name: str, req_size: int=100000, verbose: bool=True):
 		if verbose: print(table_name + ': request ' + str(i + 1) + ' of ' + str(len(req_bins) - 1))
 		# Make request
 		url = API_ROOT + table_name + '?_end=' + str(req_bins[i+1]) + '&_start='+str(req_bins[i])
-		r = requests.get(url, headers=REQ_HEADER)
+		r = session.get(url, headers=REQ_HEADER)
 		# Add chunk contents to dataframe list
 		dfs += [pd.DataFrame(r.json()['Items'])]
 
 	# Concatenate chunks
 	df = pd.concat(dfs)
-	
+
 	return df
 
 def main():
@@ -88,7 +121,7 @@ def main():
 		else:
 			## Send to Google object store
 			table_data[tab].to_csv('EEADP_' + tab + '.csv', encoding='utf-8', index=0)
-			os.system('gsutil cp EEADP_' + tab + '.csv gs://ns697-amend/EEADP_' + tab + '.csv')
+			os.system('gsutil cp EEADP_' + tab + '.csv gs://openamend-data/EEADP_' + tab + '.csv')
 			
 			## Include some special summary statistics tables
 			## ---		
