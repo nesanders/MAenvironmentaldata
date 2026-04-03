@@ -34,6 +34,10 @@ Source: `massbudget.org` — blocked as of early 2026 (Cloudflare on `spreadshee
 Contact MassBudget directly for API access or a direct CSV export.
 Script: `get_data/get_MassBudget_environmental.py`.
 
+### Update Jekyll and Ruby gem versions
+Audit and update `docs/Gemfile` and `docs/Gemfile.lock` to current stable versions of
+Jekyll and all dependencies (there are known Dependabot alerts on the default branch).
+
 ### Optimize geospatial performance in analysis scripts
 The EJ/EJSCREEN correlation analyses and CSO map scripts are slow due to shapefile
 loading and per-feature spatial joins.  Consider pre-simplifying geometries, caching
