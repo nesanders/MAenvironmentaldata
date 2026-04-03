@@ -9,7 +9,7 @@ ancillary: 0
 
 Massachussets environmental-related budget line item, including MA Department of Environmental Protection administration, records dating back to 2001 are availabe on the [MassBudget website](http://massbudget.org/browser/subcat.php?id=Environment&inflation=cpi#line_items).  
 
-These records have been archived on this site, last updated on **{{ site.data.ts_update_MassBudget_environmental.updated | date: "%-d %B %Y" }}**.
+These records have been archived on this site, last updated on **{{ site.data.ts_update_MassBudget_environmental.updated | date: "%-d %B %Y" }}**.  Note: automatic updates for this dataset are currently paused pending resolution of an access issue with the source data provider.
 
 ## Download archive
 

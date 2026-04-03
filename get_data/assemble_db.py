@@ -1,6 +1,18 @@
-"""This script is meant to be run after all relevant data has been downloaded locally with
-the various get*.py scripts, and then assembles that data into a SQlite database and
-persists it to Google Cloud.
+"""Assemble all downloaded CSVs into a SQLite database and upload it to Google Cloud Storage.
+
+Run this after all data-fetch scripts (get_*.py) have completed successfully.
+Typical invocation is via the GitHub Actions workflow, but can also be run locally
+from the get_data/ directory.
+
+SSAWages handling: the SSA average wage index file is static and updated manually
+(source: https://www.ssa.gov/oact/cola/awidevelop.html).  This script automatically
+extends it with placeholder rows (zero growth) for any years that appear in the staff
+data but not yet in the SSA CSV, so the database assembles without errors even if the
+SSA file lags behind.
+
+Outputs:
+  AMEND.db             — SQLite database (local, then uploaded to GCS)
+  gs://openamend-data/amend.db — GCS copy, served to the web app
 """
 
 import pandas as pd
@@ -37,9 +49,14 @@ if __name__ == '__main__':
 	data_csv['EPA_EJSCREEN_2023'] = pd.read_csv('../docs/data/EPA_EJSCREEN_MA_2023.csv')
 	data_csv['MAEEADP_CSO'] = pd.read_csv('../docs/data/EEADP_CSO.csv')
 
-	## Temporary insertion for 2022 assuming no inflation
+	## Extend SSAWages with placeholder rows for years not yet in the source CSV.
+	## Zero-fill the growth columns; Year and AWI are carried forward from the last known year.
+	## Update this list as real SSA data becomes available at:
+	## https://www.ssa.gov/oact/cola/awidevelop.html
 	data_csv['SSAWages'] = pd.read_csv('../docs/data/SSAWages_2023-02-03.csv')
-	for yr in [2022]:
+	last_staff_year = int(pd.read_csv('../docs/data/MADEP_staff_SODA.csv')['year'].max())
+	last_ssa_year = int(data_csv['SSAWages']['Year'].max())
+	for yr in range(last_ssa_year + 1, last_staff_year + 1):
 		data_csv['SSAWages'] = data_csv['SSAWages']._append(data_csv['SSAWages'].iloc[-1])
 		data_csv['SSAWages'].iloc[-1, 0] = yr
 		data_csv['SSAWages'].iloc[-1, 2:] = 0
@@ -54,4 +71,4 @@ if __name__ == '__main__':
 		print(f'Writing database table {key}')
 		data_csv[key].to_sql(name=key, con=disk_engine, if_exists='append')
 
-	os.system('gsutil cp AMEND.db gs://ns697-amend/amend.db')
+	os.system('gsutil cp AMEND.db gs://openamend-data/amend.db')

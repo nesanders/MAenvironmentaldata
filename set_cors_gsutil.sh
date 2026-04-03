@@ -8,6 +8,6 @@ echo '[{
     "maxAgeSeconds": 3600
 }]' > cors-json-amend.json
 
-gsutil cors set cors-json-amend.json gs://ns697-amend
+gsutil cors set cors-json-amend.json gs://openamend-data
 
 

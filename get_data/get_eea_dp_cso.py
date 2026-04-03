@@ -1,21 +1,43 @@
-"""Query the Combined Sewer Overflow (CSO) data from the EEA data portal to return data on CSO discharge events,
-and store that data in a table.
+"""Query the Combined Sewer Overflow (CSO) data from the EEA data portal.
 
-We do this separately from the `get_EEA_data_portal.py` script because, while the CSO data is also from the Data Portal,
-the API is somewhat different.
+Returns data on CSO discharge events and stores it as a CSV table.
 
-This is an example query to the data portal API:
-https://eeaonline.eea.state.ma.us/dep/CSOAPI/api/Incident/GetIncidentsBySearchFields/?ReporterClass=Verified%20Data%20Report&IncidentFromDate=01/01/2022&IncidentToDate=08/02/2023&RainfallDataFrom=1&pageNumber=2&pageSize=50&
+We do this separately from `get_EEA_data_portal.py` because, while the CSO data is also
+from the EEA Data Portal, it uses a distinct API endpoint (CSOAPI) with different
+pagination and auth requirements.
+
+Key implementation notes:
+  - The CSOAPI requires a Referer header pointing to the portal page; bare requests
+    return HTTP 500.  The REQ_HEADER below must be kept in sync with the portal URL.
+  - The API is 1-indexed (pageNumber starts at 1, not 0).
+  - Timestamps are ISO 8601 but may or may not include milliseconds; use format='ISO8601'.
+  - The API returns a lowercase 'year' column; we drop it to avoid a case-insensitive
+    name collision with our added 'Year' column when writing to SQLite.
+
+Example API URL:
+  https://eeaonline.eea.state.ma.us/dep/CSOAPI/api/Incident/GetIncidentsBySearchFields/
+    ?ReporterClass=Verified%20Data%20Report&IncidentFromDate=01/01/2022
+    &IncidentToDate=08/02/2023&RainfallDataFrom=1&pageNumber=2&pageSize=50
+
+Outputs:
+  ../docs/data/EEADP_CSO.csv         — full CSO incident table
+  ../docs/data/EEADP_CSO_sample.csv  — 10-row random sample
+  ../docs/data/ts_update_EEADP_CSO.yml — timestamp of last run
 """
 
-import json
 import requests
 from typing import Optional
 
 import datetime
 import pandas as pd
 
-from get_EEA_data_portal import REQ_HEADER
+# The CSOAPI requires a Referer header matching the portal page; plain User-Agent requests return 500.
+REQ_HEADER = {
+    'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
+    'Referer': 'https://eeaonline.eea.state.ma.us/portal/dep/cso-data-portal/',
+    'Origin': 'https://eeaonline.eea.state.ma.us',
+    'Accept': 'application/json, text/plain, */*',
+}
 
 API_BASE_URL = 'https://eeaonline.eea.state.ma.us/dep/CSOAPI/api/Incident/GetIncidentsBySearchFields/?pageSize=50&'
 
@@ -45,7 +67,7 @@ def run_query() -> pd.DataFrame:
     """Run a full query, paging through results and returning a combined DataFrame.
     """
     print('Running full query')
-    page = 0
+    page = 1  # CSOAPI is 1-indexed
     result_dfs = []
     while True:
         df = _query_page(page)
@@ -59,8 +81,11 @@ def get_data() -> pd.DataFrame:
     """Query data from the data portal API and do any necessary post processing.
     """
     df = run_query()
-    df['incidentDate'] = pd.to_datetime(df['incidentDate'])
-    df['submittedDate'] = pd.to_datetime(df['submittedDate'])
+    df['incidentDate'] = pd.to_datetime(df['incidentDate'], format='ISO8601')
+    df['submittedDate'] = pd.to_datetime(df['submittedDate'], format='ISO8601')
+    # API already returns a lowercase 'year' column; drop it before adding 'Year'
+    # to avoid duplicate column names (case-insensitive collision in SQLite).
+    df.drop(columns=[c for c in df.columns if c.lower() == 'year'], inplace=True)
     df['Year'] = df['incidentDate'].apply(lambda x: x.year)
     return df
 

@@ -1,0 +1,69 @@
+name: Update Charts
+
+on:
+  workflow_run:
+    workflows: ["Update Data"]
+    types: [completed]    # Only runs after Update Data finishes (successfully)
+  workflow_dispatch:       # Allow manual trigger from GitHub UI
+
+jobs:
+  update-charts:
+    runs-on: ubuntu-latest
+    # Skip if triggered by a failed data update (manual trigger always runs)
+    if: >
+      github.event_name == 'workflow_dispatch' ||
+      github.event.workflow_run.conclusion == 'success'
+    permissions:
+      contents: write   # to commit updated charts
+      issues: write     # to open failure issues
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+          cache: pip
+
+      - name: Install dependencies
+        run: pip install -r requirements-ci.txt
+
+      - name: Generate charts
+        working-directory: analysis
+        run: |
+          python SSA_wages_viz.py
+          python MADEP_staff.py
+          python MADEP_budget_viz.py
+          python MADEP_enforcements_viz.py
+          python ECOS_budgets_viz.py
+          python EEA_DP_CSO_map.py
+
+      - name: Commit changes
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add docs/_includes/charts/ docs/assets/maps/
+          git diff --staged --quiet \
+            || git commit -m "Auto-update charts $(date -u +%Y-%m-%d)" \
+            && git push
+
+      - name: Open issue on failure
+        if: failure()
+        uses: actions/github-script@v7
+        with:
+          script: |
+            github.rest.issues.create({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              title: `Chart update failed: ${new Date().toISOString().split('T')[0]}`,
+              body: [
+                '## Chart generation failed',
+                '',
+                `**Run:** ${context.serverUrl}/${context.repo.owner}/${context.repo.repo}/actions/runs/${context.runId}`,
+                '',
+                'Check the run logs above for details.',
+                '',
+                'Note: NECIR_CSO_map.py (PySTAN regression) is intentionally excluded from CI — run it locally.',
+              ].join('\n'),
+              labels: ['chart-update-failure'],
+            })

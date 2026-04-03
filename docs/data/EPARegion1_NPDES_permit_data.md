@@ -28,7 +28,7 @@ The federal Evironmental Protection Agency (EPA) Region 1 (New England) stores p
 * [VT final permits](https://www3.epa.gov/region1/npdes/draft_permits_listing_vt.html)
 
 
-These permits have been archived on this site, last updated on **{{ site.data.ts_update_EPARegion1_NPDES_permit.updated | date: "%-d %B %Y %I:%M %P" }}**.
+These permits have been archived on this site, last updated on **{{ site.data.ts_update_EPARegion1_NPDES_permit.updated | date: "%-d %B %Y %I:%M %P" }}**.  The archive is refreshed automatically on a weekly basis.
 
 ## Download archive
 
