@@ -227,9 +227,12 @@ def assign_ej_data_to_geo_bins_with_geopandas(data_ejs: pd.DataFrame, geo_towns_
         ]:
         data_ejs_out[geo_type] = '[UNKNOWN]'
         result_df = geo_df.sjoin(data_ejs_centroids, predicate='contains')
+        # geopandas >=1.0 names the right-index column after the right df's index name
+        # (e.g. 'GEOID') rather than the generic 'index_right' used in older versions.
+        right_idx_col = data_ejs_centroids.index.name or 'index_right'
         # Parse the results
         for cbg_id in data_ejs_cbg_merge['GEOID']:
-            result_set = result_df.loc[result_df['index_right'] == cbg_id]
+            result_set = result_df.loc[result_df[right_idx_col] == cbg_id]
             if len(result_set) == 0:
                 logging.info(f'No {geo_type} found for Census Block Group #{cbg_id}')
                 continue
@@ -456,46 +459,46 @@ class CSOAnalysis():
         logging.info('Making map of discharge volumes')
         ## Map total discharge volume
         map_1 = folium.Map(
-            location=[42.29, -71.74], 
+            location=[42.29, -71.74],
             zoom_start=8.2,
-            tiles='Stamen Terrain',
+            tiles='OpenStreetMap',
             )
 
         # We show only the watershed view by default
         ## Draw choropleth layer for census blocks
-        map_1.choropleth(
-            geo_data=self.geo_blockgroups_path, 
+        folium.Choropleth(
+            geo_data=self.geo_blockgroups_path,
             name='Census Block Groups',
             data=data_ins_g_bg[self.discharge_vol_col],
             key_on='feature.properties.GEOID',
             legend_name=f'Block Group: Total volume of discharge ({self.cso_data_year}; Millions of gallons)',
-            threshold_scale = list(np.nanpercentile(data_ins_g_bg[self.discharge_vol_col], [0,25,50,75,100])),  
+            threshold_scale=list(np.nanpercentile(data_ins_g_bg[self.discharge_vol_col], [0,25,50,75,100])),
             fill_color='BuGn', fill_opacity=0.7, line_opacity=0.3, highlight=True, show=False
-            )
+            ).add_to(map_1)
 
         ## Draw Choropleth layer for towns
-        map_1.choropleth(
-            geo_data=self.geo_towns_path, 
+        folium.Choropleth(
+            geo_data=self.geo_towns_path,
             name='Municipalities',
             data=data_ins_g_muni_j[self.discharge_vol_col],
             key_on='feature.properties.TOWN',
             legend_name=f'Municipality: Total volume of discharge ({self.cso_data_year}; Millions of gallons)',
-            threshold_scale = [0] + list(np.nanpercentile(
-                data_ins_g_muni_j[self.discharge_vol_col][data_ins_g_muni_j[self.discharge_vol_col] > 0], 
-                [25,50,75,100])),  
+            threshold_scale=[0] + list(np.nanpercentile(
+                data_ins_g_muni_j[self.discharge_vol_col][data_ins_g_muni_j[self.discharge_vol_col] > 0],
+                [25,50,75,100])),
             fill_color='PuRd', fill_opacity=0.7, line_opacity=0.3, highlight=True, show=False
-            )
+            ).add_to(map_1)
 
         ## Draw Choropleth layer for watersheds
-        map_1.choropleth(
-            geo_data=self.geo_watershed_path, 
+        folium.Choropleth(
+            geo_data=self.geo_watershed_path,
             name='Watersheds',
             data=data_ins_g_ws_j[self.discharge_vol_col],
             key_on='feature.properties.NAME',
             legend_name=f'Watershed: Total volume of discharge ({self.cso_data_year}; Millions of gallons)',
-            threshold_scale = list(np.nanpercentile(data_ins_g_ws_j[self.discharge_vol_col], [0,25,50,75,100])),  
+            threshold_scale=list(np.nanpercentile(data_ins_g_ws_j[self.discharge_vol_col], [0,25,50,75,100])),
             fill_color='PuBu', fill_opacity=0.7, line_opacity=0.3, highlight=True,
-            )
+            ).add_to(map_1)
 
         ## Add points layer for CSOs
         for i in range(len(data_cso)):
@@ -558,44 +561,44 @@ class CSOAnalysis():
 
             ## Map total discharge volume
             map_2 = folium.Map(
-                location=[42.29, -71.74], 
+                location=[42.29, -71.74],
                 zoom_start=8.2,
-                tiles='Stamen Terrain',
+                tiles='OpenStreetMap',
                 )
 
             # We show only the watershed by default
             ## Draw choropleth layer for census blocks
-            map_2.choropleth(
-                geo_data=self.geo_blockgroups_path, 
+            folium.Choropleth(
+                geo_data=self.geo_blockgroups_path,
                 name='Census Block Groups',
                 data=data_egs_merge[col],
                 key_on='feature.properties.GEOID',
                 legend_name='Block Group: '+col_label,
-                threshold_scale = list(np.nanpercentile(data_egs_merge[col], [0,25,50,75,100])),  
+                threshold_scale=list(np.nanpercentile(data_egs_merge[col], [0,25,50,75,100])),
                 fill_color='BuGn', fill_opacity=0.7, line_opacity=0.3, highlight=True, show=False
-                )
+                ).add_to(map_2)
 
             ## Draw Choropleth layer for towns
-            map_2.choropleth(
-                geo_data=self.geo_towns_path, 
+            folium.Choropleth(
+                geo_data=self.geo_towns_path,
                 name='Municipalities',
                 data=df_town_level[col],
                 key_on='feature.properties.TOWN',
                 legend_name='Municipality: '+col_label,
-                threshold_scale = list(np.nanpercentile(df_town_level[col], [0,25,50,75,100])),  
+                threshold_scale=list(np.nanpercentile(df_town_level[col], [0,25,50,75,100])),
                 fill_color='PuRd', fill_opacity=0.7, line_opacity=0.3, highlight=True, show=False
-                )
+                ).add_to(map_2)
 
             ## Draw Choropleth layer for watersheds
-            map_2.choropleth(
-                geo_data=self.geo_watershed_path, 
+            folium.Choropleth(
+                geo_data=self.geo_watershed_path,
                 name='Watersheds',
                 data=df_watershed_level[col],
                 key_on='feature.properties.NAME',
                 legend_name='Watershed: '+col_label,
-                threshold_scale = list(np.nanpercentile(df_watershed_level[col], [0,25,50,75,100])),  
+                threshold_scale=list(np.nanpercentile(df_watershed_level[col], [0,25,50,75,100])),
                 fill_color='PuBu', fill_opacity=0.7, line_opacity=0.3, highlight=True,
-                )
+                ).add_to(map_2)
 
             ## Add points layer for CSOs
             for i in range(len(data_cso)):
@@ -661,7 +664,7 @@ class CSOAnalysis():
             (2, 'LINGISOPCT', 'Fraction of population in households whose adults speak English less than "very well"'),
             ):
 
-            mychart.add_dataset(df_watershed_level[col][sel].values.tolist(), 
+            mychart.add_dataset(df_watershed_level[col].iloc[sel].values.tolist(),
                 col_label,
                 backgroundColor="'rgba({},0.8)'".format(", ".join([str(x) for x in hex2rgb(COLOR_CYCLE[i])])),
                 yAxisID= "'y-axis-0'")
@@ -685,7 +688,7 @@ class CSOAnalysis():
             (2, 'LINGISOPCT', 'Fraction of population in households whose adults speak English less than "very well"'),
             ):
 
-            mychart.add_dataset(df_town_level[col][sel].values.tolist(), 
+            mychart.add_dataset(df_town_level[col].iloc[sel].values.tolist(),
                 col_label,
                 backgroundColor="'rgba({},0.8)'".format(", ".join([str(x) for x in hex2rgb(COLOR_CYCLE[i])])),
                 yAxisID= "'y-axis-0'")
