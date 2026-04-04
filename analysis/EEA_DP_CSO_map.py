@@ -492,6 +492,190 @@ class CSOAnalysisEEADP(CSOAnalysis):
         self.plot_annual_volume_trends()
         self.plot_annual_volume_by_operator()
 
+    # -------------------------
+    # Per-year EJ evolution
+    # -------------------------
+
+    def run_annual_ej_evolution(
+        self,
+        analysis_years: Optional[list]=None,
+        chart_outpath: Optional[str]=None,
+    ) -> None:
+        """Run watershed-level Stan regression per calendar year and plot beta time evolution.
+
+        Reuses the geographic assignment from the saved data_egs_merge and data_cso files
+        produced by run_analysis(), so no geopandas pipeline is required here.
+
+        For each year and each EJ variable, fits the power-law discharge model at the watershed
+        level and records the posterior median and 90% CI of 2^beta (the growth ratio for a
+        doubling of the EJ indicator).  Results are written to the facts YAML and to a Chart.js
+        line chart.
+
+        Parameters
+        ----------
+        analysis_years : list[int], optional
+            Calendar years to analyse.  Defaults to full years ≥2023 present in the database.
+        chart_outpath : str, optional
+            Where to write the Chart.js HTML.  Defaults to
+            ``../docs/_includes/charts/{output_slug}_annual_ej_beta_evolution.html``.
+        """
+        import stan as pystan
+        from NECIR_CSO_map import pop_weighted_average
+
+        if chart_outpath is None:
+            chart_outpath = f'../docs/_includes/charts/{self.output_slug}_annual_ej_beta_evolution.html'
+
+        # ── Load saved geographic data ──────────────────────────────────────────
+        data_egs = pd.read_csv(f'{self.data_path}{self.output_slug}_data_egs_merge.csv.gz')
+        data_cso_saved = pd.read_csv(f'{self.data_path}{self.output_slug}_data_cso.csv')
+
+        # cso_id → GEOID from the outfall-level file produced by run_analysis
+        cso_geoid = (
+            data_cso_saved.dropna(subset=['GEOID'])
+            .set_index('cso_id')['GEOID'].astype(str).to_dict()
+        )
+        # GEOID → Watershed
+        data_egs['ID'] = data_egs['ID'].astype(str)
+        geoid_ws_map = data_egs.drop_duplicates('ID').set_index('ID')['Watershed'].to_dict()
+
+        # Watershed-level population-weighted EJ (static across years)
+        EJ_VARS = [
+            ('MINORPCT',   'Fraction non-white'),
+            ('LOWINCPCT',  'Fraction low income'),
+            ('LINGISOPCT', 'Fraction linguistically isolated'),
+        ]
+        ws_ej = data_egs.groupby('Watershed').apply(
+            lambda x: pop_weighted_average(x, [col for col, _ in EJ_VARS])
+        )
+        ws_pop = data_egs.groupby('Watershed')['ACSTOTPOP'].sum()
+
+        # ── Load raw CSO data ───────────────────────────────────────────────────
+        disk_engine = get_engine()
+        df_all = pd.read_sql_query(self.EEA_DP_CSO_QUERY, disk_engine)
+        df_all['incidentDate'] = pd.to_datetime(df_all['incidentDate'])
+        df_all = df_all[df_all['reporterClass'] == self.pick_report_type]
+        df_all['cal_year'] = df_all['incidentDate'].dt.year
+        df_all['cso_id'] = df_all['outfallId']
+        df_all['GEOID'] = df_all['cso_id'].map(cso_geoid)
+        df_all['Watershed'] = df_all['GEOID'].map(geoid_ws_map)
+
+        if analysis_years is None:
+            year_months = df_all.groupby('cal_year')['incidentDate'].apply(
+                lambda x: x.dt.month.nunique()
+            )
+            analysis_years = sorted(
+                y for y in year_months[year_months >= 6].index if y >= 2023
+            )
+
+        print(f'Running per-year EJ beta evolution for years: {analysis_years}')
+
+        # ── Fit Stan models per year ────────────────────────────────────────────
+        stan_code = open(self.stan_model_code).read()
+        results: dict = {col: {} for col, _ in EJ_VARS}
+
+        for year in analysis_years:
+            df_yr = df_all[df_all['cal_year'] == year]
+            ws_discharge_yr = df_yr.groupby('Watershed')['volumnOfEvent'].sum() / 1e6
+
+            for col, col_label in EJ_VARS:
+                print(f'  Fitting Stan model: {col} / {year}')
+                ws_list = [
+                    ws for ws in ws_ej.index
+                    if ws in ws_discharge_yr.index and ws in ws_pop.index
+                ]
+                x = ws_ej.loc[ws_list, col].values.astype(float)
+                y = ws_discharge_yr.reindex(ws_list).fillna(0).values.astype(float)
+                pop = ws_pop.reindex(ws_list).fillna(1).values.astype(float)
+
+                sel_unpop = (pop == 0) | (x == 0) | np.isnan(x) | np.isnan(y)
+                x, y, pop = x[~sel_unpop], y[~sel_unpop], pop[~sel_unpop]
+
+                stan_dat = {
+                    'J': int(len(x)),
+                    'x': x.tolist(),
+                    'y': y.tolist(),
+                    'p': (pop / np.mean(pop)).tolist(),
+                }
+                sm = pystan.build(stan_code, data=stan_dat)
+                fit = sm.sample(num_samples=1000, num_chains=4)
+                fit_par = fit.to_frame()
+
+                ph = 2 ** fit_par['beta']
+                results[col][year] = {
+                    'median': float(np.median(ph)),
+                    'p5':     float(np.percentile(ph, 5)),
+                    'p95':    float(np.percentile(ph, 95)),
+                }
+
+        # ── Write facts YAML ────────────────────────────────────────────────────
+        with open(self.fact_file, 'a') as f:
+            for col, _ in EJ_VARS:
+                for yr, vals in results[col].items():
+                    f.write(
+                        f'annual_ej_{col}_{yr}: '
+                        f'{vals["median"]:.1f} times '
+                        f'(90% CI {vals["p5"]:.1f}\u2013{vals["p95"]:.1f})\n'
+                    )
+
+        # ── Write Chart.js line chart ───────────────────────────────────────────
+        year_labels = [str(y) for y in analysis_years]
+        mychart = chartjs.chart(
+            "EJ-CSO correlation over time (watershed level)", "Line", 700, 420
+        )
+        mychart.set_labels(year_labels)
+
+        for i, (col, col_label) in enumerate(EJ_VARS):
+            color_rgb = ", ".join([str(x) for x in hex2rgb(COLOR_CYCLE[i % len(COLOR_CYCLE)])])
+            medians = [float(results[col][y]['median']) for y in analysis_years]
+            p5s     = [float(results[col][y]['p5'])     for y in analysis_years]
+            p95s    = [float(results[col][y]['p95'])    for y in analysis_years]
+
+            # Median line
+            mychart.add_dataset(
+                medians,
+                col_label,
+                borderColor="'rgba({},0.9)'".format(color_rgb),
+                backgroundColor="'rgba({},0.15)'".format(color_rgb),
+                pointBackgroundColor="'rgba({},0.9)'".format(color_rgb),
+                fill='false',
+                pointRadius=5,
+                borderWidth=2,
+                yAxisID="'y-axis-0'",
+            )
+            # 90% CI lower
+            mychart.add_dataset(
+                p5s,
+                f'{col_label} (5th pct)',
+                borderColor="'rgba({},0.3)'".format(color_rgb),
+                backgroundColor="'rgba({},0.0)'".format(color_rgb),
+                fill='false',
+                pointRadius=2,
+                borderWidth=1,
+                borderDash='[4,4]',
+                yAxisID="'y-axis-0'",
+            )
+            # 90% CI upper
+            mychart.add_dataset(
+                p95s,
+                f'{col_label} (95th pct)',
+                borderColor="'rgba({},0.3)'".format(color_rgb),
+                backgroundColor="'rgba({},0.0)'".format(color_rgb),
+                fill='false',
+                pointRadius=2,
+                borderWidth=1,
+                borderDash='[4,4]',
+                yAxisID="'y-axis-0'",
+            )
+
+        mychart.set_params(
+            JSinline=0,
+            ylabel='EJ-CSO correlation (2\u02e3 growth ratio, watershed level)',
+            xlabel='Calendar year',
+            scaleBeginAtZero=1,
+        )
+        mychart.jekyll_write(chart_outpath)
+        print(f'  Wrote EJ beta evolution chart to {chart_outpath}')
+
     
 # -------------------------
 # Main logic
@@ -534,3 +718,5 @@ if __name__ == '__main__':
         )
         csoa.run_analysis()
         csoa.extra_plots()
+        if run_name == 'through_2025':
+            csoa.run_annual_ej_evolution()

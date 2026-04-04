@@ -1,0 +1,79 @@
+{% raw  %}
+<html>
+    <head>
+        <title>EJ-CSO correlation over time (watershed level)</title>
+        <script src='https://cdn.jsdelivr.net/npm/chart.js@2.8.0/dist/Chart.bundle.min.js'></script>
+    </head>
+    <body>
+        <div style="width: 700px; height: 420px; max-width: 99%" class="chartjs">
+
+            <canvas id="EJ-CSO correlation over time (watershed level)" height="420" width="700"></canvas>
+            <script>
+                Chart.defaults.global.defaultFontSize = 12;
+                var chart_data = {
+                
+                    data: {
+                        labels: ['2023', '2024', '2025'],
+                        datasets: [{'data': [4.920932687557242, 5.598875758714866, 4.739115228788485], 'label': 'Fraction non-white', 'borderColor': 'rgba(31, 119, 180,0.9)', 'backgroundColor': 'rgba(31, 119, 180,0.15)', 'pointBackgroundColor': 'rgba(31, 119, 180,0.9)', 'fill': false, 'pointRadius': 5, 'borderWidth': 2, 'yAxisID': 'y-axis-0'},{'data': [2.0580245382557845, 1.7232797561962816, 1.6721444799246272], 'label': 'Fraction non-white (5th pct)', 'borderColor': 'rgba(31, 119, 180,0.3)', 'backgroundColor': 'rgba(31, 119, 180,0.0)', 'fill': false, 'pointRadius': 2, 'borderWidth': 1, 'borderDash': [4,4], 'yAxisID': 'y-axis-0'},{'data': [10.493696274664254, 22.277671033812894, 11.280801731485827], 'label': 'Fraction non-white (95th pct)', 'borderColor': 'rgba(31, 119, 180,0.3)', 'backgroundColor': 'rgba(31, 119, 180,0.0)', 'fill': false, 'pointRadius': 2, 'borderWidth': 1, 'borderDash': [4,4], 'yAxisID': 'y-axis-0'},{'data': [3.164397819611175, 3.795884849147577, 3.1250332509061827], 'label': 'Fraction low income', 'borderColor': 'rgba(255, 127, 14,0.9)', 'backgroundColor': 'rgba(255, 127, 14,0.15)', 'pointBackgroundColor': 'rgba(255, 127, 14,0.9)', 'fill': false, 'pointRadius': 5, 'borderWidth': 2, 'yAxisID': 'y-axis-0'},{'data': [1.1766959606986984, 1.2493704418376521, 1.455416203785195], 'label': 'Fraction low income (5th pct)', 'borderColor': 'rgba(255, 127, 14,0.3)', 'backgroundColor': 'rgba(255, 127, 14,0.0)', 'fill': false, 'pointRadius': 2, 'borderWidth': 1, 'borderDash': [4,4], 'yAxisID': 'y-axis-0'},{'data': [14.840259925057266, 68.1551030691498, 8.140883606901292], 'label': 'Fraction low income (95th pct)', 'borderColor': 'rgba(255, 127, 14,0.3)', 'backgroundColor': 'rgba(255, 127, 14,0.0)', 'fill': false, 'pointRadius': 2, 'borderWidth': 1, 'borderDash': [4,4], 'yAxisID': 'y-axis-0'},{'data': [1.8658406020762097, 2.2560586461365744, 1.8530138620607868], 'label': 'Fraction linguistically isolated', 'borderColor': 'rgba(44, 160, 44,0.9)', 'backgroundColor': 'rgba(44, 160, 44,0.15)', 'pointBackgroundColor': 'rgba(44, 160, 44,0.9)', 'fill': false, 'pointRadius': 5, 'borderWidth': 2, 'yAxisID': 'y-axis-0'},{'data': [1.1191299071827523, 1.1553644387080806, 1.1637288657188922], 'label': 'Fraction linguistically isolated (5th pct)', 'borderColor': 'rgba(44, 160, 44,0.3)', 'backgroundColor': 'rgba(44, 160, 44,0.0)', 'fill': false, 'pointRadius': 2, 'borderWidth': 1, 'borderDash': [4,4], 'yAxisID': 'y-axis-0'},{'data': [41.27114609509125, 118.20753547018325, 28.82747445489883], 'label': 'Fraction linguistically isolated (95th pct)', 'borderColor': 'rgba(44, 160, 44,0.3)', 'backgroundColor': 'rgba(44, 160, 44,0.0)', 'fill': false, 'pointRadius': 2, 'borderWidth': 1, 'borderDash': [4,4], 'yAxisID': 'y-axis-0'}]
+                    },
+                    type: 'line',
+                    options: {
+                        scales: {
+                            yAxes: [{
+                                display: true,
+                                scaleLabel: {
+                                    display: true,
+                                    labelString: 'EJ-CSO correlation (2ˣ growth ratio, watershed level)'
+                                },
+                                ticks: {
+                                    beginAtZero: true, min: 0
+                                },
+                                "id": "y-axis-0",
+                                "position": "left",
+                                stacked: false
+                            }, {
+                                display: false,
+                                scaleLabel: {
+                                    display: true,
+                                    labelString: ''
+                                },
+                                ticks: {
+                                    beginAtZero: true, min: 0
+                                },
+                                "id": "y-axis-1",
+                                "position": "right"
+                            }],
+                            xAxes: [{
+                                scaleLabel: {
+                                    display: true,
+                                    labelString: 'Calendar year'
+                                },
+                                stacked: false,
+                                ticks: {
+                                    autoSkip: true
+                                }
+                            }]
+                        },
+                        legend: {
+                            display: true
+                            },
+                        tooltips: {
+                            display: true
+                            }
+                    },
+                }
+                
+                
+                
+            </script>
+            <script>
+                {{
+                    var ctx = document.getElementById("EJ-CSO correlation over time (watershed level)").getContext("2d");
+                    var mychart = new Chart(ctx, chart_data);
+                }}
+            </script>
+
+        </div>
+    </body>
+</html>
+{% endraw  %}

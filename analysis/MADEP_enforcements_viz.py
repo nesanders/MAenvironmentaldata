@@ -1,16 +1,19 @@
 from __future__ import absolute_import
+import sys
+import os
+sys.path.insert(0, os.path.dirname(__file__))
+
 import pandas as pd
 import numpy as np
 from sqlalchemy import create_engine
 import chartjs
 import json
 import ast
-import folium
 from scipy.stats import pearsonr
 
 import matplotlib as mpl
-from six.moves import range
-from shapely.geometry import shape
+
+from cso_maps import make_enforcement_map
 
 color_cycle = [c['color'] for c in list(mpl.rcParams['axes.prop_cycle'])]
 
@@ -303,63 +306,13 @@ merge_census_df = pd.DataFrame(data={
 	}, index=towns)
 
 
-## Map total inspections
-map_bytown = folium.Map(
-	location=[42.29, -71.74], 
-	zoom_start=8.2,
-	tiles='cartodbpositron',
-	)
-
-## Draw choropleth
-map_bytown.choropleth(
-	geo_data=geo_towns, 
-	data=town_count,
-	key_on='feature.properties.TOWN',
-	legend_name='Total # of MA DEP enforcements reported',
-	threshold_scale = [0,1.] + list(np.percentile(town_count, [50,90,95, 100])),
-	fill_color='PuBu', fill_opacity=0.7, line_opacity=0.3, highlight=True,
-	)
-
-## Add statistics and top enforcement actions to each city
-for i in range(len(geo_towns_dict)):
-	town = geo_towns_dict[i]['properties']['TOWN']
-	if town in towns:
-		## Gather town data
-		enforcements = merge_census_df['DEP enforcements'].loc[town]
-		pop14 = merge_census_df['Population'].loc[town]
-		top_enforcements = s_data[s_data.municipality.apply(lambda x: town in x)].sort_values('Fine', ascending=False)[['Date','Fine','Text']].values[:3]
-		enforcement_summary = '<br>'.join(['<b>'+c[0]+', $%0.0f'%(0 if np.isnan(c[1]) else c[1])+'</b>: '+c[2] for c in top_enforcements])
-		## Take average position of polygon points for marker center
-		raw_coords = shape(geo_towns_dict[i]['geometry'])
-		mean_pos = raw_coords.centroid.x, raw_coords.centroid.y
-		## Add marker
-		html="""
-		<h1>{town}</h1>
-		<p>Population (2014): {pop}<br>
-		Total MA DEP enforcements reported since {enforcement_start}: {enforcements}</p>
-		
-		<p>Largest enforcements reported (by penalty):</p>
-		<p>{enforcement_summary}</p>
-		""".format(
-				town=town, 
-				pop=pop14, 
-				enforcements=enforcements, 
-				enforcement_summary=enforcement_summary, 
-				enforcement_start=s_data.Year.min()
-			)
-		iframe = folium.IFrame(html=html, width=400, height=200)
-		popup = folium.Popup(iframe, max_width=500)
-		folium.RegularPolygonMarker(
-				location=mean_pos, 
-				popup=popup, 
-				number_of_sides=4, 
-				radius=6, 
-				color='green',
-				fill_color='green',
-			).add_to(map_bytown)
-
-## Save to html
-map_bytown.save(geo_out_path+'MADEP_enforcements_town_total.html')
+## Map total enforcements by town (plotly)
+make_enforcement_map(
+	town_count=town_count,
+	enforcement_df=s_data,
+	geo_towns_path=geo_towns,
+	outpath=geo_out_path+'MADEP_enforcements_town_total.html',
+)
 
 
 #############################

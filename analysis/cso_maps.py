@@ -16,6 +16,13 @@ make_discharge_map(...)
 make_ej_map(...)
     Choropleth of one EJ indicator (MINORPCT / LOWINCPCT / LINGISOPCT)
     with CSO point layer.
+
+make_inspection_map(...)
+    Simple single-layer choropleth of inspection counts by municipality.
+
+make_enforcement_map(...)
+    Choropleth of DEP enforcement counts by municipality with town-center
+    marker overlay showing top enforcement actions in hover tooltip.
 """
 
 from __future__ import annotations
@@ -150,6 +157,18 @@ def _save_map(fig: go.Figure, outpath: str) -> None:
     )
 
 
+def _town_centroids(geojson: dict) -> dict:
+    """Return {TOWN_NAME: (lat, lon)} centroid for each feature in a towns GeoJSON."""
+    from shapely.geometry import shape
+    centroids = {}
+    for feat in geojson['features']:
+        name = feat['properties'].get('TOWN') or feat['properties'].get('NAME', '')
+        geom = shape(feat['geometry'])
+        c = geom.centroid
+        centroids[name] = (c.y, c.x)   # lat, lon
+    return centroids
+
+
 # ── public functions ──────────────────────────────────────────────────────────
 
 def make_discharge_map(
@@ -266,5 +285,120 @@ def make_ej_map(
             showactive=True,
         )],
         showlegend=False,
+    )
+    _save_map(fig, outpath)
+
+
+def make_inspection_map(
+    data_ins_g_t: pd.Series,
+    geo_towns_path: str,
+    outpath: str,
+    label: str = 'Total # of inspections recorded',
+) -> None:
+    """Write a single-layer choropleth of inspection counts by municipality."""
+    gj_town = _load_geojson(geo_towns_path)
+    fig = go.Figure(go.Choroplethmapbox(
+        geojson=gj_town,
+        featureidkey='properties.TOWN',
+        locations=data_ins_g_t.index.tolist(),
+        z=data_ins_g_t.values.tolist(),
+        colorscale=_SCALE_MUNI,
+        marker_opacity=0.65,
+        marker_line_width=0.5,
+        showscale=True,
+        colorbar=dict(
+            orientation='h', x=0.5, xanchor='center',
+            y=0.01, yanchor='bottom', thickness=12, len=0.55,
+            tickfont=dict(size=11),
+            title=dict(text=label, side='top', font=dict(size=12)),
+        ),
+        hovertemplate='<b>%{location}</b><br>' + label + ': %{z:.0f}<extra></extra>',
+    ))
+    fig.update_layout(
+        mapbox=dict(style=_MAP_STYLE, center=_MAP_CENTER, zoom=_MAP_ZOOM),
+        margin={'r': 0, 't': 0, 'l': 0, 'b': 0},
+        height=_MAP_HEIGHT, width=_MAP_WIDTH, showlegend=False,
+    )
+    _save_map(fig, outpath)
+
+
+def make_enforcement_map(
+    town_count: pd.Series,
+    enforcement_df: pd.DataFrame,
+    geo_towns_path: str,
+    outpath: str,
+    town_col: str = 'municipality',
+    date_col: str = 'Date',
+    fine_col: str = 'Fine',
+    text_col: str = 'Text',
+) -> None:
+    """Write a choropleth of DEP enforcement counts by municipality.
+
+    Overlays a scatter marker at each town centroid; hovering shows the top 3
+    enforcement actions (by penalty) for that town.
+    """
+    gj_town = _load_geojson(geo_towns_path)
+    centroids = _town_centroids(gj_town)
+
+    label = 'Total # of MA DEP enforcements reported'
+    choropleth = go.Choroplethmapbox(
+        geojson=gj_town,
+        featureidkey='properties.TOWN',
+        locations=town_count.index.tolist(),
+        z=town_count.values.tolist(),
+        colorscale=_SCALE_MUNI,
+        marker_opacity=0.65,
+        marker_line_width=0.5,
+        showscale=True,
+        colorbar=dict(
+            orientation='h', x=0.5, xanchor='center',
+            y=0.01, yanchor='bottom', thickness=12, len=0.55,
+            tickfont=dict(size=11),
+            title=dict(text=label, side='top', font=dict(size=12)),
+        ),
+        hovertemplate='<b>%{location}</b><br>' + label + ': %{z:.0f}<extra></extra>',
+        name='',
+    )
+
+    # Per-town marker overlay with top-3 enforcement hover
+    towns_with_data = [t for t in town_count.index if t in centroids and town_count[t] > 0]
+    lats, lons, hovers = [], [], []
+    for town in towns_with_data:
+        lat, lon = centroids[town]
+        lats.append(lat)
+        lons.append(lon)
+        top3 = (
+            enforcement_df[
+                enforcement_df[town_col].apply(
+                    lambda x: town in x if isinstance(x, list) else False
+                )
+            ]
+            .sort_values(fine_col, ascending=False)
+            [[date_col, fine_col, text_col]]
+            .head(3)
+        )
+        lines = [
+            f'<b>{town}</b><br>Total enforcements: {int(town_count[town])}'
+            '<br>Top actions (by penalty):'
+        ]
+        for _, row in top3.iterrows():
+            fine_str = f'${row[fine_col]:,.0f}' if pd.notna(row[fine_col]) else '$0'
+            lines.append(f'{row[date_col]}, {fine_str}: {str(row[text_col])[:80]}')
+        hovers.append('<br>'.join(lines) + '<extra></extra>')
+
+    scatter = go.Scattermapbox(
+        lat=lats, lon=lons,
+        mode='markers',
+        marker=dict(size=6, color='#2ca02c', opacity=0.8),
+        hovertemplate=hovers,
+        name='Towns with enforcements',
+        visible=True,
+    )
+
+    fig = go.Figure([choropleth, scatter])
+    fig.update_layout(
+        mapbox=dict(style=_MAP_STYLE, center=_MAP_CENTER, zoom=_MAP_ZOOM),
+        margin={'r': 0, 't': 0, 'l': 0, 'b': 0},
+        height=_MAP_HEIGHT, width=_MAP_WIDTH, showlegend=False,
     )
     _save_map(fig, outpath)

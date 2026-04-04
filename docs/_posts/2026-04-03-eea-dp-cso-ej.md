@@ -164,13 +164,23 @@ The relationship with racial minority demographics remains strong over the full 
 
 The income gradient is similarly persistent.  On average, **watersheds that have twice the level of low income populations tend to have {{ site.data.facts_MAEEADP_through_2025.depend_cso_LOWINCPCT_Watershed }} the level of CSO discharge.**
 
+## Year-by-year EJ correlation
+
+To test whether the EJ disparity is stable over time or driven by a single anomalous year, we fit the same watershed-level power-law regression independently for each calendar year (2023–2025; 2022 is excluded as a partial year beginning June 30).  The chart below shows the posterior median 2× growth ratio for each EJ variable in each year, with dashed lines marking the 5th and 95th percentile of the posterior.
+
+{% include /charts/MAEEADP_through_2025_annual_ej_beta_evolution.html %}
+
+*The 2× growth ratio is the estimated multiplicative difference in CSO discharge volume between a watershed at the median EJ indicator level and one at twice that level.  Values above 1 indicate higher discharge burden in more-disadvantaged communities.*
+
+The EJ disparities are consistent across years.  For minority population share, the 2× growth ratio was {{ site.data.facts_MAEEADP_through_2025.annual_ej_MINORPCT_2023 }} in 2023, {{ site.data.facts_MAEEADP_through_2025.annual_ej_MINORPCT_2024 }} in 2024, and {{ site.data.facts_MAEEADP_through_2025.annual_ej_MINORPCT_2025 }} in 2025.  For low-income share: {{ site.data.facts_MAEEADP_through_2025.annual_ej_LOWINCPCT_2023 }}, {{ site.data.facts_MAEEADP_through_2025.annual_ej_LOWINCPCT_2024 }}, and {{ site.data.facts_MAEEADP_through_2025.annual_ej_LOWINCPCT_2025 }}, respectively.  For linguistic isolation: {{ site.data.facts_MAEEADP_through_2025.annual_ej_LINGISOPCT_2023 }}, {{ site.data.facts_MAEEADP_through_2025.annual_ej_LINGISOPCT_2024 }}, and {{ site.data.facts_MAEEADP_through_2025.annual_ej_LINGISOPCT_2025 }}.  The wide confidence intervals — particularly for 2024 — reflect the smaller number of watersheds with non-zero discharge in drier years, but the point estimates are stable and consistently elevated.
+
 ## Conclusions
 
 With nearly three and a half years of data from Massachusetts's sewage notification system, several patterns have become clear.
 
 **Rainfall is the dominant driver of year-over-year variation in discharge volume.** The exceptional rainfall of 2023 drove a large spike in reported discharges, while drier conditions in 2024 and 2025 brought volumes down somewhat. This underscores the importance of comparing discharge trends on a rainfall-normalized basis, and of investing in infrastructure that can handle increasingly intense precipitation events as climate change progresses.
 
-**Environmental justice disparities in sewage burden are persistent.** Across all three years of data, communities with higher concentrations of racial minority, low income, and linguistically isolated residents continue to bear disproportionately high levels of CSO discharge. These disparities are not diminishing over time; if anything, the expansion of the dataset provides stronger statistical evidence for their existence.
+**Environmental justice disparities in sewage burden are persistent and consistent year-to-year.** Across all three full calendar years (2023–2025), communities with higher concentrations of racial minority, low income, and linguistically isolated residents bear disproportionately high levels of CSO discharge. Per-year regression estimates (watershed level) show the minority-population 2× growth ratio ranging from {{ site.data.facts_MAEEADP_through_2025.annual_ej_MINORPCT_2025 }} to {{ site.data.facts_MAEEADP_through_2025.annual_ej_MINORPCT_2023 }} across years — elevated in every year, and not trending downward.
 
 **Significant data gaps remain.** Roughly half of untreated CSO discharge reports continue to use modeled (rather than metered) volume estimates, limiting the precision of this analysis. Investments in outfall metering would substantially improve the quality and utility of this public dataset.
 
