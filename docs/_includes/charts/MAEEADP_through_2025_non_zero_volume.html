@@ -1,0 +1,79 @@
+{% raw  %}
+<html>
+    <head>
+        <title>Discharges with no volume reported by discharge type</title>
+        <script src='https://cdn.jsdelivr.net/npm/chart.js@2.8.0/dist/Chart.bundle.min.js'></script>
+    </head>
+    <body>
+        <div style="width: 640px; height: 480px; max-width: 99%" class="chartjs">
+
+            <canvas id="Discharges with no volume reported by discharge type" height="480" width="640"></canvas>
+            <script>
+                Chart.defaults.global.defaultFontSize = 12;
+                var chart_data = {
+                
+                    data: {
+                        labels: ['SSO – System Surcharging Under High Flow Conditions', 'SSO – Failure of Pump Station or Associated Force Main', 'SSO – Discharge Through Wastewater Outfall', 'CSO – UnTreated', 'Partially Treated – Blended', 'Partially Treated – Other', 'CSO – Treated'],
+                        datasets: [{'data': [98.56115107913669, 100.0, 100.0, 97.78954334877564, 99.09255898366605, 100.0, 98.52289512555392], 'label': '...with nonzero volume reported', 'backgroundColor': 'rgba(31, 119, 180,0.5)'},{'data': [38.1294964028777, 55.172413793103445, 45.45454545454545, 43.45466578424884, 88.74773139745916, 57.89473684210527, 97.48892171344166], 'label': '...with likely-modeled volume reported', 'backgroundColor': 'rgba(255, 127, 14,0.5)'}]
+                    },
+                    type: 'bar',
+                    options: {
+                        scales: {
+                            yAxes: [{
+                                display: true,
+                                scaleLabel: {
+                                    display: true,
+                                    labelString: '% of discharges...'
+                                },
+                                ticks: {
+                                    beginAtZero: true, min: 0
+                                },
+                                "id": "y-axis-0",
+                                "position": "left",
+                                stacked: false
+                            }, {
+                                display: false,
+                                scaleLabel: {
+                                    display: true,
+                                    labelString: ''
+                                },
+                                ticks: {
+                                    beginAtZero: true, min: 0
+                                },
+                                "id": "y-axis-1",
+                                "position": "right"
+                            }],
+                            xAxes: [{
+                                scaleLabel: {
+                                    display: true,
+                                    labelString: 'Discharge type'
+                                },
+                                stacked: false,
+                                ticks: {
+                                    autoSkip: true
+                                }
+                            }]
+                        },
+                        legend: {
+                            display: true
+                            },
+                        tooltips: {
+                            display: true
+                            }
+                    },
+                }
+                
+                
+                
+            </script>
+            <script>
+                {{
+                    var ctx = document.getElementById("Discharges with no volume reported by discharge type").getContext("2d");
+                    var mychart = new Chart(ctx, chart_data);
+                }}
+            </script>
+
+        </div>
+    </body>
+</html>
+{% endraw  %}

@@ -36,7 +36,7 @@ class CSOAnalysisEEADP(CSOAnalysis):
     longitude_col: str = 'longitude'
     # Path to file with lat long data from the state
     cso_lat_long_data_file: str = '../docs/data/ma_permittee-and-outfall-lists.xlsx'
-    geo_blockgroups_path: str='../docs/assets/geo_json/cb_2022_25_bg_500k.json'
+    geo_blockgroups_path: str='../docs/assets/geo_json/cb_2017_25_bg_500k.json'
     
     def __init__(
         self, 
@@ -301,6 +301,185 @@ class CSOAnalysisEEADP(CSOAnalysis):
 
         mychart.jekyll_write(outpath)
     
+    def plot_annual_precip_and_discharge(self, outpath: Optional[str]=None):
+        """Dual-axis bar chart comparing annual CSO discharge volume against annual MA heavy-rain-day count.
+
+        Heavy rain days are defined as days with ≥ 1 inch of precipitation at a given GHCN/COOP station,
+        averaged across MA stations (from get_MA_precipitation.py).  This is a more meaningful driver
+        of CSO overflows than total monthly precipitation.
+        2022 is flagged as a partial CSO year (reporting began June 30).
+        """
+        if outpath is None:
+            outpath = f'../docs/_includes/charts/{self.output_slug}_annual_precip_discharge.html'
+
+        print('Making annual heavy-rain-days vs discharge comparison chart')
+        try:
+            df_rain = pd.read_csv('../docs/data/MA_precipitation_daily.csv')
+        except FileNotFoundError:
+            print('  Daily precipitation CSV not found; skipping chart')
+            return
+        df_rain['date'] = pd.to_datetime(df_rain['date'])
+        df_rain['year'] = df_rain['date'].dt.year
+        # Compute annual heavy-rain-day counts from daily data
+        heavy_rain = (
+            df_rain[df_rain['precip_in_avg'] >= 1.0]
+            .groupby('year')['date'].count()
+            .rename('heavy_rain_days')
+        )
+
+        disk_engine = get_engine()
+        df_all = pd.read_sql_query(self.EEA_DP_CSO_QUERY, disk_engine)
+        df_all['incidentDate'] = pd.to_datetime(df_all['incidentDate'])
+        df_all = df_all[df_all['reporterClass'] == self.pick_report_type]
+        df_all['cal_year'] = df_all['incidentDate'].dt.year
+        year_months = df_all.groupby('cal_year')['incidentDate'].apply(lambda x: x.dt.month.nunique())
+        full_years = year_months[year_months >= 6].index
+        df_full = df_all[df_all['cal_year'].isin(full_years)]
+
+        years = sorted(df_full['cal_year'].unique())
+        year_labels = [f'{y}*' if y == 2022 else str(y) for y in years]
+
+        annual_vol = df_full.groupby('cal_year')['volumnOfEvent'].sum() / 1e6
+        mychart = chartjs.chart("Annual CSO discharge vs heavy rain days", "Bar", 700, 420)
+        mychart.set_labels(year_labels)
+        mychart.add_dataset(
+            [float(annual_vol.get(y, 0)) for y in years],
+            'CSO discharge (M gallons)',
+            backgroundColor="'rgba({},0.8)'".format(", ".join([str(x) for x in hex2rgb(COLOR_CYCLE[0])])),
+            yAxisID="'y-axis-0'",
+        )
+        mychart.add_dataset(
+            [float(heavy_rain.get(y, 0)) for y in years],
+            'Heavy rain days (\u22651 inch/day)',
+            backgroundColor="'rgba({},0.5)'".format(", ".join([str(x) for x in hex2rgb(COLOR_CYCLE[3])])),
+            yAxisID="'y-axis-1'",
+        )
+        mychart.set_params(
+            JSinline=0,
+            ylabel='Total CSO discharge (millions of gallons)',
+            xlabel='Calendar year  (* 2022 reporting began June 30)',
+            scaleBeginAtZero=1,
+            y2nd='true',
+            y2nd_title='Heavy rain days (\u22651 inch/day, MA station average)',
+        )
+        mychart.jekyll_write(outpath)
+
+    def plot_annual_volume_trends(self, outpath_volume: Optional[str]=None, outpath_count: Optional[str]=None):
+        """Bar charts comparing annual CSO discharge volume and count across all years in the dataset.
+
+        Loads the full (unfiltered) CSO dataset so all calendar years are shown, not just the
+        window selected for the main EJ analysis.  2022 is flagged as a partial year because
+        reporting did not begin until June.
+        """
+        if outpath_volume is None:
+            outpath_volume = f'../docs/_includes/charts/{self.output_slug}_annual_volume.html'
+        if outpath_count is None:
+            outpath_count = f'../docs/_includes/charts/{self.output_slug}_annual_count.html'
+
+        print('Making annual volume and count trend charts')
+        disk_engine = get_engine()
+        df_all = pd.read_sql_query(self.EEA_DP_CSO_QUERY, disk_engine)
+        df_all['incidentDate'] = pd.to_datetime(df_all['incidentDate'])
+        df_all = df_all[df_all['reporterClass'] == self.pick_report_type]
+        df_all['cal_year'] = df_all['incidentDate'].dt.year
+        # Drop partial current year (< 6 full months of data in a year)
+        year_months = df_all.groupby('cal_year')['incidentDate'].apply(lambda x: x.dt.month.nunique())
+        full_years = year_months[year_months >= 6].index
+        df_full = df_all[df_all['cal_year'].isin(full_years)]
+
+        years = sorted(df_full['cal_year'].unique())
+        year_labels = [f'{y}*' if y == 2022 else str(y) for y in years]
+
+        # --- Volume chart ---
+        annual_vol = df_full.groupby('cal_year')['volumnOfEvent'].sum() / 1e6
+        mychart_v = chartjs.chart("Annual CSO discharge volume", "Bar", 640, 400)
+        mychart_v.set_labels(year_labels)
+        mychart_v.add_dataset(
+            [annual_vol.get(y, 0) for y in years],
+            'Total discharge volume (M gallons)',
+            backgroundColor="'rgba({},0.8)'".format(", ".join([str(x) for x in hex2rgb(COLOR_CYCLE[0])])),
+            yAxisID="'y-axis-0'",
+        )
+        mychart_v.set_params(
+            JSinline=0,
+            ylabel='Total discharge volume (millions of gallons)',
+            xlabel='Calendar year  (* 2022 reporting began June 30)',
+            scaleBeginAtZero=1,
+        )
+        mychart_v.jekyll_write(outpath_volume)
+
+        # --- Count chart ---
+        annual_count = df_full.groupby('cal_year')['incidentId'].count()
+        mychart_c = chartjs.chart("Annual CSO discharge count", "Bar", 640, 400)
+        mychart_c.set_labels(year_labels)
+        mychart_c.add_dataset(
+            [int(annual_count.get(y, 0)) for y in years],
+            'Number of discharge reports',
+            backgroundColor="'rgba({},0.8)'".format(", ".join([str(x) for x in hex2rgb(COLOR_CYCLE[2])])),
+            yAxisID="'y-axis-0'",
+        )
+        mychart_c.set_params(
+            JSinline=0,
+            ylabel='Number of discharge reports',
+            xlabel='Calendar year  (* 2022 reporting began June 30)',
+            scaleBeginAtZero=1,
+        )
+        mychart_c.jekyll_write(outpath_count)
+
+    def plot_annual_volume_by_operator(self, outpath: Optional[str]=None, top_n: int=8):
+        """Line chart of annual discharge volume for the top operators over time.
+
+        X-axis: calendar year. Each operator is its own line, showing year-over-year trend.
+        """
+        if outpath is None:
+            outpath = f'../docs/_includes/charts/{self.output_slug}_annual_volume_by_operator.html'
+
+        print('Making annual volume by operator trend chart')
+        disk_engine = get_engine()
+        df_all = pd.read_sql_query(self.EEA_DP_CSO_QUERY, disk_engine)
+        df_all['incidentDate'] = pd.to_datetime(df_all['incidentDate'])
+        df_all = df_all[df_all['reporterClass'] == self.pick_report_type]
+        df_all['cal_year'] = df_all['incidentDate'].dt.year
+        year_months = df_all.groupby('cal_year')['incidentDate'].apply(lambda x: x.dt.month.nunique())
+        full_years = sorted(year_months[year_months >= 6].index)
+        # Exclude first partial year from operator comparison since it overstates operators
+        compare_years = [y for y in full_years if y > 2022]
+        df_cmp = df_all[df_all['cal_year'].isin(compare_years)]
+
+        top_operators = (
+            df_cmp.groupby('permiteeName')['volumnOfEvent'].sum()
+            .sort_values(ascending=False).head(top_n).index.tolist()
+        )
+
+        # X-axis: years; each operator is a line
+        year_labels = [str(y) for y in compare_years]
+        mychart = chartjs.chart("Annual discharge volume by operator", "Line", 640, 480)
+        mychart.set_labels(year_labels)
+
+        for i, op in enumerate(top_operators):
+            df_op = df_cmp[df_cmp['permiteeName'] == op]
+            vol_by_year = df_op.groupby('cal_year')['volumnOfEvent'].sum() / 1e6
+            color_rgb = ", ".join([str(x) for x in hex2rgb(COLOR_CYCLE[i % len(COLOR_CYCLE)])])
+            mychart.add_dataset(
+                [float(vol_by_year.get(yr, 0)) for yr in compare_years],
+                op,
+                backgroundColor="'rgba({},0.15)'".format(color_rgb),
+                borderColor="'rgba({},0.9)'".format(color_rgb),
+                pointBackgroundColor="'rgba({},0.9)'".format(color_rgb),
+                fill='false',
+                pointRadius=4,
+                pointHoverRadius=6,
+                borderWidth=2,
+                yAxisID="'y-axis-0'",
+            )
+        mychart.set_params(
+            JSinline=0,
+            ylabel='Discharge volume (millions of gallons)',
+            xlabel='Calendar year',
+            scaleBeginAtZero=1,
+        )
+        mychart.jekyll_write(outpath)
+
     def extra_plots(self):
         """Generate all extra data plots for the EEA DP CSO data
         """
@@ -309,6 +488,9 @@ class CSOAnalysisEEADP(CSOAnalysis):
         self.plot_volume_per_operator_by_event_type()
         self.plot_reports_non_zero_volume()
         self.plot_volume_per_waterbody_by_event_type()
+        self.plot_annual_precip_and_discharge()
+        self.plot_annual_volume_trends()
+        self.plot_annual_volume_by_operator()
 
     
 # -------------------------
@@ -316,18 +498,39 @@ class CSOAnalysisEEADP(CSOAnalysis):
 # -------------------------
     
 if __name__ == '__main__':
-    for start_date, end_date, run_name, cbg_smooth_radius in (
+    import argparse
+    parser = argparse.ArgumentParser(description='Generate CSO EJ maps and regression models.')
+    parser.add_argument(
+        '--plots-only', action='store_true',
+        help='Skip maps, charts, and Stan regression; regenerate only extra_plots() output. '
+             'Useful after adding new plot methods without re-running the full analysis.'
+    )
+    parser.add_argument(
+        '--run', default=None,
+        help='Limit execution to a single named run (e.g. "through_2025"). Runs all by default.'
+    )
+    args = parser.parse_args()
+
+    RUNS = (
         (PICK_CSO_START, PICK_CSO_END, '2022', None),
         (date(2022, 6, 1), date(2023, 6, 30), 'first_year', None),
         (date(2022, 6, 1), date(2023, 6, 30), 'first_year_smooth', 0.5),
         (date(2022, 6, 1), date(2023, 9, 30), 'through_sept_2023', None),
-        ):
-        # NOTE for fast debugging of the `extra_plot`, try using these parameters:
-        # > make_maps=False, make_charts=False, make_regression=False
+        # Full dataset through end of 2025; used for the 2026 analysis post
+        (date(2022, 6, 1), date(2025, 12, 31), 'through_2025', None),
+    )
+
+    for start_date, end_date, run_name, cbg_smooth_radius in RUNS:
+        if args.run and run_name != args.run:
+            continue
         csoa = CSOAnalysisEEADP(
-            cso_data_start=start_date, 
-            cso_data_end=end_date, 
-            output_slug=f'MAEEADP_{run_name}', 
-            cbg_smooth_radius=cbg_smooth_radius        )
+            cso_data_start=start_date,
+            cso_data_end=end_date,
+            output_slug=f'MAEEADP_{run_name}',
+            cbg_smooth_radius=cbg_smooth_radius,
+            make_maps=not args.plots_only,
+            make_charts=not args.plots_only,
+            make_regression=not args.plots_only,
+        )
         csoa.run_analysis()
         csoa.extra_plots()

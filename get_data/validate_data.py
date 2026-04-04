@@ -52,6 +52,9 @@ DATASETS = {
     'EEADP_CSO.csv': [
         'incidentId', 'incidentDate',
     ],
+    'MA_precipitation_daily.csv': [
+        'date', 'precip_in_avg', 'n_stations',
+    ],
 }
 
 # Minimum absolute row counts as a hard floor (catches total fetch failures).
@@ -62,6 +65,7 @@ MIN_ROWS = {
     'EEADP_inspection.csv': 1000,
     'EEADP_enforcement.csv': 100,
     'EEADP_CSO.csv': 100,
+    'MA_precipitation_daily.csv': 8000,  # ~25 years × 365 days
 }
 
 

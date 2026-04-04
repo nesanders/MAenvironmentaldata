@@ -1,0 +1,79 @@
+{% raw  %}
+<html>
+    <head>
+        <title>Annual CSO discharge vs heavy rain days</title>
+        <script src='https://cdn.jsdelivr.net/npm/chart.js@2.8.0/dist/Chart.bundle.min.js'></script>
+    </head>
+    <body>
+        <div style="width: 700px; height: 420px; max-width: 99%" class="chartjs">
+
+            <canvas id="Annual CSO discharge vs heavy rain days" height="420" width="700"></canvas>
+            <script>
+                Chart.defaults.global.defaultFontSize = 12;
+                var chart_data = {
+                
+                    data: {
+                        labels: ['2022*', '2023', '2024', '2025'],
+                        datasets: [{'data': [1442.304922, 7245.363624, 7667.293701, 3070.98858], 'label': 'CSO discharge (M gallons)', 'backgroundColor': 'rgba(31, 119, 180,0.8)', 'yAxisID': 'y-axis-0'},{'data': [7.0, 15.0, 9.0, 5.0], 'label': 'Heavy rain days (≥1 inch/day)', 'backgroundColor': 'rgba(214, 39, 40,0.5)', 'yAxisID': 'y-axis-1'}]
+                    },
+                    type: 'bar',
+                    options: {
+                        scales: {
+                            yAxes: [{
+                                display: true,
+                                scaleLabel: {
+                                    display: true,
+                                    labelString: 'Total CSO discharge (millions of gallons)'
+                                },
+                                ticks: {
+                                    beginAtZero: true, min: 0
+                                },
+                                "id": "y-axis-0",
+                                "position": "left",
+                                stacked: false
+                            }, {
+                                display: true,
+                                scaleLabel: {
+                                    display: true,
+                                    labelString: 'Heavy rain days (≥1 inch/day, MA station average)'
+                                },
+                                ticks: {
+                                    beginAtZero: true, min: 0
+                                },
+                                "id": "y-axis-1",
+                                "position": "right"
+                            }],
+                            xAxes: [{
+                                scaleLabel: {
+                                    display: true,
+                                    labelString: 'Calendar year  (* 2022 reporting began June 30)'
+                                },
+                                stacked: false,
+                                ticks: {
+                                    autoSkip: true
+                                }
+                            }]
+                        },
+                        legend: {
+                            display: true
+                            },
+                        tooltips: {
+                            display: true
+                            }
+                    },
+                }
+                
+                
+                
+            </script>
+            <script>
+                {{
+                    var ctx = document.getElementById("Annual CSO discharge vs heavy rain days").getContext("2d");
+                    var mychart = new Chart(ctx, chart_data);
+                }}
+            </script>
+
+        </div>
+    </body>
+</html>
+{% endraw  %}
