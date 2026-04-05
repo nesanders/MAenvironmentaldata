@@ -1,6 +1,8 @@
 name: Update Charts
 
 on:
+  # DISABLED: This workflow regenerates charts for fixed-in-time analyses.
+  # See TODO.md for proposal to replace with interactive dashboards.
   workflow_run:
     workflows: ["Update Data"]
     types: [completed]    # Only runs after Update Data finishes (successfully)
@@ -9,10 +11,9 @@ on:
 jobs:
   update-charts:
     runs-on: ubuntu-latest
-    # Skip if triggered by a failed data update (manual trigger always runs)
-    if: >
-      github.event_name == 'workflow_dispatch' ||
-      github.event.workflow_run.conclusion == 'success'
+    # DISABLED: This workflow regenerates charts for fixed-in-time analyses.
+    # See TODO.md for proposal to replace with interactive dashboards.
+    if: false
     permissions:
       contents: write   # to commit updated charts
       issues: write     # to open failure issues
