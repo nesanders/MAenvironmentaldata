@@ -28,6 +28,22 @@ The pattern is striking: 2023 recorded the most heavy rain days of any recent ye
 
 That said, even in the drier years of 2024 and 2025, discharge volumes remain substantial in absolute terms.  Reductions in discharge volume appear to reflect fewer extreme events, not improvements to underlying infrastructure.
 
+### Does individual-day discharge track with rainfall?
+
+The annual correlation above is suggestive, but CSO systems respond to individual storm events, not annual averages.  Most days — particularly dry ones — have zero reported discharges.  The chart below shows what fraction of days had any discharge at all, grouped by the prior 48-hour precipitation at MA weather stations.
+
+{% include /charts/MAEEADP_through_2025_rainfall_discharge_freq.html %}
+
+The pattern is clear: on days following dry conditions (less than 0.05 inches in the prior 48 hours), barely any discharges are reported.  That fraction rises steeply with rainfall, reaching the majority of heavy-rain days.
+
+The scatter chart below shows the volume of those discharge days in more detail.  Each point is a (day, discharge type) pair on which at least one incident was reported, plotted against the prior 48-hour precipitation.  Colors distinguish discharge types: untreated CSOs (the largest category), treated CSOs, partially treated discharges, and sanitary sewer overflows (SSOs).
+
+{% include /charts/MAEEADP_through_2025_rainfall_discharge_scatter.html %}
+
+The y-axis is on a logarithmic scale to spread the large dynamic range of discharge volumes. The rainfall-responsiveness of the system is unmistakable: the highest-discharge days are tightly coupled to recent heavy precipitation, while the bulk of low-discharge events cluster near zero prior rainfall.  SSO events appear across the full rainfall range, consistent with their distinct failure modes (pump failures, force main breaks) that can occur independent of storm conditions.
+
+**What about the dry-weather discharges?** A notable cluster of events occurs with near-zero prior-48-hour precipitation. Under [EPA's Nine Minimum Controls](https://www.epa.gov/sites/default/files/2015-10/documents/owm0030_2.pdf) and Massachusetts NPDES permits, [CSO discharges during dry weather are prohibited](https://www.mass.gov/guides/sanitary-sewer-systems-combined-sewer-overflows) and require immediate investigation. When they occur, typical causes include groundwater infiltration into aging pipes, illicit storm drain connections, and pump or equipment failures — all NPDES permit violations that utilities are required to investigate and correct. Some events near the left edge of the chart may also reflect precipitation that fell slightly outside the 48-hour window captured by our statewide station average. Bizer & Kirchhoff ([2022, *Water Science & Technology*](https://iwaponline.com/wst/article/86/11/2848/91816/Regression-modeling-of-combined-sewer-overflows-to)) found that log-transformed regression best fits CSO volume-rainfall relationships, consistent with the power-law pattern visible here.
+
 ### Annual discharge counts
 
 While volume is the most important measure of the burden of sewage pollution, discharge counts tell a slightly different story — they reflect how many separate discharge events occurred, regardless of size.
@@ -166,13 +182,13 @@ The income gradient is similarly persistent.  On average, **watersheds that have
 
 ## Year-by-year EJ correlation
 
-To test whether the EJ disparity is stable over time or driven by a single anomalous year, we fit the same watershed-level power-law regression independently for each calendar year (2023–2025; 2022 is excluded as a partial year beginning June 30).  The chart below shows the posterior median 2× growth ratio for each EJ variable in each year, with dashed lines marking the 5th and 95th percentile of the posterior.
+To test whether the EJ disparity is stable over time or driven by a single anomalous year, we fit the same watershed-level power-law regression independently for each calendar year (2023–2025; 2022 is excluded as a partial year beginning June 30).  We also include the 2011 estimate from the [original NECIR analysis]({% post_url 2018-04-25-necir-cso-ej %}) as a long-run reference point, extending the timeline back over a decade.  The chart shows the posterior median 2× growth ratio for each EJ variable in each year.
 
 {% include /charts/MAEEADP_through_2025_annual_ej_beta_evolution.html %}
 
-*The 2× growth ratio is the estimated multiplicative difference in CSO discharge volume between a watershed at the median EJ indicator level and one at twice that level.  Values above 1 indicate higher discharge burden in more-disadvantaged communities.*
+*The 2× growth ratio is the estimated multiplicative difference in CSO discharge volume between a watershed at the median EJ indicator level and one at twice that level.  Values above 1 indicate higher discharge burden in more-disadvantaged communities.  \*The 2011 point uses 2011 EJSCREEN demographics and NECIR discharge data; 2023–2025 use 2023 EJSCREEN demographics and EEA Data Portal data — a direct year-to-year comparison should account for these differences.*
 
-The EJ disparities are consistent across years.  For minority population share, the 2× growth ratio was {{ site.data.facts_MAEEADP_through_2025.annual_ej_MINORPCT_2023 }} in 2023, {{ site.data.facts_MAEEADP_through_2025.annual_ej_MINORPCT_2024 }} in 2024, and {{ site.data.facts_MAEEADP_through_2025.annual_ej_MINORPCT_2025 }} in 2025.  For low-income share: {{ site.data.facts_MAEEADP_through_2025.annual_ej_LOWINCPCT_2023 }}, {{ site.data.facts_MAEEADP_through_2025.annual_ej_LOWINCPCT_2024 }}, and {{ site.data.facts_MAEEADP_through_2025.annual_ej_LOWINCPCT_2025 }}, respectively.  For linguistic isolation: {{ site.data.facts_MAEEADP_through_2025.annual_ej_LINGISOPCT_2023 }}, {{ site.data.facts_MAEEADP_through_2025.annual_ej_LINGISOPCT_2024 }}, and {{ site.data.facts_MAEEADP_through_2025.annual_ej_LINGISOPCT_2025 }}.  The wide confidence intervals — particularly for 2024 — reflect the smaller number of watersheds with non-zero discharge in drier years, but the point estimates are stable and consistently elevated.
+The EJ disparities are consistent across years.  For minority population share, the 2× growth ratio was {{ site.data.facts_MAEEADP_through_2025.annual_ej_MINORPCT_2023 }} in 2023, {{ site.data.facts_MAEEADP_through_2025.annual_ej_MINORPCT_2024 }} in 2024, and {{ site.data.facts_MAEEADP_through_2025.annual_ej_MINORPCT_2025 }} in 2025.  For low-income share: {{ site.data.facts_MAEEADP_through_2025.annual_ej_LOWINCPCT_2023 }}, {{ site.data.facts_MAEEADP_through_2025.annual_ej_LOWINCPCT_2024 }}, and {{ site.data.facts_MAEEADP_through_2025.annual_ej_LOWINCPCT_2025 }}, respectively.  For linguistic isolation: {{ site.data.facts_MAEEADP_through_2025.annual_ej_LINGISOPCT_2023 }}, {{ site.data.facts_MAEEADP_through_2025.annual_ej_LINGISOPCT_2024 }}, and {{ site.data.facts_MAEEADP_through_2025.annual_ej_LINGISOPCT_2025 }}.  Point estimates are stable and consistently elevated across all three years.
 
 ## Conclusions
 

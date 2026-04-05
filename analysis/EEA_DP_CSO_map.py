@@ -480,6 +480,195 @@ class CSOAnalysisEEADP(CSOAnalysis):
         )
         mychart.jekyll_write(outpath)
 
+    # Mapping from raw eventType strings to broad display groups
+    EVENT_TYPE_GROUPS = {
+        'CSO – UnTreated':                                            'CSO – Untreated',
+        'CSO – Treated':                                              'CSO – Treated',
+        'Partially Treated – Blended':                                'Partially Treated',
+        'Partially Treated – Other':                                  'Partially Treated',
+        'SSO – System Surcharging Under High Flow Conditions':        'SSO',
+        'SSO – Failure of Pump Station or Associated Force Main':     'SSO',
+        'SSO – Discharge Through Wastewater Outfall':                 'SSO',
+    }
+
+    def _load_rain_and_cso(self, window_days: int=2):
+        """Shared helper: load prior-N-day precip and daily discharge by event type group.
+
+        Returns
+        -------
+        prior_rain : pd.Series  (index=date)
+        df_typed   : pd.DataFrame  columns [incidentDate, type_group, volumnOfEvent]
+        """
+        try:
+            df_rain = pd.read_csv('../docs/data/MA_precipitation_daily.csv')
+        except FileNotFoundError:
+            return None, None
+        df_rain['date'] = pd.to_datetime(df_rain['date'])
+        df_rain = df_rain.sort_values('date').set_index('date')
+        prior_rain = (
+            df_rain['precip_in_avg']
+            .rolling(window=window_days, min_periods=1)
+            .sum()
+            .shift(1)
+            .rename('prior_rain_in')
+        )
+
+        disk_engine = get_engine()
+        df_all = pd.read_sql_query(self.EEA_DP_CSO_QUERY, disk_engine)
+        df_all['incidentDate'] = pd.to_datetime(df_all['incidentDate'])
+        df_all = df_all[df_all['reporterClass'] == self.pick_report_type]
+        df_all['type_group'] = df_all['eventType'].map(self.EVENT_TYPE_GROUPS).fillna('Other')
+
+        return prior_rain, df_all
+
+    def plot_discharge_frequency_by_rain(
+        self, outpath: Optional[str]=None, window_days: int=2
+    ):
+        """Bar chart: fraction of days with any discharge, by prior-N-day rainfall bin."""
+        if outpath is None:
+            outpath = (
+                f'../docs/_includes/charts/{self.output_slug}_rainfall_discharge_freq.html'
+            )
+        print('Making discharge frequency by rainfall chart')
+        prior_rain, df_all = self._load_rain_and_cso(window_days)
+        if prior_rain is None:
+            print('  Daily precipitation CSV not found; skipping frequency chart')
+            return
+
+        # Days that had any discharge
+        discharge_days = set(df_all['incidentDate'].dt.normalize())
+
+        # All days covered by the precipitation dataset and our data window
+        all_dates = prior_rain.index[
+            (prior_rain.index >= pd.Timestamp(self.cso_data_start))
+            & (prior_rain.index <= pd.Timestamp(self.cso_data_end))
+        ]
+        df_days = pd.DataFrame({
+            'prior_rain_in': prior_rain.reindex(all_dates),
+            'had_discharge':  [d in discharge_days for d in all_dates],
+        }).dropna()
+
+        # Rainfall bins
+        bin_edges  = [0.0, 0.05, 0.25, 0.75, 1.5, 99.0]
+        bin_labels = [
+            'None (<0.05 in)',
+            'Light (0.05–0.25 in)',
+            'Moderate (0.25–0.75 in)',
+            'Heavy (0.75–1.5 in)',
+            'Very heavy (>1.5 in)',
+        ]
+        df_days['rain_bin'] = pd.cut(
+            df_days['prior_rain_in'], bins=bin_edges, labels=bin_labels, right=False
+        )
+
+        freq = df_days.groupby('rain_bin', observed=True)['had_discharge'].mean() * 100
+        counts = df_days.groupby('rain_bin', observed=True)['had_discharge'].count()
+        freq = freq.reindex(bin_labels).fillna(0)
+        counts = counts.reindex(bin_labels).fillna(0)
+
+        mychart = chartjs.chart(
+            f'Fraction of days with any discharge by prior-{window_days*24}-hr rainfall',
+            'Bar', 640, 380,
+        )
+        mychart.set_labels(bin_labels)
+        color_rgb = ', '.join([str(x) for x in hex2rgb(COLOR_CYCLE[0])])
+        mychart.add_dataset(
+            freq.tolist(),
+            '% of days with any discharge',
+            backgroundColor="'rgba({},0.7)'".format(color_rgb),
+            borderColor="'rgba({},1.0)'".format(color_rgb),
+            borderWidth=1,
+        )
+        mychart.set_params(
+            JSinline=0,
+            ylabel=f'Days with discharge reported (%)',
+            xlabel=f'Prior {window_days*24}-hr precipitation (MA station avg)',
+        )
+        # Tooltip: show % and day count
+        count_list = counts.astype(int).tolist()
+        mychart.add_extra_code(
+            'chart_data.options.tooltips = { callbacks: { label: function(item, data) {'
+            ' var pct = item.yLabel.toFixed(1);'
+            f' var counts = {count_list};'
+            ' var n = counts[item.index];'
+            " return pct + '% of ' + n + ' days'; "
+            '} } };'
+        )
+        mychart.jekyll_write(outpath)
+        print(f'  Wrote discharge frequency chart to {outpath}')
+
+    def plot_rainfall_discharge_scatter(self, outpath: Optional[str]=None, window_days: int=2):
+        """Scatter plot of daily discharge volume vs prior-N-day precipitation, by event type group.
+
+        Each point is a (day, event-type-group) pair on which at least one incident was
+        recorded.  Days with zero precipitation in the prior window are shown in a separate
+        dataset so the axes don't need to start at zero rainfall.
+
+        Parameters
+        ----------
+        window_days : int
+            Number of prior days over which precipitation is summed (default 2 → 48 hr).
+        """
+        if outpath is None:
+            outpath = f'../docs/_includes/charts/{self.output_slug}_rainfall_discharge_scatter.html'
+
+        print('Making rainfall vs discharge scatter plot')
+        prior_rain, df_all = self._load_rain_and_cso(window_days)
+        if prior_rain is None:
+            print('  Daily precipitation CSV not found; skipping scatter')
+            return
+
+        # Daily discharge per event-type group
+        daily_by_type = (
+            df_all.groupby(['incidentDate', 'type_group'])['volumnOfEvent'].sum() / 1e6
+        ).rename('discharge_mgal').reset_index()
+
+        # Join prior rain
+        daily_by_type = daily_by_type.join(
+            prior_rain.rename('prior_rain_in'), on='incidentDate'
+        ).dropna()
+
+        mychart = chartjs.chart(
+            f'Daily discharge vs prior-{window_days*24}-hr rainfall by type', 'Scatter', 640, 420
+        )
+        mychart.set_labels([])
+
+        # Stable ordering for color assignment
+        type_order = ['CSO – Untreated', 'CSO – Treated', 'Partially Treated', 'SSO', 'Other']
+        present_types = [t for t in type_order if t in daily_by_type['type_group'].unique()]
+
+        for i, tgroup in enumerate(present_types):
+            sub = daily_by_type[daily_by_type['type_group'] == tgroup]
+            color_rgb = ', '.join([str(x) for x in hex2rgb(COLOR_CYCLE[i % len(COLOR_CYCLE)])])
+            mychart.add_dataset(
+                sub[['prior_rain_in', 'discharge_mgal']].values,
+                tgroup,
+                backgroundColor="'rgba({},0.45)'".format(color_rgb),
+                pointRadius=3,
+                yAxisID="'y-axis-0'",
+            )
+
+        mychart.set_params(
+            JSinline=0,
+            ylabel='Total discharge that day (millions of gallons, log scale)',
+            xlabel=f'Precipitation in prior {window_days*24} hours (inches, MA station avg)',
+            yaxis_type='logarithmic',
+        )
+        # Log y: clean decade tick labels; tooltip rounded to 2 decimal places
+        mychart.scaleBeginAtZero = (
+            'min: 0.001, '
+            'callback: function(value) {'
+            ' var labels = [0.001,0.01,0.1,1,10,100,1000];'
+            ' return labels.indexOf(value) >= 0 ? value : null; }'
+        )
+        mychart.custom_tooltips = (
+            ', callbacks: { label: function(item, data) {'
+            ' var v = item.yLabel; '
+            " return data.datasets[item.datasetIndex].label + ': ' + (typeof v === 'number' ? v.toFixed(2) + ' M gal' : v); "
+            '} }'
+        )
+        mychart.jekyll_write(outpath)
+
     def extra_plots(self):
         """Generate all extra data plots for the EEA DP CSO data
         """
@@ -491,6 +680,8 @@ class CSOAnalysisEEADP(CSOAnalysis):
         self.plot_annual_precip_and_discharge()
         self.plot_annual_volume_trends()
         self.plot_annual_volume_by_operator()
+        self.plot_discharge_frequency_by_rain()
+        self.plot_rainfall_discharge_scatter()
 
     # -------------------------
     # Per-year EJ evolution
@@ -500,6 +691,7 @@ class CSOAnalysisEEADP(CSOAnalysis):
         self,
         analysis_years: Optional[list]=None,
         chart_outpath: Optional[str]=None,
+        necir_facts_path: Optional[str]=None,
     ) -> None:
         """Run watershed-level Stan regression per calendar year and plot beta time evolution.
 
@@ -511,6 +703,9 @@ class CSOAnalysisEEADP(CSOAnalysis):
         doubling of the EJ indicator).  Results are written to the facts YAML and to a Chart.js
         line chart.
 
+        If necir_facts_path is provided, the NECIR 2011 watershed-level estimates are read from
+        that YAML and added to the chart as a reference point, extending the timeline back to 2011.
+
         Parameters
         ----------
         analysis_years : list[int], optional
@@ -518,6 +713,9 @@ class CSOAnalysisEEADP(CSOAnalysis):
         chart_outpath : str, optional
             Where to write the Chart.js HTML.  Defaults to
             ``../docs/_includes/charts/{output_slug}_annual_ej_beta_evolution.html``.
+        necir_facts_path : str, optional
+            Path to NECIR facts YAML (e.g. ``../docs/data/facts_NECIR_CSO.yml``) which contains
+            ``depend_cso_{COL}_Watershed`` entries for year 2011.
         """
         import stan as pystan
         from NECIR_CSO_map import pop_weighted_average
@@ -617,20 +815,67 @@ class CSOAnalysisEEADP(CSOAnalysis):
                         f'(90% CI {vals["p5"]:.1f}\u2013{vals["p95"]:.1f})\n'
                     )
 
-        # ── Write Chart.js line chart ───────────────────────────────────────────
-        year_labels = [str(y) for y in analysis_years]
+        # ── Parse NECIR 2011 reference data (optional) ─────────────────────────
+        necir_results = {}   # col → {median, p5, p95} or absent
+        necir_year = 2011
+        if necir_facts_path is not None:
+            import re
+            with open(necir_facts_path) as f:
+                necir_text = f.read()
+            # Pattern: "depend_cso_MINORPCT_Watershed: 3.0 times (90% probability interval 1.8 to 4.8 times)"
+            pat = re.compile(
+                r'depend_cso_(\w+)_Watershed:\s*([\d.]+)\s*times.*?'
+                r'([\d.]+)\s*to\s*([\d.]+)\s*times'
+            )
+            for m in pat.finditer(necir_text):
+                col_name = m.group(1)
+                necir_results[col_name] = {
+                    'median': float(m.group(2)),
+                    'p5':     float(m.group(3)),
+                    'p95':    float(m.group(4)),
+                }
+
+        # ── Build chart labels and year list ───────────────────────────────────
+        # Fill in null-valued intermediate years between 2011 and first analysis
+        # year so the categorical x-axis shows the correct temporal gap.
+        if necir_results:
+            all_years   = list(range(necir_year, max(analysis_years) + 1))
+            year_labels = ['2011*' if y == necir_year else str(y) for y in all_years]
+        else:
+            all_years   = analysis_years
+            year_labels = [str(y) for y in analysis_years]
+
         mychart = chartjs.chart(
             "EJ-CSO correlation over time (watershed level)", "Line", 700, 420
         )
         mychart.set_labels(year_labels)
 
+        # Equity reference line (y=1 across all labels)
+        mychart.add_dataset(
+            [1.0] * len(all_years),
+            'Equity (ratio = 1)',
+            borderColor="'rgba(80,80,80,0.6)'",
+            backgroundColor="'rgba(0,0,0,0)'",
+            fill='false',
+            pointRadius=0,
+            borderWidth=1,
+            borderDash='[6,4]',
+            yAxisID="'y-axis-0'",
+            spanGaps='true',
+        )
+
         for i, (col, col_label) in enumerate(EJ_VARS):
             color_rgb = ", ".join([str(x) for x in hex2rgb(COLOR_CYCLE[i % len(COLOR_CYCLE)])])
-            medians = [float(results[col][y]['median']) for y in analysis_years]
-            p5s     = [float(results[col][y]['p5'])     for y in analysis_years]
-            p95s    = [float(results[col][y]['p95'])    for y in analysis_years]
 
-            # Median line
+            def _val(yr, key, _col=col):
+                if yr == necir_year:
+                    return float(necir_results[_col][key]) if _col in necir_results else float('nan')
+                if yr in results[_col]:
+                    return float(results[_col][yr][key])
+                return float('nan')  # intermediate gap years
+
+            medians = [_val(y, 'median') for y in all_years]
+
             mychart.add_dataset(
                 medians,
                 col_label,
@@ -641,37 +886,22 @@ class CSOAnalysisEEADP(CSOAnalysis):
                 pointRadius=5,
                 borderWidth=2,
                 yAxisID="'y-axis-0'",
-            )
-            # 90% CI lower
-            mychart.add_dataset(
-                p5s,
-                f'{col_label} (5th pct)',
-                borderColor="'rgba({},0.3)'".format(color_rgb),
-                backgroundColor="'rgba({},0.0)'".format(color_rgb),
-                fill='false',
-                pointRadius=2,
-                borderWidth=1,
-                borderDash='[4,4]',
-                yAxisID="'y-axis-0'",
-            )
-            # 90% CI upper
-            mychart.add_dataset(
-                p95s,
-                f'{col_label} (95th pct)',
-                borderColor="'rgba({},0.3)'".format(color_rgb),
-                backgroundColor="'rgba({},0.0)'".format(color_rgb),
-                fill='false',
-                pointRadius=2,
-                borderWidth=1,
-                borderDash='[4,4]',
-                yAxisID="'y-axis-0'",
+                spanGaps='true',
             )
 
         mychart.set_params(
             JSinline=0,
             ylabel='EJ-CSO correlation (2\u02e3 growth ratio, watershed level)',
             xlabel='Calendar year',
-            scaleBeginAtZero=1,
+        )
+        mychart.scaleBeginAtZero = 'beginAtZero: false, min: 0'
+        # Round tooltip values to 1 decimal place; suppress equity line from tooltip
+        mychart.custom_tooltips = (
+            ', callbacks: { label: function(item, data) {'
+            ' if (data.datasets[item.datasetIndex].label === "Equity (ratio = 1)") return null;'
+            ' var v = item.yLabel; '
+            " return data.datasets[item.datasetIndex].label + ': ' + (typeof v === 'number' ? v.toFixed(1) : v); "
+            '} }'
         )
         mychart.jekyll_write(chart_outpath)
         print(f'  Wrote EJ beta evolution chart to {chart_outpath}')
@@ -719,4 +949,6 @@ if __name__ == '__main__':
         csoa.run_analysis()
         csoa.extra_plots()
         if run_name == 'through_2025':
-            csoa.run_annual_ej_evolution()
+            csoa.run_annual_ej_evolution(
+                necir_facts_path='../docs/data/facts_NECIR_CSO.yml'
+            )
