@@ -108,7 +108,7 @@ def _cso_point_trace(
         .agg({vol_col: 'sum', count_col: 'sum'})
         .reset_index()
     )
-    agg[vol_col] = agg[vol_col] / 1e6  # gallons → millions of gallons
+    # vol_col is expected in M gal (already converted by the caller)
 
     hover = (
         '<b>CSO outfall: ' + agg[loc_col].astype(str) + '</b><br>'
@@ -197,9 +197,10 @@ def make_discharge_map(
     gj_town = _load_geojson(geo_towns_path)
     gj_ws   = _load_geojson(geo_watershed_path)
 
-    vol_bg   = data_ins_g_bg[vol_col]   / 1e6
-    vol_muni = data_ins_g_muni[vol_col] / 1e6
-    vol_ws   = data_ins_g_ws[vol_col]   / 1e6
+    # vol_col values are expected in M gal (already converted by the caller)
+    vol_bg   = data_ins_g_bg[vol_col]
+    vol_muni = data_ins_g_muni[vol_col]
+    vol_ws   = data_ins_g_ws[vol_col]
 
     label = f'Total discharge {period_label} (M gal)'
 

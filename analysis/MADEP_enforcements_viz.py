@@ -90,22 +90,30 @@ mychart.jekyll_write('../docs/_includes/charts/MADEP_enforcement_fines_overall.h
 
 s_data_g_na = s_data.dropna().groupby(['Year']).Fine
 
-## Establish stacked chart
+## Establish stacked chart: top N individual penalties + "Other" bucket
+TOP_N = 10
 mychart = chartjs.chart("Individual DEP Enforcement Penalties ($M)", "Bar", 640, 480)
 mychart.set_labels(s_data_g.index.values.tolist())
-## Output one series for each penalty
-max_counts = s_data.groupby(['Year']).count().Fine.max()
 rgba_list = [
 	'rgba(166,206,227)',
 	'rgba(31,120,180)',
 	'rgba(178,223,138)',
 	'rgba(51,160,44)'
 	]
-for i in range(max_counts):
-	get_sorted_i = lambda x: 0 if (i > len(x) - 1) else sorted(x.values)[::-1][i]
-	mychart.add_dataset((s_data_g_na.apply(get_sorted_i)/1e6).tolist(), 
-		"Rank among largest reported penalties of the year: "+str(i),
+for i in range(TOP_N):
+	def get_sorted_i(x, _i=i):
+		s = sorted(x.values)[::-1]
+		return s[_i] if _i < len(s) else 0
+	mychart.add_dataset((s_data_g_na.apply(get_sorted_i)/1e6).tolist(),
+		"Rank #{} penalty of the year".format(i + 1),
 		backgroundColor="'"+rgba_list[np.mod(i, len(rgba_list))]+"'",)
+# "Other" bucket: sum of all penalties beyond rank TOP_N
+def get_other(x):
+	s = sorted(x.values)[::-1]
+	return sum(s[TOP_N:]) if len(s) > TOP_N else 0
+mychart.add_dataset((s_data_g_na.apply(get_other)/1e6).tolist(),
+	"All other penalties (ranks {0}+)".format(TOP_N + 1),
+	backgroundColor="'rgba(200,200,200,0.7)'",)
 mychart.set_params(JSinline = 0, ylabel = 'Sum of reported penalties ($M)', xlabel='Year',
 	scaleBeginAtZero=1, stacked=1, legend=0)
 
