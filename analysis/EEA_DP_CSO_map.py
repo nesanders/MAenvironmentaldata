@@ -5,6 +5,7 @@ but is defined separately because some aspects of the data differ.
 
 from datetime import date
 from typing import Any, Optional, Tuple
+import os
 
 import chartjs
 import numpy as np
@@ -983,9 +984,11 @@ class CSOAnalysisEEADP(CSOAnalysis):
 
         print(f'Running per-year EJ beta evolution for years: {analysis_years}')
 
-        # ── Fit Stan models per year ────────────────────────────────────────────
+        # ── Fit Stan models per year and overall ────────────────────────────────
         stan_code = open(self.stan_model_code).read()
         results: dict = {col: {} for col, _ in EJ_VARS}
+        overall_results: dict = {col: {} for col, _ in EJ_VARS}
+        all_fits: dict = {col: {} for col, _ in EJ_VARS}  # Store fit objects for diagnostics
 
         for year in analysis_years:
             df_yr = df_all[df_all['cal_year'] == year]
@@ -1020,9 +1023,55 @@ class CSOAnalysisEEADP(CSOAnalysis):
                     'p5':     float(np.percentile(ph, 5)),
                     'p95':    float(np.percentile(ph, 95)),
                 }
+                all_fits[col][year] = fit_par['beta'].values
+
+        # ── Fit overall model on all analysis_years data combined ────────────────
+        df_all_years = df_all[df_all['cal_year'].isin(analysis_years)]
+        ws_discharge_all = df_all_years.groupby('Watershed')['volumnOfEvent'].sum() / 1e6
+
+        for col, col_label in EJ_VARS:
+            print(f'  Fitting Stan model (overall): {col}')
+            ws_list = [
+                ws for ws in ws_ej.index
+                if ws in ws_discharge_all.index and ws in ws_pop.index
+            ]
+            x = ws_ej.loc[ws_list, col].values.astype(float)
+            y = ws_discharge_all.reindex(ws_list).fillna(0).values.astype(float)
+            pop = ws_pop.reindex(ws_list).fillna(1).values.astype(float)
+
+            sel_unpop = (pop == 0) | (x == 0) | np.isnan(x) | np.isnan(y)
+            x, y, pop = x[~sel_unpop], y[~sel_unpop], pop[~sel_unpop]
+
+            stan_dat = {
+                'J': int(len(x)),
+                'x': x.tolist(),
+                'y': y.tolist(),
+                'p': (pop / np.mean(pop)).tolist(),
+            }
+            sm = pystan.build(stan_code, data=stan_dat)
+            fit = sm.sample(num_samples=1000, num_chains=4)
+            fit_par = fit.to_frame()
+
+            ph = 2 ** fit_par['beta']
+            overall_results[col] = {
+                'median': float(np.median(ph)),
+                'p5':     float(np.percentile(ph, 5)),
+                'p95':    float(np.percentile(ph, 95)),
+            }
+            all_fits[col]['overall'] = fit_par['beta'].values
 
         # ── Write facts YAML ────────────────────────────────────────────────────
         with open(self.fact_file, 'a') as f:
+            # Overall estimates (correspond to NECIR's depend_cso_*_Watershed format)
+            for col, _ in EJ_VARS:
+                vals = overall_results[col]
+                f.write(
+                    f'depend_cso_{col}_Watershed: '
+                    f'{vals["median"]:.1f} times '
+                    f'(90% CI {vals["p5"]:.1f}\u2013{vals["p95"]:.1f})\n'
+                )
+            f.write('\n')
+            # Annual estimates
             for col, _ in EJ_VARS:
                 for yr, vals in results[col].items():
                     f.write(
@@ -1050,6 +1099,60 @@ class CSOAnalysisEEADP(CSOAnalysis):
                     'p5':     float(m.group(3)),
                     'p95':    float(m.group(4)),
                 }
+
+        # ── Generate diagnostic plots (posterior distributions) ─────────────────
+        import json
+        diag_outpath = f'../docs/_includes/charts/{self.output_slug}_ej_posterior_distributions.html'
+        diag_outpath_dir = os.path.dirname(os.path.abspath(diag_outpath))
+        os.makedirs(diag_outpath_dir, exist_ok=True)
+
+        with open(diag_outpath, 'w') as f:
+            f.write('{% raw %}\n<html>\n<head>\n')
+            f.write('<script src="https://cdnjs.cloudflare.com/ajax/libs/plotly.js/2.26.0/plotly.min.js"></script>\n')
+            f.write('</head>\n<body>\n')
+            f.write('<div style="max-width: 1200px; margin: 0 auto;">\n')
+            f.write('<p style="color:#666;font-size:0.9em;margin-bottom:20px;"><em>Note: Y-axes are scaled to the 99th percentile of each distribution to improve readability. Outliers beyond this range are still included in the box-and-whisker statistics.</em></p>\n')
+
+            for col, col_label in EJ_VARS:
+                f.write(f'<h3>{col_label}</h3>\n')
+                f.write(f'<div id="plot_{col}" style="width:100%;height:500px;"></div>\n')
+                f.write('<script>\n')
+
+                # Prepare data for Plotly box plots
+                box_data = []
+                years_to_plot = sorted(analysis_years) + ['overall']
+                all_samples = []
+
+                for year_key in years_to_plot:
+                    if year_key in all_fits[col]:
+                        beta_samples = 2 ** all_fits[col][year_key]  # Convert to ratio scale
+                        all_samples.extend(beta_samples.tolist())
+                        year_label = f'{year_key} (n={len(beta_samples)})'
+                        box_data.append({
+                            'y': beta_samples.tolist(),
+                            'name': year_label,
+                            'type': 'box',
+                            'boxmean': 'sd',
+                        })
+
+                # Calculate 99th percentile for y-axis limit
+                y_max = np.percentile(all_samples, 99) if all_samples else 10
+                y_max = y_max * 1.1  # Add 10% padding
+
+                f.write('var data = ' + json.dumps(box_data) + ';\n')
+                f.write(f'var layout = {{\n')
+                f.write(f'  title: "{col_label} - Posterior distributions of 2^beta",\n')
+                f.write(f'  yaxis: {{ title: "2× growth ratio", range: [0, {y_max:.1f}] }},\n')
+                f.write(f'  xaxis: {{ title: "Analysis period" }},\n')
+                f.write(f'  hovermode: "closest",\n')
+                f.write(f'  showlegend: false\n')
+                f.write(f'}};\n')
+                f.write(f'Plotly.newPlot("plot_{col}", data, layout, {{responsive: true}});\n')
+                f.write('</script>\n')
+
+            f.write('</div>\n</body>\n</html>\n{% endraw %}\n')
+
+        print(f'  Wrote posterior distribution diagnostics to {diag_outpath}')
 
         # ── Build chart labels and year list ───────────────────────────────────
         # Fill in null-valued intermediate years between 2011 and first analysis
