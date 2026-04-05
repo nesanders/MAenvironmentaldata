@@ -42,3 +42,17 @@ Jekyll and all dependencies (there are known Dependabot alerts on the default br
 The EJ/EJSCREEN correlation analyses and CSO map scripts are slow due to shapefile
 loading and per-feature spatial joins.  Consider pre-simplifying geometries, caching
 dissolved boundaries, or switching to vectorized `geopandas.sjoin`.
+
+### Replace fixed-in-time chart regeneration with live dashboards
+The `update-charts.yml` workflow (now disabled) regenerated charts weekly for analyses
+that rarely change: SSA wages, MassBudget, ECOS budgets. These are historical artifacts
+that don't benefit from weekly regeneration. Instead:
+
+- Keep blog posts as static historical artifacts (2018 NECIR, 2023/2026 CSO analyses)
+- Create new "Dashboards" section on the site with interactive, weekly-updated charts:
+  - CSO discharge trends (data refreshed Monday via data pipeline)
+  - DEP enforcement and payroll trends (data refreshed Monday)
+  - Real-time permit and facility summaries
+- Use lightweight Plotly templates or Streamlit for dashboard interactivity
+- Only regenerate when underlying data actually changes via `update-data` workflow
+- Reduces CI noise and git history churn from unchanged chart files

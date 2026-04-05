@@ -1,0 +1,79 @@
+{% raw  %}
+<html>
+    <head>
+        <title>Annual CSO discharge count</title>
+        <script src='https://cdn.jsdelivr.net/npm/chart.js@2.8.0/dist/Chart.bundle.min.js'></script>
+    </head>
+    <body>
+        <div style="width: 640px; height: 400px; max-width: 99%" class="chartjs">
+
+            <canvas id="Annual CSO discharge count" height="400" width="640"></canvas>
+            <script>
+                Chart.defaults.global.defaultFontSize = 12;
+                var chart_data = {
+                
+                    data: {
+                        labels: ['2022*', '2023', '2024', '2025'],
+                        datasets: [{'data': [1362, 3375, 2405, 1839], 'label': 'Number of discharge reports', 'backgroundColor': 'rgba(44, 160, 44,0.8)', 'yAxisID': 'y-axis-0'}]
+                    },
+                    type: 'bar',
+                    options: {
+                        scales: {
+                            yAxes: [{
+                                display: true,
+                                scaleLabel: {
+                                    display: true,
+                                    labelString: 'Number of discharge reports'
+                                },
+                                ticks: {
+                                    beginAtZero: true, min: 0
+                                },
+                                "id": "y-axis-0",
+                                "position": "left",
+                                stacked: false
+                            }, {
+                                display: false,
+                                scaleLabel: {
+                                    display: true,
+                                    labelString: ''
+                                },
+                                ticks: {
+                                    beginAtZero: true, min: 0
+                                },
+                                "id": "y-axis-1",
+                                "position": "right"
+                            }],
+                            xAxes: [{
+                                scaleLabel: {
+                                    display: true,
+                                    labelString: 'Calendar year  (* 2022 reporting began June 30)'
+                                },
+                                stacked: false,
+                                ticks: {
+                                    autoSkip: true
+                                }
+                            }]
+                        },
+                        legend: {
+                            display: true
+                            },
+                        tooltips: {
+                            display: true
+                            }
+                    },
+                }
+                
+                
+                
+            </script>
+            <script>
+                {{
+                    var ctx = document.getElementById("Annual CSO discharge count").getContext("2d");
+                    var mychart = new Chart(ctx, chart_data);
+                }}
+            </script>
+
+        </div>
+    </body>
+</html>
+{% endraw  %}

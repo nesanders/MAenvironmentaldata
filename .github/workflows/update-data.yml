@@ -47,6 +47,7 @@ jobs:
           python get_DEP_staff_SODA.py
           python get_EEA_data_portal.py
           python get_eea_dp_cso.py
+          python get_MA_precipitation.py
 
       - name: Validate data
         working-directory: get_data

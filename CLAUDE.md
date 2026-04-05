@@ -63,6 +63,16 @@ bash set_cors_gsutil.sh
 - **EEA CSOAPI**: Requires `Referer` and `Origin` headers matching the portal URL; plain requests return HTTP 500.  Pagination is 1-indexed.
 - **SSAWages lag**: The SSA average wage index CSV is updated manually.  `assemble_db.py` auto-extends it with zero-growth placeholder rows for any year gap.
 
+## Local Jekyll preview
+
+Run from the `docs/` directory in the `amend_jekyll` conda env.  Use `--host localhost` (not `0.0.0.0`) so that `site.url` resolves to `http://localhost:4000` and sidebar links work correctly in the browser:
+
+```bash
+conda activate amend_jekyll
+cd docs
+bundle exec jekyll serve --host localhost --port 4000 --baseurl ""
+```
+
 ## Analysis scripts
 
 PySTAN models are excluded from CI.  Run locally with the full conda env.  The six CI-safe chart scripts are listed in `.github/workflows/update-charts.yml`.
