@@ -14,7 +14,7 @@
                 
                     data: {
                         labels: ['None (<0.05 in)', 'Light (0.05–0.25 in)', 'Moderate (0.25–0.75 in)', 'Heavy (0.75–1.5 in)', 'Very heavy (>1.5 in)'],
-                        datasets: [{'data': [34.44639718804921, 44.26229508196721, 41.75824175824176, 42.51968503937008, 38.88888888888889], 'label': '% of days with any discharge', 'backgroundColor': 'rgba(31, 119, 180,0.7)', 'borderColor': 'rgba(31, 119, 180,1.0)', 'borderWidth': 1}]
+                        datasets: [{'data': [31.282952548330407, 40.98360655737705, 36.996336996337, 33.85826771653544, 27.77777777777778], 'label': 'CSO – Untreated', 'backgroundColor': 'rgba(31, 119, 180,0.75)', 'borderColor': 'rgba(31, 119, 180,1.0)', 'borderWidth': 1, 'yAxisID': 'y-axis-0', 'stack': 'discharge'},{'data': [0.5272407732864675, 0.0, 0.3663003663003663, 0.7874015748031495, 0.0], 'label': 'CSO – Treated', 'backgroundColor': 'rgba(255, 127, 14,0.75)', 'borderColor': 'rgba(255, 127, 14,1.0)', 'borderWidth': 1, 'yAxisID': 'y-axis-0', 'stack': 'discharge'},{'data': [1.4059753954305798, 1.9672131147540985, 2.197802197802198, 5.511811023622047, 5.555555555555555], 'label': 'Partially Treated', 'backgroundColor': 'rgba(44, 160, 44,0.75)', 'borderColor': 'rgba(44, 160, 44,1.0)', 'borderWidth': 1, 'yAxisID': 'y-axis-0', 'stack': 'discharge'},{'data': [1.2302284710017575, 1.3114754098360655, 2.197802197802198, 2.3622047244094486, 5.555555555555555], 'label': 'SSO', 'backgroundColor': 'rgba(214, 39, 40,0.75)', 'borderColor': 'rgba(214, 39, 40,1.0)', 'borderWidth': 1, 'yAxisID': 'y-axis-0', 'stack': 'discharge'},{'data': [569, 305, 273, 127, 36], 'label': 'Days in bin', 'type': 'line', 'yAxisID': 'y-axis-1', 'backgroundColor': 'rgba(148, 103, 189,0.15)', 'borderColor': 'rgba(148, 103, 189,0.7)', 'pointBackgroundColor': 'rgba(148, 103, 189,0.9)', 'pointRadius': 4, 'fill': false}]
                     },
                     type: 'bar',
                     options: {
@@ -26,19 +26,19 @@
                                     labelString: 'Days with discharge reported (%)'
                                 },
                                 ticks: {
-                                    
+                                    beginAtZero: true, min: 0
                                 },
                                 "id": "y-axis-0",
                                 "position": "left",
-                                stacked: false
+                                stacked: true
                             }, {
-                                display: false,
+                                display: true,
                                 scaleLabel: {
                                     display: true,
-                                    labelString: ''
+                                    labelString: 'Number of days in bin'
                                 },
                                 ticks: {
-                                    
+                                    beginAtZero: true, min: 0
                                 },
                                 "id": "y-axis-1",
                                 "position": "right"
@@ -48,7 +48,7 @@
                                     display: true,
                                     labelString: 'Prior 48-hr precipitation (MA station avg)'
                                 },
-                                stacked: false,
+                                stacked: true,
                                 ticks: {
                                     autoSkip: true
                                 }
@@ -66,7 +66,7 @@
                 
                 
 
-chart_data.options.tooltips = { callbacks: { label: function(item, data) { var pct = item.yLabel.toFixed(1); var counts = [569, 305, 273, 127, 36]; var n = counts[item.index]; return pct + '% of ' + n + ' days'; } } };
+chart_data.options.tooltips = { callbacks: { label: function(item, data) { if (item.datasetIndex < 4) {  return data.datasets[item.datasetIndex].label + ": " + item.yLabel.toFixed(1) + "% of days"; } else {  return item.yLabel.toFixed(0) + " days in bin"; }} } };
             </script>
             <script>
                 {{

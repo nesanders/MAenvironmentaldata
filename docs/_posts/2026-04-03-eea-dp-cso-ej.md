@@ -1,14 +1,16 @@
 ---
 layout: post
-title: "Three years of MA sewage pollution data: trends, rainfall, and persistent environmental justice disparities"
+title: "(DRAFT) Three years of MA sewage pollution data: trends, rainfall, and persistent environmental justice disparities"
 ancillary: 0
 ---
+
+*This post is in DRAFT status. It has not yet been fully completed and reviewed.*
 
 *This post extends the analysis from our earlier posts, ["Revisiting the environmental justice implications of CSOs with 2022 data"]({% post_url 2023-02-04-eea-dp-cso-ej %}) and ["The first year of data from MA's new sewage pollution notification system"]({% post_url 2023-10-20-eea-dp-cso-ej %}), now incorporating the full dataset through December 2025.*
 
 In 2021, Massachusetts [enacted the Sewage Notification Act](https://malegislature.gov/Laws/SessionLaws/Acts/2020/Chapter322), which [requires public notification](https://www.mass.gov/regulations/314-CMR-1600-notification-requirements-to-promote-public-awareness-of-sewage-pollution) of combined sewer overflow (CSO) discharges.  The first discharge report appeared in the [MA EEA Data Portal]({{ site.url }}{{ site.baseurl }}/data/EEADP_all.html) in late June 2022.  We now have nearly three and a half years of data — enough to begin examining year-over-year trends, to assess whether reported discharge volumes are correlated with rainfall, and to evaluate whether the environmental justice disparities documented in our earlier analyses persist over time.
 
-The [environmental justice data used in this analysis]({{ site.url }}{{ site.baseurl }}/data/EPA_EJSCREEN.html) comes from the [US EPA EJSCREEN tool](https://www.epa.gov/ejscreen/what-ejscreen) (2023 demographics). Latitude and longitude coordinates for the CSO outfalls were retrieved from [a state publication](https://www.mass.gov/doc/permittee-and-outfall-lists/download), also [archived on this site]({{ site.url }}{{ site.baseurl }}/data/ma_permittee-and-outfall-lists.xlsx). The Massachusetts heavy-rain-day data used for context counts, for each calendar year, the number of days on which at least 1 inch of precipitation was recorded at each MA GHCN/COOP station (averaged across stations reporting that year), drawn from the [NOAA ACIS web service](https://www.rcc-acis.org/).  A 1-inch daily threshold is a common operational benchmark for events capable of triggering CSO overflows.
+The [environmental justice data used in this analysis]({{ site.url }}{{ site.baseurl }}/data/EPA_EJSCREEN.html) comes from the US EPA EJSCREEN tool (2023 demographics; note that [EJScreen was removed from EPA's website](https://envirodatagov.org/epa-removes-ejscreen-from-its-website/) in early 2025 — archived data remains available on [our data page]({{ site.url }}{{ site.baseurl }}/data/EPA_EJSCREEN.html)). Latitude and longitude coordinates for the CSO outfalls were retrieved from [a state publication](https://www.mass.gov/doc/permittee-and-outfall-lists/download), also [archived on this site]({{ site.url }}{{ site.baseurl }}/data/ma_permittee-and-outfall-lists.xlsx). For this analysis, rainfall data was newly acquired from the [NOAA ACIS web service](https://www.rcc-acis.org/). Using the NOAA data, we count the number of days on which at least 1 inch of precipitation as recorded across an average of Massachusetss [NOAA GHCN](https://www.ncei.noaa.gov/products/land-based-station/global-historical-climatology-network-daily) & [NWS COOP](https://www.weather.gov/coop/overview) stations.
 
 *[The code needed to reproduce this analysis using {{ site.data.site_config.site_abbrev }} data can be viewed and downloaded here](https://github.com/nesanders/MAenvironmentaldata/blob/master/analysis/EEA_DP_CSO_map.py)*
 
@@ -18,39 +20,47 @@ For background information about CSO discharges and environmental justice, see t
 
 ## Year-over-year trends in CSO discharge
 
-### How does annual discharge compare across years, and how much is explained by rainfall?
-
-The chart below shows total annual CSO discharge volume alongside the annual count of heavy rain days (days with ≥ 1 inch of precipitation, averaged across Massachusetts GHCN/COOP stations).  CSO systems overflow in response to intense rainfall events rather than total precipitation, so heavy-rain-day counts are a more direct driver of discharge than monthly averages.  Note that 2022 is a partial year — reporting under the Sewage Notification Act began on June 30, 2022, so the 2022 discharge figure covers only the second half of the calendar year.
-
-{% include /charts/MAEEADP_through_2025_annual_precip_discharge.html %}
-
-The pattern is striking: 2023 recorded the most heavy rain days of any recent year (~14 days with ≥ 1 inch across MA stations), and correspondingly saw the largest CSO discharge volume.  In contrast, 2024 and 2025 both had fewer heavy rain days (~10 and ~8 respectively), and discharge volumes fell accordingly.  This co-movement supports the interpretation that year-over-year variation in CSO discharge is largely weather-driven.
-
-That said, even in the drier years of 2024 and 2025, discharge volumes remain substantial in absolute terms.  Reductions in discharge volume appear to reflect fewer extreme events, not improvements to underlying infrastructure.
-
-### Does individual-day discharge track with rainfall?
-
-The annual correlation above is suggestive, but CSO systems respond to individual storm events, not annual averages.  Most days — particularly dry ones — have zero reported discharges.  The chart below shows what fraction of days had any discharge at all, grouped by the prior 48-hour precipitation at MA weather stations.
-
-{% include /charts/MAEEADP_through_2025_rainfall_discharge_freq.html %}
-
-The pattern is clear: on days following dry conditions (less than 0.05 inches in the prior 48 hours), barely any discharges are reported.  That fraction rises steeply with rainfall, reaching the majority of heavy-rain days.
-
-The scatter chart below shows the volume of those discharge days in more detail.  Each point is a (day, discharge type) pair on which at least one incident was reported, plotted against the prior 48-hour precipitation.  Colors distinguish discharge types: untreated CSOs (the largest category), treated CSOs, partially treated discharges, and sanitary sewer overflows (SSOs).
-
-{% include /charts/MAEEADP_through_2025_rainfall_discharge_scatter.html %}
-
-The y-axis is on a logarithmic scale to spread the large dynamic range of discharge volumes. The rainfall-responsiveness of the system is unmistakable: the highest-discharge days are tightly coupled to recent heavy precipitation, while the bulk of low-discharge events cluster near zero prior rainfall.  SSO events appear across the full rainfall range, consistent with their distinct failure modes (pump failures, force main breaks) that can occur independent of storm conditions.
-
-**What about the dry-weather discharges?** A notable cluster of events occurs with near-zero prior-48-hour precipitation. Under [EPA's Nine Minimum Controls](https://www.epa.gov/sites/default/files/2015-10/documents/owm0030_2.pdf) and Massachusetts NPDES permits, [CSO discharges during dry weather are prohibited](https://www.mass.gov/guides/sanitary-sewer-systems-combined-sewer-overflows) and require immediate investigation. When they occur, typical causes include groundwater infiltration into aging pipes, illicit storm drain connections, and pump or equipment failures — all NPDES permit violations that utilities are required to investigate and correct. Some events near the left edge of the chart may also reflect precipitation that fell slightly outside the 48-hour window captured by our statewide station average. Bizer & Kirchhoff ([2022, *Water Science & Technology*](https://iwaponline.com/wst/article/86/11/2848/91816/Regression-modeling-of-combined-sewer-overflows-to)) found that log-transformed regression best fits CSO volume-rainfall relationships, consistent with the power-law pattern visible here.
 
 ### Annual discharge counts
 
-While volume is the most important measure of the burden of sewage pollution, discharge counts tell a slightly different story — they reflect how many separate discharge events occurred, regardless of size.
+Discharge counts reflect how many separate discharge events occurred, regardless of size.
 
 {% include /charts/MAEEADP_through_2025_annual_count.html %}
 
-The count trends broadly mirror volume, with 2023 showing the highest number of discharge events.  Because CSO events range widely in scale, a spike in counts does not always imply a proportional spike in volume.
+2023 shows the highest number of discharge events with significant decline year-over-year since then, such that 2025 saw little more than half the number of events as 2023. However, because CSO events range widely in scale, a spike in counts does not always imply a proportional spike in volume and, as we will see, changes in weather conditions may be the primary explanation for this trend.
+
+
+### How has sewage discharge changed over the years?
+
+The chart below shows total annual CSO discharge volume alongside the annual count of heavy rain days (days with ≥ 1 inch of precipitation, averaged across Massachusetts GHCN/COOP stations).  CSO systems overflow in response to intense rainfall events rather than total precipitation, so heavy-rain-day counts are a causal driver of sewage discharges.  Note that reporting under the Sewage Notification Act began on June 30, 2022, so the 2022 discharge figure covers only the second half of the calendar year.
+
+{% include /charts/MAEEADP_through_2025_annual_precip_discharge.html %}
+
+2023 recorded the most heavy rain days of any recent year (15 days with ≥ 1 inch across MA stations), and correspondingly saw large CSO discharge volume. 2024 saw somewhat fewer heavy rain days (9) and even higher discharge volume. 2025 had significantly fewer days of heavy discharge (5) and, correspondingly, less than half the total discharge of 2023 and 2024.
+
+That said, even in the drier years like 2025, discharge volumes remain substantial in absolute terms (billions of gallons).
+
+### Does individual-day discharge track with rainfall?
+
+The annual correlation above is suggestive, but CSO systems respond to individual storm events, not annual sums.  Most days — particularly dry ones — have zero reported discharges.  The chart below shows what fraction of days had any discharge at all, grouped by the prior 48-hour precipitation at MA weather stations. Each day is assigned to exactly one discharge type to render the stacked bars — whichever type (CSO-Untreated → CSO-Treated → Partially Treated → SSO → Other) occurs first in that priority order.
+
+{% include /charts/MAEEADP_through_2025_rainfall_discharge_freq.html %}
+
+On days following dry conditions (less than 0.05 inches in the prior 48 hours), there is roughly a one third chance of having any discharge statewide. On days when the prior 48 hours have seen at least 0.05 inches of rainfall statewide, that change jumps by about a third to ~45%. The rate of discharge does not grow substantially (actually, it appears to decrease somewhat) on moderate-to-very heavy rainfall days (>0.25 inches).
+
+The cumulative distribution below makes the rainfall-discharge relationship more precise.  The dashed line shows the distribution of prior 48-hour rainfall across all days; a colored solid line to the *right* of the dashed line means that event type is disproportionately concentrated on wetter days relative to the average day. We can see that SSOs have the highest association with very wet weather days.
+
+{% include /charts/MAEEADP_through_2025_rainfall_cdf.html %}
+
+The scatter chart below breaks down this trend in terms of the volume of discharge.  Each point is a (day, discharge type) pair on which at least one incident was reported, plotted against the prior 48-hour precipitation.  Colors distinguish discharge types: untreated CSOs, treated CSOs, partially treated discharges, and sanitary sewer overflows (SSOs).
+
+{% include /charts/MAEEADP_through_2025_rainfall_discharge_scatter.html %}
+
+The y-axis is on a logarithmic scale to spread the large dynamic range of discharge volumes. There is no evident relationship between the severity of rainfall and the volume of CSO discharge. While SSO events tend to have limited total volume (often less than a million gallons), they are more associated with very heavy rainfall days, indicating that extreme [stormwater inflow](https://en.wikipedia.org/wiki/Infiltration_and_inflow) is a primary cause of Massachusetts SSOs. 
+
+Bizer & Kirchhoff ([2022, *Water Science & Technology*](https://iwaponline.com/wst/article/86/11/2848/91816/Regression-modeling-of-combined-sewer-overflows-to)) studied CSO systems in Maryland and found that, in that system, discharge frequency increases with total rainfall, such that CSOs were all but certain to occur above 1.5 inches of rainfall.
+
+**What about the dry-weather discharges?** A notable cluster of events occurs with near-zero prior-48-hour precipitation. Under [EPA's Nine Minimum Controls](https://www.epa.gov/sites/default/files/2015-10/documents/owm0030_2.pdf) and Massachusetts NPDES permits, [CSO discharges during dry weather are prohibited](https://www.mass.gov/guides/sanitary-sewer-systems-combined-sewer-overflows) and require immediate investigation. When they occur, typical causes include groundwater infiltration into aging pipes, illicit storm drain connections, and pump or equipment failures — all NPDES permit violations that utilities are required to investigate and correct. Some events near the left edge of the chart may also reflect precipitation that fell slightly outside the 48-hour window captured by our statewide station average. 
 
 ### Trends by sewer operator
 
@@ -58,7 +68,7 @@ The following chart shows year-over-year discharge volumes for the largest repor
 
 {% include /charts/MAEEADP_through_2025_annual_volume_by_operator.html %}
 
-Several large operators (e.g. MWRA, Deer Island) account for a disproportionate share of total volume and also show the steepest year-to-year swings correlated with rainfall.  Operators whose volumes remain elevated even in drier years may face more persistent infrastructure challenges.
+Several large operators (e.g. MWRA, Lowell) account for a large share of total volume and also show the steepest declines since 2023, which may be correlated with favorable rainfall. Operators whose volumes remain elevated even in drier years (e.g., New Bedford and Holyoke) may face more persistent infrastructure challenges.
 
 ## Characteristics of the full dataset (June 2022 – December 2025)
 
@@ -72,11 +82,9 @@ The regularity of the seasonal cycle across years is consistent with CSO systems
 
 ### Discharge volume over time
 
-The following chart shows total discharge volume by month. The scale of the 2023 wet season is clearly visible.
+The following chart shows total discharge volume by month. The [exceptionally wet winter](https://www.climate.gov/news-features/understanding-climate/us-climate-summary-january-2024) of 2024 and its [associated](https://www.cambridgepublichealth.org/updated-avoid-contact-with-the-alewife-brook-and-the-charles-river-in-cambridge-due-to-potential-harmful-bacteria-and-other-pollutants-until-january-13-2024/) [CSO discharges](https://mysticriver.org/news/2025/1/30/csos-on-the-mystic-2024) particularly is clearly visible.
 
 {% include /charts/MAEEADP_through_2025_volume_per_month.html %}
-
-Several months in 2023 individually exceed the total volume of entire quarters in other years, illustrating how a single period of intense rainfall can dominate annual statistics.
 
 ### Volume by sewer operator
 
@@ -84,9 +92,11 @@ The following chart shows total discharge volume over the full period by sewer o
 
 {% include /charts/MAEEADP_through_2025_volume_per_operator.html %}
 
-The concentration of volume among a few operators reflects both the size of their sewer systems and the degree to which those systems remain dependent on combined sewers.
+The concentration of volume among a few operators reflects both the size of their sewer systems and the degree to which those systems remain dependent on combined sewers and/or other persistent infrastructural defficiencies. It is notable that MWRA, Lowell, and Fall River continue to have substantial fractions of ['blended' discharge](https://openamend.org/2023/02/04/eea-dp-cso-ej.html#:~:text=According%20to%20the%20Massachusetts%20Water%20Resources%20Authority%20(MWRA)%2C%20%E2%80%98blended%E2%80%99%20discharge).
 
 ### What fraction of reports have non-zero, non-modeled discharge volumes?
+
+**TODO: update this with annual breakdown**
 
 The following chart shows, by event type and year, what share of discharge reports include a measured (non-modeled, non-zero) volume estimate.
 
@@ -104,6 +114,8 @@ A small number of waterbodies — particularly those adjacent to large urban sew
 
 ## Locations of CSO discharges
 
+**TODO: Fix discharge coloring by watershed**
+
 The map below shows the location of CSO outfalls in MA (points), with overlays showing the sum total of CSO discharge volume over the full period by watershed, municipality, and Census block group.  Use the layer controls to switch between geographic aggregations.  Darker shading indicates higher total discharge volume.
 
 {% raw %}
@@ -113,50 +125,7 @@ The map below shows the location of CSO outfalls in MA (points), with overlays s
 
 ## Environmental Justice community characteristics
 
-The following maps visualize major EJ population characteristics at the watershed, municipality, and Census block group levels, using 2023 EPA EJSCREEN demographics.  These maps provide context for interpreting the discharge-EJ correlations below.
-
-### Minority Racial Demographics
-
-The percentage of Census block group residents who identify as non-white.  Areas with higher minority populations are shown in darker shades.
-
-{% raw %}
-<iframe frameborder="no" border="0" marginwidth="0" marginheight="0" width="700" height="400" src="../../../assets/maps/MAEEADP_through_2025_map_EJ_MINORPCT.html"></iframe>
-<p><em><a target="_blank" href="../../../assets/maps/MAEEADP_through_2025_map_EJ_MINORPCT.html">Click here to view map in a separate page</a></em></p>
-{% endraw %}
-
-### Linguistic Isolation
-
-The percentage of households where no adult speaks English "very well," a measure of language access barriers.
-
-{% raw %}
-<iframe frameborder="no" border="0" marginwidth="0" marginheight="0" width="700" height="400" src="../../../assets/maps/MAEEADP_through_2025_map_EJ_LINGISOPCT.html"></iframe>
-<p><em><a target="_blank" href="../../../assets/maps/MAEEADP_through_2025_map_EJ_LINGISOPCT.html">Click here to view map in a separate page</a></em></p>
-{% endraw %}
-
-### Low Income Status
-
-The percentage of residents with incomes below twice the federal poverty level.
-
-{% raw %}
-<iframe frameborder="no" border="0" marginwidth="0" marginheight="0" width="700" height="400" src="../../../assets/maps/MAEEADP_through_2025_map_EJ_LOWINCPCT.html"></iframe>
-<p><em><a target="_blank" href="../../../assets/maps/MAEEADP_through_2025_map_EJ_LOWINCPCT.html">Click here to view map in a separate page</a></em></p>
-{% endraw %}
-
-## Aggregate EJ population statistics
-
-The charts below summarize the distribution of EJ indicators across geographic units, weighted by population.  They provide context for how EJ characteristics are distributed across the areas that bear CSO discharge burdens.
-
-### By watershed
-
-{% include /charts/EJSCREEN_demographics_watershed.html %}
-
-Watersheds that receive more CSO discharge tend to score higher on all three EJ indicators, a pattern explored in more detail in the regression analysis below.
-
-### By municipality
-
-{% include /charts/EJSCREEN_demographics_municipality.html %}
-
-The municipality-level distribution shows similar patterns, with more urbanized municipalities (which tend to have older combined sewer infrastructure) also showing elevated EJ indicator values.
+**TODO: Link to plots on earlier posts, which are unchanged.**
 
 ## Correlation between CSO discharge and EJ factors
 
@@ -182,6 +151,8 @@ The income gradient is similarly persistent.  On average, **watersheds that have
 
 ## Year-by-year EJ correlation
 
+**TODO: Review and update**
+
 To test whether the EJ disparity is stable over time or driven by a single anomalous year, we fit the same watershed-level power-law regression independently for each calendar year (2023–2025; 2022 is excluded as a partial year beginning June 30).  We also include the 2011 estimate from the [original NECIR analysis]({% post_url 2018-04-25-necir-cso-ej %}) as a long-run reference point, extending the timeline back over a decade.  The chart shows the posterior median 2× growth ratio for each EJ variable in each year.
 
 {% include /charts/MAEEADP_through_2025_annual_ej_beta_evolution.html %}
@@ -202,4 +173,4 @@ With nearly three and a half years of data from Massachusetts's sewage notificat
 
 ---
 
-*This post was prepared with assistance from [Claude](https://www.anthropic.com/claude) (Anthropic), an AI assistant, which helped structure the analysis, write code, and draft text. All data, methodology, and conclusions were reviewed and approved by the site authors.*
+*This post was prepared with assistance from [Claude](https://www.anthropic.com/claude), an AI assistant, which helped structure the analysis, write code, and draft text. All data, methodology, and conclusions were reviewed and approved by [the site author](https://github.com/nesanders).*

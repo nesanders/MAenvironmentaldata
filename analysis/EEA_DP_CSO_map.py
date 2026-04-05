@@ -336,29 +336,45 @@ class CSOAnalysisEEADP(CSOAnalysis):
         full_years = year_months[year_months >= 6].index
         df_full = df_all[df_all['cal_year'].isin(full_years)]
 
+        df_full['type_group'] = df_full['eventType'].map(self.EVENT_TYPE_GROUPS).fillna('Other')
+
         years = sorted(df_full['cal_year'].unique())
         year_labels = [f'{y}*' if y == 2022 else str(y) for y in years]
 
-        annual_vol = df_full.groupby('cal_year')['volumnOfEvent'].sum() / 1e6
-        mychart = chartjs.chart("Annual CSO discharge vs heavy rain days", "Bar", 700, 420)
+        # Annual discharge by type group, in stable display order
+        type_order = ['CSO – Untreated', 'CSO – Treated', 'Partially Treated', 'SSO', 'Other']
+        annual_by_type = (
+            df_full.groupby(['cal_year', 'type_group'])['volumnOfEvent'].sum() / 1e6
+        ).unstack('type_group').reindex(columns=type_order).fillna(0)
+
+        mychart = chartjs.chart("Annual discharge vs heavy rain days", "Bar", 700, 420)
         mychart.set_labels(year_labels)
-        mychart.add_dataset(
-            [float(annual_vol.get(y, 0)) for y in years],
-            'CSO discharge (M gallons)',
-            backgroundColor="'rgba({},0.8)'".format(", ".join([str(x) for x in hex2rgb(COLOR_CYCLE[0])])),
-            yAxisID="'y-axis-0'",
-        )
+
+        for i, tgroup in enumerate(type_order):
+            if tgroup not in annual_by_type.columns:
+                continue
+            color_rgb = ", ".join([str(x) for x in hex2rgb(COLOR_CYCLE[i % len(COLOR_CYCLE)])])
+            mychart.add_dataset(
+                [float(annual_by_type[tgroup].get(y, 0)) for y in years],
+                tgroup,
+                backgroundColor="'rgba({},0.8)'".format(color_rgb),
+                yAxisID="'y-axis-0'",
+                stack="'discharge'",
+            )
+
         mychart.add_dataset(
             [float(heavy_rain.get(y, 0)) for y in years],
             'Heavy rain days (\u22651 inch/day)',
-            backgroundColor="'rgba({},0.5)'".format(", ".join([str(x) for x in hex2rgb(COLOR_CYCLE[3])])),
+            backgroundColor="'rgba({},0.5)'".format(", ".join([str(x) for x in hex2rgb(COLOR_CYCLE[5])])),
             yAxisID="'y-axis-1'",
+            stack="'rain'",
         )
         mychart.set_params(
             JSinline=0,
-            ylabel='Total CSO discharge (millions of gallons)',
+            ylabel='Total discharge (millions of gallons)',
             xlabel='Calendar year  (* 2022 reporting began June 30)',
             scaleBeginAtZero=1,
+            stacked=1,
             y2nd='true',
             y2nd_title='Heavy rain days (\u22651 inch/day, MA station average)',
         )
@@ -561,37 +577,84 @@ class CSOAnalysisEEADP(CSOAnalysis):
             df_days['prior_rain_in'], bins=bin_edges, labels=bin_labels, right=False
         )
 
-        freq = df_days.groupby('rain_bin', observed=True)['had_discharge'].mean() * 100
         counts = df_days.groupby('rain_bin', observed=True)['had_discharge'].count()
-        freq = freq.reindex(bin_labels).fillna(0)
         counts = counts.reindex(bin_labels).fillna(0)
+
+        # Assign each discharge day to its highest-priority event type so stacks are
+        # mutually exclusive and sum to the original "any discharge" total.
+        type_order = ['CSO – Untreated', 'CSO – Treated', 'Partially Treated', 'SSO', 'Other']
+        type_priority = {t: i for i, t in enumerate(type_order)}
+        discharge_day_types = (
+            df_all.assign(discharge_date=df_all['incidentDate'].dt.normalize())
+            .groupby(['discharge_date', 'type_group'])
+            .size()
+            .reset_index(name='n')
+        )
+        discharge_day_types['priority'] = (
+            discharge_day_types['type_group'].map(type_priority).fillna(len(type_order))
+        )
+        day_primary = (
+            discharge_day_types.sort_values('priority')
+            .groupby('discharge_date')['type_group']
+            .first()
+            .rename('primary_type')
+        )
+        df_days = df_days.join(day_primary)
+
+        present_types = [t for t in type_order if t in day_primary.values]
 
         mychart = chartjs.chart(
             f'Fraction of days with any discharge by prior-{window_days*24}-hr rainfall',
             'Bar', 640, 380,
         )
         mychart.set_labels(bin_labels)
-        color_rgb = ', '.join([str(x) for x in hex2rgb(COLOR_CYCLE[0])])
+        for i, type_label in enumerate(present_types):
+            freq_type = (
+                df_days.groupby('rain_bin', observed=True)['primary_type']
+                .apply(lambda x, _t=type_label: (x == _t).mean() * 100)
+                .reindex(bin_labels).fillna(0)
+            )
+            color_rgb = ', '.join([str(x) for x in hex2rgb(COLOR_CYCLE[i % len(COLOR_CYCLE)])])
+            mychart.add_dataset(
+                freq_type.tolist(),
+                type_label,
+                backgroundColor="'rgba({},0.75)'".format(color_rgb),
+                borderColor="'rgba({},1.0)'".format(color_rgb),
+                borderWidth=1,
+                yAxisID="'y-axis-0'",
+                stack="'discharge'",
+            )
+
+        count_rgb = ', '.join([str(x) for x in hex2rgb(COLOR_CYCLE[len(present_types) % len(COLOR_CYCLE)])])
         mychart.add_dataset(
-            freq.tolist(),
-            '% of days with any discharge',
-            backgroundColor="'rgba({},0.7)'".format(color_rgb),
-            borderColor="'rgba({},1.0)'".format(color_rgb),
-            borderWidth=1,
+            counts.astype(int).tolist(),
+            'Days in bin',
+            type="'line'",
+            yAxisID="'y-axis-1'",
+            backgroundColor="'rgba({},0.15)'".format(count_rgb),
+            borderColor="'rgba({},0.7)'".format(count_rgb),
+            pointBackgroundColor="'rgba({},0.9)'".format(count_rgb),
+            pointRadius=4,
+            fill='false',
         )
         mychart.set_params(
             JSinline=0,
-            ylabel=f'Days with discharge reported (%)',
+            ylabel='Days with discharge reported (%)',
             xlabel=f'Prior {window_days*24}-hr precipitation (MA station avg)',
+            y2nd='true',
+            y2nd_title='Number of days in bin',
+            scaleBeginAtZero=True,
+            stacked=1,
         )
-        # Tooltip: show % and day count
-        count_list = counts.astype(int).tolist()
+        # Tooltip: % label for discharge stacks, count for the days-in-bin line
+        n_type_datasets = len(present_types)
         mychart.add_extra_code(
             'chart_data.options.tooltips = { callbacks: { label: function(item, data) {'
-            ' var pct = item.yLabel.toFixed(1);'
-            f' var counts = {count_list};'
-            ' var n = counts[item.index];'
-            " return pct + '% of ' + n + ' days'; "
+            f' if (item.datasetIndex < {n_type_datasets}) {{'
+            '  return data.datasets[item.datasetIndex].label + ": " + item.yLabel.toFixed(1) + "% of days";'
+            ' } else {'
+            '  return item.yLabel.toFixed(0) + " days in bin";'
+            ' }'
             '} } };'
         )
         mychart.jekyll_write(outpath)
@@ -667,7 +730,142 @@ class CSOAnalysisEEADP(CSOAnalysis):
             " return data.datasets[item.datasetIndex].label + ': ' + (typeof v === 'number' ? v.toFixed(2) + ' M gal' : v); "
             '} }'
         )
+
+        # Marginal histogram: distribution of prior_rain for all days in window
+        all_dates = prior_rain.index[
+            (prior_rain.index >= pd.Timestamp(self.cso_data_start))
+            & (prior_rain.index <= pd.Timestamp(self.cso_data_end))
+        ]
+        rain_all = prior_rain.reindex(all_dates).dropna().values
+        hist_bin_size = 0.25
+        hist_max = 3.0
+        hist_bins = np.arange(0, hist_max + hist_bin_size, hist_bin_size)
+        rain_clipped = rain_all.copy()
+        rain_clipped[rain_clipped > hist_max] = hist_max
+        hist_counts, _ = np.histogram(rain_clipped, bins=hist_bins)
+        hist_labels = [f'{b:.2f}' for b in hist_bins[:-1]]
+        hist_labels[-1] = f'{hist_bins[-2]:.2f}+'
+
+        hist_chart = chartjs.chart(
+            f'Distribution of prior-{window_days*24}-hr rainfall (all days)',
+            'Bar', 640, 200,
+        )
+        hist_chart.set_labels(hist_labels)
+        hist_chart.add_dataset(
+            hist_counts.tolist(),
+            'Days',
+            backgroundColor="'rgba(128,128,128,0.5)'",
+            borderColor="'rgba(128,128,128,0.8)'",
+            borderWidth=1,
+        )
+        hist_chart.set_params(
+            JSinline=0,
+            ylabel='Number of days',
+            xlabel=f'Prior {window_days*24}-hr precipitation (inches)',
+            scaleBeginAtZero=True,
+            legend=False,
+            x_autoskip=False,
+        )
+
+        # Write combined HTML (scatter + marginal histogram) with a single CDN include
+        cdn = "<script src='https://cdn.jsdelivr.net/npm/chart.js@2.8.0/dist/Chart.bundle.min.js'></script>"
+        scatter_html = mychart.make_chart()
+        hist_html = hist_chart.make_chart()
+        import os
+        os.makedirs(os.path.dirname(os.path.abspath(outpath)), exist_ok=True)
+        with open(outpath, 'w') as f:
+            f.write('{% raw  %}\n')
+            f.write(f'<html>\n<head>{cdn}</head>\n<body>\n')
+            f.write('<div style="width: 640px; max-width: 99%" class="chartjs">\n')
+            f.write(scatter_html)
+            f.write(hist_html)
+            f.write('</div>\n</body>\n</html>\n')
+            f.write('{% endraw  %}\n')
+        print(f'  Wrote scatter + marginal histogram to {outpath}')
+
+    def plot_rainfall_cdf_by_type(self, outpath: Optional[str]=None, window_days: int=2):
+        """Empirical CDF of prior-N-day rainfall for all days vs discharge days by event type.
+
+        Shows what fraction of events (or days) occur at or below each rainfall level.
+        Dashed line = all days; solid colored lines = discharge events by type group.
+        """
+        if outpath is None:
+            outpath = f'../docs/_includes/charts/{self.output_slug}_rainfall_cdf.html'
+
+        print('Making rainfall CDF by event type chart')
+        prior_rain, df_all = self._load_rain_and_cso(window_days)
+        if prior_rain is None:
+            print('  Daily precipitation CSV not found; skipping CDF chart')
+            return
+
+        # All days in data window
+        all_dates = prior_rain.index[
+            (prior_rain.index >= pd.Timestamp(self.cso_data_start))
+            & (prior_rain.index <= pd.Timestamp(self.cso_data_end))
+        ]
+        rain_all = prior_rain.reindex(all_dates).dropna().values
+
+        # Daily discharge per event-type group
+        daily_by_type = (
+            df_all.groupby(['incidentDate', 'type_group'])['volumnOfEvent'].sum() / 1e6
+        ).rename('discharge_mgal').reset_index()
+        daily_by_type = daily_by_type.join(
+            prior_rain.rename('prior_rain_in'), on='incidentDate'
+        ).dropna()
+
+        # CDF evaluation grid: 0 to 3 inches
+        x_grid = np.linspace(0, 3.0, 121)
+
+        mychart = chartjs.chart(
+            f'Cumulative distribution of prior-{window_days*24}-hr rainfall by event type',
+            'Scatter', 640, 360,
+        )
+        mychart.set_labels([])
+
+        # All-days rainfall CDF (dashed)
+        cdf_all = np.array([np.mean(rain_all <= x) for x in x_grid]) * 100
+        xy_all = np.column_stack([x_grid, cdf_all])
+        mychart.add_dataset(
+            xy_all,
+            f'All days (rainfall distribution)',
+            showLine='true',
+            borderColor="'rgba(80,80,80,0.7)'",
+            backgroundColor="'rgba(0,0,0,0)'",
+            borderDash='[6, 4]',
+            borderWidth=2,
+            pointRadius=0,
+            fill='false',
+        )
+
+        # Per-type CDFs (solid colored lines)
+        type_order = ['CSO – Untreated', 'CSO – Treated', 'Partially Treated', 'SSO', 'Other']
+        present_types = [t for t in type_order if t in daily_by_type['type_group'].unique()]
+        for i, tgroup in enumerate(present_types):
+            events_rain = daily_by_type[
+                daily_by_type['type_group'] == tgroup
+            ]['prior_rain_in'].values
+            cdf_type = np.array([np.mean(events_rain <= x) for x in x_grid]) * 100
+            xy_type = np.column_stack([x_grid, cdf_type])
+            color_rgb = ', '.join([str(x) for x in hex2rgb(COLOR_CYCLE[i % len(COLOR_CYCLE)])])
+            mychart.add_dataset(
+                xy_type,
+                tgroup,
+                showLine='true',
+                borderColor="'rgba({},0.85)'".format(color_rgb),
+                backgroundColor="'rgba(0,0,0,0)'",
+                borderWidth=2,
+                pointRadius=0,
+                fill='false',
+            )
+
+        mychart.set_params(
+            JSinline=0,
+            ylabel='Cumulative fraction (%)',
+            xlabel=f'Prior {window_days*24}-hr precipitation (inches, MA station avg)',
+        )
+        mychart.scaleBeginAtZero = 'beginAtZero: true, min: 0, max: 100'
         mychart.jekyll_write(outpath)
+        print(f'  Wrote rainfall CDF chart to {outpath}')
 
     def extra_plots(self):
         """Generate all extra data plots for the EEA DP CSO data
@@ -681,6 +879,7 @@ class CSOAnalysisEEADP(CSOAnalysis):
         self.plot_annual_volume_trends()
         self.plot_annual_volume_by_operator()
         self.plot_discharge_frequency_by_rain()
+        self.plot_rainfall_cdf_by_type()
         self.plot_rainfall_discharge_scatter()
 
     # -------------------------
