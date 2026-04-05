@@ -1,32 +1,32 @@
 {% raw  %}
 <html>
     <head>
-        <title>Discharges with no volume reported by discharge type</title>
+        <title>Fraction of reports with likely-modeled volume estimates, by type and year</title>
         <script src='https://cdn.jsdelivr.net/npm/chart.js@2.8.0/dist/Chart.bundle.min.js'></script>
     </head>
     <body>
-        <div style="width: 640px; height: 480px; max-width: 99%" class="chartjs">
+        <div style="width: 640px; height: 380px; max-width: 99%" class="chartjs">
 
-            <canvas id="Discharges with no volume reported by discharge type" height="480" width="640"></canvas>
+            <canvas id="Fraction of reports with likely-modeled volume estimates, by type and year" height="380" width="640"></canvas>
             <script>
                 Chart.defaults.global.defaultFontSize = 12;
                 var chart_data = {
                 
                     data: {
-                        labels: ['SSO – System Surcharging Under High Flow Conditions', 'SSO – Failure of Pump Station or Associated Force Main', 'SSO – Discharge Through Wastewater Outfall', 'CSO – UnTreated', 'Partially Treated – Blended', 'Partially Treated – Other', 'CSO – Treated'],
-                        datasets: [{'data': [98.56115107913669, 100.0, 100.0, 97.78954334877564, 99.09255898366605, 100.0, 98.52289512555392], 'label': '...with nonzero volume reported', 'backgroundColor': 'rgba(31, 119, 180,0.5)'},{'data': [38.1294964028777, 55.172413793103445, 45.45454545454545, 43.45466578424884, 88.74773139745916, 57.89473684210527, 97.48892171344166], 'label': '...with likely-modeled volume reported', 'backgroundColor': 'rgba(255, 127, 14,0.5)'}]
+                        labels: ['2022', '2023', '2024', '2025'],
+                        datasets: [{'data': [48.883374689826304, 45.988740323715696, 37.41188318227593, 42.29249011857708], 'label': 'CSO – Untreated', 'borderColor': 'rgba(31, 119, 180,0.9)', 'backgroundColor': 'rgba(31, 119, 180,0.1)', 'pointRadius': 4, 'fill': false, 'borderWidth': 2, 'spanGaps': true},{'data': [90.9090909090909, 99.19028340080972, 97.32620320855615, 98.70967741935483], 'label': 'CSO – Treated', 'borderColor': 'rgba(255, 127, 14,0.9)', 'backgroundColor': 'rgba(255, 127, 14,0.1)', 'pointRadius': 4, 'fill': false, 'borderWidth': 2, 'spanGaps': true},{'data': [95.16129032258065, 95.28795811518324, 82.14285714285714, 81.20805369127517], 'label': 'Partially Treated', 'borderColor': 'rgba(44, 160, 44,0.9)', 'backgroundColor': 'rgba(44, 160, 44,0.1)', 'pointRadius': 4, 'fill': false, 'borderWidth': 2, 'spanGaps': true},{'data': [66.66666666666666, 37.89473684210527, 46.875, 35.294117647058826], 'label': 'SSO', 'borderColor': 'rgba(214, 39, 40,0.9)', 'backgroundColor': 'rgba(214, 39, 40,0.1)', 'pointRadius': 4, 'fill': false, 'borderWidth': 2, 'spanGaps': true}]
                     },
-                    type: 'bar',
+                    type: 'line',
                     options: {
                         scales: {
                             yAxes: [{
                                 display: true,
                                 scaleLabel: {
                                     display: true,
-                                    labelString: '% of discharges...'
+                                    labelString: 'Reports with likely-modeled volume (%)'
                                 },
                                 ticks: {
-                                    beginAtZero: true, min: 0
+                                    beginAtZero: true, min: 0, max: 100
                                 },
                                 "id": "y-axis-0",
                                 "position": "left",
@@ -38,7 +38,7 @@
                                     labelString: ''
                                 },
                                 ticks: {
-                                    beginAtZero: true, min: 0
+                                    beginAtZero: true, min: 0, max: 100
                                 },
                                 "id": "y-axis-1",
                                 "position": "right"
@@ -46,7 +46,7 @@
                             xAxes: [{
                                 scaleLabel: {
                                     display: true,
-                                    labelString: 'Discharge type'
+                                    labelString: 'Year'
                                 },
                                 stacked: false,
                                 ticks: {
@@ -68,7 +68,7 @@
             </script>
             <script>
                 {{
-                    var ctx = document.getElementById("Discharges with no volume reported by discharge type").getContext("2d");
+                    var ctx = document.getElementById("Fraction of reports with likely-modeled volume estimates, by type and year").getContext("2d");
                     var mychart = new Chart(ctx, chart_data);
                 }}
             </script>

@@ -44,6 +44,12 @@ cd docs
 bundle exec jekyll serve --host localhost --port 4000 --baseurl ""
 ```
 
+For faster rebuilds while editing, add the `--incremental` flag to rebuild only the files that have changed:
+
+```bash
+bundle exec jekyll serve --host localhost --port 4000 --baseurl "" --incremental
+```
+
 ## Python dependencies
 
 ### CI (lightweight)

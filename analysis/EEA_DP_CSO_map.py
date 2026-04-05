@@ -265,40 +265,57 @@ class CSOAnalysisEEADP(CSOAnalysis):
         mychart.jekyll_write(outpath)
 
     def plot_reports_non_zero_volume(self, outpath: Optional[str]=None):
-        """Bar chart showing how many reports of each discharge type have zero volume reported.
-        
-        NOTE: We use a very simplistic assumption to decide if a volume report is likely modeled rather than
-        metered; we simply look to see if the reported volume was rounded to the nearest 1000.
-        """        
+        """Line chart: % of reports with likely-modeled volume, by event type group and year.
+
+        A volume is flagged as likely modeled (rather than metered) if it is rounded to
+        the nearest 1,000 gallons.  One line per type group; x-axis = calendar year.
+        """
         if outpath is None:
             outpath = f'../docs/_includes/charts/{self.output_slug}_non_zero_volume.html'
-        
-        print('Making chart of discharges with no volume reported by discharge type')
-        mychart = chartjs.chart("Discharges with no volume reported by discharge type", "Bar", 640, 480)
-        
-        data_types = self.data_cso_filtered_reports['eventType'].unique()
-        mychart.set_labels(data_types)
-        
-        def vol_gtr_0(x: float) -> float:
-            return 100 * np.mean(x > 0)
-        
-        def likely_modeled(x: float) -> bool:
-            return 100 * np.mean((x % 1000) == 0)
-        
-        nonzero_rates = self.data_cso_filtered_reports.groupby(['eventType'])[self.discharge_vol_col].apply(vol_gtr_0)
-        likely_modeled_rates = self.data_cso_filtered_reports.groupby(['eventType'])[self.discharge_vol_col].apply(likely_modeled)
-        
-        mychart.add_dataset(nonzero_rates.reindex(data_types).tolist(), 
-            '...with nonzero volume reported',
-            backgroundColor="'rgba({},0.5)'".format(", ".join([str(x) for x in hex2rgb(COLOR_CYCLE[0])])),
-        )
-        mychart.add_dataset(likely_modeled_rates.reindex(data_types).tolist(), 
-            '...with likely-modeled volume reported',
-            backgroundColor="'rgba({},0.5)'".format(", ".join([str(x) for x in hex2rgb(COLOR_CYCLE[1])])),
-        )
-        mychart.set_params(JSinline=0, ylabel='% of discharges...', 
-            xlabel='Discharge type', scaleBeginAtZero=1)
 
+        print('Making chart of likely-modeled volume rates by type and year')
+        df = self.data_cso_filtered_reports.copy()
+        df['type_group'] = df['eventType'].map(self.EVENT_TYPE_GROUPS).fillna('Other')
+        df['modeled'] = (df[self.discharge_vol_col] % 1000) == 0
+
+        type_order = ['CSO – Untreated', 'CSO – Treated', 'Partially Treated', 'SSO']
+        present_types = [t for t in type_order if t in df['type_group'].unique()]
+
+        years = sorted(df['Year'].dropna().unique())
+        year_labels = [str(int(y)) for y in years]
+
+        modeled_by_type_year = (
+            df.groupby(['Year', 'type_group'])['modeled']
+            .mean() * 100
+        ).unstack('type_group').reindex(columns=present_types)
+
+        mychart = chartjs.chart(
+            'Fraction of reports with likely-modeled volume estimates, by type and year',
+            'Line', 640, 380,
+        )
+        mychart.set_labels(year_labels)
+
+        for i, tgroup in enumerate(present_types):
+            vals = modeled_by_type_year[tgroup].reindex(years).tolist()
+            color_rgb = ', '.join([str(x) for x in hex2rgb(COLOR_CYCLE[i % len(COLOR_CYCLE)])])
+            mychart.add_dataset(
+                vals,
+                tgroup,
+                borderColor="'rgba({},0.9)'".format(color_rgb),
+                backgroundColor="'rgba({},0.1)'".format(color_rgb),
+                pointRadius=4,
+                fill='false',
+                borderWidth=2,
+                spanGaps='true',
+            )
+
+        mychart.set_params(
+            JSinline=0,
+            ylabel='Reports with likely-modeled volume (%)',
+            xlabel='Year',
+            scaleBeginAtZero=True,
+        )
+        mychart.scaleBeginAtZero = 'beginAtZero: true, min: 0, max: 100'
         mychart.jekyll_write(outpath)
     
     def plot_annual_precip_and_discharge(self, outpath: Optional[str]=None):

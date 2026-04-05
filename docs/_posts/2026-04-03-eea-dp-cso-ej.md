@@ -46,7 +46,9 @@ The annual correlation above is suggestive, but CSO systems respond to individua
 
 {% include /charts/MAEEADP_through_2025_rainfall_discharge_freq.html %}
 
-On days following dry conditions (less than 0.05 inches in the prior 48 hours), there is roughly a one third chance of having any discharge statewide. On days when the prior 48 hours have seen at least 0.05 inches of rainfall statewide, that change jumps by about a third to ~45%. The rate of discharge does not grow substantially (actually, it appears to decrease somewhat) on moderate-to-very heavy rainfall days (>0.25 inches).
+On days following dry conditions (less than 0.05 inches in the prior 48 hours), there is roughly a one third chance of having any discharge statewide. On days when the prior 48 hours have seen at least 0.05 inches of rainfall statewide, that chance jumps by about a third to ~45%. The rate of discharge does not grow substantially (actually, it appears to decrease somewhat) on moderate-to-very heavy rainfall days (>0.25 inches).
+
+The 48-hour accumulation window was chosen because CSO systems respond to conditions created by cumulative rainfall — soil saturation, groundwater recharge, and pipe storage filling. Bizer & Kirchhoff ([2022, *Water Science & Technology*](https://iwaponline.com/wst/article/86/11/2848/91816/Regression-modeling-of-combined-sewer-overflows-to)) found that CSOs in their Maryland case study were optimally paired with rainfall events identified over a 48-hour lookback window.
 
 The cumulative distribution below makes the rainfall-discharge relationship more precise.  The dashed line shows the distribution of prior 48-hour rainfall across all days; a colored solid line to the *right* of the dashed line means that event type is disproportionately concentrated on wetter days relative to the average day. We can see that SSOs have the highest association with very wet weather days.
 
@@ -58,9 +60,9 @@ The scatter chart below breaks down this trend in terms of the volume of dischar
 
 The y-axis is on a logarithmic scale to spread the large dynamic range of discharge volumes. There is no evident relationship between the severity of rainfall and the volume of CSO discharge. While SSO events tend to have limited total volume (often less than a million gallons), they are more associated with very heavy rainfall days, indicating that extreme [stormwater inflow](https://en.wikipedia.org/wiki/Infiltration_and_inflow) is a primary cause of Massachusetts SSOs. 
 
-Bizer & Kirchhoff ([2022, *Water Science & Technology*](https://iwaponline.com/wst/article/86/11/2848/91816/Regression-modeling-of-combined-sewer-overflows-to)) studied CSO systems in Maryland and found that, in that system, discharge frequency increases with total rainfall, such that CSOs were all but certain to occur above 1.5 inches of rainfall.
+[Bizer & Kirchhoff](https://iwaponline.com/wst/article/86/11/2848/91816/Regression-modeling-of-combined-sewer-overflows-to) studied CSO systems in Maryland and found that, in that system, discharge frequency increases with total rainfall, such that CSOs had maximal probability to occur above 1.5 inches of rainfall.
 
-**What about the dry-weather discharges?** A notable cluster of events occurs with near-zero prior-48-hour precipitation. Under [EPA's Nine Minimum Controls](https://www.epa.gov/sites/default/files/2015-10/documents/owm0030_2.pdf) and Massachusetts NPDES permits, [CSO discharges during dry weather are prohibited](https://www.mass.gov/guides/sanitary-sewer-systems-combined-sewer-overflows) and require immediate investigation. When they occur, typical causes include groundwater infiltration into aging pipes, illicit storm drain connections, and pump or equipment failures — all NPDES permit violations that utilities are required to investigate and correct. Some events near the left edge of the chart may also reflect precipitation that fell slightly outside the 48-hour window captured by our statewide station average. 
+**What about the dry-weather discharges?** A notable cluster of events occurs with near-zero prior-48-hour precipitation. Under [EPA's Nine Minimum Controls](https://www.epa.gov/sites/default/files/2015-10/documents/owm0030_2.pdf) and Massachusetts NPDES permits, [CSO discharges during dry weather are prohibited](https://www.mass.gov/guides/sanitary-sewer-systems-combined-sewer-overflows) and require immediate investigation. When they occur, typical causes include groundwater infiltration into aging pipes, illicit storm drain connections, and pump or equipment failures — all NPDES permit violations that utilities are required to investigate and correct. Some events near the left edge of the chart may also reflect precipitation that fell slightly outside the 48-hour window captured by our statewide station average. A definite limitation of this analysis is that it uses only a single statewide average rainfall: a localized storm could trigger a discharge in one municipality while the statewide rainfall average remains near zero. However, Massachusetts is a small state and local rainfall events tend to accompany a measurable statewide effect. An analysis of apparent dry-weather days in this dataset shows that the median event involves 3 municipalities reporting simultaneously — making a purely localized missed-rainfall explanation unlikely for the majority of cases. 
 
 ### Trends by sewer operator
 
@@ -94,15 +96,13 @@ The following chart shows total discharge volume over the full period by sewer o
 
 The concentration of volume among a few operators reflects both the size of their sewer systems and the degree to which those systems remain dependent on combined sewers and/or other persistent infrastructural defficiencies. It is notable that MWRA, Lowell, and Fall River continue to have substantial fractions of ['blended' discharge](https://openamend.org/2023/02/04/eea-dp-cso-ej.html#:~:text=According%20to%20the%20Massachusetts%20Water%20Resources%20Authority%20(MWRA)%2C%20%E2%80%98blended%E2%80%99%20discharge).
 
-### What fraction of reports have non-zero, non-modeled discharge volumes?
+### What fraction of reports have likely-modeled discharge volumes?
 
-**TODO: update this with annual breakdown**
-
-The following chart shows, by event type and year, what share of discharge reports include a measured (non-modeled, non-zero) volume estimate.
+The following chart shows, by discharge type and year, what share of reports have a volume figure that is likely estimate from a discharge model rather than directly meteted. We use a heuristic to identify likely-modeled data: reports that are rounded to the nearest 1,000 gallons.
 
 {% include /charts/MAEEADP_through_2025_non_zero_volume.html %}
 
-Roughly half of untreated CSO reports continue to rely on modeled rather than metered volume estimates.  This limits the precision of any volume-based analysis and underscores the need for expanded outfall metering.
+Model estimates are more prevalant for untreated CSOs and SSOs, of which the majority of event reports in 2025 seem to have been modeled. The modeled-volume rate for untreated CSOs has declined slighlty roughly 49% in 2022 toward 42% by 2025, which could be consistent with a small expansion in metering infrastructure. Model reliance limits the precision of any volume-based analysis and underscores the continued need for expanded outfall metering.
 
 ### Volume by receiving waterbody
 
@@ -125,7 +125,7 @@ The map below shows the location of CSO outfalls in MA (points), with overlays s
 
 ## Environmental Justice community characteristics
 
-**TODO: Link to plots on earlier posts, which are unchanged.**
+For demographic context on communities affected by CSOs — including racial minority share, income levels, and linguistic isolation — see the [original 2018 CSO analysis on AMEND]({% post_url 2018-04-25-necir-cso-ej %}), which provides a detailed geographic breakdown. The demogaphic patterns shown there have not changed substantially in less than a decade.
 
 ## Correlation between CSO discharge and EJ factors
 
