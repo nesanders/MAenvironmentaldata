@@ -916,7 +916,7 @@ class CSOAnalysisEEADP(CSOAnalysis):
         produced by run_analysis(), so no geopandas pipeline is required here.
 
         For each year and each EJ variable, fits the power-law discharge model at the watershed
-        level and records the posterior median and 90% CI of 2^beta (the growth ratio for a
+        level and records the posterior median and 90% CI of 2^beta (the burden ratio for a
         doubling of the EJ indicator).  Results are written to the facts YAML and to a Chart.js
         line chart.
 
@@ -1142,7 +1142,7 @@ class CSOAnalysisEEADP(CSOAnalysis):
                 f.write('var data = ' + json.dumps(box_data) + ';\n')
                 f.write(f'var layout = {{\n')
                 f.write(f'  title: "{col_label} - Posterior distributions of 2^beta",\n')
-                f.write(f'  yaxis: {{ title: "2× growth ratio", range: [0, {y_max:.1f}] }},\n')
+                f.write(f'  yaxis: {{ title: "2× burden ratio", range: [0, {y_max:.1f}] }},\n')
                 f.write(f'  xaxis: {{ title: "Analysis period" }},\n')
                 f.write(f'  hovermode: "closest",\n')
                 f.write(f'  showlegend: false\n')
@@ -1210,7 +1210,7 @@ class CSOAnalysisEEADP(CSOAnalysis):
 
         mychart.set_params(
             JSinline=0,
-            ylabel='EJ-CSO correlation (2\u02e3 growth ratio, watershed level)',
+            ylabel='EJ-CSO correlation (2\u02e3 burden ratio, watershed level)',
             xlabel='Calendar year',
         )
         mychart.scaleBeginAtZero = 'beginAtZero: false, min: 0'

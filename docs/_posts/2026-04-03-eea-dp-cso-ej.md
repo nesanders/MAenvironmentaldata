@@ -114,8 +114,6 @@ A small number of waterbodies — particularly those adjacent to large urban sew
 
 ## Locations of CSO discharges
 
-**TODO: Fix discharge coloring by watershed**
-
 The map below shows the location of CSO outfalls in MA (points), with overlays showing the sum total of CSO discharge volume over the full period by watershed, municipality, and Census block group.  Use the layer controls to switch between geographic aggregations.  Darker shading indicates higher total discharge volume.
 
 {% raw %}
@@ -151,15 +149,13 @@ The income gradient is similarly persistent.  On average, **watersheds that have
 
 ## Year-by-year EJ correlation
 
-**TODO: Review and update**
-
-To test whether the EJ disparity is stable over time or driven by a single anomalous year, we fit the same watershed-level power-law regression independently for each calendar year (2023–2025; 2022 is excluded as a partial year beginning June 30).  We also include the 2011 estimate from the [original NECIR analysis]({% post_url 2018-04-25-necir-cso-ej %}) as a long-run reference point, extending the timeline back over a decade.  The chart shows the posterior median 2× growth ratio for each EJ variable in each year.
+To test whether the EJ disparity is stable over time or driven by a single anomalous year, we fit the same watershed-level power-law regression independently for each calendar year (2023–2025; 2022 is excluded as a partial year beginning June 30).  We also include the 2011 estimate from the [original NECIR analysis]({% post_url 2018-04-25-necir-cso-ej %}) as a long-run reference point, extending the timeline back over a decade.  The chart shows the posterior median 2× burden ratio for each EJ variable in each year.
 
 {% include /charts/MAEEADP_through_2025_annual_ej_beta_evolution.html %}
 
-Note: The 2× growth ratio is the estimated multiplicative difference in CSO discharge volume between a watershed at the median EJ indicator level and one at twice that level.  Values above 1 indicate higher discharge burden in more-disadvantaged communities. The 2011 point uses 2011 EJSCREEN demographics and NECIR discharge data; 2023–2025 use 2023 EJSCREEN demographics and EEA Data Portal data.
+Note: The 2× burden ratio is the estimated multiplicative difference in CSO discharge volume between a watershed at the median EJ indicator level and one at twice that level.  Values above 1 indicate higher discharge burden in more-disadvantaged communities. The 2011 point uses 2011 EJSCREEN demographics and NECIR discharge data; 2023–2025 use 2023 EJSCREEN demographics and EEA Data Portal data.
 
-The EJ disparities are persistent and fairly consistent across years, with the strongest effect being on race and the weakest (but still significant) being for lignuistic isolation.  For minority population share, the 2× growth ratio was {{ site.data.facts_MAEEADP_through_2025.annual_ej_MINORPCT_2023 }} in 2023, {{ site.data.facts_MAEEADP_through_2025.annual_ej_MINORPCT_2024 }} in 2024, and {{ site.data.facts_MAEEADP_through_2025.annual_ej_MINORPCT_2025 }} in 2025.  For low-income share: {{ site.data.facts_MAEEADP_through_2025.annual_ej_LOWINCPCT_2023 }}, {{ site.data.facts_MAEEADP_through_2025.annual_ej_LOWINCPCT_2024 }}, and {{ site.data.facts_MAEEADP_through_2025.annual_ej_LOWINCPCT_2025 }}, respectively.  For linguistic isolation: {{ site.data.facts_MAEEADP_through_2025.annual_ej_LINGISOPCT_2023 }}, {{ site.data.facts_MAEEADP_through_2025.annual_ej_LINGISOPCT_2024 }}, and {{ site.data.facts_MAEEADP_through_2025.annual_ej_LINGISOPCT_2025 }}.  Point estimates are stable and consistently elevated across all three years.
+The EJ disparities are persistent and fairly consistent across years, with the strongest effect being on race and the weakest (but still significant) being for lignuistic isolation.  For minority population share, the 2× burden ratio was {{ site.data.facts_MAEEADP_through_2025.annual_ej_MINORPCT_2023 }} in 2023, {{ site.data.facts_MAEEADP_through_2025.annual_ej_MINORPCT_2024 }} in 2024, and {{ site.data.facts_MAEEADP_through_2025.annual_ej_MINORPCT_2025 }} in 2025.  For low-income share: {{ site.data.facts_MAEEADP_through_2025.annual_ej_LOWINCPCT_2023 }}, {{ site.data.facts_MAEEADP_through_2025.annual_ej_LOWINCPCT_2024 }}, and {{ site.data.facts_MAEEADP_through_2025.annual_ej_LOWINCPCT_2025 }}, respectively.  For linguistic isolation: {{ site.data.facts_MAEEADP_through_2025.annual_ej_LINGISOPCT_2023 }}, {{ site.data.facts_MAEEADP_through_2025.annual_ej_LINGISOPCT_2024 }}, and {{ site.data.facts_MAEEADP_through_2025.annual_ej_LINGISOPCT_2025 }}.  Point estimates are stable and consistently elevated across all three years.
 
 ## Conclusions
 

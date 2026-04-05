@@ -64,28 +64,43 @@ def _choropleth_trace(
     colorscale: str,
     label: str,
     visible: bool,
+    customdata: Optional[list] = None,
+    colorbar_tickvals: Optional[list] = None,
+    colorbar_ticktext: Optional[list] = None,
 ) -> go.Choroplethmapbox:
+    # If customdata is provided, use it in hover (for displaying linear values when z is log-transformed)
+    hover_value = '%{customdata:.3f}' if customdata is not None else '%{z:.3f}'
+
+    colorbar_kwargs = dict(
+        orientation='h',
+        x=0.5, xanchor='center',
+        y=0.01, yanchor='bottom',
+        thickness=12,
+        len=0.55,
+        tickfont=dict(size=11),
+        title=dict(text=label, side='top', font=dict(size=12)),
+    )
+
+    # Add custom tick values/labels if provided (for log-scale with linear labels)
+    if colorbar_tickvals is not None:
+        colorbar_kwargs['tickvals'] = colorbar_tickvals
+    if colorbar_ticktext is not None:
+        colorbar_kwargs['ticktext'] = colorbar_ticktext
+
     return go.Choroplethmapbox(
         geojson=geojson,
         featureidkey=featureidkey,
         locations=ids,
         z=values,
+        customdata=customdata,
         colorscale=colorscale,
         marker_opacity=0.65,
         marker_line_width=0.5,
         name=name,
         showscale=True,
-        colorbar=dict(
-            orientation='h',
-            x=0.5, xanchor='center',
-            y=0.01, yanchor='bottom',
-            thickness=12,
-            len=0.55,
-            tickfont=dict(size=11),
-            title=dict(text=label, side='top', font=dict(size=12)),
-        ),
+        colorbar=colorbar_kwargs,
         visible=visible,
-        hovertemplate='<b>%{location}</b><br>' + label + ': %{z:.3f}<extra></extra>',
+        hovertemplate='<b>%{location}</b><br>' + label + ': ' + hover_value + '<extra></extra>',
     )
 
 
@@ -204,10 +219,19 @@ def make_discharge_map(
 
     label = f'Total discharge {period_label} (M gal)'
 
+    # For CBG layer, use log scale to improve color differentiation (most CBGs have small volumes)
+    # but display original linear values in hover text and colorbar labels
+    vol_bg_log = np.log10(vol_bg + 0.01)  # Add small constant to avoid log(0)
+
+    # Create colorbar ticks at log scale with linear value labels for CBG layer
+    # Maps: 10^-1=0.1, 10^0=1, 10^1=10, 10^2=100, 10^3=1000, 10^4=10000 M gal
+    cbg_colorbar_tickvals = [-1, 0, 1, 2, 3, 4]
+    cbg_colorbar_ticktext = ['0.1', '1', '10', '100', '1 k', '10 k']
+
     traces = [
         _choropleth_trace(gj_ws,   'properties.NAME', vol_ws.index.tolist(),   vol_ws.tolist(),   'Watersheds',          _SCALE_WATERSHED, label, visible=True),
         _choropleth_trace(gj_town, 'properties.TOWN', vol_muni.index.tolist(), vol_muni.tolist(), 'Municipalities',      _SCALE_MUNI,      label, visible=False),
-        _choropleth_trace(gj_bg,   'properties.GEOID', [str(x) for x in vol_bg.index.tolist()],  vol_bg.tolist(),   'Census Block Groups', _SCALE_CBG,       label, visible=False),
+        _choropleth_trace(gj_bg,   'properties.GEOID', [str(x) for x in vol_bg.index.tolist()],  vol_bg_log.tolist(),   'Census Block Groups', _SCALE_CBG,       label, visible=False, customdata=vol_bg.tolist(), colorbar_tickvals=cbg_colorbar_tickvals, colorbar_ticktext=cbg_colorbar_ticktext),
         _cso_point_trace(data_cso, lat_col, lon_col, vol_col, count_col, loc_col, waterbody_col, muni_col, operator_col, period_label),
     ]
 
