@@ -1,16 +1,19 @@
 from __future__ import absolute_import
+import sys
+import os
+sys.path.insert(0, os.path.dirname(__file__))
+
 import pandas as pd
 import numpy as np
 from sqlalchemy import create_engine
 import chartjs
 import json
 import ast
-import folium
 from scipy.stats import pearsonr
 
 import matplotlib as mpl
-from six.moves import range
-from shapely.geometry import shape
+
+from cso_maps import make_enforcement_map
 
 color_cycle = [c['color'] for c in list(mpl.rcParams['axes.prop_cycle'])]
 
@@ -87,22 +90,30 @@ mychart.jekyll_write('../docs/_includes/charts/MADEP_enforcement_fines_overall.h
 
 s_data_g_na = s_data.dropna().groupby(['Year']).Fine
 
-## Establish stacked chart
+## Establish stacked chart: top N individual penalties + "Other" bucket
+TOP_N = 10
 mychart = chartjs.chart("Individual DEP Enforcement Penalties ($M)", "Bar", 640, 480)
 mychart.set_labels(s_data_g.index.values.tolist())
-## Output one series for each penalty
-max_counts = s_data.groupby(['Year']).count().Fine.max()
 rgba_list = [
 	'rgba(166,206,227)',
 	'rgba(31,120,180)',
 	'rgba(178,223,138)',
 	'rgba(51,160,44)'
 	]
-for i in range(max_counts):
-	get_sorted_i = lambda x: 0 if (i > len(x) - 1) else sorted(x.values)[::-1][i]
-	mychart.add_dataset((s_data_g_na.apply(get_sorted_i)/1e6).tolist(), 
-		"Rank among largest reported penalties of the year: "+str(i),
+for i in range(TOP_N):
+	def get_sorted_i(x, _i=i):
+		s = sorted(x.values)[::-1]
+		return s[_i] if _i < len(s) else 0
+	mychart.add_dataset((s_data_g_na.apply(get_sorted_i)/1e6).tolist(),
+		"Rank #{} penalty of the year".format(i + 1),
 		backgroundColor="'"+rgba_list[np.mod(i, len(rgba_list))]+"'",)
+# "Other" bucket: sum of all penalties beyond rank TOP_N
+def get_other(x):
+	s = sorted(x.values)[::-1]
+	return sum(s[TOP_N:]) if len(s) > TOP_N else 0
+mychart.add_dataset((s_data_g_na.apply(get_other)/1e6).tolist(),
+	"All other penalties (ranks {0}+)".format(TOP_N + 1),
+	backgroundColor="'rgba(200,200,200,0.7)'",)
 mychart.set_params(JSinline = 0, ylabel = 'Sum of reported penalties ($M)', xlabel='Year',
 	scaleBeginAtZero=1, stacked=1, legend=0)
 
@@ -303,63 +314,13 @@ merge_census_df = pd.DataFrame(data={
 	}, index=towns)
 
 
-## Map total inspections
-map_bytown = folium.Map(
-	location=[42.29, -71.74], 
-	zoom_start=8.2,
-	tiles='cartodbpositron',
-	)
-
-## Draw choropleth
-map_bytown.choropleth(
-	geo_data=geo_towns, 
-	data=town_count,
-	key_on='feature.properties.TOWN',
-	legend_name='Total # of MA DEP enforcements reported',
-	threshold_scale = [0,1.] + list(np.percentile(town_count, [50,90,95, 100])),
-	fill_color='PuBu', fill_opacity=0.7, line_opacity=0.3, highlight=True,
-	)
-
-## Add statistics and top enforcement actions to each city
-for i in range(len(geo_towns_dict)):
-	town = geo_towns_dict[i]['properties']['TOWN']
-	if town in towns:
-		## Gather town data
-		enforcements = merge_census_df['DEP enforcements'].loc[town]
-		pop14 = merge_census_df['Population'].loc[town]
-		top_enforcements = s_data[s_data.municipality.apply(lambda x: town in x)].sort_values('Fine', ascending=False)[['Date','Fine','Text']].values[:3]
-		enforcement_summary = '<br>'.join(['<b>'+c[0]+', $%0.0f'%(0 if np.isnan(c[1]) else c[1])+'</b>: '+c[2] for c in top_enforcements])
-		## Take average position of polygon points for marker center
-		raw_coords = shape(geo_towns_dict[i]['geometry'])
-		mean_pos = raw_coords.centroid.x, raw_coords.centroid.y
-		## Add marker
-		html="""
-		<h1>{town}</h1>
-		<p>Population (2014): {pop}<br>
-		Total MA DEP enforcements reported since {enforcement_start}: {enforcements}</p>
-		
-		<p>Largest enforcements reported (by penalty):</p>
-		<p>{enforcement_summary}</p>
-		""".format(
-				town=town, 
-				pop=pop14, 
-				enforcements=enforcements, 
-				enforcement_summary=enforcement_summary, 
-				enforcement_start=s_data.Year.min()
-			)
-		iframe = folium.IFrame(html=html, width=400, height=200)
-		popup = folium.Popup(iframe, max_width=500)
-		folium.RegularPolygonMarker(
-				location=mean_pos, 
-				popup=popup, 
-				number_of_sides=4, 
-				radius=6, 
-				color='green',
-				fill_color='green',
-			).add_to(map_bytown)
-
-## Save to html
-map_bytown.save(geo_out_path+'MADEP_enforcements_town_total.html')
+## Map total enforcements by town (plotly)
+make_enforcement_map(
+	town_count=town_count,
+	enforcement_df=s_data,
+	geo_towns_path=geo_towns,
+	outpath=geo_out_path+'MADEP_enforcements_town_total.html',
+)
 
 
 #############################

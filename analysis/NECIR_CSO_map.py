@@ -24,7 +24,7 @@ from typing import Any, Dict, List, Optional, Tuple
 
 import chartjs
 import geopandas as gpd
-import folium
+from cso_maps import make_discharge_map, make_ej_map
 from joblib import Memory
 import matplotlib as mpl
 from matplotlib import pyplot as plt
@@ -451,202 +451,60 @@ class CSOAnalysis():
     # Mapping functions
     # -------------------------
     
-    def make_map_discharge_volumes(self, data_cso: pd.DataFrame, geo_watersheds_df: gpd.GeoDataFrame, data_ins_g_bg: pd.DataFrame, 
+    def make_map_discharge_volumes(self, data_cso: pd.DataFrame, geo_watersheds_df: gpd.GeoDataFrame, data_ins_g_bg: pd.DataFrame,
         data_ins_g_muni_j: pd.DataFrame, data_ins_g_ws_j: pd.DataFrame):
-        """
-        Map of discharge volumes with layers for watershed, town, and census block group with CSO points
-        """
+        """Map of discharge volumes with layer toggle (watershed/municipality/CBG) and CSO point overlay."""
         logging.info('Making map of discharge volumes')
-        ## Map total discharge volume
-        map_1 = folium.Map(
-            location=[42.29, -71.74],
-            zoom_start=8.2,
-            tiles='OpenStreetMap',
-            )
+        make_discharge_map(
+            data_cso=data_cso,
+            data_ins_g_bg=data_ins_g_bg,
+            data_ins_g_muni=data_ins_g_muni_j,
+            data_ins_g_ws=data_ins_g_ws_j,
+            geo_blockgroups_path=self.geo_blockgroups_path,
+            geo_towns_path=self.geo_towns_path,
+            geo_watershed_path=self.geo_watershed_path,
+            outpath=self.out_path + f'{self.output_slug}_map_total.html',
+            vol_col=self.discharge_vol_col,
+            count_col=self.discharge_count_col,
+            lat_col=self.latitude_col,
+            lon_col=self.longitude_col,
+            loc_col=self.outfall_address_col,
+            waterbody_col=self.water_body_col,
+            muni_col=self.municipality_col,
+            operator_col='permiteeName',
+            period_label=str(self.cso_data_year),
+        )
 
-        # We show only the watershed view by default
-        ## Draw choropleth layer for census blocks
-        folium.Choropleth(
-            geo_data=self.geo_blockgroups_path,
-            name='Census Block Groups',
-            data=data_ins_g_bg[self.discharge_vol_col],
-            key_on='feature.properties.GEOID',
-            legend_name=f'Block Group: Total volume of discharge ({self.cso_data_year}; Millions of gallons)',
-            threshold_scale=list(np.nanpercentile(data_ins_g_bg[self.discharge_vol_col], [0,25,50,75,100])),
-            fill_color='BuGn', fill_opacity=0.7, line_opacity=0.3, highlight=True, show=False
-            ).add_to(map_1)
-
-        ## Draw Choropleth layer for towns
-        folium.Choropleth(
-            geo_data=self.geo_towns_path,
-            name='Municipalities',
-            data=data_ins_g_muni_j[self.discharge_vol_col],
-            key_on='feature.properties.TOWN',
-            legend_name=f'Municipality: Total volume of discharge ({self.cso_data_year}; Millions of gallons)',
-            threshold_scale=[0] + list(np.nanpercentile(
-                data_ins_g_muni_j[self.discharge_vol_col][data_ins_g_muni_j[self.discharge_vol_col] > 0],
-                [25,50,75,100])),
-            fill_color='PuRd', fill_opacity=0.7, line_opacity=0.3, highlight=True, show=False
-            ).add_to(map_1)
-
-        ## Draw Choropleth layer for watersheds
-        folium.Choropleth(
-            geo_data=self.geo_watershed_path,
-            name='Watersheds',
-            data=data_ins_g_ws_j[self.discharge_vol_col],
-            key_on='feature.properties.NAME',
-            legend_name=f'Watershed: Total volume of discharge ({self.cso_data_year}; Millions of gallons)',
-            threshold_scale=list(np.nanpercentile(data_ins_g_ws_j[self.discharge_vol_col], [0,25,50,75,100])),
-            fill_color='PuBu', fill_opacity=0.7, line_opacity=0.3, highlight=True,
-            ).add_to(map_1)
-
-        ## Add points layer for CSOs
-        for i in range(len(data_cso)):
-            ## Gather CSO data
-            cso = data_cso.iloc[i]
-            ## Add marker
-            html="""
-            <h1>CSO outfall at {address}</h1>
-            <p>
-            Discharge Body: {body}<br>
-            Municipality: {muni}<br>
-            Discharge volume ({cso_data_year}): {vol} (Millions of gallons)<br>
-            Discharge frequency ({cso_data_year}): {N} discharges<br>
-            </p>
-            """.format(
-                    address = cso[self.outfall_address_col],
-                    body = cso[self.water_body_col],
-                    muni = cso[self.municipality_col],
-                    vol = cso[self.discharge_vol_col],
-                    N = cso[self.discharge_count_col],
-                    cso_data_year = self.cso_data_year
-                )
-            iframe = folium.IFrame(html=html, width=400, height=200)
-            popup = folium.Popup(iframe, max_width=500)
-            folium.RegularPolygonMarker(
-                    location=(cso[self.latitude_col], cso[self.longitude_col]), 
-                    popup=popup, 
-                    number_of_sides=8, 
-                    radius=6, 
-                    color='green',
-                    fill_color='green',
-                ).add_to(map_1)
-
-        ## Add labels for watersheds
-        for fid, feature in geo_watersheds_df.iterrows():
-            pos = feature['geometry'].centroid.coords.xy
-            pos = (pos[1][0], pos[0][0])
-            folium.Marker(pos, icon=folium.features.DivIcon(
-                icon_size=(150,36),
-                icon_anchor=(7,20),
-                html='<div style="font-size: 12pt; color: blue; opacity: 0.3">{}</div>'.format(feature['NAME']),
-                )).add_to(map_1)
-
-        ## Add a layer control
-        folium.LayerControl(collapsed=False).add_to(map_1)
-
-        ## Save to html
-        map_1.save(self.out_path + f'{self.output_slug}_map_total.html')
-
-    def make_map_ej_characteristics(self, data_egs_merge: pd.DataFrame, data_cso: pd.DataFrame, 
+    def make_map_ej_characteristics(self, data_egs_merge: pd.DataFrame, data_cso: pd.DataFrame,
         df_town_level: pd.DataFrame, df_watershed_level: pd.DataFrame, geo_watersheds_df: gpd.GeoDataFrame):
-        """Map of EJ characteristics with layers for watershed, town, and census block group with CSO points
-        """
-        logging.info('Making map of EJ characteristics')
+        """Maps of EJ characteristics with layer toggle (watershed/municipality/CBG) and CSO point overlay."""
+        logging.info('Making maps of EJ characteristics')
         for col, col_label in (
-            ('MINORPCT', 'Fraction of population identifying as non-white'),
-            ('LOWINCPCT', 'Fraction of population with income less than twice the Federal poverty limit'),
+            ('MINORPCT',   'Fraction of population identifying as non-white'),
+            ('LOWINCPCT',  'Fraction of population with income less than twice the Federal poverty limit'),
             ('LINGISOPCT', 'Fraction of population in households whose adults speak English less than "very well"'),
-            ):
-
-            ## Map total discharge volume
-            map_2 = folium.Map(
-                location=[42.29, -71.74],
-                zoom_start=8.2,
-                tiles='OpenStreetMap',
-                )
-
-            # We show only the watershed by default
-            ## Draw choropleth layer for census blocks
-            folium.Choropleth(
-                geo_data=self.geo_blockgroups_path,
-                name='Census Block Groups',
-                data=data_egs_merge[col],
-                key_on='feature.properties.GEOID',
-                legend_name='Block Group: '+col_label,
-                threshold_scale=list(np.nanpercentile(data_egs_merge[col], [0,25,50,75,100])),
-                fill_color='BuGn', fill_opacity=0.7, line_opacity=0.3, highlight=True, show=False
-                ).add_to(map_2)
-
-            ## Draw Choropleth layer for towns
-            folium.Choropleth(
-                geo_data=self.geo_towns_path,
-                name='Municipalities',
-                data=df_town_level[col],
-                key_on='feature.properties.TOWN',
-                legend_name='Municipality: '+col_label,
-                threshold_scale=list(np.nanpercentile(df_town_level[col], [0,25,50,75,100])),
-                fill_color='PuRd', fill_opacity=0.7, line_opacity=0.3, highlight=True, show=False
-                ).add_to(map_2)
-
-            ## Draw Choropleth layer for watersheds
-            folium.Choropleth(
-                geo_data=self.geo_watershed_path,
-                name='Watersheds',
-                data=df_watershed_level[col],
-                key_on='feature.properties.NAME',
-                legend_name='Watershed: '+col_label,
-                threshold_scale=list(np.nanpercentile(df_watershed_level[col], [0,25,50,75,100])),
-                fill_color='PuBu', fill_opacity=0.7, line_opacity=0.3, highlight=True,
-                ).add_to(map_2)
-
-            ## Add points layer for CSOs
-            for i in range(len(data_cso)):
-                ## Gather CSO data
-                cso = data_cso.iloc[i]
-                ## Add marker
-                html="""
-                <h1>CSO outfall at {address}</h1>
-                <p>
-                Discharge Body: {body}<br>
-                Municipality: {muni}<br>
-                Discharge volume ({cso_data_year}): {vol} (Millions of gallons)<br>
-                Discharge frequency ({cso_data_year}): {N} discharges<br>
-                </p>
-                """.format(
-                        address = cso[self.outfall_address_col],
-                        body = cso[self.water_body_col],
-                        muni = cso[self.municipality_col],
-                        vol = cso[self.discharge_vol_col],
-                        N = cso[self.discharge_count_col],
-                        cso_data_year = self.cso_data_year
-                    )
-                iframe = folium.IFrame(html=html, width=400, height=200)
-                popup = folium.Popup(iframe, max_width=500)
-                folium.RegularPolygonMarker(
-                        location=(cso[self.latitude_col], cso[self.longitude_col]), 
-                        popup=popup, 
-                        number_of_sides=8, 
-                        radius=6, 
-                        color='green',
-                        fill_color='green',
-                    ).add_to(map_2)
-
-            ## Add labels for watersheds
-            for fid, feature in geo_watersheds_df.iterrows():
-                pos = shape(feature['geometry']).centroid.coords.xy
-                pos = (pos[1][0], pos[0][0])
-                folium.Marker(pos, icon=folium.features.DivIcon(
-                    icon_size=(150,36),
-                    icon_anchor=(7,20),
-                    html='<div style="font-size: 12pt; color: blue; opacity: 0.3">{}</div>'.format(feature['NAME']),
-                    )).add_to(map_2)
-
-            ## Add a layer control
-            folium.LayerControl(collapsed=False).add_to(map_2)
-
-            ## Save to html
-            map_2.save(self.out_path + f'{self.output_slug}_map_EJ_'+col+'.html')
+        ):
+            make_ej_map(
+                data_cso=data_cso,
+                data_egs_merge=data_egs_merge,
+                df_town_level=df_town_level,
+                df_watershed_level=df_watershed_level,
+                geo_blockgroups_path=self.geo_blockgroups_path,
+                geo_towns_path=self.geo_towns_path,
+                geo_watershed_path=self.geo_watershed_path,
+                outpath=self.out_path + f'{self.output_slug}_map_EJ_{col}.html',
+                ej_col=col,
+                ej_label=col_label,
+                vol_col=self.discharge_vol_col,
+                count_col=self.discharge_count_col,
+                lat_col=self.latitude_col,
+                lon_col=self.longitude_col,
+                loc_col=self.outfall_address_col,
+                waterbody_col=self.water_body_col,
+                muni_col=self.municipality_col,
+                operator_col='permiteeName',
+                period_label=str(self.cso_data_year),
+            )
 
     @staticmethod
     def make_chart_summary_ej_characteristics_watershed(df_watershed_level: pd.DataFrame, 

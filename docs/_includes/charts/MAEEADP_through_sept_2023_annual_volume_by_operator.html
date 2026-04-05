@@ -1,0 +1,79 @@
+{% raw  %}
+<html>
+    <head>
+        <title>Annual discharge volume by operator</title>
+        <script src='https://cdn.jsdelivr.net/npm/chart.js@2.8.0/dist/Chart.bundle.min.js'></script>
+    </head>
+    <body>
+        <div style="width: 640px; height: 480px; max-width: 99%" class="chartjs">
+
+            <canvas id="Annual discharge volume by operator" height="480" width="640"></canvas>
+            <script>
+                Chart.defaults.global.defaultFontSize = 12;
+                var chart_data = {
+                
+                    data: {
+                        labels: ['2023', '2024', '2025'],
+                        datasets: [{'data': [1896.409002, 2270.532541, 528.95], 'label': 'MASSACHUSETTS WATER RESOURCES AUTHORITY', 'backgroundColor': 'rgba(31, 119, 180,0.15)', 'borderColor': 'rgba(31, 119, 180,0.9)', 'pointBackgroundColor': 'rgba(31, 119, 180,0.9)', 'fill': false, 'pointRadius': 4, 'pointHoverRadius': 6, 'borderWidth': 2, 'yAxisID': 'y-axis-0'},{'data': [1762.563547, 1238.870408, 592.461988], 'label': 'LOWELL REGIONAL WASTEWATER UTILITY', 'backgroundColor': 'rgba(255, 127, 14,0.15)', 'borderColor': 'rgba(255, 127, 14,0.9)', 'pointBackgroundColor': 'rgba(255, 127, 14,0.9)', 'fill': false, 'pointRadius': 4, 'pointHoverRadius': 6, 'borderWidth': 2, 'yAxisID': 'y-axis-0'},{'data': [1049.562493, 1012.332578, 527.4359], 'label': 'CITY OF FALL RIVER', 'backgroundColor': 'rgba(44, 160, 44,0.15)', 'borderColor': 'rgba(44, 160, 44,0.9)', 'pointBackgroundColor': 'rgba(44, 160, 44,0.9)', 'fill': false, 'pointRadius': 4, 'pointHoverRadius': 6, 'borderWidth': 2, 'yAxisID': 'y-axis-0'},{'data': [478.146773, 605.80802, 400.906749], 'label': 'CITY OF NEW BEDFORD', 'backgroundColor': 'rgba(214, 39, 40,0.15)', 'borderColor': 'rgba(214, 39, 40,0.9)', 'pointBackgroundColor': 'rgba(214, 39, 40,0.9)', 'fill': false, 'pointRadius': 4, 'pointHoverRadius': 6, 'borderWidth': 2, 'yAxisID': 'y-axis-0'},{'data': [489.819564, 292.265706, 482.820124], 'label': 'SPRINGFIELD WATER & SEWER COMMISSION', 'backgroundColor': 'rgba(148, 103, 189,0.15)', 'borderColor': 'rgba(148, 103, 189,0.9)', 'pointBackgroundColor': 'rgba(148, 103, 189,0.9)', 'fill': false, 'pointRadius': 4, 'pointHoverRadius': 6, 'borderWidth': 2, 'yAxisID': 'y-axis-0'},{'data': [0.0, 999.999999, 0.0], 'label': 'ATTLEBORO WASTEWATER TREATMENT FACILITY', 'backgroundColor': 'rgba(140, 86, 75,0.15)', 'borderColor': 'rgba(140, 86, 75,0.9)', 'pointBackgroundColor': 'rgba(140, 86, 75,0.9)', 'fill': false, 'pointRadius': 4, 'pointHoverRadius': 6, 'borderWidth': 2, 'yAxisID': 'y-axis-0'},{'data': [349.448648, 204.550222, 254.641238], 'label': 'CITY OF HOLYOKE', 'backgroundColor': 'rgba(227, 119, 194,0.15)', 'borderColor': 'rgba(227, 119, 194,0.9)', 'pointBackgroundColor': 'rgba(227, 119, 194,0.9)', 'fill': false, 'pointRadius': 4, 'pointHoverRadius': 6, 'borderWidth': 2, 'yAxisID': 'y-axis-0'},{'data': [230.649, 248.650345, 62.936001], 'label': 'CITY OF WORCESTER', 'backgroundColor': 'rgba(127, 127, 127,0.15)', 'borderColor': 'rgba(127, 127, 127,0.9)', 'pointBackgroundColor': 'rgba(127, 127, 127,0.9)', 'fill': false, 'pointRadius': 4, 'pointHoverRadius': 6, 'borderWidth': 2, 'yAxisID': 'y-axis-0'}]
+                    },
+                    type: 'line',
+                    options: {
+                        scales: {
+                            yAxes: [{
+                                display: true,
+                                scaleLabel: {
+                                    display: true,
+                                    labelString: 'Discharge volume (millions of gallons)'
+                                },
+                                ticks: {
+                                    beginAtZero: true, min: 0
+                                },
+                                "id": "y-axis-0",
+                                "position": "left",
+                                stacked: false
+                            }, {
+                                display: false,
+                                scaleLabel: {
+                                    display: true,
+                                    labelString: ''
+                                },
+                                ticks: {
+                                    beginAtZero: true, min: 0
+                                },
+                                "id": "y-axis-1",
+                                "position": "right"
+                            }],
+                            xAxes: [{
+                                scaleLabel: {
+                                    display: true,
+                                    labelString: 'Calendar year'
+                                },
+                                stacked: false,
+                                ticks: {
+                                    autoSkip: true
+                                }
+                            }]
+                        },
+                        legend: {
+                            display: true
+                            },
+                        tooltips: {
+                            display: true
+                            }
+                    },
+                }
+                
+                
+                
+            </script>
+            <script>
+                {{
+                    var ctx = document.getElementById("Annual discharge volume by operator").getContext("2d");
+                    var mychart = new Chart(ctx, chart_data);
+                }}
+            </script>
+
+        </div>
+    </body>
+</html>
+{% endraw  %}

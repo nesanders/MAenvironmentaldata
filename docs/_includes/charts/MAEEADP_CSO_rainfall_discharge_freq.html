@@ -1,0 +1,81 @@
+{% raw  %}
+<html>
+    <head>
+        <title>Fraction of days with any discharge by prior-48-hr rainfall</title>
+        <script src='https://cdn.jsdelivr.net/npm/chart.js@2.8.0/dist/Chart.bundle.min.js'></script>
+    </head>
+    <body>
+        <div style="width: 640px; height: 380px; max-width: 99%" class="chartjs">
+
+            <canvas id="Fraction of days with any discharge by prior-48-hr rainfall" height="380" width="640"></canvas>
+            <script>
+                Chart.defaults.global.defaultFontSize = 12;
+                var chart_data = {
+                
+                    data: {
+                        labels: ['None (<0.05 in)', 'Light (0.05–0.25 in)', 'Moderate (0.25–0.75 in)', 'Heavy (0.75–1.5 in)', 'Very heavy (>1.5 in)'],
+                        datasets: [{'data': [10.986547085201794, 11.769834350479512, 12.153518123667377, 13.23529411764706, 13.20754716981132], 'label': '% of days with any discharge', 'backgroundColor': 'rgba(31, 119, 180,0.7)', 'borderColor': 'rgba(31, 119, 180,1.0)', 'borderWidth': 1, 'yAxisID': 'y-axis-0'},{'data': [1784, 1147, 938, 408, 106], 'label': 'Days in bin', 'type': 'line', 'yAxisID': 'y-axis-1', 'backgroundColor': 'rgba(44, 160, 44,0.15)', 'borderColor': 'rgba(44, 160, 44,0.7)', 'pointBackgroundColor': 'rgba(44, 160, 44,0.9)', 'pointRadius': 4, 'fill': false}]
+                    },
+                    type: 'bar',
+                    options: {
+                        scales: {
+                            yAxes: [{
+                                display: true,
+                                scaleLabel: {
+                                    display: true,
+                                    labelString: 'Days with discharge reported (%)'
+                                },
+                                ticks: {
+                                    beginAtZero: true, min: 0
+                                },
+                                "id": "y-axis-0",
+                                "position": "left",
+                                stacked: false
+                            }, {
+                                display: true,
+                                scaleLabel: {
+                                    display: true,
+                                    labelString: 'Number of days in bin'
+                                },
+                                ticks: {
+                                    beginAtZero: true, min: 0
+                                },
+                                "id": "y-axis-1",
+                                "position": "right"
+                            }],
+                            xAxes: [{
+                                scaleLabel: {
+                                    display: true,
+                                    labelString: 'Prior 48-hr precipitation (MA station avg)'
+                                },
+                                stacked: false,
+                                ticks: {
+                                    autoSkip: true
+                                }
+                            }]
+                        },
+                        legend: {
+                            display: true
+                            },
+                        tooltips: {
+                            display: true
+                            }
+                    },
+                }
+                
+                
+                
+
+chart_data.options.tooltips = { callbacks: { label: function(item, data) { if (item.datasetIndex === 0) {  return item.yLabel.toFixed(1) + "% of days with discharge"; } else {  return item.yLabel.toFixed(0) + " days in bin"; }} } };
+            </script>
+            <script>
+                {{
+                    var ctx = document.getElementById("Fraction of days with any discharge by prior-48-hr rainfall").getContext("2d");
+                    var mychart = new Chart(ctx, chart_data);
+                }}
+            </script>
+
+        </div>
+    </body>
+</html>
+{% endraw  %}

@@ -48,6 +48,7 @@ if __name__ == '__main__':
 	data_csv['EPA_EJSCREEN_2017'] = pd.read_csv('../docs/data/EPA_EJSCREEN_MA_2017.csv')
 	data_csv['EPA_EJSCREEN_2023'] = pd.read_csv('../docs/data/EPA_EJSCREEN_MA_2023.csv')
 	data_csv['MAEEADP_CSO'] = pd.read_csv('../docs/data/EEADP_CSO.csv')
+	data_csv['MA_precipitation_daily'] = pd.read_csv('../docs/data/MA_precipitation_daily.csv')
 
 	## Extend SSAWages with placeholder rows for years not yet in the source CSV.
 	## Zero-fill the growth columns; Year and AWI are carried forward from the last known year.

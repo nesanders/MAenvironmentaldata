@@ -1,0 +1,79 @@
+{% raw  %}
+<html>
+    <head>
+        <title>EJ-CSO correlation over time (watershed level)</title>
+        <script src='https://cdn.jsdelivr.net/npm/chart.js@2.8.0/dist/Chart.bundle.min.js'></script>
+    </head>
+    <body>
+        <div style="width: 700px; height: 420px; max-width: 99%" class="chartjs">
+
+            <canvas id="EJ-CSO correlation over time (watershed level)" height="420" width="700"></canvas>
+            <script>
+                Chart.defaults.global.defaultFontSize = 12;
+                var chart_data = {
+                
+                    data: {
+                        labels: ['2011*', '2012', '2013', '2014', '2015', '2016', '2017', '2018', '2019', '2020', '2021', '2022', '2023', '2024', '2025'],
+                        datasets: [{'data': [1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0], 'label': 'Equity (ratio = 1)', 'borderColor': 'rgba(80,80,80,0.6)', 'backgroundColor': 'rgba(0,0,0,0)', 'fill': false, 'pointRadius': 0, 'borderWidth': 1, 'borderDash': [6,4], 'yAxisID': 'y-axis-0', 'spanGaps': true},{'data': [3.0, 'null', 'null', 'null', 'null', 'null', 'null', 'null', 'null', 'null', 'null', 'null', 4.807531635492635, 5.409497121413333, 4.628394969900669], 'label': 'Fraction non-white', 'borderColor': 'rgba(31, 119, 180,0.9)', 'backgroundColor': 'rgba(31, 119, 180,0.15)', 'pointBackgroundColor': 'rgba(31, 119, 180,0.9)', 'fill': false, 'pointRadius': 5, 'borderWidth': 2, 'yAxisID': 'y-axis-0', 'spanGaps': true},{'data': [3.3, 'null', 'null', 'null', 'null', 'null', 'null', 'null', 'null', 'null', 'null', 'null', 3.1115042567326534, 3.9398161963385165, 3.0895531089355783], 'label': 'Fraction low income', 'borderColor': 'rgba(255, 127, 14,0.9)', 'backgroundColor': 'rgba(255, 127, 14,0.15)', 'pointBackgroundColor': 'rgba(255, 127, 14,0.9)', 'fill': false, 'pointRadius': 5, 'borderWidth': 2, 'yAxisID': 'y-axis-0', 'spanGaps': true},{'data': [1.6, 'null', 'null', 'null', 'null', 'null', 'null', 'null', 'null', 'null', 'null', 'null', 1.8599279493317673, 2.2840952958704506, 1.8888021577677905], 'label': 'Fraction linguistically isolated', 'borderColor': 'rgba(44, 160, 44,0.9)', 'backgroundColor': 'rgba(44, 160, 44,0.15)', 'pointBackgroundColor': 'rgba(44, 160, 44,0.9)', 'fill': false, 'pointRadius': 5, 'borderWidth': 2, 'yAxisID': 'y-axis-0', 'spanGaps': true}]
+                    },
+                    type: 'line',
+                    options: {
+                        scales: {
+                            yAxes: [{
+                                display: true,
+                                scaleLabel: {
+                                    display: true,
+                                    labelString: 'EJ-CSO correlation (2ˣ growth ratio, watershed level)'
+                                },
+                                ticks: {
+                                    beginAtZero: false, min: 0
+                                },
+                                "id": "y-axis-0",
+                                "position": "left",
+                                stacked: false
+                            }, {
+                                display: false,
+                                scaleLabel: {
+                                    display: true,
+                                    labelString: ''
+                                },
+                                ticks: {
+                                    beginAtZero: false, min: 0
+                                },
+                                "id": "y-axis-1",
+                                "position": "right"
+                            }],
+                            xAxes: [{
+                                scaleLabel: {
+                                    display: true,
+                                    labelString: 'Calendar year'
+                                },
+                                stacked: false,
+                                ticks: {
+                                    autoSkip: true
+                                }
+                            }]
+                        },
+                        legend: {
+                            display: true
+                            },
+                        tooltips: {
+                            display: true, callbacks: { label: function(item, data) { if (data.datasets[item.datasetIndex].label === "Equity (ratio = 1)") return null; var v = item.yLabel;  return data.datasets[item.datasetIndex].label + ': ' + (typeof v === 'number' ? v.toFixed(1) : v); } }
+                            }
+                    },
+                }
+                
+                
+                
+            </script>
+            <script>
+                {{
+                    var ctx = document.getElementById("EJ-CSO correlation over time (watershed level)").getContext("2d");
+                    var mychart = new Chart(ctx, chart_data);
+                }}
+            </script>
+
+        </div>
+    </body>
+</html>
+{% endraw  %}
