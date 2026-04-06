@@ -195,7 +195,7 @@ def generate_charts(engine, prefix=''):
 		borderWidth = 2,
 		stack="'annual'", type="'line'", yAxisID= "'y-axis-1'")
 	mychart.set_params(JSinline = 0, ylabel = 'Number of enforcements', xlabel='Year',
-		y2nd = 1, y2nd_title = 'Funding level ($M, 2016 dollars)',
+		y2nd = 1, y2nd_title = 'Funding level ($M, 2024 dollars)',
 		scaleBeginAtZero=0)
 
 	mychart.jekyll_write(f'../docs/_includes/charts/{prefix}MADEP_enforcement_vsbudget.html')
@@ -231,6 +231,56 @@ def generate_charts(engine, prefix=''):
 		scaleBeginAtZero=1)
 
 	mychart.jekyll_write(f'../docs/_includes/charts/{prefix}MADEP_enforcement_bytopic.html')
+
+
+	#############################
+	## Show enforcement actions by type per year (using MAEEADP data through 2026)
+	## Uses substantive enforcement types after filtering routine notices
+	#############################
+
+	s_data_enftype = s_data.groupby(['Year', 'EnforcementType']).size().unstack(fill_value=0)
+
+	## Map full enforcement type names to shorter labels
+	enforce_type_labels = {
+		'Administrative Consent Order With Penalty': 'ACO w/ Penalty',
+		'Administrative Consent Order No Penalty': 'ACO w/o Penalty',
+		'Unilateral Administrative Order': 'Unilateral Order',
+		'Penalty Assessment Notice': 'Penalty Notice',
+		'Reporting Penalty Assessment Notice': 'Reporting Penalty',
+		'Demand Action': 'Demand Action',
+		'FEDERAL ADMINISTRATIVE ORDER AGAINST PWS': 'Federal ACO (PWS)',
+		'FEDERAL NOTICE OF NONCOMPLIANCE AGAINST PWS': 'Federal NOC (PWS)',
+	}
+
+	## Establish chart
+	mychart = chartjs.chart("DEP Enforcements by Action Type", "Bar", 640, 480)
+	# Format year labels as integers
+	mychart.set_labels([str(int(y)) for y in s_data_enftype.index.values])
+
+	# Add datasets for each enforcement type with distinct colors
+	color_palette = [
+		'rgba(31,120,180,0.8)',
+		'rgba(166,206,227,0.8)',
+		'rgba(51,160,44,0.8)',
+		'rgba(178,223,138,0.8)',
+		'rgba(227,26,28,0.8)',
+		'rgba(253,191,111,0.8)',
+		'rgba(202,178,214,0.8)',
+		'rgba(106,61,154,0.8)',
+	]
+
+	for i, enftype in enumerate(s_data_enftype.columns):
+		label = enforce_type_labels.get(enftype, enftype)
+		color = color_palette[i % len(color_palette)]
+		mychart.add_dataset(s_data_enftype[enftype].values.tolist(),
+			label,
+			backgroundColor="'"+color+"'",
+			stack="'annual'", yAxisID="'y-axis-0'")
+
+	mychart.set_params(JSinline = 0, ylabel = 'Number of enforcement actions', xlabel='Year',
+		scaleBeginAtZero=1, stacked=1)
+
+	mychart.jekyll_write(f'../docs/_includes/charts/{prefix}MADEP_enforcement_bytype.html')
 
 
 	## Export some facts (using MADEP data for topic facts).

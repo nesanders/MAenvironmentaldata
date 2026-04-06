@@ -50,8 +50,8 @@ def generate_charts(engine, prefix=''):
 	## Get DEP funding data
 	inf_data = pd.read_sql_query('SELECT * FROM SSAWages', engine)
 	inf_data.index = inf_data.Year.astype(str)
-	inf_target = '2016'
-	## Restrict to relevant years and calculate correction factors
+	inf_target = '2024'
+	## Restrict to relevant years and calculate correction factors (2024 dollars)
 	inf_data_sel = inf_data.reindex(ECOS_years)
 	inf_data_sel['correct'] = inf_data_sel['AWI'].loc[inf_target] / inf_data_sel['AWI']
 

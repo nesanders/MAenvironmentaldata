@@ -40,10 +40,7 @@ jobs:
         working-directory: get_data
         run: |
           python get_EPARegion1_NPDES_permits.py
-          # get_MassBudget_environmental.py is currently broken: massbudget.org
-          # blocks the CSV endpoint (403) as of early 2026. The existing CSVs
-          # from June 2023 remain in the repo. Re-enable once a working source
-          # is found (consider contacting MassBudget for API access).
+          python get_budget_CTHRU.py
           python get_DEP_staff_SODA.py
           python get_EEA_data_portal.py
           python get_eea_dp_cso.py

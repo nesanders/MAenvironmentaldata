@@ -50,17 +50,22 @@ if __name__ == '__main__':
 	data_csv['MAEEADP_CSO'] = pd.read_csv('../docs/data/EEADP_CSO.csv')
 	data_csv['MA_precipitation_daily'] = pd.read_csv('../docs/data/MA_precipitation_daily.csv')
 
-	## Extend SSAWages with placeholder rows for years not yet in the source CSV.
-	## Zero-fill the growth columns; Year and AWI are carried forward from the last known year.
-	## Update this list as real SSA data becomes available at:
-	## https://www.ssa.gov/oact/cola/awidevelop.html
-	data_csv['SSAWages'] = pd.read_csv('../docs/data/SSAWages_2023-02-03.csv')
+	## Load SSAWages (auto-updated via get_SSAWages.py when available).
+	## If SSA source is blocked, use cached version; assemble_db will extend with
+	## placeholder rows for any years between SSA data and staff data.
+	try:
+		data_csv['SSAWages'] = pd.read_csv('../docs/data/SSAWages.csv')
+	except FileNotFoundError:
+		# Fallback to dated version if current version not available
+		data_csv['SSAWages'] = pd.read_csv('../docs/data/SSAWages_2023-02-03.csv')
 	last_staff_year = int(pd.read_csv('../docs/data/MADEP_staff_SODA.csv')['year'].max())
 	last_ssa_year = int(data_csv['SSAWages']['Year'].max())
 	for yr in range(last_ssa_year + 1, last_staff_year + 1):
-		data_csv['SSAWages'] = data_csv['SSAWages']._append(data_csv['SSAWages'].iloc[-1])
-		data_csv['SSAWages'].iloc[-1, 0] = yr
-		data_csv['SSAWages'].iloc[-1, 2:] = 0
+		# Extend with placeholder row (zero growth) for missing years
+		new_row = data_csv['SSAWages'].iloc[-1:].copy()
+		new_row.iloc[0, 0] = yr  # Update year column
+		new_row.iloc[0, 2:] = 0  # Zero-fill growth columns
+		data_csv['SSAWages'] = pd.concat([data_csv['SSAWages'], new_row], ignore_index=True)
 
 	data_csv['AMEND_metadata'] = pd.Series({
 		'Website':'https://nesanders.github.io/MAenvironmentaldata/index.html',

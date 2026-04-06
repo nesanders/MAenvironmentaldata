@@ -25,8 +25,9 @@ Full analysis: [Staff Changes at the MADEP Over Time]({{ site.url }}{{ site.base
 
 Payroll records from two sources are merged on employee name and calendar year, allowing a
 continuous series from 2004 onward. Staffing counts are tabulated by calendar year. Funding
-data comes from the <a href="{{ site.url }}{{ site.baseurl }}/data/MassBudget_environmental.html">MassBudget environmental appropriations database</a>,
-inflation-adjusted to 2015 dollars using the SSA Average Wage Index. Seniority is estimated
+data comes from the MA Comptroller CTHRU (Socrata API) for FY2005–present, supplemented with 
+<a href="{{ site.url }}{{ site.baseurl }}/data/MassBudget_environmental.html">MassBudget data</a> for FY2001–FY2004.
+Budget figures are inflation-adjusted to 2024 dollars using the SSA Average Wage Index. Seniority is estimated
 as the number of years each employee appears in the combined dataset relative to 2004, the
 first year of records.
 
@@ -45,8 +46,6 @@ for detailed caveats on data completeness and the merger of the two payroll sour
 {% include charts/dash_MADEP_staffing_overall.html %}
 
 ### Staffing vs. agency funding
-
-⚠️ **Staffing bars update weekly. Budget line reflects 2023 data (MassBudget source unavailable since 2026) and does not update automatically.**
 
 {% include charts/dash_MADEP_staffing_overall_funding.html %}
 
@@ -68,15 +67,15 @@ Full analysis: [Changes in Enforcement by MA DEP Over Time]({{ site.url }}{{ sit
 <details>
 <summary>About this data and methodology</summary>
 
-Enforcement counts use EEA Data Portal records spanning 1996 to present. Routine administrative notices (Notice Of Non-Compliance, Field NONs, Boil Orders, and federal notices) are excluded—these are issued at high volume and do not reflect investigative or enforcement officer effort. Substantive enforcement actions counted include consent orders, unilateral orders, and penalty notices. Budget data is the same inflation-adjusted MassBudget series used in the staffing section.
+Enforcement counts use EEA Data Portal records spanning 1996 to present. Routine administrative notices (Notice Of Non-Compliance, Field NONs, Boil Orders, and federal notices) are excluded—these are issued at high volume and do not reflect investigative or enforcement officer effort. Substantive enforcement actions counted include consent orders, unilateral orders, and penalty notices. Budget data comes from the MA Comptroller CTHRU API (FY2005–present) supplemented with cached MassBudget data (FY2001–FY2004), inflation-adjusted to 2024 dollars.
 
 The correlation between annual enforcement counts and agency budget is
 {{ site.data.facts_DEPenforce.cor_enforcement_funding }}%.
 Administrative Consent Orders with Penalties (ACOPs) are identified as a subset of consent orders;
 penalty amounts are estimated using bootstrap resampling with 90% confidence intervals.
 
-Topic breakdown (wetlands, NPDES, Chapter 91, etc.) uses the older MADEP press-release dataset and is only available through 2017; see the <a href="{{ site.url }}{{ site.baseurl }}/2017/04/02/dep-enforcements.html">2017 enforcement post</a>
-for the full methodology.
+See the <a href="{{ site.url }}{{ site.baseurl }}/2017/04/02/dep-enforcements.html">2017 enforcement post</a>
+for detailed topic-level analysis.
 
 </details>
 
@@ -86,13 +85,11 @@ for the full methodology.
 
 ### Enforcement actions vs. agency budget
 
-*Note: budget data shown reflects 2015 inflation-adjusted values and does not update automatically. Current MassBudget source is unavailable as of 2026.*
-
 {% include charts/dash_MADEP_enforcement_vsbudget.html %}
 
-### Enforcement actions by topic
+### Enforcement actions by type
 
-{% include charts/dash_MADEP_enforcement_bytopic.html %}
+{% include charts/dash_MADEP_enforcement_bytype.html %}
 
 ---
 
@@ -120,7 +117,7 @@ comparisons. Budget figures are adjusted for inflation using the SSA Average Wag
 
 ### Per-capita environmental spending by state
 
-⚠️ **ECOS budget data is updated manually, not weekly. Check [commit history](https://github.com/nesanders/MAenvironmentaldata) for the last update date.**
+*Note: ECOS budget data is fetched manually and does not update automatically each week. Last updated [check commit history](https://github.com/nesanders/MAenvironmentaldata).*
 
 {% include charts/dash_ECOS_budget_percap_peryear_bystate.html %}
 

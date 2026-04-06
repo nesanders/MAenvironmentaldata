@@ -39,10 +39,10 @@ def generate_charts(engine, prefix=''):
 	# Merge the two earnings columns
 	s_data_j['Earnings'] = s_data_j['Earnings'].fillna(s_data_j['pay_total_actual'])
 
-	## Get wage adjustments
+	## Get wage adjustments (2024 dollars)
 	ssa_wage_df = pd.read_sql_query('SELECT * FROM SSAWages', engine)
 	ssa_wage_df.index = ssa_wage_df.Year.astype(int)
-	wage_adjust = ssa_wage_df.loc[years].AWI.values / ssa_wage_df.loc[2015].AWI
+	wage_adjust = ssa_wage_df.loc[years].AWI.values / ssa_wage_df.loc[2024].AWI
 
 	## Get funding data
 	f_data = pd.read_sql_query('SELECT * FROM MassBudget_summary', engine)
@@ -91,7 +91,7 @@ def generate_charts(engine, prefix=''):
 		borderWidth = 2,
 		stack="'annual'", type="'line'", yAxisID= "'y-axis-1'")
 	mychart.set_params(JSinline = 0, ylabel = 'Total employment', xlabel='Year',
-		y2nd = 1, y2nd_title = 'Funding level ($M, 2016 dollars)',
+		y2nd = 1, y2nd_title = 'Funding level ($M, 2024 dollars)',
 		scaleBeginAtZero=0)
 
 	mychart.jekyll_write(f'../docs/_includes/charts/{prefix}MADEP_staffing_overall_funding.html')

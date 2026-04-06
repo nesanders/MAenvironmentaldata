@@ -1,20 +1,20 @@
 {% raw  %}
 <html>
     <head>
-        <title>DEP buyouts</title>
+        <title>DEP Enforcements by Action Type</title>
         <script src='https://cdn.jsdelivr.net/npm/chart.js@2.8.0/dist/Chart.bundle.min.js'></script>
     </head>
     <body>
         <div style="width: 640px; height: 480px; max-width: 99%" class="chartjs">
 
-            <canvas id="DEP buyouts" height="480" width="640"></canvas>
+            <canvas id="DEP Enforcements by Action Type" height="480" width="640"></canvas>
             <script>
                 Chart.defaults.global.defaultFontSize = 12;
                 var chart_data = {
                 
                     data: {
-                        labels: ['2004.0', '2005.0', '2006.0', '2007.0', '2008.0', '2009.0', '2010.0', '2011.0', '2012.0', '2013.0', '2014.0', '2015.0', '2016.0', '2017.0', '2018.0', '2019.0', '2020.0', '2021.0', '2022.0', '2023.0', '2024.0'],
-                        datasets: [{'data': [np.float64(0.0), np.float64(0.0), np.float64(0.0), np.float64(0.0), np.float64(0.0), np.float64(0.0), np.float64(0.2941622501963174), np.float64(0.15546090839126242), np.float64(0.30153254531112406), np.float64(0.24163369386635877), np.float64(0.3431202188208583), np.float64(0.7835257838277756), np.float64(0.5653100163237221), np.float64(0.6589955068833487), np.float64(0.1982847909092744), np.float64(0.5933213574673644), np.float64(0.5770549800933961), np.float64(0.953953994734473), np.float64(1.1660023150100827), np.float64(1.3007837495196974), np.float64(0.44741116000000003)], 'label': 'Buyout expenditures', 'backgroundColor': 'rgba(50,50,50,0.5)', 'type': 'line', 'fill': false, 'borderWidth': 2, 'stack': 'annual', 'yAxisID': 'y-axis-0'},{'data': [np.int64(0), np.int64(0), np.int64(0), np.int64(0), np.int64(0), np.int64(0), np.int64(67), np.int64(14), np.int64(25), np.int64(24), np.int64(34), np.int64(138), np.int64(124), np.int64(125), np.int64(20), np.int64(34), np.int64(33), np.int64(49), np.int64(90), np.int64(53), np.int64(20)], 'label': 'Staff Bought Out', 'borderColor': '#ff7f0e', 'fill': false, 'borderWidth': 2, 'steppedLine': true, 'stack': 'annual', 'type': 'line', 'yAxisID': 'y-axis-1'}]
+                        labels: ['2001', '2002', '2003', '2004', '2005', '2006', '2007', '2008', '2009', '2010', '2011', '2012', '2013', '2014', '2015', '2016', '2017', '2018', '2019', '2020', '2021', '2022', '2023', '2024'],
+                        datasets: [{'data': [87, 63, 40, 46, 90, 110, 70, 67, 61, 44, 72, 49, 81, 60, 40, 48, 22, 21, 18, 9, 11, 5, 8, 8], 'label': 'ACO w/o Penalty', 'backgroundColor': 'rgba(31,120,180,0.8)', 'stack': 'annual', 'yAxisID': 'y-axis-0'},{'data': [129, 144, 271, 215, 291, 240, 201, 214, 203, 213, 175, 160, 152, 111, 97, 121, 67, 81, 88, 80, 70, 53, 66, 58], 'label': 'ACO w/ Penalty', 'backgroundColor': 'rgba(166,206,227,0.8)', 'stack': 'annual', 'yAxisID': 'y-axis-0'},{'data': [7, 3, 1, 4, 4, 14, 5, 7, 2, 3, 7, 10, 6, 9, 10, 6, 8, 10, 8, 2, 6, 6, 3, 2], 'label': 'Demand Action', 'backgroundColor': 'rgba(51,160,44,0.8)', 'stack': 'annual', 'yAxisID': 'y-axis-0'},{'data': [1, 0, 0, 16, 4, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0], 'label': 'Federal ACO (PWS)', 'backgroundColor': 'rgba(178,223,138,0.8)', 'stack': 'annual', 'yAxisID': 'y-axis-0'},{'data': [26, 35, 35, 30, 59, 96, 86, 68, 44, 12, 13, 13, 8, 87, 6, 8, 11, 12, 12, 13, 9, 3, 5, 9], 'label': 'Penalty Notice', 'backgroundColor': 'rgba(227,26,28,0.8)', 'stack': 'annual', 'yAxisID': 'y-axis-0'},{'data': [0, 0, 60, 67, 101, 91, 65, 128, 138, 58, 116, 77, 126, 84, 51, 57, 206, 164, 217, 106, 246, 226, 193, 240], 'label': 'Reporting Penalty', 'backgroundColor': 'rgba(253,191,111,0.8)', 'stack': 'annual', 'yAxisID': 'y-axis-0'},{'data': [20, 38, 47, 44, 56, 38, 67, 62, 51, 31, 58, 55, 58, 50, 45, 50, 20, 31, 26, 23, 27, 26, 39, 22], 'label': 'Unilateral Order', 'backgroundColor': 'rgba(202,178,214,0.8)', 'stack': 'annual', 'yAxisID': 'y-axis-0'}]
                     },
                     type: 'bar',
                     options: {
@@ -23,19 +23,19 @@
                                 display: true,
                                 scaleLabel: {
                                     display: true,
-                                    labelString: 'Cost($M)'
+                                    labelString: 'Number of enforcement actions'
                                 },
                                 ticks: {
                                     beginAtZero: true, min: 0
                                 },
                                 "id": "y-axis-0",
                                 "position": "left",
-                                stacked: false
+                                stacked: true
                             }, {
-                                display: true,
+                                display: false,
                                 scaleLabel: {
                                     display: true,
-                                    labelString: 'Number of personnel'
+                                    labelString: ''
                                 },
                                 ticks: {
                                     beginAtZero: true, min: 0
@@ -48,7 +48,7 @@
                                     display: true,
                                     labelString: 'Year'
                                 },
-                                stacked: false,
+                                stacked: true,
                                 ticks: {
                                     autoSkip: true
                                 }
@@ -68,7 +68,7 @@
             </script>
             <script>
                 {{
-                    var ctx = document.getElementById("DEP buyouts").getContext("2d");
+                    var ctx = document.getElementById("DEP Enforcements by Action Type").getContext("2d");
                     var mychart = new Chart(ctx, chart_data);
                 }}
             </script>
