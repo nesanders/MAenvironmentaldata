@@ -13,6 +13,8 @@ For full analysis and narrative context, follow the links in each section.
 
 ## MA DEP Staffing
 
+**DEP staffing levels directly determine the agency's capacity to review permits, investigate violations, and enforce environmental law.**
+
 Data: [MA DEP staff payroll records]({{ site.url }}{{ site.baseurl }}/data/MADEP_staff.html)
 — [VisibleGovernment]({{ site.url }}{{ site.baseurl }}/data/MADEP_staff.html) through 2016,
 [MA Comptroller]({{ site.url }}{{ site.baseurl }}/data/MADEP_staff.html) (SODA API) 2010–present.
@@ -28,6 +30,8 @@ inflation-adjusted to 2015 dollars using the SSA Average Wage Index. Seniority i
 as the number of years each employee appears in the combined dataset relative to 2004, the
 first year of records.
 
+MA Comptroller payroll data has a publication lag of approximately 15 months. Data is currently available through calendar year 2024; records for 2025 are expected to appear in the API in approximately early 2027.
+
 The correlation between annual DEP headcount and total agency budget is
 {{ site.data.facts_DEPstaff.cor_staff_funding }}% (p={{ site.data.facts_DEPstaff.cor_staff_funding_p }}).
 Note that the budget series uses reported administrative appropriations and may not capture
@@ -42,7 +46,7 @@ for detailed caveats on data completeness and the merger of the two payroll sour
 
 ### Staffing vs. agency funding
 
-*Note: budget data shown reflects 2015 inflation-adjusted values and does not update automatically. Current MassBudget source is unavailable as of 2026.*
+⚠️ **Staffing bars update weekly. Budget line reflects 2023 data (MassBudget source unavailable since 2026) and does not update automatically.**
 
 {% include charts/dash_MADEP_staffing_overall_funding.html %}
 
@@ -56,22 +60,22 @@ for detailed caveats on data completeness and the merger of the two payroll sour
 
 ## MA DEP Enforcement Actions
 
+**Enforcement actions measure whether DEP is actively holding polluters accountable.**
+
 Data: [MA DEP enforcement actions]({{ site.url }}{{ site.baseurl }}/data/MADEP_enforcement_actions.html).
 Full analysis: [Changes in Enforcement by MA DEP Over Time]({{ site.url }}{{ site.baseurl }}/2017/04/02/dep-enforcements.html).
 
 <details>
 <summary>About this data and methodology</summary>
 
-Enforcement action counts are tallied by calendar year from DEP's publicly released enforcement
-reports. Environmental media topics (wetlands, Chapter 91, NPDES, water supply, etc.) are
-assigned by keyword matching on enforcement record descriptions. Budget data is the same
-inflation-adjusted MassBudget series used in the staffing section.
+Enforcement counts use EEA Data Portal records spanning 1996 to present. Routine administrative notices (Notice Of Non-Compliance, Field NONs, Boil Orders, and federal notices) are excluded—these are issued at high volume and do not reflect investigative or enforcement officer effort. Substantive enforcement actions counted include consent orders, unilateral orders, and penalty notices. Budget data is the same inflation-adjusted MassBudget series used in the staffing section.
 
 The correlation between annual enforcement counts and agency budget is
 {{ site.data.facts_DEPenforce.cor_enforcement_funding }}%.
 Administrative Consent Orders with Penalties (ACOPs) are identified as a subset of consent orders;
 penalty amounts are estimated using bootstrap resampling with 90% confidence intervals.
-See the <a href="{{ site.url }}{{ site.baseurl }}/2017/04/02/dep-enforcements.html">2017 enforcement post</a>
+
+Topic breakdown (wetlands, NPDES, Chapter 91, etc.) uses the older MADEP press-release dataset and is only available through 2017; see the <a href="{{ site.url }}{{ site.baseurl }}/2017/04/02/dep-enforcements.html">2017 enforcement post</a>
 for the full methodology.
 
 </details>
@@ -94,6 +98,8 @@ for the full methodology.
 
 ## State Environmental Agency Budgets
 
+**State environmental agency budgets vary widely per capita; Massachusetts has the lowest per-capita environmental spending among New England states.**
+
 Data: [ECOS State Environmental Agency Budget Report]({{ site.url }}{{ site.baseurl }}/data/ECOS_budget_history.html)
 and [US Census state population estimates]({{ site.url }}{{ site.baseurl }}/data/Census_statepop.html).
 
@@ -114,13 +120,15 @@ comparisons. Budget figures are adjusted for inflation using the SSA Average Wag
 
 ### Per-capita environmental spending by state
 
-*Note: ECOS budget data is fetched manually and does not update automatically each week. Last updated [check commit history](https://github.com/nesanders/MAenvironmentaldata).*
+⚠️ **ECOS budget data is updated manually, not weekly. Check [commit history](https://github.com/nesanders/MAenvironmentaldata) for the last update date.**
 
 {% include charts/dash_ECOS_budget_percap_peryear_bystate.html %}
 
 ---
 
 ## CSO Discharge Trends
+
+**Combined sewer overflows discharge untreated sewage into waterways during rain events. The charts below reflect conditions since the 2020 Sewage Notification Act took effect.**
 
 Data: [MA EEA Data Portal — CSO discharge reports]({{ site.url }}{{ site.baseurl }}/data/EEADP_all.html),
 covering June 2022 to present under the [Sewage Notification Act (Chapter 322 of 2020)](https://malegislature.gov/Laws/SessionLaws/Acts/2020/Chapter322).
@@ -157,22 +165,18 @@ the first full calendar year of data is 2023.
 
 ---
 
-## Modeled vs. Metered Discharge Reports
+## Data Quality Indicator: Estimated vs. Measured Discharge Volumes
 
 Data: [MA EEA Data Portal — CSO discharge reports]({{ site.url }}{{ site.baseurl }}/data/EEADP_all.html).
 
 <details>
 <summary>About this data and methodology</summary>
 
-Reported discharge volumes often contain round numbers that suggest estimation rather than
-direct metering. Using a heuristic that flags volumes rounded to the nearest 1,000 gallons
-as "likely modeled," this chart shows the monthly fraction of reports using estimated versus
-metered discharge volumes. CSO operators may estimate discharge volume when direct measurement
-is not available, particularly during early-response phases of an event.
+When operators report discharge volumes rounded to the nearest 1,000 gallons, this likely indicates estimation rather than direct measurement. A higher fraction of estimated reports means less precise discharge accounting for that month. CSO operators may estimate discharge volume when direct measurement is not available, particularly during early-response phases of an event.
 
 </details>
 
-### Monthly fraction of likely-modeled discharge reports
+### Monthly fraction of estimated vs. measured discharge reports
 
 {% include charts/dash_MAEEADP_dashboard_modeled_vs_metered_fraction.html %}
 

@@ -47,7 +47,20 @@ def generate_charts(engine, prefix=''):
 		# Add zero topic columns (will be overwritten with MADEP data later)
 		for col in ['order_consent order', 'order_wetlands', 'order_water supply', 'law_chapter 91', 'law_npdes', 'order_stormwater']:
 			s_data[col] = 0
-		print(f'Using MAEEADP_Enforcement data (EEA Data Portal): {len(s_data)} records from {s_data.Year.min()}-{s_data.Year.max()}')
+
+		# Filter out routine administrative notices (not reflective of enforcement effort)
+		# Notice Of Non-Compliance records (78% of data) are routine notices issued at high volume;
+		# keep only substantive enforcement actions (consent orders, unilateral orders, penalty notices)
+		ROUTINE_NOTICE_TYPES = {
+			'Notice Of Non-Compliance',
+			'Field Notice Of Non Compliance',
+			'BOIL ORDER',
+			'Federal Administrative Order Against PWS',
+			'Federal Notice Of Noncompliance Against PWS',
+		}
+		s_data_before_filter = len(s_data)
+		s_data = s_data[~s_data['EnforcementType'].isin(ROUTINE_NOTICE_TYPES)].copy()
+		print(f'Using MAEEADP_Enforcement data (EEA Data Portal): {len(s_data)} substantive enforcement records (filtered from {s_data_before_filter} total) from {s_data.Year.min()}-{s_data.Year.max()}')
 
 		# Also load MADEP_enforcement for topic breakdown (which has proper topic columns)
 		s_data_madep = pd.read_sql_query('SELECT * FROM MADEP_enforcement', engine)
