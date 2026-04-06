@@ -12,6 +12,10 @@
 
 ### MA political donations
 
+### Update ECOS budget data across states
+
+Look at the latest [ECOS](https://www.ecos.org/areas-of-focus/budget-and-agency-management/) reports to update environmntal agency budget data across states.
+
 
 # Analyses
 
@@ -43,16 +47,13 @@ The EJ/EJSCREEN correlation analyses and CSO map scripts are slow due to shapefi
 loading and per-feature spatial joins.  Consider pre-simplifying geometries, caching
 dissolved boundaries, or switching to vectorized `geopandas.sjoin`.
 
-### Replace fixed-in-time chart regeneration with live dashboards
-The `update-charts.yml` workflow (now disabled) regenerated charts weekly for analyses
-that rarely change: SSA wages, MassBudget, ECOS budgets. These are historical artifacts
-that don't benefit from weekly regeneration. Instead:
+### Find replacement source for MassBudget environmental budget data
+Source: `massbudget.org` — blocked as of early 2026 (Cloudflare on `spreadsheet.php`).
+The dashboard currently shows budget data static at 2015 inflation-adjusted levels.
+A live dashboard needs current budget figures to track agency spending trends.
+Options:
+- Contact MassBudget directly for API access or a direct data export
+- Check MA Comptroller's system for state appropriations data
+- Use alternative budget tracking sources (state executive budget documents, legislative appropriations)
 
-- Keep blog posts as static historical artifacts (2018 NECIR, 2023/2026 CSO analyses)
-- Create new "Dashboards" section on the site with interactive, weekly-updated charts:
-  - CSO discharge trends (data refreshed Monday via data pipeline)
-  - DEP enforcement and payroll trends (data refreshed Monday)
-  - Real-time permit and facility summaries
-- Use lightweight Plotly templates or Streamlit for dashboard interactivity
-- Only regenerate when underlying data actually changes via `update-data` workflow
-- Reduces CI noise and git history churn from unchanged chart files
+This blocks the funding charts (#2, #5, #7 on the dashboard) from auto-updating. High priority.

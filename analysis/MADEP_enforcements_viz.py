@@ -19,478 +19,223 @@ color_cycle = [c['color'] for c in list(mpl.rcParams['axes.prop_cycle'])]
 
 import locale
 locale.setlocale(locale.LC_ALL, 'en_US.UTF-8')
- 
-## Load database
-disk_engine = create_engine('sqlite:///../get_data/AMEND.db')
 
 
-## Get MADEP website enforcement data
-s_data = pd.read_sql_query('SELECT * FROM MADEP_enforcement', disk_engine)
-years = s_data.Year.unique()
-s_data['municipality'] = s_data.municipality.apply(lambda x: [t.upper() for t in ast.literal_eval(x)])
+def generate_charts(engine, prefix=''):
+	"""Generate DEP enforcement charts with optional filename prefix.
 
-## Get funding data
-f_data = pd.read_sql_query('SELECT * FROM MassBudget_summary', disk_engine)
-f_data.index = f_data.Year
+	Parameters
+	----------
+	engine : sqlalchemy.engine.Engine
+		Database connection engine
+	prefix : str, default ''
+		Prefix to add to all output chart filenames (e.g., 'dash_')
+	"""
 
-## Get Census data
-c_data = pd.read_sql_query('SELECT * FROM Census_ACS', disk_engine)
-c_data.index = c_data.Subdivision.str.upper()
+	## Get enforcement data - use hybrid approach:
+	## - MAEEADP_Enforcement (EEA Data Portal) for overall counts/fines (has data through 2026)
+	## - MADEP_enforcement for topic breakdown (has proper topic columns through 2017)
+	try:
+		s_data = pd.read_sql_query('SELECT * FROM MAEEADP_Enforcement', engine)
+		# Extract year from EnforcementDate
+		s_data['Year'] = pd.to_datetime(s_data['EnforcementDate'], errors='coerce').dt.year
+		# Rename/create columns to match expected schema
+		s_data.rename(columns={'FacilityName': 'facility', 'PenaltyAssessed': 'Fine'}, inplace=True)
+		s_data['Fine'] = s_data['Fine'].fillna(0)
+		# Set municipality to empty list
+		s_data['municipality'] = [[]] * len(s_data)
+		# Add zero topic columns (will be overwritten with MADEP data later)
+		for col in ['order_consent order', 'order_wetlands', 'order_water supply', 'law_chapter 91', 'law_npdes', 'order_stormwater']:
+			s_data[col] = 0
+		print(f'Using MAEEADP_Enforcement data (EEA Data Portal): {len(s_data)} records from {s_data.Year.min()}-{s_data.Year.max()}')
 
-## Establish file to export facts
-fact_file = '../docs/data/facts_DEPenforce.yml'
-with open(fact_file, 'w') as f: f.write('')
+		# Also load MADEP_enforcement for topic breakdown (which has proper topic columns)
+		s_data_madep = pd.read_sql_query('SELECT * FROM MADEP_enforcement', engine)
+		s_data_madep['municipality'] = s_data_madep.municipality.apply(lambda x: [t.upper() for t in ast.literal_eval(x)])
+		print(f'Also loaded MADEP_enforcement for topic breakdown: {len(s_data_madep)} records through {s_data_madep.Year.max()}')
+	except Exception as e:
+		print(f'Could not load MAEEADP_Enforcement: {e}. Using MADEP_enforcement only.')
+		s_data = pd.read_sql_query('SELECT * FROM MADEP_enforcement', engine)
+		s_data['municipality'] = s_data.municipality.apply(lambda x: [t.upper() for t in ast.literal_eval(x)])
+		s_data_madep = s_data
 
-## Geo data
-geo_path = '../docs/assets/geo_json/'
-geo_towns = geo_path+'TOWNSSURVEY_POLYM_geojson_simple.json'
-geo_towns_dict = json.load(open(geo_towns))['features']
-geo_out_path = '../docs/assets/maps/'
+	## Get funding data
+	f_data = pd.read_sql_query('SELECT * FROM MassBudget_summary', engine)
+	f_data.index = f_data.Year.astype(int)
 
+	# Filter enforcement data to years that have budget data
+	budget_years = set(f_data.index.astype(int).unique())
+	s_data = s_data[s_data['Year'].astype(int).isin(budget_years)].copy()
+	s_data['Year'] = s_data['Year'].astype(int)
+	print(f'Filtered to years with budget data: {sorted(budget_years)}')
 
+	# Recalculate years after filtering
+	years = sorted(s_data.Year.unique())
 
-#############################
-## Show total enforcements per year
-#############################
+	## Get Census data
+	c_data = pd.read_sql_query('SELECT * FROM Census_ACS', engine)
+	c_data.index = c_data.Subdivision.str.upper()
 
-s_data_g = s_data.groupby(['Year']).count().iloc[:,1]
+	## Establish file to export facts
+	fact_file = '../docs/data/facts_DEPenforce.yml'
+	with open(fact_file, 'w') as f: f.write('')
 
-## Establish chart
-mychart = chartjs.chart("Overall DEP Enforcement", "Bar", 640, 480)
-mychart.set_labels(s_data_g.index.values.tolist())
-mychart.add_dataset(s_data_g.values.tolist(), 
-	"Number of enforcements",
-	backgroundColor="'rgba(50,50,200,0.8)'",
-	stack="'annual'", yAxisID= "'y-axis-0'",)
-mychart.set_params(JSinline = 0, ylabel = 'Total reported enforcement actions', xlabel='Year',
-	scaleBeginAtZero=1)
-
-mychart.jekyll_write('../docs/_includes/charts/MADEP_enforcement_overall.html')
-
-
-
-#############################
-## Show total penalties per year
-#############################
-
-s_data_g = s_data.groupby(['Year']).sum()
-
-## Establish chart
-mychart = chartjs.chart("Overall DEP Enforcement Penalties ($M)", "Bar", 640, 480)
-mychart.set_labels(s_data_g.index.values.tolist())
-mychart.add_dataset((s_data_g.Fine/1e6).tolist(), 
-	"Reported penalties",
-	backgroundColor="'rgba(50,50,200,0.8)'",
-	stack="'annual'", yAxisID= "'y-axis-0'",)
-mychart.set_params(JSinline = 0, ylabel = 'Sum of reported penalties ($M)', xlabel='Year',
-	scaleBeginAtZero=1)
-
-mychart.jekyll_write('../docs/_includes/charts/MADEP_enforcement_fines_overall.html')
+	## Geo data
+	geo_path = '../docs/assets/geo_json/'
+	geo_towns = geo_path+'TOWNSSURVEY_POLYM_geojson_simple.json'
+	geo_towns_dict = json.load(open(geo_towns))['features']
+	geo_out_path = '../docs/assets/maps/'
 
 
-s_data_g_na = s_data.dropna().groupby(['Year']).Fine
 
-## Establish stacked chart: top N individual penalties + "Other" bucket
-TOP_N = 10
-mychart = chartjs.chart("Individual DEP Enforcement Penalties ($M)", "Bar", 640, 480)
-mychart.set_labels(s_data_g.index.values.tolist())
-rgba_list = [
-	'rgba(166,206,227)',
-	'rgba(31,120,180)',
-	'rgba(178,223,138)',
-	'rgba(51,160,44)'
-	]
-for i in range(TOP_N):
-	def get_sorted_i(x, _i=i):
+	#############################
+	## Show total enforcements per year
+	#############################
+
+	s_data_g = s_data.groupby(['Year']).count().iloc[:,1]
+
+	## Establish chart
+	mychart = chartjs.chart("Overall DEP Enforcement", "Bar", 640, 480)
+	# Format year labels as integers (e.g., "2024" not "2024.0")
+	mychart.set_labels([str(int(y)) for y in s_data_g.index.values])
+	mychart.add_dataset(s_data_g.values.tolist(),
+		"Number of enforcements",
+		backgroundColor="'rgba(50,50,200,0.8)'",
+		stack="'annual'", yAxisID= "'y-axis-0'",)
+	mychart.set_params(JSinline = 0, ylabel = 'Total reported enforcement actions', xlabel='Year',
+		scaleBeginAtZero=1)
+
+	mychart.jekyll_write(f'../docs/_includes/charts/{prefix}MADEP_enforcement_overall.html')
+
+
+
+	#############################
+	## Show total penalties per year
+	#############################
+
+	s_data_g = s_data.groupby(['Year']).sum()
+
+	## Establish chart
+	mychart = chartjs.chart("Overall DEP Enforcement Penalties ($M)", "Bar", 640, 480)
+	# Format year labels as integers
+	mychart.set_labels([str(int(y)) for y in s_data_g.index.values])
+	mychart.add_dataset((s_data_g.Fine/1e6).tolist(),
+		"Reported penalties",
+		backgroundColor="'rgba(50,50,200,0.8)'",
+		stack="'annual'", yAxisID= "'y-axis-0'",)
+	mychart.set_params(JSinline = 0, ylabel = 'Sum of reported penalties ($M)', xlabel='Year',
+		scaleBeginAtZero=1)
+
+	mychart.jekyll_write(f'../docs/_includes/charts/{prefix}MADEP_enforcement_fines_overall.html')
+
+
+	s_data_g_na = s_data.dropna().groupby(['Year']).Fine
+
+	## Establish stacked chart: top N individual penalties + "Other" bucket
+	TOP_N = 10
+	mychart = chartjs.chart("Individual DEP Enforcement Penalties ($M)", "Bar", 640, 480)
+	mychart.set_labels(s_data_g.index.values.tolist())
+	rgba_list = [
+		'rgba(166,206,227)',
+		'rgba(31,120,180)',
+		'rgba(178,223,138)',
+		'rgba(51,160,44)'
+		]
+	for i in range(TOP_N):
+		def get_sorted_i(x, _i=i):
+			s = sorted(x.values)[::-1]
+			return s[_i] if _i < len(s) else 0
+		mychart.add_dataset((s_data_g_na.apply(get_sorted_i)/1e6).tolist(),
+			"Rank #{} penalty of the year".format(i + 1),
+			backgroundColor="'"+rgba_list[np.mod(i, len(rgba_list))]+"'",)
+	# "Other" bucket: sum of all penalties beyond rank TOP_N
+	def get_other(x):
 		s = sorted(x.values)[::-1]
-		return s[_i] if _i < len(s) else 0
-	mychart.add_dataset((s_data_g_na.apply(get_sorted_i)/1e6).tolist(),
-		"Rank #{} penalty of the year".format(i + 1),
-		backgroundColor="'"+rgba_list[np.mod(i, len(rgba_list))]+"'",)
-# "Other" bucket: sum of all penalties beyond rank TOP_N
-def get_other(x):
-	s = sorted(x.values)[::-1]
-	return sum(s[TOP_N:]) if len(s) > TOP_N else 0
-mychart.add_dataset((s_data_g_na.apply(get_other)/1e6).tolist(),
-	"All other penalties (ranks {0}+)".format(TOP_N + 1),
-	backgroundColor="'rgba(200,200,200,0.7)'",)
-mychart.set_params(JSinline = 0, ylabel = 'Sum of reported penalties ($M)', xlabel='Year',
-	scaleBeginAtZero=1, stacked=1, legend=0)
+		return sum(s[TOP_N:]) if len(s) > TOP_N else 0
+	mychart.add_dataset((s_data_g_na.apply(get_other)/1e6).tolist(),
+		"All other penalties (ranks {0}+)".format(TOP_N + 1),
+		backgroundColor="'rgba(200,200,200,0.7)'",)
+	mychart.set_params(JSinline = 0, ylabel = 'Sum of reported penalties ($M)', xlabel='Year',
+		scaleBeginAtZero=1, stacked=1, legend=0)
 
-mychart.jekyll_write('../docs/_includes/charts/MADEP_enforcement_fines_overall_stacked.html')
+	mychart.jekyll_write(f'../docs/_includes/charts/{prefix}MADEP_enforcement_fines_overall_stacked.html')
 
 
 
-#############################
-## Show enforcements per year versus budget
-#############################
+	#############################
+	## Show enforcements per year versus budget
+	#############################
 
-s_data_g = s_data.groupby(['Year']).count().iloc[:,1]
+	s_data_g = s_data.groupby(['Year']).count().iloc[:,1]
 
-## Establish chart
-mychart = chartjs.chart("DEP Enforcements versus budget", "Line", 640, 480)
-mychart.set_labels(s_data_g.index.values.tolist())
-mychart.add_dataset(s_data_g.values.tolist(), "Number of enforcements",
-	backgroundColor="'rgba(50,50,50,0.5)'",
-	type="'line'", fill = "false",
-	borderWidth = 2,
-	stack="'annual'", yAxisID= "'y-axis-0'")
-mychart.add_dataset((f_data['DEPAdministration_inf_float'].loc[years]/1e6).values.tolist(), "DEP administrative budget",
-	borderColor = "'"+color_cycle[1]+"'", fill = "false",
-	borderWidth = 2,
-	stack="'annual'", type="'line'", yAxisID= "'y-axis-1'")
-mychart.set_params(JSinline = 0, ylabel = 'Number of enforcements', xlabel='Year',
-	y2nd = 1, y2nd_title = 'Funding level ($M, 2016 dollars)',
-	scaleBeginAtZero=0)
+	## Establish chart
+	mychart = chartjs.chart("DEP Enforcements versus budget", "Line", 640, 480)
+	# Format year labels as integers
+	mychart.set_labels([str(int(y)) for y in s_data_g.index.values])
+	mychart.add_dataset(s_data_g.values.tolist(), "Number of enforcements",
+		backgroundColor="'rgba(50,50,50,0.5)'",
+		type="'line'", fill = "false",
+		borderWidth = 2,
+		stack="'annual'", yAxisID= "'y-axis-0'")
+	mychart.add_dataset((f_data['DEPAdministration_inf_float'].loc[years]/1e6).values.tolist(), "DEP administrative budget",
+		borderColor = "'"+color_cycle[1]+"'", fill = "false",
+		borderWidth = 2,
+		stack="'annual'", type="'line'", yAxisID= "'y-axis-1'")
+	mychart.set_params(JSinline = 0, ylabel = 'Number of enforcements', xlabel='Year',
+		y2nd = 1, y2nd_title = 'Funding level ($M, 2016 dollars)',
+		scaleBeginAtZero=0)
 
-mychart.jekyll_write('../docs/_includes/charts/MADEP_enforcement_vsbudget.html')
+	mychart.jekyll_write(f'../docs/_includes/charts/{prefix}MADEP_enforcement_vsbudget.html')
 
-## Output correlation level
-pr = pearsonr(s_data_g.values, (f_data['DEPAdministration_inf_float'].loc[years]/1e6).values)
-with open(fact_file, 'a') as f:
-	f.write('cor_enforcement_funding: %0.0f'%(pr[0]*100)+'\n')
-
-
-#############################
-## Show enforcement fractions by topic per year
-#############################
-
-s_data_g = s_data.groupby(['Year'])
-topics = [d for d in s_data.columns if d.startswith('order_') or d.startswith('law_')]
-
-## Establish chart
-mychart = chartjs.chart("DEP Enforcements by Topic Per Year", "Line", 640, 480)
-mychart.set_labels(s_data_g.count().index.values.tolist())
-for i,topic in enumerate(topics):
-	mychart.add_dataset(
-		(s_data_g.sum()[topic] / s_data_g.count()[topic].astype(float) * 100).tolist(), 
-		topic.split('_')[1].strip().title(),
-		backgroundColor="'"+(color_cycle*10)[i]+"'",
-		stack="'annual'", yAxisID= "'y-axis-0'", fill = "false",
-		hidden = 'false' if topic=='order_wetlands' else 'true')
-mychart.set_params(JSinline = 0, ylabel = 'Reported enforcement actions (% of annual total)', xlabel='Year',
-	scaleBeginAtZero=1)
-
-mychart.jekyll_write('../docs/_includes/charts/MADEP_enforcement_bytopic.html')
+	## Output correlation level
+	pr = pearsonr(s_data_g.values, (f_data['DEPAdministration_inf_float'].loc[years]/1e6).values)
+	with open(fact_file, 'a') as f:
+		f.write('cor_enforcement_funding: %0.0f'%(pr[0]*100)+'\n')
 
 
-## Export some facts.
-## Exclude most recent year from averages, as it will be partial.
-with open(fact_file, 'a') as f:
-	f.write('yearly_ch91: %0.1f'%(s_data_g.sum()['law_chapter 91'][:-1].mean())+'\n')
-	f.write('yearly_npdes: %0.1f'%(s_data_g.sum()['law_npdes'][:-1].mean())+'\n')
-	f.write('yearly_avg_consentorder: %0.0f'%(s_data_g['order_consent order'].mean()[:-1].mean() * 100)+'\n')
-	f.write('yearly_avg_delta2016_wetlands: %0.0f'%(
-		(1 - s_data_g['order_wetlands'].mean().loc[2016] / s_data_g['order_wetlands'].mean().max()) * 100
-		)+'\n')
-	f.write('yearly_2004_watersupply: %0.1f'%(s_data_g['order_water supply'].mean().loc[2004] * 100)+'\n')
-	f.write('yearly_2016_watersupply: %0.1f'%(s_data_g['order_water supply'].mean().loc[2016] * 100)+'\n')
-	
-	#Water supply-related enforcement has grown from ~5% to ~25% of all enforcements since 2004
-	#Wetlands-related enforcement has declined from ~16% at peak to <10% in recent years.
+	#############################
+	## Show enforcement fractions by topic per year
+	## Use MADEP_enforcement data since it has proper topic columns
+	#############################
 
-	
+	s_data_g = s_data_madep.groupby(['Year'])
+	topics = [d for d in s_data_madep.columns if d.startswith('order_') or d.startswith('law_')]
 
-#############################
-## Show distribution of penalties
-#############################
+	## Establish chart
+	mychart = chartjs.chart("DEP Enforcements by Topic Per Year", "Line", 640, 480)
+	# Format year labels as integers
+	mychart.set_labels([str(int(y)) for y in s_data_g.count().index.values])
+	# Topics to show by default
+	visible_topics = ['order_wetlands', 'order_stormwater', 'order_water supply', 'law_npdes', 'law_chapter 91']
+	for i,topic in enumerate(topics):
+		mychart.add_dataset(
+			(s_data_g.sum()[topic] / s_data_g.count()[topic].astype(float) * 100).tolist(),
+			topic.split('_')[1].strip().title(),
+			backgroundColor="'"+(color_cycle*10)[i]+"'",
+			stack="'annual'", yAxisID= "'y-axis-0'", fill = "false",
+			hidden = 'false' if topic in visible_topics else 'true')
+	mychart.set_params(JSinline = 0, ylabel = 'Reported enforcement actions (% of annual total)', xlabel='Year',
+		scaleBeginAtZero=1)
 
-#penalties_per_year = s_data_g.Fine.apply(lambda x: np.histogram(np.log10(x), bins=20, range=[2,7]))
-
-fine_bin_edges = 200*2**(np.arange(19))
-## Round down to 1 sig fig
-fine_bin_edges = [int('%0.0f'%(c/10**np.floor(np.log10(c))))*10**np.floor(np.log10(c)) for c in fine_bin_edges]
-fine_dist, fine_bins = np.histogram(s_data.Fine.values, bins=fine_bin_edges, range=[2,7])
-fine_bins_fmt = [locale.format_string("%d", c, grouping=True) for c in fine_bins]
-
-## Establish chart
-mychart = chartjs.chart("Penalty distribution", "Bar", 640, 480)
-mychart.set_labels(['$' + fine_bins_fmt[i]+' - '+fine_bins_fmt[i+1] for i in range(len(fine_bins_fmt)-1)])
-mychart.add_dataset(fine_dist, 
-	"Number of enforcements",
-	backgroundColor="'rgba(50,100,100,0.8)'",
-	stack="'annual'", yAxisID= "'y-axis-0'",)
-mychart.set_params(JSinline = 0, ylabel = 'Number of enforcement actions since 2004', xlabel='Penalty amount ($, logarithmic spacing)',
-	scaleBeginAtZero=0)
-
-mychart.jekyll_write('../docs/_includes/charts/MADEP_enforcement_fine_dist.html')
+	mychart.jekyll_write(f'../docs/_includes/charts/{prefix}MADEP_enforcement_bytopic.html')
 
 
-## Show evolution of median With bootstrap resampling
-
-## Bootstrap more appropriate here
-#def jackknife(x, func):
-	#n = len(x)
-	#idx = np.arange(n)
-	#return np.array([func(x[idx!=i]) for i in range(n)])
-
-def bootstrap(x, func, reps = 1000):
-	n = len(x)
-	return func(np.random.choice(x, (n, reps)), axis=0)
-
-s_meds = s_data_g.Fine.apply(lambda x: np.nanpercentile(bootstrap(x, np.nanmedian), [5,50,95], axis=0))
-## Exclude most recent partial year
-s_meds = s_meds[:-1]
-
-## Establish chart
-mychart = chartjs.chart("Penalty average", "Line", 640, 480)
-mychart.set_labels(s_meds.index.tolist())
-mychart.add_dataset(s_meds.apply(lambda x: x[1]).values.tolist(), 
-	"Best estimate",
-	backgroundColor="'rgba(50,100,100,0.8)'", yAxisID= "'y-axis-0'", borderWidth = 3, fill = 'false'  )
-mychart.add_dataset(s_meds.apply(lambda x: x[0]).values.tolist(), 
-	"Lower bound (5% limit)",
-	backgroundColor="'rgba(50,50,50,0.3)'", yAxisID= "'y-axis-0'", borderWidth = 1, 
-	fill = 'false', pointBackgroundColor="'rgba(0,0,0,0)'", pointBorderColor="'rgba(0,0,0,0)'")
-mychart.add_dataset(s_meds.apply(lambda x: x[2]).values.tolist(), 
-	"Upper bound (95% limit)",
-	backgroundColor="'rgba(50,50,50,0.3)'", yAxisID= "'y-axis-0'", borderWidth = 1, fill = "'1'", pointBackgroundColor="'rgba(0,0,0,0)'", pointBorderColor="'rgba(0,0,0,0)'")
-mychart.set_params(JSinline = 0, ylabel = 'Median penalty amount per year', xlabel='Year',
-	scaleBeginAtZero=0)
-
-mychart.jekyll_write('../docs/_includes/charts/MADEP_enforcement_fine_avg_bootstrap.html')
+	## Export some facts (using MADEP data for topic facts).
+	## Exclude most recent year from averages, as it will be partial.
+	with open(fact_file, 'a') as f:
+		f.write('yearly_ch91: %0.1f'%(s_data_g.sum()['law_chapter 91'][:-1].mean())+'\n')
+		f.write('yearly_npdes: %0.1f'%(s_data_g.sum()['law_npdes'][:-1].mean())+'\n')
+		f.write('yearly_avg_consentorder: %0.0f'%(s_data_g['order_consent order'].mean()[:-1].mean() * 100)+'\n')
+		if 2016 in s_data_g['order_wetlands'].mean().index and s_data_g['order_wetlands'].mean().max() > 0:
+			f.write('yearly_avg_delta2016_wetlands: %0.0f'%(
+				(1 - s_data_g['order_wetlands'].mean().loc[2016] / s_data_g['order_wetlands'].mean().max()) * 100
+				)+'\n')
+		if 2004 in s_data_g['order_water supply'].mean().index:
+			f.write('yearly_2004_watersupply: %0.1f'%(s_data_g['order_water supply'].mean().loc[2004] * 100)+'\n')
+		if 2016 in s_data_g['order_water supply'].mean().index:
+			f.write('yearly_2016_watersupply: %0.1f'%(s_data_g['order_water supply'].mean().loc[2016] * 100)+'\n')
 
 
-#############################
-## Show change in ACOPs over time
-#############################
-
-s_data_g = s_data.groupby(['Year'])
-#s_data_g_acop = s_data_g.apply(lambda x: np.mean((x['order_consent order']) & (x['Fine'] > 0)) / np.mean(x['order_consent order'])) * 100
-s_data_g_acop = s_data_g.apply(lambda x: 
-		np.percentile(
-			bootstrap(x.iloc[np.where(x['order_consent order'])]['Fine'].values > 0, np.mean)
-			, [5,50,95], axis=0)
-		) * 100
-
-## Establish chart
-mychart = chartjs.chart("DEP ACOPs Per Year", "Line", 640, 480)
-mychart.set_labels(s_data_g_acop.index.values.tolist())
-#mychart.add_dataset(
-	#s_data_g_acop.values.tolist(), 
-	#'Consent orders with penalties',
-	#backgroundColor="'"+color_cycle[0]+"'",
-	#stack="'annual'", yAxisID= "'y-axis-0'", fill = "false")
-mychart.add_dataset(s_data_g_acop.apply(lambda x: x[1]).values.tolist(), 
-	"Best estimate",
-	backgroundColor="'rgba(50,100,100,0.8)'", yAxisID= "'y-axis-0'", borderWidth = 3, fill = 'false'  )
-mychart.add_dataset(s_data_g_acop.apply(lambda x: x[0]).values.tolist(), 
-	"Lower bound (5% limit)",
-	backgroundColor="'rgba(50,50,50,0.3)'", yAxisID= "'y-axis-0'", borderWidth = 1, 
-	fill = 'false', pointBackgroundColor="'rgba(0,0,0,0)'", pointBorderColor="'rgba(0,0,0,0)'")
-mychart.add_dataset(s_data_g_acop.apply(lambda x: x[2]).values.tolist(), 
-	"Upper bound (95% limit)",
-	backgroundColor="'rgba(50,50,50,0.3)'", yAxisID= "'y-axis-0'", borderWidth = 1, fill = "'1'", pointBackgroundColor="'rgba(0,0,0,0)'", pointBorderColor="'rgba(0,0,0,0)'")
-mychart.set_params(JSinline = 0, ylabel = 'Enforcements with financial penalties (% of annual total consent orders)', xlabel='Year',
-	scaleBeginAtZero=0)
-
-mychart.jekyll_write('../docs/_includes/charts/MADEP_enforcement_ACOP_byyear.html')
-
-
-#############################
-## Show variation by town
-#############################
-
-## Count enforcements per town
-towns = sorted([geo_towns_dict[i]['properties']['TOWN'] for i in range(len(geo_towns_dict))])
-town_count = {}
-town_fines = {}
-for town in towns:
-	## Check if town appears in each row
-	count = s_data.municipality.apply(lambda x: town in x)
-	town_count[town] = count.sum()
-	## tally enforcement penalties
-	fines = s_data.apply(lambda x: x.Fine if town in x.municipality else 0, axis=1)
-	town_fines[town] = fines.sum()
-
-town_count = pd.Series(town_count)
-town_fines = pd.Series(town_fines)
-
-merge_census_df = pd.DataFrame(data={
-	'Population': c_data['population_acs52014'].reindex(towns).values,
-	'Per capita income ($k)': c_data['per_capita_income_acs52014'].reindex(towns).values / 1000,
-	'DEP enforcements': town_count.reindex(towns).values,
-	'DEP penalties ($1,000)': town_fines.reindex(towns).values / 1000,
-	}, index=towns)
-
-
-## Map total enforcements by town (plotly)
-make_enforcement_map(
-	town_count=town_count,
-	enforcement_df=s_data,
-	geo_towns_path=geo_towns,
-	outpath=geo_out_path+'MADEP_enforcements_town_total.html',
-)
-
-
-#############################
-## Compare census data to town characteristics
-#############################
-
-"""
-## Matplotlib plots for testing purposes
-from matplotlib import pyplot as plt
-from statsmodels.nonparametric.smoothers_lowess import lowess
-
-## counts
-x = merge_census_df['Per capita income ($k)'].values
-y = merge_census_df['DEP enforcements'].values / merge_census_df['Population'].values * 1e5
-pxy = lowess(np.log10(y), x, frac=0.2)
-
-#x_bins = np.linspace(min(x), max(x), 10)
-x_bins = np.nanpercentile(x, list(np.linspace(0,100,11)))
-x_bin_id = pd.cut(x, x_bins, labels=False)
-y_bin = [np.mean((y)[x_bin_id == i]) for i in range(len(x_bins) - 1)]
-dy_bin = [np.std((y)[x_bin_id == i]) / np.sqrt(sum(x_bin_id == i)) for i in range(len(x_bins) - 1)]
-
-plt.figure()
-plt.plot(x, y, '.')
-plt.semilogy()
-plt.plot(pxy[:,0], 10**pxy[:,1], lw=3)
-plt.errorbar([np.mean([x_bins[i], x_bins[i+1]]) for i in range(len(x_bins) - 1)], y_bin, yerr = dy_bin, marker='o')
-plt.xlabel('Per Capita Income ($1,000)')
-plt.ylabel('Per Capita Enforcements (per 100,000)')
-
-## penalties
-x = merge_census_df['Per capita income ($k)']
-y = (merge_census_df['DEP penalties ($1,000)']) / (merge_census_df['Population']/1e5)
-pxy = lowess(np.log10(y), x, frac=0.2)
-
-plt.figure()
-plt.plot(x, y, '.')
-plt.semilogy()
-plt.plot(pxy[:,0], 10**pxy[:,1], lw=3)
-plt.xlabel('Per Capita Income ($1,000)')
-plt.ylabel('Per Capita Enforcement Penalties ($1,000 per 100,000)')
-"""
-
-#############################
-## Enforcement count per capita by town income
-#############################
-
-## Lookup base values
-pop_sel = merge_census_df['Population'] >= 25e3
-x = merge_census_df['Per capita income ($k)'].values
-y = merge_census_df['DEP enforcements'].values / merge_census_df['Population'].values * 1e5
-pop = merge_census_df['Population'].values
-l = merge_census_df.index.values
-
-## Boostrapped weighted mean function
-def weight_mean(x, weights, N=1000):
-	avgs = np.zeros(N)
-	nonan_sel = (np.isnan(x) == 0) & (np.isnan(weights) == 0)
-	x = x[nonan_sel]
-	weights = weights[nonan_sel]
-	for i in range(N):
-		sel = np.random.randint(len(x), size=len(x))
-		avgs[i] = np.average(x[sel], weights=weights[sel])
-	return np.mean(avgs), np.std(avgs)
-
-## Calculate binned values
-x_bins = np.nanpercentile(x, list(np.linspace(0,100,9)))
-x_bin_cent = [np.mean([x_bins[i], x_bins[i+1]]) for i in range(len(x_bins) - 1)]
-x_bin_id = pd.cut(x, x_bins, labels=False)
-y_bin = np.array([
-	weight_mean(y[x_bin_id == i], pop[x_bin_id == i])
-	for i in range(len(x_bins) - 1)]).T
-
-## Establish chart
-mychart = chartjs.chart("DEP Enforcements per capita versus town income", "Scatter", 640, 480)
-
-## Add individual town dataset
-mychart.add_dataset(
-	np.array([x[~pop_sel], y[~pop_sel]]).T, 
-	dataset_label="Individual towns (population < 25,000)",
-	backgroundColor="'rgba(50,50,50,0.125)'",
-	showLine = "false",
-	yAxisID= "'y-axis-0'",
-	fill="false",
-	hidden="'true'"
-	)
-mychart.add_dataset(
-	np.array([x[pop_sel], y[pop_sel]]).T, 
-	dataset_label="Individual towns (population >= 25,000)",
-	backgroundColor="'rgba(50,50,50,0.5)'",
-	showLine = "false",
-	yAxisID= "'y-axis-0'",
-	fill="false",
-	hidden="'true'"
-	)
-## Add binned dataset
-mychart.add_dataset(
-	np.array([x_bin_cent, y_bin[0]]).T, 
-	dataset_label="Average (binned)",
-	backgroundColor="'rgba(50,50,200,1)'",
-	showLine = "true",
-	borderColor="'rgba(50,50,200,1)'",
-	borderWidth=3,
-	yAxisID= "'y-axis-0'",
-	fill="false",
-	pointRadius=6,
-	)
-## Add uncertainty contour
-mychart.add_dataset(np.array([x_bin_cent, y_bin[0] - 1.65 * y_bin[1]]).T, 
-	"Average lower bound (5% limit)",
-	backgroundColor="'rgba(50,50,200,0.3)'", showLine = "true", yAxisID= "'y-axis-0'", borderWidth = 1, 
-	fill = 'false', pointBackgroundColor="'rgba(50,50,200,0.3)'", pointBorderColor="'rgba(50,50,200,0.3)'")
-mychart.add_dataset(np.array([x_bin_cent, y_bin[0] + 1.65 * y_bin[1]]).T, 
-	"Average upper bound (95% limit)",
-	backgroundColor="'rgba(50,50,200,0.3)'", showLine = "true", yAxisID= "'y-axis-0'", borderWidth = 1, fill = "'-1'", pointBackgroundColor="'rgba(50,50,200,0.3)'", pointBorderColor="'rgba(50,50,200,0.3)'")
-## Set overall chart parameters
-mychart.set_params(
-	JSinline = 0, 
-	ylabel = 'MA DEP enforcements per 100,000 residents', 
-	xlabel='Per capita income ($k)',
-	yaxis_type='logarithmic',	
-	y2nd = 0,
-	scaleBeginAtZero=0,
-	custom_tooltips = """
-                mode: 'single',
-                callbacks: {
-                    label: function(tooltipItems, data) { 
-						var title = '';
-						
-						if (tooltipItems.datasetIndex == 0) {
-							title = ma_towns[tooltipItems.index];
-						} else {
-							title = data.datasets[tooltipItems.datasetIndex].label;
-						}
-						return [title, 'Enforcements per 100,000 residents: ' + tooltipItems.yLabel, 'Per capita income ($k): ' + tooltipItems.xLabel];
-                    }
-				}
-"""
-	) 
-## Update logarithm tick format as in https://github.com/chartjs/Chart.js/issues/3121
-mychart.add_extra_code(
-"""
-Chart.scaleService.updateScaleDefaults('logarithmic', {
-  ticks: {
-	autoSkip: true,
-	autoSkipPadding: 100,
-	callback: function(tick, index, ticks) {
-      return tick.toLocaleString()
-    }
-  }
-});
-""")
-## Add town dataset
-mychart.add_extra_code(
-	'var ma_towns = ["' + '","'.join(l) + '"];')
-
-mychart.jekyll_write('../docs/_includes/charts/MADEP_enforcement_bytown_income.html')
-
-
-#############################
-## Enforcements per capita - extreme value tables
-#############################
-
-## Top cities
-merge_census_df['Enforcements per capita (per 100,000 people)'] = merge_census_df['DEP enforcements']/merge_census_df['Population'] * 1e5
-merge_census_df['Penalties per capita ($1M per 100,000 people)'] = (merge_census_df['DEP penalties ($1,000)'] / 1000) / (merge_census_df['Population']/1e5)
-
-## Export tables
-merge_census_df.index.name='Town'
-merge_census_df[merge_census_df.Population>25000].sort_values('Enforcements per capita (per 100,000 people)', ascending=False).dropna().head().to_csv('../docs/data/table_MADEP_enforcement_topcities_enforcements.csv')
-merge_census_df[merge_census_df.Population>25000].sort_values('Penalties per capita ($1M per 100,000 people)', ascending=False).dropna().head().to_csv('../docs/data/table_MADEP_enforcement_topcities_penalties.csv')
-
-
+if __name__ == '__main__':
+	disk_engine = create_engine('sqlite:///../get_data/AMEND.db')
+	generate_charts(disk_engine)
