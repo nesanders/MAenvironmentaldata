@@ -4,7 +4,9 @@ title: "Live Data Dashboard"
 permalink: /dashboard.html
 ---
 
-Charts on this page are regenerated automatically each week from the latest available data.
+**Last updated:** {{ site.data.ts_update_dashboard.updated | date: "%-d %B %Y at %H:%M UTC" }}
+
+Charts on this page are regenerated automatically each Monday morning from the latest available data.
 For full analysis and narrative context, follow the links in each section.
 
 *[GitHub Actions run history](https://github.com/nesanders/MAenvironmentaldata/actions/workflows/update-charts.yml)*
