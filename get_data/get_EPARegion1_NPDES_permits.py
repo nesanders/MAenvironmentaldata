@@ -110,8 +110,8 @@ if __name__ == '__main__':
             pdf['Facility Name'] = pdf[facility_col]
             pdf['Facility_name_clean'] = pdf['Facility Name'].apply(lambda x: BeautifulSoup(x, features="lxml").text.split(' (PDF')[0].split('\n')[0].split("in new window.'>")[-1])
             pdf['Permit_URL'] = pdf['Facility Name'].apply(lambda x: [
-                BeautifulSoup(x, features="lxml").findAll('a')[j].get('href')
-                for j in range(len(BeautifulSoup(x, features="lxml").findAll('a')))
+                BeautifulSoup(x, features="lxml").find_all('a')[j].get('href')
+                for j in range(len(BeautifulSoup(x, features="lxml").find_all('a')))
             ])
             pdf['Stage'] = stage
             pdf['State'] = state
@@ -125,9 +125,9 @@ if __name__ == '__main__':
         else:
             print('Parsing html table')
             soup = BeautifulSoup(content, 'lxml')
-            
-            table = soup.findAll('tr')
-            header = [table[0].findAll('th')[i].get_text() for i in range(len(table[0].findAll('th')))]
+
+            table = soup.find_all('tr')
+            header = [table[0].find_all('th')[i].get_text() for i in range(len(table[0].find_all('th')))]
 
             print(f'Iterating over N={len(table[1:])} rows')
             for row in table[1:]:
@@ -140,9 +140,9 @@ if __name__ == '__main__':
                     
                     for i,col in enumerate(header):
                         if '<td>' in str(row):
-                            element = row.findAll('td')[i]
+                            element = row.find_all('td')[i]
                         elif '<th>' in str(row):
-                            element = row.findAll('th')[i]
+                            element = row.find_all('th')[i]
                         else:
                             raise ValueError('Missing expected HTML elements in table')
                         
@@ -182,7 +182,7 @@ if __name__ == '__main__':
                         if col == 'Facility Name':
                             permit_data[-1]['Facility_name_clean'] = permit_data[-1][col].split(' (PDF')[0].split('\n')[0]
                             if '(PDF' in permit_data[-1][col]:
-                                permit_data[-1]['Permit_URL'] = ['https://www3.epa.gov/region1/npdes/' + element.findAll('a')[j].get('href') for j in range(len(element.findAll('a')))]
+                                permit_data[-1]['Permit_URL'] = ['https://www3.epa.gov/region1/npdes/' + element.find_all('a')[j].get('href') for j in range(len(element.find_all('a')))]
                             else:
                                 permit_data[-1]['Permit_URL'] = np.nan
 
@@ -212,10 +212,22 @@ if __name__ == '__main__':
         if row['Permit_URL'] is not np.nan:
             out_files += [[]]
             for permit in row['Permit_URL']:
+                # Skip None, empty, or non-string values
+                if permit is None or not isinstance(permit, str) or not permit.strip():
+                    continue
                 # Skip anything that isn't a direct PDF link (avoids downloading
                 # HTML listing pages, anchor fragments, etc.)
-                if not permit.lower().split('?')[0].split('#')[0].endswith('.pdf'):
+                permit_clean = permit.lower().split('?')[0].split('#')[0].strip()
+                if not permit_clean.endswith('.pdf'):
                     continue
+                # Skip malformed URLs (must be http(s) or ftp, not fragmented)
+                if not (permit_clean.startswith('http://') or permit_clean.startswith('https://') or permit_clean.startswith('ftp://')):
+                    continue
+                # Skip URLs with incomplete scheme/host (e.g., "permit/", "numbers/")
+                url_parts = permit_clean.split('/')
+                if len(url_parts) < 4 or not url_parts[2]:  # Expect at least scheme://host/path/file
+                    continue
+
                 out_path = PERMIT_DIR.format(state, stage, permitID)
                 for i in range(1,len(out_path.split('/'))):
                     check_path = '/'.join(out_path.split('/')[:i])

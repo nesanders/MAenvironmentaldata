@@ -127,12 +127,26 @@ if __name__ == '__main__':
     result.index.name = 'Year'
     result_reset = result.reset_index()
 
-    # Write CSV
-    result_reset.to_csv('../docs/data/MassBudget_environmental_summary.csv', index=False, encoding='ascii')
+    # Rename columns to remove _float suffix for Jekyll compatibility
+    column_rename = {col: col.replace('_float', '') for col in result_reset.columns if '_float' in col}
+    result_reset = result_reset.rename(columns=column_rename)
 
+    # Write CSV to Jekyll _data directory (for template access) and public data directory (for downloads)
+    print('Writing CSV to ../docs/_data/MassBudget_environmental_summary.csv (Jekyll data)...')
+    result_reset.to_csv('../docs/_data/MassBudget_environmental_summary.csv', index=False, encoding='ascii')
+    print('✓ Jekyll data file written')
+
+    print('Writing CSV to ../docs/data/MassBudget_environmental_summary.csv (public download)...')
+    result_reset.to_csv('../docs/data/MassBudget_environmental_summary.csv', index=False, encoding='ascii')
+    print('✓ Public data file written')
+
+    print('Writing timestamp to ../docs/data/ts_update_MassBudget_environmental.yml...')
     with open('../docs/data/ts_update_MassBudget_environmental.yml', 'w') as f:
         f.write('updated: ' + str(datetime.datetime.now()).split('.')[0] + '\n')
+    print('✓ Timestamp written')
 
-    print(f'\nWrote {len(result)} rows: FY{result.index.min()}–FY{result.index.max()}')
+    print(f'\n✓ get_budget_CTHRU.py completed successfully')
+    print(f'  Wrote {len(result)} rows: FY{result.index.min()}–FY{result.index.max()}')
     print('\nDEP Administration budget (inflation-adjusted to 2024 dollars):')
     print(result[['DEPAdministration_noinf_float', 'DEPAdministration_inf_float', 'TotalBudget_inf_float']].tail(10))
+    print(f'\n[{datetime.datetime.now().isoformat()}] Script complete')
