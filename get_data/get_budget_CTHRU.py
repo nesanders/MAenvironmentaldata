@@ -8,7 +8,6 @@ Agencies: DEP (22000100), DCR (28000100+28100100), EEA (20011001+20000100), Fish
 import datetime
 import requests
 import pandas as pd
-from sqlalchemy import create_engine
 
 CTHRU_URL = 'https://cthru.data.socrata.com/resource/kv7m-35wn.json'
 
@@ -46,9 +45,9 @@ def fetch_agency_budget(accounts: list) -> pd.DataFrame:
 
 
 if __name__ == '__main__':
-    # Load SSA AWI from DB for inflation adjustment (2024 base year)
-    engine = create_engine('sqlite:///AMEND.db')
-    awi = pd.read_sql('SELECT Year, AWI FROM SSAWages', engine).set_index('Year')
+    # Load SSA AWI from CSV for inflation adjustment (2024 base year)
+    # Read from CSV instead of DB since this runs before assemble_db.py creates tables
+    awi = pd.read_csv('../docs/data/SSAWages.csv').set_index('Year')
     awi_base = float(awi.loc[2024, 'AWI'])
 
     print(f'Using 2024 AWI base year: ${awi_base:.2f}')
