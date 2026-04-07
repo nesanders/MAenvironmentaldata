@@ -37,3 +37,7 @@ SQL demo interface.
 The EJ/EJSCREEN correlation analyses and CSO map scripts are slow due to shapefile
 loading and per-feature spatial joins.  Consider pre-simplifying geometries, caching
 dissolved boundaries, or switching to vectorized `geopandas.sjoin`.
+
+# Infrastructure
+
+### Add unit tests
