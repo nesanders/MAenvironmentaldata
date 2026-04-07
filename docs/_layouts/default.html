@@ -5,6 +5,12 @@
     <meta http-equiv="X-UA-Compatible" content="chrome=1">
 <!--     <title>{{ site.title | default: site.github.repository_name }} by {{ site.github.owner_name }}</title> -->
     <title>{{ site.data.site_config.site_title }}</title>
+    <!-- Favicons -->
+    <link rel="icon" type="image/x-icon" href="{{ '/assets/favicons/favicon.ico' | relative_url }}">
+    <link rel="icon" type="image/png" sizes="32x32" href="{{ '/assets/favicons/favicon-32.png' | relative_url }}">
+    <link rel="icon" type="image/png" sizes="16x16" href="{{ '/assets/favicons/favicon-16.png' | relative_url }}">
+    <link rel="icon" type="image/png" sizes="64x64" href="{{ '/assets/favicons/favicon-64.png' | relative_url }}">
+    <link rel="icon" type="image/png" sizes="256x256" href="{{ '/assets/favicons/favicon-256.png' | relative_url }}">
     <link href='https://fonts.googleapis.com/css?family=Arvo:400,700,400italic' rel='stylesheet' type='text/css'>
     <link rel="stylesheet" href="{{ '/assets/css/style.css?v=' | append: site.github.build_revision | relative_url }}">
     <script src="{{ '/assets/js/scale.fix.js' | relative_url }}"></script>
@@ -25,6 +31,7 @@
 		<li><a href="{{ site.url }}{{ site.baseurl }}/about.html">About</a></li>
 		<li><a href="{{ site.url }}{{ site.baseurl }}/data/">Data Sets</a></li>
 		<li><a href="{{ site.url }}{{ site.baseurl }}/posts.html">Analysis</a></li>
+		<li><a href="{{ site.url }}{{ site.baseurl }}/dashboard.html">Dashboard</a></li>
 		<li><a href="{{ site.url }}{{ site.baseurl }}/data/sql_demo.html">Query</a></li>
           {% if site.show_downloads %}
             <li class="download"><a class="buttons" href="{{ site.github.zip_url }}">Download ZIP</a></li>

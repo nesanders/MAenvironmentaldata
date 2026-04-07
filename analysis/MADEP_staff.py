@@ -11,231 +11,246 @@ import matplotlib as mpl
 color_cycle = [c['color'] for c in list(mpl.rcParams['axes.prop_cycle'])]
 
 
-## Load database
-disk_engine = create_engine('sqlite:///../get_data/AMEND.db')
+def generate_charts(engine, prefix=''):
+	"""Generate DEP staffing charts with optional filename prefix.
 
-## Get VisibleGovernment data
-s_data = pd.read_sql_query('SELECT * FROM MADEP_staff', disk_engine)
+	Parameters
+	----------
+	engine : sqlalchemy.engine.Engine
+		Database connection engine
+	prefix : str, default ''
+		Prefix to add to all output chart filenames (e.g., 'dash_')
+	"""
 
-## Get comptroller's data
-s_data_soda = pd.read_sql_query('SELECT * FROM MADEP_staff_Comptroller', disk_engine)
-s_data_j = pd.merge(s_data, s_data_soda, how='outer', 
-	 left_on=['CalendarYear', 'name_first', 'name_last'], 
-	 right_on=['year', 'name_first', 'name_last']
-	 )
-s_data_j['BoughtOut'] = s_data_j.pay_buyout_actual > 0
+	## Get VisibleGovernment data
+	s_data = pd.read_sql_query('SELECT * FROM MADEP_staff', engine)
 
-# Merge the two year columns
-s_data_j['year'] = s_data_j['year'].fillna(s_data_j['CalendarYear'])
-years = np.array(sorted(s_data_j['year'].unique()))
-# Merge the two earnings columns
-s_data_j['Earnings'] = s_data_j['Earnings'].fillna(s_data_j['pay_total_actual'])
+	## Get comptroller's data
+	s_data_soda = pd.read_sql_query('SELECT * FROM MADEP_staff_Comptroller', engine)
+	s_data_j = pd.merge(s_data, s_data_soda, how='outer',
+		 left_on=['CalendarYear', 'name_first', 'name_last'],
+		 right_on=['year', 'name_first', 'name_last']
+		 )
+	s_data_j['BoughtOut'] = s_data_j.pay_buyout_actual > 0
 
-## Get wage adjustments
-ssa_wage_df = pd.read_sql_query('SELECT * FROM SSAWages', disk_engine)
-ssa_wage_df.index = ssa_wage_df.Year.astype(int)
-wage_adjust = ssa_wage_df.loc[years].AWI.values / ssa_wage_df.loc[2015].AWI
+	# Merge the two year columns
+	s_data_j['year'] = s_data_j['year'].fillna(s_data_j['CalendarYear'])
+	years = np.array(sorted(s_data_j['year'].unique()))
+	# Merge the two earnings columns
+	s_data_j['Earnings'] = s_data_j['Earnings'].fillna(s_data_j['pay_total_actual'])
 
-## Get funding data
-f_data = pd.read_sql_query('SELECT * FROM MassBudget_summary', disk_engine)
-f_data.index = f_data.Year
+	## Get wage adjustments (2024 dollars)
+	ssa_wage_df = pd.read_sql_query('SELECT * FROM SSAWages', engine)
+	ssa_wage_df.index = ssa_wage_df.Year.astype(int)
+	wage_adjust = ssa_wage_df.loc[years].AWI.values / ssa_wage_df.loc[2024].AWI
 
-
-#############################
-## Show overall employment
-#############################
-
-s_data_g = s_data_j.groupby(['year']).count().Earnings
-s_data_jg = s_data_j.groupby(['position_type', 'year']).count().Earnings
-
-## Establish chart
-mychart = chartjs.chart("Overall DEP Staffing", "Bar", 640, 480)
-mychart.set_labels(list(years))
-fte_stack = s_data_jg.loc['Full Time Employee'].reindex(years).fillna(0).values
-mychart.add_dataset(fte_stack.tolist(), 
-	"Full time DEP employees",
-	backgroundColor="'rgba(50,50,200,0.8)'",
-	stack="'annual'", yAxisID= "'y-axis-0'",)
-mychart.add_dataset((s_data_g.loc[years].values).tolist(), "Total DEP employment",
-	backgroundColor="'rgba(50,50,50,0.5)'",
-	stack="'annual'", yAxisID= "'y-axis-0'")
-mychart.set_params(JSinline = 0, ylabel = 'Total employment', xlabel='Year',
-	scaleBeginAtZero=1)
-
-mychart.jekyll_write('../docs/_includes/charts/MADEP_staffing_overall.html')
+	## Get funding data
+	f_data = pd.read_sql_query('SELECT * FROM MassBudget_summary', engine)
+	f_data.index = f_data.Year
 
 
-#############################
-## Show overall employment vs funding
-#############################
+	#############################
+	## Show overall employment
+	#############################
 
-## Establish chart
-mychart = chartjs.chart("Overall DEP Staffing vs Funding", "Bar", 640, 480)
-mychart.set_labels(list(years))
-fte_stack = s_data_jg.loc['Full Time Employee'].reindex(years).fillna(0).values
-mychart.add_dataset((s_data_g.loc[years].values).tolist(), "Total DEP employment",
-	backgroundColor="'rgba(50,50,50,0.5)'",
-	type="'line'", fill = "false",
-	borderWidth = 2,
-	stack="'annual'", yAxisID= "'y-axis-0'")
-mychart.add_dataset((f_data['DEPAdministration_inf_float'].loc[years]/1e6).values.tolist(), "DEP administrative budget",
-	borderColor = "'"+color_cycle[1]+"'", fill = "false",
-	borderWidth = 2,
-	stack="'annual'", type="'line'", yAxisID= "'y-axis-1'")
-mychart.set_params(JSinline = 0, ylabel = 'Total employment', xlabel='Year',
-	y2nd = 1, y2nd_title = 'Funding level ($M, 2016 dollars)',
-	scaleBeginAtZero=0)
+	s_data_g = s_data_j.groupby(['year']).count().Earnings
+	s_data_jg = s_data_j.groupby(['position_type', 'year']).count().Earnings
 
-mychart.jekyll_write('../docs/_includes/charts/MADEP_staffing_overall_funding.html')
+	## Establish chart
+	mychart = chartjs.chart("Overall DEP Staffing", "Bar", 640, 480)
+	mychart.set_labels(list(years))
+	fte_stack = s_data_jg.loc['Full Time Employee'].reindex(years).fillna(0).values
+	mychart.add_dataset(fte_stack.tolist(),
+		"Full time DEP employees",
+		backgroundColor="'rgba(50,50,200,0.8)'",
+		stack="'annual'", yAxisID= "'y-axis-0'",)
+	mychart.add_dataset((s_data_g.loc[years].values).tolist(), "Total DEP employment",
+		backgroundColor="'rgba(50,50,50,0.5)'",
+		stack="'annual'", yAxisID= "'y-axis-0'")
+	mychart.set_params(JSinline = 0, ylabel = 'Total employment', xlabel='Year',
+		scaleBeginAtZero=1)
 
-
-
-pr = pearsonr(s_data_g.loc[years].values, (f_data['DEPAdministration_inf_float'].loc[years]/1e6).values)
-with open('../docs/data/facts_DEPstaff.yml', 'w') as f:
-	f.write('cor_staff_funding: %0.0f'%(pr[0]*100)+'\n')
-	f.write('cor_staff_funding_p: %0.2f'%(pr[1]*100)+'\n')
+	mychart.jekyll_write(f'../docs/_includes/charts/{prefix}MADEP_staffing_overall.html')
 
 
+	#############################
+	## Show overall employment vs funding
+	#############################
 
-#############################
-## Buyout levels
-#############################
+	## Establish chart
+	mychart = chartjs.chart("Overall DEP Staffing vs Funding", "Bar", 640, 480)
+	mychart.set_labels(list(years))
+	fte_stack = s_data_jg.loc['Full Time Employee'].reindex(years).fillna(0).values
+	mychart.add_dataset((s_data_g.loc[years].values).tolist(), "Total DEP employment",
+		backgroundColor="'rgba(50,50,50,0.5)'",
+		type="'line'", fill = "false",
+		borderWidth = 2,
+		stack="'annual'", yAxisID= "'y-axis-0'")
+	mychart.add_dataset((f_data['DEPAdministration_inf_float'].loc[years]/1e6).values.tolist(), "DEP administrative budget",
+		borderColor = "'"+color_cycle[1]+"'", fill = "false",
+		borderWidth = 2,
+		stack="'annual'", type="'line'", yAxisID= "'y-axis-1'")
+	mychart.set_params(JSinline = 0, ylabel = 'Total employment', xlabel='Year',
+		y2nd = 1, y2nd_title = 'Funding level ($M, 2024 dollars)',
+		scaleBeginAtZero=0)
 
-## Establish chart
-mychart = chartjs.chart("DEP buyouts", "Bar", 640, 480)
-mychart.set_labels(list(years))
-mychart.add_dataset(
-	(s_data_j.groupby(['year']).pay_buyout_actual.sum().loc[years] * wage_adjust / 1e6).values, 
-	"Buyout expenditures",
-	backgroundColor="'rgba(50,50,50,0.5)'",
-	type="'line'", fill = "false",
-	borderWidth = 2,
-	stack="'annual'", yAxisID= "'y-axis-0'")
-mychart.add_dataset(
-	(s_data_j.groupby(['year']).BoughtOut.sum().loc[years]).values, 
-	"Staff Bought Out",
-	borderColor = "'"+color_cycle[1]+"'", fill = "false",
-	borderWidth = 2, steppedLine = 'true',
-	stack="'annual'", type="'line'", yAxisID= "'y-axis-1'")
-mychart.set_params(JSinline = 0, ylabel = 'Cost($M)', xlabel='Year',
-	y2nd = 1, y2nd_title = 'Number of personnel',
-	scaleBeginAtZero=1)
-
-mychart.jekyll_write('../docs/_includes/charts/MADEP_staffing_buyout.html')
+	mychart.jekyll_write(f'../docs/_includes/charts/{prefix}MADEP_staffing_overall_funding.html')
 
 
-#############################
-## Show average seniority per job type
-#############################
 
-s_data_gj = s_data.groupby(['JobType','CalendarYear'])
-sel_titles = [['Environmental Analyst'], ['Environmental Engineer'], ['Program Coordinator'], ['Regional Planner', 'Planners'], ['Counsel']]
-
-ys = []; cs = []
-for i,jt in enumerate(sel_titles):
-	ys += [np.zeros(len(years))]
-	cs += [np.zeros(len(years))]
-	try:
-		ys[-1] += s_data_gj.Earnings.sum().loc[(jt[0])].reindex(years).replace(np.nan, 0).values
-		cs[-1] += s_data_gj.Earnings.count().loc[(jt[0])].reindex(years).replace(np.nan, 0).values
-	except pd.core.indexing.IndexingError:
-		pass
-
-## Establish chart
-mychart = chartjs.chart("DEP wages over time", "Line", 640, 480)
-mychart.set_labels(years.tolist())
-mychart.set_params(JSinline = 0, ylabel = 'Average earnings per year ($k)', xlabel='Year')
+	pr = pearsonr(s_data_g.loc[years].values, (f_data['DEPAdministration_inf_float'].loc[years]/1e6).values)
+	with open('../docs/data/facts_DEPstaff.yml', 'w') as f:
+		f.write('cor_staff_funding: %0.0f'%(pr[0]*100)+'\n')
+		f.write('cor_staff_funding_p: %0.2f'%(pr[1]*100)+'\n')
 
 
-## Run non-inflation loop separately so they are adjacent in legend
-for i,jt in enumerate(sel_titles):
+
+	#############################
+	## Buyout levels
+	#############################
+
+	## Establish chart
+	mychart = chartjs.chart("DEP buyouts", "Bar", 640, 480)
+	mychart.set_labels(list(years))
 	mychart.add_dataset(
-		(ys[i] / 1000. / cs[i].astype(float)).tolist(), 
-		jt[0]+(' (absolute dollars)' if i==0 else ''),
-		borderColor = "'"+color_cycle[i]+"'", fill = "false",
-		hidden = "true",
-		borderDash = '[10,15]', borderWidth = 0.5
-		)
-
-
-for i,jt in enumerate(sel_titles):
+		(s_data_j.groupby(['year']).pay_buyout_actual.sum().loc[years] * wage_adjust / 1e6).values,
+		"Buyout expenditures",
+		backgroundColor="'rgba(50,50,50,0.5)'",
+		type="'line'", fill = "false",
+		borderWidth = 2,
+		stack="'annual'", yAxisID= "'y-axis-0'")
 	mychart.add_dataset(
-		(ys[i] / wage_adjust / 1000. / cs[i].astype(float)).tolist(), 
-		jt[0]+(' (inflation adjusted)' if i==0 else ''),
-		borderColor = "'"+color_cycle[i]+"'", fill = "false",
-		borderWidth = 2
-		)
+		(s_data_j.groupby(['year']).BoughtOut.sum().loc[years]).values,
+		"Staff Bought Out",
+		borderColor = "'"+color_cycle[1]+"'", fill = "false",
+		borderWidth = 2, steppedLine = 'true',
+		stack="'annual'", type="'line'", yAxisID= "'y-axis-1'")
+	mychart.set_params(JSinline = 0, ylabel = 'Cost($M)', xlabel='Year',
+		y2nd = 1, y2nd_title = 'Number of personnel',
+		scaleBeginAtZero=1)
+
+	mychart.jekyll_write(f'../docs/_includes/charts/{prefix}MADEP_staffing_buyout.html')
+
+
+	#############################
+	## Show average seniority per job type
+	#############################
+
+	s_data_gj = s_data.groupby(['JobType','CalendarYear'])
+	sel_titles = [['Environmental Analyst'], ['Environmental Engineer'], ['Program Coordinator'], ['Regional Planner', 'Planners'], ['Counsel']]
+
+	ys = []; cs = []
+	for i,jt in enumerate(sel_titles):
+		ys += [np.zeros(len(years))]
+		cs += [np.zeros(len(years))]
+		try:
+			ys[-1] += s_data_gj.Earnings.sum().loc[(jt[0])].reindex(years).replace(np.nan, 0).values
+			cs[-1] += s_data_gj.Earnings.count().loc[(jt[0])].reindex(years).replace(np.nan, 0).values
+		except pd.core.indexing.IndexingError:
+			pass
+
+	## Establish chart
+	mychart = chartjs.chart("DEP wages over time", "Line", 640, 480)
+	mychart.set_labels(years.tolist())
+	mychart.set_params(JSinline = 0, ylabel = 'Average earnings per year ($k)', xlabel='Year')
+
+
+	## Run non-inflation loop separately so they are adjacent in legend
+	for i,jt in enumerate(sel_titles):
+		mychart.add_dataset(
+			(ys[i] / 1000. / cs[i].astype(float)).tolist(),
+			jt[0]+(' (absolute dollars)' if i==0 else ''),
+			borderColor = "'"+color_cycle[i]+"'", fill = "false",
+			hidden = "true",
+			borderDash = '[10,15]', borderWidth = 0.5
+			)
+
+
+	for i,jt in enumerate(sel_titles):
+		mychart.add_dataset(
+			(ys[i] / wage_adjust / 1000. / cs[i].astype(float)).tolist(),
+			jt[0]+(' (inflation adjusted)' if i==0 else ''),
+			borderColor = "'"+color_cycle[i]+"'", fill = "false",
+			borderWidth = 2
+			)
 
 
 
-## Write out
-mychart.jekyll_write('../docs/_includes/charts/MADEP_staffing_wagehistory.html', full=0)
+	## Write out
+	mychart.jekyll_write(f'../docs/_includes/charts/{prefix}MADEP_staffing_wagehistory.html', full=0)
 
 
 
 
-#############################
-## Show average seniority per job type
-#############################
+	#############################
+	## Show average seniority per job type
+	#############################
 
-s_data_gj = s_data.groupby(['JobType','CalendarYear'])
-sel_titles = [['Environmental Analyst'], ['Environmental Engineer'], ['Program Coordinator'], ['Regional Planner', 'Planners'], ['Counsel']]
+	s_data_gj = s_data.groupby(['JobType','CalendarYear'])
+	sel_titles = [['Environmental Analyst'], ['Environmental Engineer'], ['Program Coordinator'], ['Regional Planner', 'Planners'], ['Counsel']]
 
-ys = []; cs = []
-for i,jt in enumerate(sel_titles):
-	ys += [np.zeros(len(years))]
-	cs += [np.zeros(len(years))]
-	try:
-		ys[-1] += s_data_gj.Seniority.sum().loc[(jt[0])].reindex(years).replace(np.nan, 0).values
-		cs[-1] += s_data_gj.Earnings.count().loc[(jt[0])].reindex(years).replace(np.nan, 0).values
-	except pd.core.indexing.IndexingError:
-		pass
+	ys = []; cs = []
+	for i,jt in enumerate(sel_titles):
+		ys += [np.zeros(len(years))]
+		cs += [np.zeros(len(years))]
+		try:
+			ys[-1] += s_data_gj.Seniority.sum().loc[(jt[0])].reindex(years).replace(np.nan, 0).values
+			cs[-1] += s_data_gj.Earnings.count().loc[(jt[0])].reindex(years).replace(np.nan, 0).values
+		except pd.core.indexing.IndexingError:
+			pass
 
-## Establish chart
-mychart = chartjs.chart("DEP seniority over time", "Line", 640, 480)
-mychart.set_labels(years.tolist())
-mychart.set_params(JSinline = 0, ylabel = 'Average seniority gain (yrs with DEP since 2004)', xlabel='Year')
+	## Establish chart
+	mychart = chartjs.chart("DEP seniority over time", "Line", 640, 480)
+	mychart.set_labels(years.tolist())
+	mychart.set_params(JSinline = 0, ylabel = 'Average seniority gain (yrs with DEP since 2004)', xlabel='Year')
 
-for i,jt in enumerate(sel_titles):
-	mychart.add_dataset(
-		(ys[i] / cs[i].astype(float)).tolist() - (years - years[0]), 
-		jt[0],
-		borderColor = "'"+color_cycle[i]+"'", fill = "false",
-		borderWidth = 2
-		)
+	for i,jt in enumerate(sel_titles):
+		# Convert to list and subtract year offset, explicitly converting to Python floats
+		seniority_values = [float(y - (y_year - years[0])) for y, y_year in zip(ys[i] / cs[i].astype(float), years)]
+		mychart.add_dataset(
+			seniority_values,
+			jt[0],
+			borderColor = "'"+color_cycle[i]+"'", fill = "false",
+			borderWidth = 2
+			)
 
-## Write out
-mychart.jekyll_write('../docs/_includes/charts/MADEP_staffing_seniority.html', full=0)
-
-
-
-#############################
-## Show indexed position changes over time
-#############################
-
-sel_titles = [['Environmental Analyst'], ['Environmental Engineer'], ['Program Coordinator'], ['Regional Planner', 'Planners'], ['Accountant'], ['Counsel']]
-
-## Total number of employees in major types
-ys = []
-for i,t in enumerate(sel_titles):
-	ys += [s_data[s_data.JobType == t[0]].groupby('CalendarYear').Earnings.count().reindex(years).values]
-
-mychart = chartjs.chart("DEP role volume over time", "Line", 640, 480)
-mychart.set_labels(years.tolist())
-mychart.set_params(JSinline = 0, 
-	ylabel = 'Total staff change since 2004 (%)', xlabel='Year')
+	## Write out
+	mychart.jekyll_write(f'../docs/_includes/charts/{prefix}MADEP_staffing_seniority.html', full=0)
 
 
-## Run non-inflation loop separately so they are adjacent in legend
-for i,t in enumerate(sel_titles):
-	mychart.add_dataset(
-		(100 * ys[i] / ys[i][0]).tolist(), 
-		t[0],
-		borderColor = "'"+color_cycle[i]+"'", fill = "false",
-		borderWidth = 2
-		)
+
+	#############################
+	## Show indexed position changes over time
+	#############################
+
+	sel_titles = [['Environmental Analyst'], ['Environmental Engineer'], ['Program Coordinator'], ['Regional Planner', 'Planners'], ['Accountant'], ['Counsel']]
+
+	## Total number of employees in major types
+	ys = []
+	for i,t in enumerate(sel_titles):
+		ys += [s_data[s_data.JobType == t[0]].groupby('CalendarYear').Earnings.count().reindex(years).values]
+
+	mychart = chartjs.chart("DEP role volume over time", "Line", 640, 480)
+	mychart.set_labels(years.tolist())
+	mychart.set_params(JSinline = 0,
+		ylabel = 'Total staff change since 2004 (%)', xlabel='Year')
 
 
-## Write out
-mychart.jekyll_write('../docs/_includes/charts/MADEP_staffing_rolevolume.html', full=0)
+	## Run non-inflation loop separately so they are adjacent in legend
+	for i,t in enumerate(sel_titles):
+		mychart.add_dataset(
+			(100 * ys[i] / ys[i][0]).tolist(),
+			t[0],
+			borderColor = "'"+color_cycle[i]+"'", fill = "false",
+			borderWidth = 2
+			)
+
+
+	## Write out
+	mychart.jekyll_write(f'../docs/_includes/charts/{prefix}MADEP_staffing_rolevolume.html', full=0)
+
+
+if __name__ == '__main__':
+	disk_engine = create_engine('sqlite:///../get_data/AMEND.db')
+	generate_charts(disk_engine)
 

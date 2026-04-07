@@ -167,19 +167,45 @@ class CSOAnalysisEEADP(CSOAnalysis):
         
         print('Making chart of discharge counts per month by discharge type')
         mychart = chartjs.chart("Discharge counts per month by discharge type", "Bar", 640, 480)
-        
+
         data_types = self.data_cso_filtered_reports['eventType'].unique()
         all_months = pd.date_range(start=self.cso_data_start, end=self.cso_data_end, freq='MS')
-        mychart.set_labels(all_months.tolist())
+        # Format month labels as "Jan 2022"
+        month_labels = [m.strftime('%b %Y') for m in all_months]
+        mychart.set_labels(month_labels)
         cso_df_counts = self.data_cso_filtered_reports.groupby(['eventType', 'incidentDate']).size()
-        
+
         for i, event_type in enumerate(data_types):
             counts_per_month = cso_df_counts.loc[event_type].resample('MS').sum().reindex(all_months).fillna(0)
-            mychart.add_dataset(counts_per_month.values.tolist(), 
+            mychart.add_dataset(counts_per_month.values.tolist(),
                 event_type,
                 backgroundColor="'rgba({},0.8)'".format(", ".join([str(x) for x in hex2rgb(COLOR_CYCLE[i])])),
                 yAxisID= "'y-axis-0'")
-        mychart.set_params(JSinline=0, ylabel='Number of discharges', xlabel='Date',
+
+        # Add rainfall overlay
+        try:
+            df_rain = pd.read_csv('../docs/data/MA_precipitation_daily.csv')
+            df_rain['date'] = pd.to_datetime(df_rain['date'])
+            precip_monthly = df_rain[
+                (df_rain['date'] >= pd.to_datetime(self.cso_data_start)) &
+                (df_rain['date'] <= pd.to_datetime(self.cso_data_end))
+            ].resample('MS', on='date')['precip_in_avg'].sum()
+            precip_monthly = precip_monthly.reindex(all_months, fill_value=0)
+            mychart.add_dataset(
+                precip_monthly.values.tolist(),
+                'Precipitation (48-hr lookback)',
+                borderColor="'rgba(100,150,255,1)'",
+                type="'line'",
+                fill="false",
+                borderWidth=2,
+                yAxisID="'y-axis-1'",
+                pointRadius=1
+            )
+        except FileNotFoundError:
+            pass  # Skip rainfall if data not available
+
+        mychart.set_params(JSinline=0, ylabel='Number of discharges', xlabel='Month',
+            y2nd=1, y2nd_title='Precipitation (inches)',
             scaleBeginAtZero=1)
         mychart.stacked = 'true'
 
@@ -211,23 +237,39 @@ class CSOAnalysisEEADP(CSOAnalysis):
 
         mychart.jekyll_write(outpath)
 
-    def plot_volume_per_operator_by_event_type(self, outpath: Optional[str]=None):
+    def plot_volume_per_operator_by_event_type(self, outpath: Optional[str]=None, truncate_labels: bool=False, label_max_length: int=20):
         """Bar chart showing how many reports were made each day of different discharge types.
-        """        
+
+        Parameters
+        ----------
+        outpath : str, optional
+            Output path for chart. Defaults to volume_per_operator
+        truncate_labels : bool
+            If True, truncate long operator names to label_max_length characters
+        label_max_length : int
+            Maximum length for truncated labels (default 20 chars)
+        """
         if outpath is None:
             outpath = f'../docs/_includes/charts/{self.output_slug}_volume_per_operator.html'
-        
+
         print('Making chart of discharge volume per operator by discharge type')
         mychart = chartjs.chart("Discharge volume per operator by discharge type", "Bar", 640, 480)
-        
+
         data_types = self.data_cso_filtered_reports['eventType'].unique()
         all_operators = sorted(self.data_cso_filtered_reports['permiteeName'].unique())
-        mychart.set_labels(all_operators)
+
+        # Optionally truncate labels for readability
+        if truncate_labels:
+            operator_labels = [op[:label_max_length] + '...' if len(op) > label_max_length else op for op in all_operators]
+        else:
+            operator_labels = all_operators
+
+        mychart.set_labels(operator_labels)
         cso_df_vol = self.data_cso_filtered_reports.groupby(['eventType', 'permiteeName'])[self.discharge_vol_col].sum() / 1e6
-        
+
         for i, event_type in enumerate(data_types):
             counts_per_operator = cso_df_vol.loc[event_type].reindex(all_operators).fillna(0)
-            mychart.add_dataset(counts_per_operator.values.tolist(), 
+            mychart.add_dataset(counts_per_operator.values.tolist(),
                 event_type,
                 backgroundColor="'rgba({},0.8)'".format(", ".join([str(x) for x in hex2rgb(COLOR_CYCLE[i])])),
                 yAxisID= "'y-axis-0'")
@@ -884,6 +926,258 @@ class CSOAnalysisEEADP(CSOAnalysis):
         mychart.scaleBeginAtZero = 'beginAtZero: true, min: 0, max: 100'
         mychart.jekyll_write(outpath)
         print(f'  Wrote rainfall CDF chart to {outpath}')
+
+    # -------------------------
+    # Dashboard-specific plots
+    # -------------------------
+
+    def plot_monthly_volume_and_rainfall(self, outpath: Optional[str]=None, window_days: int=2):
+        """Monthly CSO discharge volume (stacked bar by type) with rainfall as line overlay.
+
+        This replaces the annual precip/discharge plot for the dashboard to show finer temporal resolution.
+        """
+        if outpath is None:
+            outpath = f'../docs/_includes/charts/{self.output_slug}_monthly_volume_rainfall.html'
+
+        print('Making chart of monthly discharge volume with rainfall overlay')
+
+        # Aggregate monthly CSO volume by event type
+        data_monthly = self.data_cso_filtered_reports.copy()
+        data_monthly['YearMonth'] = pd.to_datetime(data_monthly['incidentDate']).dt.to_period('M')
+        monthly_volume = data_monthly.groupby(['YearMonth', 'eventType'])['DischargeVolume'].sum().unstack(fill_value=0)
+        monthly_volume.index = monthly_volume.index.to_timestamp()
+
+        # Get rainfall data (daily average precip, aggregated monthly)
+        try:
+            df_rain = pd.read_csv('../docs/data/MA_precipitation_daily.csv')
+        except FileNotFoundError:
+            print(f'  Daily precipitation CSV not found; rainfall overlay skipped')
+            df_rain = None
+
+        if df_rain is not None:
+            df_rain['date'] = pd.to_datetime(df_rain['date'])
+            precip_monthly = df_rain[
+                (df_rain['date'] >= pd.to_datetime(self.cso_data_start)) &
+                (df_rain['date'] <= pd.to_datetime(self.cso_data_end))
+            ].resample('MS', on='date')['precip_in_avg'].sum()
+        else:
+            precip_monthly = pd.Series(0, index=pd.date_range(start=pd.to_datetime(self.cso_data_start), end=pd.to_datetime(self.cso_data_end), freq='MS'))
+
+        # Align indices
+        all_months = pd.date_range(start=pd.to_datetime(self.cso_data_start), end=pd.to_datetime(self.cso_data_end), freq='MS')
+        monthly_volume = monthly_volume.reindex(all_months, fill_value=0)
+        precip_monthly = precip_monthly.reindex(all_months, fill_value=0)
+
+        # Create chart
+        mychart = chartjs.chart("Monthly discharge volume and rainfall", "Bar", 640, 480)
+        # Format month labels as "Jan 2022"
+        month_labels = [m.strftime('%b %Y') for m in monthly_volume.index]
+        mychart.set_labels(month_labels)
+
+        # Add discharge volume datasets (stacked bars)
+        for i, event_type in enumerate(monthly_volume.columns):
+            mychart.add_dataset(
+                (monthly_volume[event_type] / 1e6).tolist(),
+                event_type,
+                backgroundColor="'rgba({},0.8)'".format(", ".join([str(x) for x in hex2rgb(COLOR_CYCLE[i])])),
+                yAxisID="'y-axis-0'",
+                stack="'volume'"
+            )
+
+        # Add rainfall as line on secondary axis
+        mychart.add_dataset(
+            precip_monthly.values.tolist(),
+            "Precipitation (48-hr lookback)",
+            borderColor="'rgba(100,150,255,1)'",
+            type="'line'",
+            fill="false",
+            borderWidth=2,
+            yAxisID="'y-axis-1'",
+            pointRadius=1
+        )
+
+        mychart.set_params(
+            JSinline=0,
+            ylabel='Total discharge volume (million gallons)',
+            xlabel='Month',
+            y2nd=1,
+            y2nd_title='Precipitation (inches)',
+            scaleBeginAtZero=1
+        )
+
+        mychart.jekyll_write(outpath)
+        print(f'  Wrote monthly volume + rainfall chart to {outpath}')
+
+    def plot_monthly_modeled_vs_metered_fraction(self, outpath: Optional[str]=None):
+        """Monthly fraction of CSO reports with likely-modeled (vs metered) discharge volumes.
+
+        Uses heuristic: volumes rounded to nearest 1,000 gallons are flagged as modeled.
+        CSO-Untreated data shown monthly; SSO data aggregated annually to reduce clutter.
+        """
+        if outpath is None:
+            outpath = f'../docs/_includes/charts/{self.output_slug}_modeled_vs_metered_fraction.html'
+
+        print('Making chart of monthly modeled vs metered discharge fraction')
+
+        # Identify likely-modeled volumes (rounded to 1000 gal)
+        data = self.data_cso_filtered_reports.copy()
+        data['is_modeled'] = (
+            (data['DischargeVolume'] > 0) &
+            ((data['DischargeVolume'] % 1000) < 100)  # 100 gal tolerance
+        )
+
+        # Separate CSO-Untreated (monthly) from SSOs (annual aggregation)
+        cso_data = data[data['eventType'] == 'CSO – UnTreated'].copy()
+        cso_data['Period'] = pd.to_datetime(cso_data['incidentDate']).dt.to_period('M')
+
+        sso_data = data[data['eventType'].str.contains('SSO', na=False)].copy()
+        sso_data['Period'] = pd.to_datetime(sso_data['incidentDate']).dt.to_period('Y')
+
+        # Create date range for monthly CSO data
+        all_months = pd.date_range(start=self.cso_data_start, end=self.cso_data_end, freq='MS')
+        all_years = pd.date_range(start=self.cso_data_start, end=self.cso_data_end, freq='YS')
+
+        mychart = chartjs.chart("Modeled vs metered discharge reports", "Line", 640, 480)
+
+        # For mixed temporal resolution, use monthly for CSO and annual for SSO
+        # Create friendly month labels (e.g., "Jun 2022")
+        month_labels = [m.strftime('%b %Y') for m in all_months]
+        mychart.set_labels(month_labels)
+
+        # CSO-Untreated (monthly)
+        cso_monthly_frac = cso_data.groupby('Period').apply(
+            lambda x: (x['is_modeled'].sum() / len(x) * 100) if len(x) > 0 else 0
+        ).reindex([pd.Period(m, 'M') for m in all_months], fill_value=np.nan)
+
+        mychart.add_dataset(
+            cso_monthly_frac.values.tolist(),
+            'CSO – UnTreated',
+            borderColor="'rgba({},0.9)'".format(", ".join([str(x) for x in hex2rgb(COLOR_CYCLE[0])])),
+            fill="false",
+            borderWidth=2,
+            yAxisID="'y-axis-0'",
+            pointRadius=2,
+            hidden="false"
+        )
+
+        # SSOs (annual aggregation, shown as step function)
+        sso_annual_frac = sso_data.groupby('Period').apply(
+            lambda x: (x['is_modeled'].sum() / len(x) * 100) if len(x) > 0 else 0
+        ).reindex([pd.Period(m, 'Y') for m in all_years], fill_value=np.nan)
+
+        # Resample to monthly for display (repeating annual values)
+        sso_monthly_resampled = []
+        year_idx = 0
+        for month in all_months:
+            period_y = pd.Period(month, 'Y')
+            if year_idx < len(sso_annual_frac) and pd.notna(sso_annual_frac.iloc[year_idx]):
+                sso_monthly_resampled.append(float(sso_annual_frac.iloc[year_idx]))
+            else:
+                sso_monthly_resampled.append(np.nan)  # Use np.nan instead of None for chartjs
+            # Move to next year when we cross year boundary
+            if month.month == 12:
+                year_idx += 1
+
+        mychart.add_dataset(
+            sso_monthly_resampled,
+            'SSO (annual aggregation)',
+            borderColor="'rgba({},0.9)'".format(", ".join([str(x) for x in hex2rgb(COLOR_CYCLE[1])])),
+            fill="false",
+            borderWidth=2,
+            borderDash="[5,5]",
+            yAxisID="'y-axis-0'",
+            pointRadius=2,
+            hidden="false"
+        )
+
+        mychart.set_params(
+            JSinline=0,
+            ylabel='% with likely-modeled volumes (rounded to 1000 gal)',
+            xlabel='Month',
+            scaleBeginAtZero=1
+        )
+        mychart.scaleBeginAtZero = 'beginAtZero: true, min: 0, max: 100'
+        mychart.jekyll_write(outpath)
+        print(f'  Wrote modeled vs metered chart to {outpath}')
+
+    def plot_monthly_volume_by_watershed(self, outpath: Optional[str]=None, top_n: int=8):
+        """Monthly CSO discharge volume by receiving watershed (line plot for top N watersheds).
+        """
+        if outpath is None:
+            outpath = f'../docs/_includes/charts/{self.output_slug}_monthly_volume_watershed.html'
+
+        print('Making chart of monthly discharge volume by watershed')
+
+        # Need to merge with geographic data to get watersheds
+        data_monthly = self.data_cso_filtered_reports.copy()
+        data_monthly['YearMonth'] = pd.to_datetime(data_monthly['incidentDate']).dt.to_period('M')
+
+        # Get watershed data from saved geographic file
+        try:
+            # Load GEOID to Watershed mapping from EGS data
+            data_egs = pd.read_csv(f'{self.data_path}{self.output_slug}_data_egs_merge.csv.gz')
+            data_cso_geoid = pd.read_csv(f'{self.data_path}{self.output_slug}_data_cso.csv')
+
+            # Build cso_id -> GEOID mapping
+            cso_geoid = data_cso_geoid.dropna(subset=['GEOID']).set_index('cso_id')['GEOID'].astype(str).to_dict()
+            # Build GEOID -> Watershed mapping
+            geoid_ws_map = data_egs.drop_duplicates('ID').set_index('ID')['Watershed'].to_dict()
+
+            # Apply both mappings
+            data_monthly['GEOID'] = data_monthly['cso_id'].map(cso_geoid)
+            data_monthly['Watershed'] = data_monthly['GEOID'].map(geoid_ws_map)
+            print(f'    Data monthly has {len(data_monthly)} rows, {data_monthly["Watershed"].notna().sum()} with non-null Watershed')
+        except (FileNotFoundError, KeyError) as e:
+            print(f'  Warning: could not load geographic data ({e}), using placeholders')
+            data_monthly['Watershed'] = 'Unknown'
+
+        # Get top N watersheds by total volume
+        # Filter out null/NaN watersheds for groupby
+        data_monthly_with_ws = data_monthly[data_monthly['Watershed'].notna()]
+        if len(data_monthly_with_ws) == 0:
+            print(f'    Warning: No watershed data available. Using waterbody instead.')
+            # Fallback to waterbody if watersheds not available
+            data_monthly_with_ws = data_monthly.copy()
+            data_monthly_with_ws['Watershed'] = data_monthly_with_ws['waterBody']
+
+        total_by_ws = data_monthly_with_ws.groupby('Watershed')['DischargeVolume'].sum().nlargest(top_n)
+        top_watersheds = total_by_ws.index.tolist()
+        print(f'    Top {top_n} watersheds: {[ws[:30] if isinstance(ws, str) else ws for ws in top_watersheds]}')
+        print(f'    Total volumes: {total_by_ws.tolist()}')
+
+        # Monthly volume for top watersheds
+        all_months = pd.date_range(start=self.cso_data_start, end=self.cso_data_end, freq='MS')
+        monthly_volume_ws = data_monthly_with_ws[data_monthly_with_ws['Watershed'].isin(top_watersheds)].groupby(
+            ['YearMonth', 'Watershed']
+        )['DischargeVolume'].sum().unstack(fill_value=0)
+        monthly_volume_ws.index = monthly_volume_ws.index.to_timestamp()
+        monthly_volume_ws = monthly_volume_ws.reindex(all_months, fill_value=0)
+
+        # Create chart
+        mychart = chartjs.chart("Monthly discharge volume by watershed", "Line", 640, 480)
+        # Format month labels as "Jan 2022"
+        month_labels = [m.strftime('%b %Y') for m in all_months]
+        mychart.set_labels(month_labels)
+
+        for i, ws in enumerate(top_watersheds):
+            mychart.add_dataset(
+                (monthly_volume_ws[ws] / 1e6).tolist(),
+                ws if len(ws) < 25 else ws[:22] + '...',
+                borderColor="'rgba({},0.9)'".format(", ".join([str(x) for x in hex2rgb(COLOR_CYCLE[i])])),
+                fill="false",
+                borderWidth=2,
+                yAxisID="'y-axis-0'",
+                pointRadius=1
+            )
+
+        mychart.set_params(
+            JSinline=0,
+            ylabel='Discharge volume (million gallons)',
+            xlabel='Month',
+            scaleBeginAtZero=0
+        )
+        mychart.jekyll_write(outpath)
+        print(f'  Wrote monthly volume by watershed chart to {outpath}')
 
     def extra_plots(self):
         """Generate all extra data plots for the EEA DP CSO data

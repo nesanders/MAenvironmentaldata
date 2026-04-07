@@ -1,19 +1,20 @@
 name: Update Charts
 
 on:
-  # DISABLED: This workflow regenerates charts for fixed-in-time analyses.
-  # See TODO.md for proposal to replace with interactive dashboards.
   workflow_run:
     workflows: ["Update Data"]
-    types: [completed]    # Only runs after Update Data finishes (successfully)
+    types: [completed]
   workflow_dispatch:       # Allow manual trigger from GitHub UI
+
+concurrency:
+  group: update-charts
+  cancel-in-progress: false
 
 jobs:
   update-charts:
+    # Only run if the Update Data workflow succeeded (or manual dispatch)
+    if: github.event_name == 'workflow_dispatch' || github.event.workflow_run.conclusion == 'success'
     runs-on: ubuntu-latest
-    # DISABLED: This workflow regenerates charts for fixed-in-time analyses.
-    # See TODO.md for proposal to replace with interactive dashboards.
-    if: false
     permissions:
       contents: write   # to commit updated charts
       issues: write     # to open failure issues
@@ -29,23 +30,21 @@ jobs:
       - name: Install dependencies
         run: pip install -r requirements-ci.txt
 
-      - name: Generate charts
+      - name: Generate dashboard charts
         working-directory: analysis
+        run: python dashboard_charts.py
+
+      - name: Write dashboard update timestamp
         run: |
-          python SSA_wages_viz.py
-          python MADEP_staff.py
-          python MADEP_budget_viz.py
-          python MADEP_enforcements_viz.py
-          python ECOS_budgets_viz.py
-          python EEA_DP_CSO_map.py
+          echo "updated: $(date -u +'%Y-%m-%d %H:%M:%S')" > docs/data/ts_update_dashboard.yml
 
       - name: Commit changes
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
-          git add docs/_includes/charts/ docs/assets/maps/
+          git add docs/_includes/charts/dash_*.html docs/data/facts_dash_*.yml docs/data/facts_DEPstaff.yml docs/data/facts_DEPenforce.yml docs/data/facts_ECOSbudgets.yml docs/data/ts_update_dashboard.yml
           git diff --staged --quiet \
-            || git commit -m "Auto-update charts $(date -u +%Y-%m-%d)" \
+            || git commit -m "Auto-update dashboard charts $(date -u +%Y-%m-%d)" \
             && git push
 
       - name: Open issue on failure

@@ -1,0 +1,79 @@
+{% raw  %}
+<html>
+    <head>
+        <title>Annual discharge vs heavy rain days</title>
+        <script src='https://cdn.jsdelivr.net/npm/chart.js@2.8.0/dist/Chart.bundle.min.js'></script>
+    </head>
+    <body>
+        <div style="width: 700px; height: 420px; max-width: 99%" class="chartjs">
+
+            <canvas id="Annual discharge vs heavy rain days" height="420" width="700"></canvas>
+            <script>
+                Chart.defaults.global.defaultFontSize = 12;
+                var chart_data = {
+                
+                    data: {
+                        labels: ['2022*', '2023', '2024', '2025'],
+                        datasets: [{'data': [804.886762, 2847.272023, 1947.588504, 1300.22196], 'label': 'CSO – Untreated', 'backgroundColor': 'rgba(31, 119, 180,0.8)', 'yAxisID': 'y-axis-0', 'stack': 'discharge'},{'data': [153.48386, 1196.35947, 853.762644, 460.199059], 'label': 'CSO – Treated', 'backgroundColor': 'rgba(255, 127, 14,0.8)', 'yAxisID': 'y-axis-0', 'stack': 'discharge'},{'data': [483.4958, 3173.986734, 4818.097593, 1308.902948], 'label': 'Partially Treated', 'backgroundColor': 'rgba(44, 160, 44,0.8)', 'yAxisID': 'y-axis-0', 'stack': 'discharge'},{'data': [0.4385, 27.745397, 47.84496, 1.664613], 'label': 'SSO', 'backgroundColor': 'rgba(214, 39, 40,0.8)', 'yAxisID': 'y-axis-0', 'stack': 'discharge'},{'data': [0.0, 0.0, 0.0, 0.0], 'label': 'Other', 'backgroundColor': 'rgba(148, 103, 189,0.8)', 'yAxisID': 'y-axis-0', 'stack': 'discharge'},{'data': [7.0, 15.0, 9.0, 5.0], 'label': 'Heavy rain days (≥1 inch/day)', 'backgroundColor': 'rgba(140, 86, 75,0.5)', 'yAxisID': 'y-axis-1', 'stack': 'rain'}]
+                    },
+                    type: 'bar',
+                    options: {
+                        scales: {
+                            yAxes: [{
+                                display: true,
+                                scaleLabel: {
+                                    display: true,
+                                    labelString: 'Total discharge (millions of gallons)'
+                                },
+                                ticks: {
+                                    beginAtZero: true, min: 0
+                                },
+                                "id": "y-axis-0",
+                                "position": "left",
+                                stacked: true
+                            }, {
+                                display: true,
+                                scaleLabel: {
+                                    display: true,
+                                    labelString: 'Heavy rain days (≥1 inch/day, MA station average)'
+                                },
+                                ticks: {
+                                    beginAtZero: true, min: 0
+                                },
+                                "id": "y-axis-1",
+                                "position": "right"
+                            }],
+                            xAxes: [{
+                                scaleLabel: {
+                                    display: true,
+                                    labelString: 'Calendar year  (* 2022 reporting began June 30)'
+                                },
+                                stacked: true,
+                                ticks: {
+                                    autoSkip: true
+                                }
+                            }]
+                        },
+                        legend: {
+                            display: true
+                            },
+                        tooltips: {
+                            display: true
+                            }
+                    },
+                }
+                
+                
+                
+            </script>
+            <script>
+                {{
+                    var ctx = document.getElementById("Annual discharge vs heavy rain days").getContext("2d");
+                    var mychart = new Chart(ctx, chart_data);
+                }}
+            </script>
+
+        </div>
+    </body>
+</html>
+{% endraw  %}

@@ -68,6 +68,15 @@ MIN_ROWS = {
     'MA_precipitation_daily.csv': 8000,  # ~25 years × 365 days
 }
 
+# Allow small row decreases (%) due to data source updates, API changes, etc.
+# Only datasets prone to churn (EEA portal data) get tolerance; others must stay stable.
+ROW_DECREASE_TOLERANCE_PCT = {
+    'EEADP_permit.csv': 1.0,      # EEA API may drop/merge permits
+    'EEADP_facility.csv': 1.0,    # EEA API may drop/merge facilities
+    'EEADP_inspection.csv': 1.0,  # EEA API data source updates
+    'EEADP_enforcement.csv': 1.0, # EEA API data source updates
+}
+
 
 def load_stats() -> dict:
     if not STATS_FILE.exists():
@@ -130,13 +139,16 @@ def validate() -> bool:
                 f'TOO FEW ROWS in {filename}: got {row_count}, minimum {min_rows}'
             )
 
-        # Regression vs previous run
+        # Regression vs previous run (with tolerance for data source updates)
         prev_count = stats.get(filename, {}).get('rows')
         if prev_count is not None and row_count < prev_count:
-            failures.append(
-                f'ROW COUNT DECREASED in {filename}: '
-                f'was {prev_count}, now {row_count}'
-            )
+            tolerance_pct = ROW_DECREASE_TOLERANCE_PCT.get(filename, 0.0)
+            max_allowed = int(prev_count * (1.0 - tolerance_pct / 100.0))
+            if row_count < max_allowed:
+                failures.append(
+                    f'ROW COUNT DECREASED in {filename}: '
+                    f'was {prev_count}, now {row_count} (tolerance: -{tolerance_pct}%)'
+                )
 
         new_stats[filename] = {'rows': row_count}
         print(

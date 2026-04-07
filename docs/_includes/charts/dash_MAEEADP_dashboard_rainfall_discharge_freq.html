@@ -1,0 +1,81 @@
+{% raw  %}
+<html>
+    <head>
+        <title>Fraction of days with any discharge by prior-48-hr rainfall</title>
+        <script src='https://cdn.jsdelivr.net/npm/chart.js@2.8.0/dist/Chart.bundle.min.js'></script>
+    </head>
+    <body>
+        <div style="width: 640px; height: 380px; max-width: 99%" class="chartjs">
+
+            <canvas id="Fraction of days with any discharge by prior-48-hr rainfall" height="380" width="640"></canvas>
+            <script>
+                Chart.defaults.global.defaultFontSize = 12;
+                var chart_data = {
+                
+                    data: {
+                        labels: ['None (<0.05 in)', 'Light (0.05–0.25 in)', 'Moderate (0.25–0.75 in)', 'Heavy (0.75–1.5 in)', 'Very heavy (>1.5 in)'],
+                        datasets: [{'data': [29.489291598023065, 38.46153846153847, 36.11111111111111, 31.61764705882353, 27.77777777777778], 'label': 'CSO – Untreated', 'backgroundColor': 'rgba(31, 119, 180,0.75)', 'borderColor': 'rgba(31, 119, 180,1.0)', 'borderWidth': 1, 'yAxisID': 'y-axis-0', 'stack': 'discharge'},{'data': [0.4942339373970346, 0.0, 0.3472222222222222, 0.7352941176470588, 0.0], 'label': 'CSO – Treated', 'backgroundColor': 'rgba(255, 127, 14,0.75)', 'borderColor': 'rgba(255, 127, 14,1.0)', 'borderWidth': 1, 'yAxisID': 'y-axis-0', 'stack': 'discharge'},{'data': [2.14168039538715, 2.366863905325444, 2.430555555555556, 5.88235294117647, 5.555555555555555], 'label': 'Partially Treated', 'backgroundColor': 'rgba(44, 160, 44,0.75)', 'borderColor': 'rgba(44, 160, 44,1.0)', 'borderWidth': 1, 'yAxisID': 'y-axis-0', 'stack': 'discharge'},{'data': [1.3179571663920924, 1.183431952662722, 2.083333333333333, 2.941176470588235, 5.555555555555555], 'label': 'SSO', 'backgroundColor': 'rgba(214, 39, 40,0.75)', 'borderColor': 'rgba(214, 39, 40,1.0)', 'borderWidth': 1, 'yAxisID': 'y-axis-0', 'stack': 'discharge'},{'data': [607, 338, 288, 136, 36], 'label': 'Days in bin', 'type': 'line', 'yAxisID': 'y-axis-1', 'backgroundColor': 'rgba(148, 103, 189,0.15)', 'borderColor': 'rgba(148, 103, 189,0.7)', 'pointBackgroundColor': 'rgba(148, 103, 189,0.9)', 'pointRadius': 4, 'fill': false}]
+                    },
+                    type: 'bar',
+                    options: {
+                        scales: {
+                            yAxes: [{
+                                display: true,
+                                scaleLabel: {
+                                    display: true,
+                                    labelString: 'Days with discharge reported (%)'
+                                },
+                                ticks: {
+                                    beginAtZero: true, min: 0
+                                },
+                                "id": "y-axis-0",
+                                "position": "left",
+                                stacked: true
+                            }, {
+                                display: true,
+                                scaleLabel: {
+                                    display: true,
+                                    labelString: 'Number of days in bin'
+                                },
+                                ticks: {
+                                    beginAtZero: true, min: 0
+                                },
+                                "id": "y-axis-1",
+                                "position": "right"
+                            }],
+                            xAxes: [{
+                                scaleLabel: {
+                                    display: true,
+                                    labelString: 'Prior 48-hr precipitation (MA station avg)'
+                                },
+                                stacked: true,
+                                ticks: {
+                                    autoSkip: true
+                                }
+                            }]
+                        },
+                        legend: {
+                            display: true
+                            },
+                        tooltips: {
+                            display: true
+                            }
+                    },
+                }
+                
+                
+                
+
+chart_data.options.tooltips = { callbacks: { label: function(item, data) { if (item.datasetIndex < 4) {  return data.datasets[item.datasetIndex].label + ": " + item.yLabel.toFixed(1) + "% of days"; } else {  return item.yLabel.toFixed(0) + " days in bin"; }} } };
+            </script>
+            <script>
+                {{
+                    var ctx = document.getElementById("Fraction of days with any discharge by prior-48-hr rainfall").getContext("2d");
+                    var mychart = new Chart(ctx, chart_data);
+                }}
+            </script>
+
+        </div>
+    </body>
+</html>
+{% endraw  %}
