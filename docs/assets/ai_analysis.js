@@ -1,0 +1,835 @@
+// ═════════════════════════════════════════════════════════════════════════════
+// AMEND AI Analysis — Client-side Interactive Data Analysis
+// ═════════════════════════════════════════════════════════════════════════════
+
+// ─── State ───────────────────────────────────────────────────────────────────
+const STATE = {
+  worker: null,
+  dbReady: false,
+  schema: null,
+  extendedContext: null,
+  workerBusy: false,
+  artifactCounter: 0,
+  pendingWorkerResolve: null,
+  pendingWorkerReject: null,
+};
+
+const ARTIFACT_STORE = {}; // { [id]: { question, sql, queryResults, chartSpec, answerText } }
+
+// ─── Constants ────────────────────────────────────────────────────────────────
+const DB_URL = 'https://storage.googleapis.com/openamend-data/amend.db';
+const SCHEMA_QUERY = "SELECT name, sql FROM sqlite_master WHERE type='table' ORDER BY name";
+const MAX_PREVIEW_ROWS = 20;
+const WRITE_BLOCK_RE = /\b(INSERT|UPDATE|DELETE|DROP|CREATE|ALTER|TRUNCATE)\b/i;
+
+const PROVIDER_CONFIG = {
+  groq: {
+    endpoint: 'https://api.groq.com/openai/v1/chat/completions',
+    defaultModel: 'llama-3.3-70b-versatile',
+    format: 'openai',
+  },
+  openai: {
+    endpoint: 'https://api.openai.com/v1/chat/completions',
+    defaultModel: 'gpt-4o-mini',
+    format: 'openai',
+  },
+  gemini: {
+    endpoint: 'https://generativelanguage.googleapis.com/v1beta/models/{model}:generateContent',
+    defaultModel: 'gemini-2.0-flash',
+    format: 'gemini',
+  },
+};
+
+const DEFAULTS = {
+  provider: 'groq',
+  model: PROVIDER_CONFIG.groq.defaultModel,
+  apiKey: '',
+  useExtendedContext: false,
+};
+
+// ─── Worker Management ────────────────────────────────────────────────────────
+
+function initWorker() {
+  // Worker path relative to page root — ai_analysis.html is at docs/
+  STATE.worker = new Worker('assets/worker.sql.js');
+  STATE.worker.onerror = function(e) {
+    if (STATE.pendingWorkerReject) STATE.pendingWorkerReject(e);
+    showChatError('Worker error: ' + e.message);
+  };
+  STATE.worker.onmessage = function(event) {
+    if (STATE.pendingWorkerResolve) {
+      var resolve = STATE.pendingWorkerResolve;
+      STATE.pendingWorkerResolve = null;
+      STATE.pendingWorkerReject = null;
+      STATE.workerBusy = false;
+      resolve(event.data);
+    }
+  };
+}
+
+function workerExec(message, transferables) {
+  return new Promise(function(resolve, reject) {
+    if (STATE.workerBusy) {
+      reject(new Error('Worker is busy'));
+      return;
+    }
+    STATE.workerBusy = true;
+    STATE.pendingWorkerResolve = resolve;
+    STATE.pendingWorkerReject = reject;
+    if (transferables) {
+      STATE.worker.postMessage(message, transferables);
+    } else {
+      STATE.worker.postMessage(message);
+    }
+  });
+}
+
+// ─── Database Loading ─────────────────────────────────────────────────────────
+
+function loadDatabase() {
+  var loadBtn = document.getElementById('ai-load-db');
+  var progressWrap = document.getElementById('ai-db-progress-wrap');
+  var progressEl = document.getElementById('ai-db-progress');
+  var progressLabel = document.getElementById('ai-db-progress-label');
+  var statusText = document.getElementById('ai-db-status-text');
+
+  loadBtn.disabled = true;
+  progressWrap.style.display = 'block';
+  statusText.textContent = 'Downloading database...';
+
+  var xhr = new XMLHttpRequest();
+  xhr.open('GET', DB_URL, true);
+  xhr.responseType = 'arraybuffer';
+
+  xhr.onprogress = function(e) {
+    if (e.lengthComputable) {
+      var pct = Math.round((e.loaded / e.total) * 100);
+      progressEl.value = pct;
+      progressLabel.textContent = pct + '%';
+    }
+  };
+
+  xhr.onerror = function() {
+    statusText.textContent = 'Download failed. Check network connection.';
+    loadBtn.disabled = false;
+    progressWrap.style.display = 'none';
+  };
+
+  xhr.onload = function() {
+    statusText.textContent = 'Opening database in worker...';
+    var uInt8Array = new Uint8Array(this.response);
+    openDBInWorker(this.response)
+      .then(function() {
+        return loadSchema();
+      })
+      .then(function(schema) {
+        STATE.schema = schema;
+        STATE.dbReady = true;
+        var useExt = loadSettings().useExtendedContext;
+        if (useExt) return loadExtendedContext();
+      })
+      .then(function() {
+        onDBReady();
+      })
+      .catch(function(err) {
+        statusText.textContent = 'Error: ' + err.message;
+        loadBtn.disabled = false;
+      });
+  };
+
+  xhr.send();
+}
+
+function openDBInWorker(arrayBuffer) {
+  // Clone buffer twice to safely attempt transfer + fallback
+  var copy1 = arrayBuffer.slice(0);
+  var copy2 = arrayBuffer.slice(0);
+
+  return workerExec({ action: 'open', buffer: new Uint8Array(copy1) }, [copy1])
+    .catch(function() {
+      // Fallback: transfer failed, try without transferable
+      STATE.workerBusy = false;
+      return workerExec({ action: 'open', buffer: new Uint8Array(copy2) });
+    });
+}
+
+function loadSchema() {
+  return workerExec({ action: 'exec', sql: SCHEMA_QUERY })
+    .then(function(data) {
+      if (!data.results || data.results.length === 0) return '';
+      var rows = data.results[0].values;
+      return rows.map(function(r) { return r[1]; }).join('\n\n');
+    });
+}
+
+function loadExtendedContext() {
+  // Fetch data dictionary + methodology excerpts
+  return Promise.all([
+    fetchExtendedContext(),
+  ]).then(function() {
+    // Context loaded and cached in STATE.extendedContext
+  }).catch(function(err) {
+    console.warn('Failed to load extended context:', err);
+    // Silently fall back to schema-only mode
+    STATE.extendedContext = null;
+  });
+}
+
+function fetchExtendedContext() {
+  // Fetch docs/data/data_stats.yml for table descriptions
+  // This is a simplified version; in production you might fetch more
+  // For now, just fetch a brief context string
+  return fetch('data/data_stats.yml')
+    .then(function(r) { return r.text(); })
+    .then(function(text) {
+      // Parse YAML as simple key-value (not a full YAML parser)
+      // Extract table descriptions
+      var lines = text.split('\n');
+      var context = 'Data Tables:\n';
+      for (var i = 0; i < lines.length; i++) {
+        if (lines[i].includes('MADEP') || lines[i].includes('EEA') || lines[i].includes('CSO')) {
+          context += lines[i] + '\n';
+        }
+      }
+      STATE.extendedContext = context || null;
+    });
+}
+
+function onDBReady() {
+  var statusEl = document.getElementById('ai-db-status');
+  statusEl.querySelector('#ai-db-status-text').textContent = 'Database loaded. Ready.';
+  statusEl.querySelector('#ai-db-progress-wrap').style.display = 'none';
+  document.getElementById('ai-question').disabled = false;
+  document.getElementById('ai-submit').disabled = false;
+}
+
+// ─── Settings Management ──────────────────────────────────────────────────────
+
+function loadSettings() {
+  return {
+    provider: localStorage.getItem('ai_provider') || DEFAULTS.provider,
+    model: localStorage.getItem('ai_model') || DEFAULTS.model,
+    apiKey: localStorage.getItem('ai_api_key') || DEFAULTS.apiKey,
+    useExtendedContext: localStorage.getItem('ai_use_extended_context') === 'true',
+  };
+}
+
+function saveSettings() {
+  var provider = document.getElementById('ai-provider').value;
+  var model = document.getElementById('ai-model').value.trim();
+  var apiKey = document.getElementById('ai-api-key').value.trim();
+  var useExt = document.getElementById('ai-use-extended-context').checked;
+
+  localStorage.setItem('ai_provider', provider);
+  localStorage.setItem('ai_model', model || PROVIDER_CONFIG[provider].defaultModel);
+  localStorage.setItem('ai_api_key', apiKey);
+  localStorage.setItem('ai_use_extended_context', useExt ? 'true' : 'false');
+
+  document.getElementById('ai-settings-saved').style.display = 'inline';
+  setTimeout(function() {
+    document.getElementById('ai-settings-saved').style.display = 'none';
+  }, 2000);
+}
+
+function populateSettingsUI() {
+  var s = loadSettings();
+  document.getElementById('ai-provider').value = s.provider;
+  document.getElementById('ai-model').value = s.model;
+  document.getElementById('ai-use-extended-context').checked = s.useExtendedContext;
+  // Do NOT pre-fill API key for security
+}
+
+// ─── LLM API Calls ───────────────────────────────────────────────────────────
+
+function callLLM(messages, jsonMode) {
+  var s = loadSettings();
+  var cfg = PROVIDER_CONFIG[s.provider];
+  var model = s.model || cfg.defaultModel;
+  var apiKey = s.apiKey;
+
+  if (!apiKey) return Promise.reject(new Error('No API key set. Open API Settings above.'));
+
+  if (cfg.format === 'openai') {
+    return callOpenAICompat(cfg.endpoint, apiKey, model, messages, jsonMode);
+  } else if (cfg.format === 'gemini') {
+    return callGemini(cfg.endpoint, apiKey, model, messages);
+  }
+}
+
+function callOpenAICompat(endpoint, apiKey, model, messages, jsonMode) {
+  var body = {
+    model: model,
+    messages: messages,
+    temperature: 0.1,
+  };
+  if (jsonMode) {
+    body.response_format = { type: 'json_object' };
+  }
+  return fetch(endpoint, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'Authorization': 'Bearer ' + apiKey,
+    },
+    body: JSON.stringify(body),
+  }).then(function(r) {
+    if (!r.ok) return r.text().then(function(t) {
+      throw new Error('LLM API error ' + r.status + ': ' + t);
+    });
+    return r.json();
+  }).then(function(data) {
+    if (!data.choices || !data.choices[0] || !data.choices[0].message) {
+      throw new Error('Unexpected LLM response format');
+    }
+    return data.choices[0].message.content;
+  });
+}
+
+function callGemini(endpointTemplate, apiKey, model, messages) {
+  // Convert OpenAI-style messages to Gemini format
+  var systemMsg = messages.find(function(m) { return m.role === 'system'; });
+  var userMsgs = messages.filter(function(m) { return m.role !== 'system'; });
+
+  var contents = userMsgs.map(function(m) {
+    return {
+      role: m.role === 'assistant' ? 'model' : 'user',
+      parts: [{ text: m.content }],
+    };
+  });
+
+  var body = { contents: contents };
+  if (systemMsg) {
+    body.systemInstruction = { parts: [{ text: systemMsg.content }] };
+  }
+  body.generationConfig = {
+    responseMimeType: 'application/json',
+    temperature: 0.1,
+  };
+
+  var url = endpointTemplate.replace('{model}', model) + '?key=' + apiKey;
+
+  return fetch(url, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(body),
+  }).then(function(r) {
+    if (!r.ok) return r.text().then(function(t) {
+      throw new Error('Gemini API error ' + r.status + ': ' + t);
+    });
+    return r.json();
+  }).then(function(data) {
+    if (!data.candidates || !data.candidates[0] || !data.candidates[0].content) {
+      throw new Error('Unexpected Gemini response format');
+    }
+    return data.candidates[0].content.parts[0].text;
+  });
+}
+
+function parseJSON(text) {
+  // Strip markdown code fences if present
+  var cleaned = text.replace(/^```(?:json)?\s*/i, '').replace(/\s*```\s*$/, '').trim();
+  return JSON.parse(cleaned);
+}
+
+// ─── System Prompts ──────────────────────────────────────────────────────────
+
+function buildStage1SystemPrompt(schema) {
+  var parts = [
+    'You are an expert data analyst for Massachusetts environmental data.',
+    'The user is querying a SQLite database. Here is the complete schema:',
+    '',
+    '```sql',
+    schema,
+    '```',
+    '',
+  ];
+
+  if (STATE.extendedContext) {
+    parts.push('Background context:', STATE.extendedContext, '');
+  }
+
+  parts.push(
+    'When the user asks a question, respond with ONLY valid JSON in this exact format:',
+    '{',
+    '  "sql": "SELECT ... ;",',
+    '  "chart_spec": {',
+    '    "type": "bar|line|scatter|histogram|pie|table",',
+    '    "x": "column_name",',
+    '    "y": "column_name",',
+    '    "color": "optional_grouping_column_or_null",',
+    '    "title": "Descriptive chart title"',
+    '  },',
+    '  "reasoning": "One sentence explaining your approach"',
+    '}',
+    '',
+    'SQL rules:',
+    '- Write valid SQLite SELECT statements only',
+    '- Never use INSERT, UPDATE, DELETE, DROP, CREATE, ALTER, or TRUNCATE',
+    '- Use LIMIT 500 unless the user asks for aggregations',
+    '- Column names must exactly match the schema',
+    '- If the question cannot be answered with available tables, set sql to null and explain in reasoning'
+  );
+
+  return parts.join('\n');
+}
+
+function buildStage2SystemPrompt() {
+  return [
+    'You are an expert data analyst interpreting query results.',
+    'The user asked a question, SQL was executed, and you have the results.',
+    'Respond with ONLY valid JSON in this exact format:',
+    '{',
+    '  "answer": "Clear, concise natural language answer (1-3 sentences)",',
+    '  "chart_spec": {',
+    '    "type": "bar|line|scatter|histogram|pie|table",',
+    '    "x": "column_name",',
+    '    "y": "column_name",',
+    '    "color": "optional_grouping_column_or_null",',
+    '    "title": "Descriptive chart title"',
+    '  }',
+    '}',
+    '',
+    'Guidelines:',
+    '- The answer must directly address the user question using the actual data values',
+    '- Refine the chart_spec if the Stage 1 spec does not match the actual result columns',
+    '- If the data has only one row or is not visual, set chart_spec.type to "table"',
+    '- Do not invent numbers not present in the results',
+  ].join('\n');
+}
+
+// ─── Main Analysis Flow ───────────────────────────────────────────────────────
+
+async function runAnalysis(question) {
+  if (!STATE.dbReady) throw new Error('Database not loaded yet.');
+  if (STATE.workerBusy) throw new Error('A query is already running. Please wait.');
+
+  // Stage 1: question + schema → SQL + chart_spec
+  appendChatMessage('assistant', '⏳ Generating SQL query…', 'status');
+  var stage1Messages = [
+    { role: 'system', content: buildStage1SystemPrompt(STATE.schema) },
+    { role: 'user', content: question },
+  ];
+
+  var stage1Text = await callLLM(stage1Messages, true);
+  var stage1 = parseJSON(stage1Text);
+
+  if (!stage1.sql) {
+    throw new Error('Could not generate SQL: ' + (stage1.reasoning || 'unknown reason'));
+  }
+
+  // SQL safety check
+  if (WRITE_BLOCK_RE.test(stage1.sql)) {
+    throw new Error('Generated SQL contains disallowed operations.');
+  }
+
+  updateLastStatus('⏳ Executing SQL query…');
+
+  // Execute SQL via worker
+  var sqlResult = await workerExec({ action: 'exec', sql: stage1.sql });
+  if (sqlResult.error) {
+    // Attempt retry with error context
+    stage1 = await retrySQLWithError(question, stage1.sql, sqlResult.error);
+    if (WRITE_BLOCK_RE.test(stage1.sql)) {
+      throw new Error('Retry produced SQL with disallowed operations.');
+    }
+    sqlResult = await workerExec({ action: 'exec', sql: stage1.sql });
+    if (sqlResult.error) throw new Error('SQL error after retry: ' + sqlResult.error);
+  }
+
+  var queryResults = sqlResult.results && sqlResult.results[0];
+  if (!queryResults) throw new Error('Query returned no results.');
+
+  // Stage 2: question + SQL + preview rows → answer + refined chart_spec
+  updateLastStatus('⏳ Interpreting results…');
+  var preview = formatResultsForLLM(queryResults, MAX_PREVIEW_ROWS);
+  var stage2Messages = [
+    { role: 'system', content: buildStage2SystemPrompt() },
+    {
+      role: 'user',
+      content: [
+        'Question: ' + question,
+        '',
+        'SQL executed:',
+        '```sql',
+        stage1.sql,
+        '```',
+        '',
+        'Query results (up to ' + MAX_PREVIEW_ROWS + ' rows):',
+        preview,
+      ].join('\n'),
+    },
+  ];
+
+  var stage2Text = await callLLM(stage2Messages, true);
+  var stage2 = parseJSON(stage2Text);
+
+  // Create artifact
+  removeLastStatus();
+  var chartSpec = stage2.chart_spec || stage1.chart_spec || { type: 'table', x: queryResults.columns[0], y: queryResults.columns[1] };
+  var artifactId = createArtifact(question, stage1.sql, queryResults, chartSpec, stage2.answer);
+  appendChatMessage('assistant', stage2.answer, 'answer', artifactId);
+}
+
+async function retrySQLWithError(question, failedSQL, errorMsg) {
+  appendChatMessage('assistant', '⚠️ SQL error, retrying with correction…', 'status');
+  var retryMessages = [
+    { role: 'system', content: buildStage1SystemPrompt(STATE.schema) },
+    { role: 'user', content: question },
+    { role: 'assistant', content: JSON.stringify({ sql: failedSQL, reasoning: '' }) },
+    {
+      role: 'user',
+      content: 'That SQL produced an error: "' + errorMsg + '". Please fix the SQL and return corrected JSON.',
+    },
+  ];
+  var retryText = await callLLM(retryMessages, true);
+  return parseJSON(retryText);
+}
+
+// ─── Plotly Chart Rendering ──────────────────────────────────────────────────
+
+function buildPlotlyFigure(chartSpec, queryResults) {
+  var columns = queryResults.columns;
+  var values = queryResults.values;
+
+  // Transpose: values is array of rows, each row is array of cell values
+  var colData = {};
+  columns.forEach(function(col, ci) {
+    colData[col] = values.map(function(row) { return row[ci]; });
+  });
+
+  var type = chartSpec.type || 'bar';
+  var xKey = chartSpec.x;
+  var yKey = chartSpec.y;
+  var colorKey = chartSpec.color;
+  var title = chartSpec.title || '';
+
+  var data = [];
+  var layout = {
+    title: title,
+    autosize: true,
+    margin: { l: 50, r: 20, t: 40, b: 80 },
+  };
+
+  if (type === 'table') {
+    data = [{
+      type: 'table',
+      header: {
+        values: columns,
+        fill: { color: '#285858' },
+        font: { color: 'white' },
+      },
+      cells: {
+        values: columns.map(function(c) { return colData[c] || []; }),
+      },
+    }];
+
+  } else if (type === 'pie') {
+    var labels = colData[xKey] || colData[columns[0]] || [];
+    var values = colData[yKey] || colData[columns[1]] || [];
+    data = [{
+      type: 'pie',
+      labels: labels,
+      values: values,
+    }];
+
+  } else if (type === 'histogram') {
+    data = [{
+      type: 'histogram',
+      x: colData[xKey] || colData[columns[0]] || [],
+    }];
+
+  } else if (colorKey && colData[colorKey]) {
+    // Grouped traces — one per unique color value
+    var groups = [...new Set(colData[colorKey])];
+    groups.forEach(function(grp) {
+      var mask = colData[colorKey].map(function(v) { return v === grp; });
+      var xVals = colData[xKey] ? colData[xKey].filter(function(_, i) { return mask[i]; }) : [];
+      var yVals = colData[yKey] ? colData[yKey].filter(function(_, i) { return mask[i]; }) : [];
+
+      data.push({
+        type: type === 'scatter' ? 'scatter' : type,
+        mode: type === 'scatter' ? 'markers' : (type === 'line' ? 'lines+markers' : undefined),
+        name: String(grp),
+        x: xVals,
+        y: yVals,
+      });
+    });
+
+  } else {
+    // Single trace
+    var xVals = colData[xKey] || colData[columns[0]] || [];
+    var yVals = colData[yKey] || colData[columns[1]] || [];
+
+    data = [{
+      type: type === 'scatter' ? 'scatter' : type,
+      mode: type === 'scatter' ? 'markers' : (type === 'line' ? 'lines+markers' : undefined),
+      x: xVals,
+      y: yVals,
+    }];
+  }
+
+  return { data: data, layout: layout };
+}
+
+// ─── Artifact Tray System ─────────────────────────────────────────────────────
+
+function createArtifact(question, sql, queryResults, chartSpec, answerText) {
+  STATE.artifactCounter++;
+  var id = STATE.artifactCounter;
+
+  // Store for later retrieval (fullscreen, etc)
+  ARTIFACT_STORE[id] = { question, sql, queryResults, chartSpec, answerText };
+
+  var el = document.createElement('div');
+  el.className = 'ai-artifact-card';
+  el.id = 'artifact-' + id;
+  el.setAttribute('data-artifact-id', id);
+
+  var truncQ = question.length > 60 ? question.slice(0, 57) + '…' : question;
+
+  el.innerHTML = [
+    '<div class="ai-artifact-header">',
+    '  <span class="ai-artifact-num">#' + id + '</span>',
+    '  <span class="ai-artifact-title">' + escapeHTML(truncQ) + '</span>',
+    '  <button class="ai-artifact-toggle" aria-expanded="true" title="Collapse">▲</button>',
+    '  <button class="ai-artifact-fullscreen" title="Fullscreen">⛶</button>',
+    '</div>',
+    '<div class="ai-artifact-body">',
+    '  <div class="ai-chart-div" id="chart-' + id + '"></div>',
+    '  <div class="ai-answer-text">' + escapeHTML(answerText || '') + '</div>',
+    '  <div class="ai-sql-section">',
+    '    <button class="ai-sql-toggle">Show SQL ▼</button>',
+    '    <pre class="ai-sql-block" style="display:none">' + escapeHTML(sql) + '</pre>',
+    '  </div>',
+    '</div>',
+  ].join('');
+
+  var list = document.getElementById('ai-artifact-list');
+  document.getElementById('ai-artifact-empty').style.display = 'none';
+
+  // Collapse all existing cards
+  collapseAllArtifacts();
+  list.insertBefore(el, list.firstChild); // newest on top
+
+  // Wire toggle
+  el.querySelector('.ai-artifact-toggle').addEventListener('click', function() {
+    toggleArtifact(el);
+  });
+
+  // Wire SQL toggle
+  el.querySelector('.ai-sql-toggle').addEventListener('click', function() {
+    var pre = el.querySelector('.ai-sql-block');
+    var btn = el.querySelector('.ai-sql-toggle');
+    var hidden = pre.style.display === 'none';
+    pre.style.display = hidden ? 'block' : 'none';
+    btn.innerHTML = hidden ? 'Hide SQL ▲' : 'Show SQL ▼';
+  });
+
+  // Wire fullscreen
+  el.querySelector('.ai-artifact-fullscreen').addEventListener('click', function() {
+    var d = ARTIFACT_STORE[id];
+    openFullscreen(id, d.chartSpec, d.queryResults);
+  });
+
+  // Plot chart
+  var fig = buildPlotlyFigure(chartSpec, queryResults);
+  Plotly.newPlot('chart-' + id, fig.data, fig.layout, { responsive: true });
+
+  return id;
+}
+
+function collapseAllArtifacts() {
+  document.querySelectorAll('.ai-artifact-card').forEach(function(card) {
+    var body = card.querySelector('.ai-artifact-body');
+    var btn = card.querySelector('.ai-artifact-toggle');
+    body.style.display = 'none';
+    btn.setAttribute('aria-expanded', 'false');
+    btn.innerHTML = '▼';
+    btn.title = 'Expand';
+  });
+}
+
+function toggleArtifact(el) {
+  var body = el.querySelector('.ai-artifact-body');
+  var btn = el.querySelector('.ai-artifact-toggle');
+  var isCollapsed = body.style.display === 'none';
+  body.style.display = isCollapsed ? 'block' : 'none';
+  btn.setAttribute('aria-expanded', isCollapsed ? 'true' : 'false');
+  btn.innerHTML = isCollapsed ? '▲' : '▼';
+  btn.title = isCollapsed ? 'Collapse' : 'Expand';
+  if (isCollapsed) {
+    var id = el.getAttribute('data-artifact-id');
+    Plotly.relayout('chart-' + id, { autosize: true });
+  }
+}
+
+function highlightArtifact(artifactId) {
+  var el = document.getElementById('artifact-' + artifactId);
+  if (!el) return;
+  el.classList.remove('ai-highlight');
+  void el.offsetWidth; // reflow to restart animation
+  el.classList.add('ai-highlight');
+  el.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+}
+
+// ─── Fullscreen Mode ─────────────────────────────────────────────────────────
+
+function openFullscreen(artifactId, chartSpec, queryResults) {
+  var overlay = document.getElementById('ai-fullscreen-overlay');
+  var inner = document.getElementById('ai-fullscreen-chart');
+  inner.innerHTML = '';
+  var chartDiv = document.createElement('div');
+  chartDiv.style.width = '100%';
+  chartDiv.style.height = '80vh';
+  inner.appendChild(chartDiv);
+
+  overlay.style.display = 'flex';
+
+  var fig = buildPlotlyFigure(chartSpec, queryResults);
+  Plotly.newPlot(chartDiv, fig.data, fig.layout, { responsive: true });
+
+  document.getElementById('ai-fullscreen-close').onclick = function() {
+    overlay.style.display = 'none';
+    Plotly.purge(chartDiv);
+  };
+
+  overlay.onclick = function(e) {
+    if (e.target === overlay) {
+      overlay.style.display = 'none';
+      Plotly.purge(chartDiv);
+    }
+  };
+}
+
+// ─── Chat Message System ─────────────────────────────────────────────────────
+
+function appendChatMessage(role, text, subtype, artifactId) {
+  var log = document.getElementById('ai-chat-log');
+  var div = document.createElement('div');
+  div.className = 'ai-chat-msg ai-chat-msg--' + role;
+  if (subtype) div.setAttribute('data-subtype', subtype);
+
+  if (subtype === 'answer' && artifactId) {
+    var link = document.createElement('a');
+    link.href = '#artifact-' + artifactId;
+    link.textContent = '[Chart #' + artifactId + ']';
+    link.className = 'ai-artifact-link';
+    link.addEventListener('click', function(e) {
+      e.preventDefault();
+      var card = document.getElementById('artifact-' + artifactId);
+      if (card) {
+        var body = card.querySelector('.ai-artifact-body');
+        if (body.style.display === 'none') toggleArtifact(card);
+      }
+      highlightArtifact(artifactId);
+    });
+    div.textContent = text + ' ';
+    div.appendChild(link);
+  } else {
+    div.textContent = text;
+  }
+
+  log.appendChild(div);
+  log.scrollTop = log.scrollHeight;
+  return div;
+}
+
+function updateLastStatus(text) {
+  var log = document.getElementById('ai-chat-log');
+  var statusMsgs = log.querySelectorAll('[data-subtype="status"]');
+  if (statusMsgs.length > 0) {
+    statusMsgs[statusMsgs.length - 1].textContent = text;
+  }
+}
+
+function removeLastStatus() {
+  var log = document.getElementById('ai-chat-log');
+  var statusMsgs = log.querySelectorAll('[data-subtype="status"]');
+  if (statusMsgs.length > 0) {
+    statusMsgs[statusMsgs.length - 1].remove();
+  }
+}
+
+// ─── Utility Functions ───────────────────────────────────────────────────────
+
+function showChatError(msg) {
+  var errEl = document.getElementById('ai-chat-error');
+  errEl.textContent = msg;
+  errEl.style.display = 'block';
+  setTimeout(function() { errEl.style.display = 'none'; }, 8000);
+}
+
+function formatResultsForLLM(queryResults, maxRows) {
+  var cols = queryResults.columns;
+  var vals = queryResults.values.slice(0, maxRows);
+  var header = cols.join('\t');
+  var rows = vals.map(function(r) { return r.join('\t'); });
+  return header + '\n' + rows.join('\n');
+}
+
+function escapeHTML(str) {
+  return String(str)
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;');
+}
+
+// ─── Event Handling & Init ────────────────────────────────────────────────────
+
+async function handleSubmit() {
+  var questionEl = document.getElementById('ai-question');
+  var question = questionEl.value.trim();
+  if (!question) return;
+  if (!STATE.dbReady) {
+    showChatError('Please load the database first.');
+    return;
+  }
+
+  var s = loadSettings();
+  if (!s.apiKey) {
+    showChatError('Please set your API key in API Settings.');
+    return;
+  }
+
+  questionEl.disabled = true;
+  document.getElementById('ai-submit').disabled = true;
+  questionEl.value = '';
+
+  appendChatMessage('user', question, 'question');
+
+  try {
+    await runAnalysis(question);
+  } catch (err) {
+    removeLastStatus();
+    appendChatMessage('assistant', 'Error: ' + err.message, 'error');
+    showChatError(err.message);
+  } finally {
+    questionEl.disabled = false;
+    document.getElementById('ai-submit').disabled = false;
+    questionEl.focus();
+  }
+}
+
+document.addEventListener('DOMContentLoaded', function() {
+  initWorker();
+  populateSettingsUI();
+
+  document.getElementById('ai-load-db').addEventListener('click', loadDatabase);
+  document.getElementById('ai-save-settings').addEventListener('click', saveSettings);
+  document.getElementById('ai-provider').addEventListener('change', function() {
+    var provider = this.value;
+    document.getElementById('ai-model').placeholder = PROVIDER_CONFIG[provider].defaultModel;
+  });
+
+  var submitBtn = document.getElementById('ai-submit');
+  var questionEl = document.getElementById('ai-question');
+
+  submitBtn.addEventListener('click', handleSubmit);
+  questionEl.addEventListener('keydown', function(e) {
+    if (e.key === 'Enter' && !e.shiftKey) {
+      e.preventDefault();
+      handleSubmit();
+    }
+  });
+});
