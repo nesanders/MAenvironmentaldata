@@ -116,6 +116,13 @@ function loadDatabase() {
   };
 
   xhr.onload = function() {
+    if (this.status !== 200) {
+      statusText.textContent = 'Download failed: HTTP ' + this.status +
+        '. Check that the database is accessible. If testing locally, see CORS note below.';
+      loadBtn.disabled = false;
+      progressWrap.style.display = 'none';
+      return;
+    }
     statusText.textContent = 'Opening database in worker...';
     var uInt8Array = new Uint8Array(this.response);
     openDBInWorker(this.response)
@@ -199,8 +206,8 @@ function onDBReady() {
   var statusEl = document.getElementById('ai-db-status');
   statusEl.querySelector('#ai-db-status-text').textContent = 'Database loaded. Ready.';
   statusEl.querySelector('#ai-db-progress-wrap').style.display = 'none';
-  document.getElementById('ai-question').disabled = false;
   document.getElementById('ai-submit').disabled = false;
+  document.getElementById('ai-question').placeholder = 'Ask a question about the environmental data... (Shift+Enter for newline, Enter to submit)';
 }
 
 // ─── Settings Management ──────────────────────────────────────────────────────
@@ -214,9 +221,25 @@ function loadSettings() {
   };
 }
 
+function getModelFromUI(provider) {
+  if (provider === 'groq') {
+    return document.getElementById('ai-model-select').value;
+  }
+  return document.getElementById('ai-model-text').value.trim();
+}
+
+function updateModelUI(provider) {
+  var isGroq = provider === 'groq';
+  document.getElementById('ai-model-select-label').style.display = isGroq ? '' : 'none';
+  document.getElementById('ai-model-text-label').style.display = isGroq ? 'none' : '';
+  if (!isGroq) {
+    document.getElementById('ai-model-text').placeholder = PROVIDER_CONFIG[provider].defaultModel;
+  }
+}
+
 function saveSettings() {
   var provider = document.getElementById('ai-provider').value;
-  var model = document.getElementById('ai-model').value.trim();
+  var model = getModelFromUI(provider);
   var apiKey = document.getElementById('ai-api-key').value.trim();
   var useExt = document.getElementById('ai-use-extended-context').checked;
 
@@ -234,7 +257,16 @@ function saveSettings() {
 function populateSettingsUI() {
   var s = loadSettings();
   document.getElementById('ai-provider').value = s.provider;
-  document.getElementById('ai-model').value = s.model;
+  updateModelUI(s.provider);
+  if (s.provider === 'groq') {
+    var sel = document.getElementById('ai-model-select');
+    // Select saved model if it exists in the list, else keep default
+    for (var i = 0; i < sel.options.length; i++) {
+      if (sel.options[i].value === s.model) { sel.selectedIndex = i; break; }
+    }
+  } else {
+    document.getElementById('ai-model-text').value = s.model;
+  }
   document.getElementById('ai-use-extended-context').checked = s.useExtendedContext;
   // Do NOT pre-fill API key for security
 }
@@ -792,7 +824,6 @@ async function handleSubmit() {
     return;
   }
 
-  questionEl.disabled = true;
   document.getElementById('ai-submit').disabled = true;
   questionEl.value = '';
 
@@ -805,7 +836,6 @@ async function handleSubmit() {
     appendChatMessage('assistant', 'Error: ' + err.message, 'error');
     showChatError(err.message);
   } finally {
-    questionEl.disabled = false;
     document.getElementById('ai-submit').disabled = false;
     questionEl.focus();
   }
@@ -818,8 +848,7 @@ document.addEventListener('DOMContentLoaded', function() {
   document.getElementById('ai-load-db').addEventListener('click', loadDatabase);
   document.getElementById('ai-save-settings').addEventListener('click', saveSettings);
   document.getElementById('ai-provider').addEventListener('change', function() {
-    var provider = this.value;
-    document.getElementById('ai-model').placeholder = PROVIDER_CONFIG[provider].defaultModel;
+    updateModelUI(this.value);
   });
 
   var submitBtn = document.getElementById('ai-submit');

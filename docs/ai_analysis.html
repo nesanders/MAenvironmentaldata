@@ -37,8 +37,19 @@ author: NES
           <option value="gemini">Google Gemini</option>
         </select>
       </label>
-      <label>Model:
-        <input type="text" id="ai-model" placeholder="e.g. llama-3.3-70b-versatile">
+      <label id="ai-model-select-label">Model:
+        <select id="ai-model-select">
+          <option value="llama-3.3-70b-versatile">llama-3.3-70b-versatile (default)</option>
+          <option value="llama-3.1-70b-versatile">llama-3.1-70b-versatile</option>
+          <option value="llama-3.1-8b-instant">llama-3.1-8b-instant (fastest)</option>
+          <option value="llama-3.3-70b-specdec">llama-3.3-70b-specdec</option>
+          <option value="mixtral-8x7b-32768">mixtral-8x7b-32768</option>
+          <option value="gemma2-9b-it">gemma2-9b-it</option>
+          <option value="deepseek-r1-distill-llama-70b">deepseek-r1-distill-llama-70b</option>
+        </select>
+      </label>
+      <label id="ai-model-text-label" style="display:none">Model:
+        <input type="text" id="ai-model-text" placeholder="e.g. gpt-4o-mini">
       </label>
       <label>API Key:
         <input type="password" id="ai-api-key" placeholder="Paste your API key (stored locally)">
@@ -80,8 +91,7 @@ author: NES
     <div class="ai-input-row">
       <textarea id="ai-question" class="ai-question-input"
                 rows="3"
-                placeholder="Ask a question about the environmental data... (Shift+Enter for newline, Enter to submit)"
-                disabled></textarea>
+                placeholder="Load the database above, then ask a question... (Shift+Enter for newline, Enter to submit)"></textarea>
       <button id="ai-submit" class="button" disabled>Ask</button>
     </div>
     <div id="ai-chat-error" class="ai-chat-error" style="display:none"></div>
