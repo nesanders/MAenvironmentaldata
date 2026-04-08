@@ -54,7 +54,8 @@ if __name__ == '__main__':
 
     # FY2001–FY2004: read DEP nominal from cached MassBudget summary CSV
     cached = pd.read_csv('../docs/data/MassBudget_environmental_summary.csv')
-    early_dep = cached[cached['Year'] <= 2004][['Year', 'DEPAdministration_noinf_float']].copy()
+    early_dep = cached[cached['Year'] <= 2004][['Year', 'DEPAdministration_noinf']].copy()
+    early_dep = early_dep.rename(columns={'DEPAdministration_noinf': 'DEPAdministration_noinf_float'})
     early_dep = early_dep.set_index('Year')
 
     result = early_dep.copy()
@@ -131,11 +132,7 @@ if __name__ == '__main__':
     column_rename = {col: col.replace('_float', '') for col in result_reset.columns if '_float' in col}
     result_reset = result_reset.rename(columns=column_rename)
 
-    # Write CSV to Jekyll _data directory (for template access) and public data directory (for downloads)
-    print('Writing CSV to ../docs/_data/MassBudget_environmental_summary.csv (Jekyll data)...')
-    result_reset.to_csv('../docs/_data/MassBudget_environmental_summary.csv', index=False, encoding='ascii')
-    print('✓ Jekyll data file written')
-
+    # Write CSV to public data directory
     print('Writing CSV to ../docs/data/MassBudget_environmental_summary.csv (public download)...')
     result_reset.to_csv('../docs/data/MassBudget_environmental_summary.csv', index=False, encoding='ascii')
     print('✓ Public data file written')
