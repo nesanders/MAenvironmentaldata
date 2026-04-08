@@ -28,6 +28,7 @@ import os
 import datetime
 import numpy as np
 import html
+import shlex
 
 # ------------------------------
 # Constants
@@ -240,9 +241,9 @@ if __name__ == '__main__':
                 # Check by the stored filename (includes permitID prefix from out_path)
                 stored_filename = os.path.basename(local_file)
                 if stored_filename not in existing_in_gcs:
-                    # Decode HTML entities in URLs (e.g., &amp; -> &) to avoid shell errors
+                    # Decode HTML entities in URLs (e.g., &amp; -> &)
                     permit_url = html.unescape(permit)
-                    os.system('wget '+permit_url+' --no-clobber --timeout=30 --tries=3 -O ' + local_file)
+                    os.system('wget ' + shlex.quote(permit_url) + ' --no-clobber --timeout=30 --tries=3 -O ' + shlex.quote(local_file))
                     if os.path.exists(local_file):
                         os.system('gsutil cp ' + local_file + ' gs://openamend-data/' + local_file)
                         new_pdf_count += 1

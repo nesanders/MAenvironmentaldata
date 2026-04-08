@@ -25,6 +25,6 @@ In addition to including this data in the integrated {{ site.data.site_config.si
 
 | Nearest Pipe Address | Municipality | Discharge Body | 2011 Discharges in Millions of Gallons | 2011 Discharge Count | Latitude | Longitude | Notes|
 | --- | --- | --- |{% for row in site.data.NECIR_CSO_2011 %}
-| {{ row.Nearest_Pipe_Address }} | {{ row.Municipality }} | {{ row.DischargesBody }} | {{ row.2011_Discharges_MGal }} | {{ row.2011_Discharge_N }} | {{ row.Latitude }} | {{ row.Longitude }} | {{ row.Notes }}|{% endfor %}
+| {{ row.Nearest_Pipe_Address }} | {{ row.Municipality }} | {{ row.DischargesBody }} | {{ row["2011_Discharges_MGal"] }} | {{ row["2011_Discharge_N"] }} | {{ row.Latitude }} | {{ row.Longitude }} | {{ row.Notes }}|{% endfor %}
 {: .sortable}
 

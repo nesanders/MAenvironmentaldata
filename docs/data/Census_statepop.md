@@ -23,6 +23,6 @@ In addition to including it in the integrated {{ site.data.site_config.site_abbr
 
 | State | 2000 | 2001 |2002 | 2003 | 2004 | 2005 | 2006 | 2007 | 2008 | 2009 | 2010 | 2011 | 2012 | 2013 | 2014 | 2015 | 2016 |
 | --- | --- | --- |{% for row in site.data.Census_statepop %}
-| {{ row.State }} | {{ row.2000 }} | {{ row.2001 }} | {{ row.2002}} | {{ row.2003}} | {{ row.2004}} | {{ row.2005}} | {{ row.2006}} | {{ row.2007}} | {{ row.2008}} | {{ row.2009}} | {{ row.2010}} | {{ row.2011}} | {{ row.2012}} | {{ row.2013}} | {{ row.2014}} | {{ row.2015}} | {{ row.2016}} |{% endfor %}
+| {{ row.State }} | {{ row["2000"] }} | {{ row["2001"] }} | {{ row["2002"] }} | {{ row["2003"] }} | {{ row["2004"] }} | {{ row["2005"] }} | {{ row["2006"] }} | {{ row["2007"] }} | {{ row["2008"] }} | {{ row["2009"] }} | {{ row["2010"] }} | {{ row["2011"] }} | {{ row["2012"] }} | {{ row["2013"] }} | {{ row["2014"] }} | {{ row["2015"] }} | {{ row["2016"] }} |{% endfor %}
 {: .sortable}
 

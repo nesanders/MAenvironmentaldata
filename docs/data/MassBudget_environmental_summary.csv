@@ -1,4 +1,4 @@
-Year,DEPAdministration_noinf_float,DCRAdministration_noinf_float,EEAAdministration_noinf_float,FishGameAdministration_noinf_float,DEPAdministration_inf_float,DCRAdministration_inf_float,EEAAdministration_inf_float,FishGameAdministration_inf_float,TotalBudget_noinf_float,TotalBudget_inf_float,FiscalYear,GovernorsBudget
+Year,DEPAdministration_noinf,DCRAdministration_noinf,EEAAdministration_noinf,FishGameAdministration_noinf,DEPAdministration_inf,DCRAdministration_inf,EEAAdministration_inf,FishGameAdministration_inf,TotalBudget_noinf,TotalBudget_inf,FiscalYear,GovernorsBudget
 2001,31870112.0,,,,67615072.53270285,,,,31870112.0,67615072.53270285,FY01,0
 2002,30483537.0,,,,64031178.21821397,,,,30483537.0,64031178.21821397,FY02,0
 2003,28830810.0,,,,59114520.60906299,,,,28830810.0,59114520.60906299,FY03,0

@@ -66,25 +66,33 @@ bash set_cors_gsutil.sh
 
 ## Running scripts
 
-**Key scripts and their working directories:**
+**Critical: All scripts use relative paths and MUST be run from their parent directory.** The session starts in the repo root (`/home/nes/Documents/MAenvironmentaldata`).
 
+**Data fetch and assembly (from repo root, cd into get_data/):**
 ```bash
-# From get_data/:
 cd get_data
-conda run -n amend_python python get_budget_CTHRU.py      # Fetch budget data (FY2005-2026)
-conda run -n amend_python python assemble_db.py           # Rebuild AMEND.db from all CSVs
-
-# From analysis/:
-cd ../analysis
-conda run -n amend_python python MADEP_staff.py           # Generate staffing charts (unprefixed)
-conda run -n amend_python python MADEP_enforcements_viz.py # Generate enforcement charts
-conda run -n amend_python python dashboard_charts.py       # Generate all 12 dashboard charts with dash_ prefix
+conda run -n amend_python python get_EPARegion1_NPDES_permits.py
+conda run -n amend_python python get_budget_CTHRU.py
+conda run -n amend_python python get_DEP_staff_SODA.py
+conda run -n amend_python python get_EEA_data_portal.py
+conda run -n amend_python python get_eea_dp_cso.py
+conda run -n amend_python python validate_data.py
+conda run -n amend_python python assemble_db.py
 ```
 
-**Relative paths in scripts:**
-- `get_data/assemble_db.py` expects to run FROM `get_data/` (uses `../docs/data/` paths)
-- `analysis/dashboard_charts.py` expects to run FROM `analysis/` (uses `../docs/` and `..get_data/` paths)
-- Always use `conda run -n amend_python` for environment isolation; avoid `conda activate` in scripts
+**Analysis and visualization (from repo root, cd into analysis/):**
+```bash
+cd ../analysis
+conda run -n amend_python python MADEP_staff.py
+conda run -n amend_python python MADEP_enforcements_viz.py
+conda run -n amend_python python dashboard_charts.py
+```
+
+**Why this matters:**
+- `get_data/*.py` scripts read from `../docs/data/` and write outputs there
+- `analysis/*.py` scripts read from `../docs/data/` and `../get_data/` and write to `../_includes/charts/`
+- Using wrong working directory causes "file not found" or "cannot save to non-existent directory" errors
+- Always use `conda run -n amend_python` (not `conda activate`); this ensures clean environment isolation between runs
 
 ## Local Jekyll preview
 
