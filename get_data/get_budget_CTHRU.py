@@ -132,8 +132,8 @@ if __name__ == '__main__':
     column_rename = {col: col.replace('_float', '') for col in result_reset.columns if '_float' in col}
     result_reset = result_reset.rename(columns=column_rename)
 
-    # Write CSV to public data directory
-    print('Writing CSV to ../docs/data/MassBudget_environmental_summary.csv (public download)...')
+    # Write CSV to data directory (Jekyll loads from docs/data via data_dir: data in _config.yml)
+    print('Writing CSV to ../docs/data/MassBudget_environmental_summary.csv...')
     result_reset.to_csv('../docs/data/MassBudget_environmental_summary.csv', index=False, encoding='ascii')
     print('✓ Public data file written')
 
