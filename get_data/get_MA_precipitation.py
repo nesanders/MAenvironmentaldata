@@ -45,7 +45,7 @@ def fetch_daily_precip_year(year: int) -> pd.DataFrame:
     stations = resp.json()['data']
 
     dates = pd.date_range(sdate, edate, freq='D')
-    matrix = pd.DataFrame(index=dates, dtype=float)
+    columns = {}
 
     for stn in stations:
         name = stn['meta']['name']
@@ -62,7 +62,9 @@ def fetch_daily_precip_year(year: int) -> pd.DataFrame:
                     vals.append(float(raw))
                 except ValueError:
                     vals.append(np.nan)
-        matrix[name] = vals
+        columns[name] = vals
+
+    matrix = pd.DataFrame(columns, index=dates, dtype=float)
 
     result = pd.DataFrame({
         'date': dates.strftime('%Y-%m-%d'),
