@@ -210,6 +210,40 @@
   color: #1a3a3a;
 }
 
+/* ─── Starter Questions ─────────────────────────────────────────────────── */
+.ai-starters {
+  padding: 6px 0 8px;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  align-items: center;
+}
+
+.ai-starters-label {
+  font-size: 0.8em;
+  color: #666;
+  font-style: italic;
+  flex-shrink: 0;
+}
+
+.ai-starter-btn {
+  background: #f0f7f0;
+  border: 1px solid #a8d5a2;
+  border-radius: 16px;
+  padding: 4px 12px;
+  font-size: 0.8em;
+  color: #285858;
+  cursor: pointer;
+  transition: background-color 0.15s, border-color 0.15s;
+  text-align: left;
+  line-height: 1.3;
+}
+
+.ai-starter-btn:hover {
+  background: #d4edda;
+  border-color: #285858;
+}
+
 /* ─── Chat Input ────────────────────────────────────────────────────────── */
 .ai-input-row {
   display: flex;

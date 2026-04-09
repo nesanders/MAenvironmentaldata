@@ -37,19 +37,30 @@ author: NES
           <option value="gemini">Google Gemini</option>
         </select>
       </label>
-      <label id="ai-model-select-label">Model:
-        <select id="ai-model-select">
+      <label>Model:
+        <select id="ai-model-select-groq">
           <option value="llama-3.3-70b-versatile">llama-3.3-70b-versatile (default)</option>
-          <option value="llama-3.1-70b-versatile">llama-3.1-70b-versatile</option>
           <option value="llama-3.1-8b-instant">llama-3.1-8b-instant (fastest)</option>
-          <option value="llama-3.3-70b-specdec">llama-3.3-70b-specdec</option>
-          <option value="mixtral-8x7b-32768">mixtral-8x7b-32768</option>
-          <option value="gemma2-9b-it">gemma2-9b-it</option>
-          <option value="deepseek-r1-distill-llama-70b">deepseek-r1-distill-llama-70b</option>
+          <option value="openai/gpt-oss-120b">openai/gpt-oss-120b (most capable)</option>
+          <option value="openai/gpt-oss-20b">openai/gpt-oss-20b (fast)</option>
+        </select>
+        <select id="ai-model-select-openai" style="display:none">
+          <option value="gpt-4o-mini">gpt-4o-mini (default, cheap)</option>
+          <option value="gpt-4o">gpt-4o</option>
+          <option value="gpt-4.1">gpt-4.1</option>
+          <option value="gpt-4.1-mini">gpt-4.1-mini</option>
+          <option value="o4-mini">o4-mini (reasoning)</option>
+          <option value="o3">o3 (reasoning, slow)</option>
+        </select>
+        <select id="ai-model-select-gemini" style="display:none">
+          <option value="gemini-2.0-flash">gemini-2.0-flash (default)</option>
+          <option value="gemini-2.5-flash">gemini-2.5-flash</option>
+          <option value="gemini-2.5-flash-lite">gemini-2.5-flash-lite (fastest)</option>
+          <option value="gemini-2.5-pro">gemini-2.5-pro (most capable)</option>
         </select>
       </label>
-      <label id="ai-model-text-label" style="display:none">Model:
-        <input type="text" id="ai-model-text" placeholder="e.g. gpt-4o-mini">
+      <label>Custom model override:
+        <input type="text" id="ai-model-custom" placeholder="Leave blank to use dropdown above">
       </label>
       <label>API Key:
         <input type="password" id="ai-api-key" placeholder="Paste your API key (stored locally)">
@@ -88,6 +99,15 @@ author: NES
   <!-- Left: Chat panel -->
   <div id="ai-chat-panel" class="ai-chat-panel">
     <div id="ai-chat-log" class="ai-chat-log" aria-live="polite"></div>
+
+    <div id="ai-starters" class="ai-starters">
+      <span class="ai-starters-label">Try asking:</span>
+      <button class="ai-starter-btn">How have annual CSO discharge volumes changed over the last 10 years?</button>
+      <button class="ai-starter-btn">Which Massachusetts watersheds have the highest total CSO discharge?</button>
+      <button class="ai-starter-btn">How does DEP's annual budget compare to its staffing levels over time?</button>
+      <button class="ai-starter-btn">Map enforcement actions by Massachusetts town</button>
+    </div>
+
     <div class="ai-input-row">
       <textarea id="ai-question" class="ai-question-input"
                 rows="3"

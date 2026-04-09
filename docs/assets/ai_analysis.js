@@ -12,6 +12,7 @@ const STATE = {
   artifactCounter: 0,
   pendingWorkerResolve: null,
   pendingWorkerReject: null,
+  conversationHistory: [],   // [{role, content}] for multi-turn context
 };
 
 const ARTIFACT_STORE = {}; // { [id]: { question, sql, queryResults, chartSpec, answerText } }
@@ -46,6 +47,28 @@ const DEFAULTS = {
   apiKey: '',
   useExtendedContext: false,
 };
+
+const MAX_HISTORY_TURNS = 3;  // user+assistant pairs to keep in context
+
+// ─── Geographic Map Config ────────────────────────────────────────────────────
+const GEO_CONFIG = {
+  towns: {
+    url: 'assets/geo_json/TOWNSSURVEY_POLYM_geojson_simple.json',
+    featureidkey: 'properties.TOWN',
+    normalize: function(v) { return String(v).toUpperCase().trim(); },
+  },
+  watersheds: {
+    url: 'assets/geo_json/watshdp1_geojson_simple.json',
+    featureidkey: 'properties.NAME',
+    normalize: function(v) { return String(v).toUpperCase().trim(); },
+  },
+  census_bg: {
+    url: 'assets/geo_json/cb_2017_25_bg_500k.json',
+    featureidkey: 'properties.GEOID',
+    normalize: function(v) { return String(v); },
+  },
+};
+const GEO_CACHE = {};
 
 // ─── Worker Management ────────────────────────────────────────────────────────
 
@@ -222,19 +245,15 @@ function loadSettings() {
 }
 
 function getModelFromUI(provider) {
-  if (provider === 'groq') {
-    return document.getElementById('ai-model-select').value;
-  }
-  return document.getElementById('ai-model-text').value.trim();
+  var custom = document.getElementById('ai-model-custom').value.trim();
+  if (custom) return custom;
+  return document.getElementById('ai-model-select-' + provider).value;
 }
 
 function updateModelUI(provider) {
-  var isGroq = provider === 'groq';
-  document.getElementById('ai-model-select-label').style.display = isGroq ? '' : 'none';
-  document.getElementById('ai-model-text-label').style.display = isGroq ? 'none' : '';
-  if (!isGroq) {
-    document.getElementById('ai-model-text').placeholder = PROVIDER_CONFIG[provider].defaultModel;
-  }
+  ['groq', 'openai', 'gemini'].forEach(function(p) {
+    document.getElementById('ai-model-select-' + p).style.display = p === provider ? '' : 'none';
+  });
 }
 
 function saveSettings() {
@@ -245,6 +264,7 @@ function saveSettings() {
 
   localStorage.setItem('ai_provider', provider);
   localStorage.setItem('ai_model', model || PROVIDER_CONFIG[provider].defaultModel);
+  localStorage.setItem('ai_model_custom', document.getElementById('ai-model-custom').value.trim());
   localStorage.setItem('ai_api_key', apiKey);
   localStorage.setItem('ai_use_extended_context', useExt ? 'true' : 'false');
 
@@ -258,15 +278,18 @@ function populateSettingsUI() {
   var s = loadSettings();
   document.getElementById('ai-provider').value = s.provider;
   updateModelUI(s.provider);
-  if (s.provider === 'groq') {
-    var sel = document.getElementById('ai-model-select');
-    // Select saved model if it exists in the list, else keep default
+
+  // Try to select saved model in the provider's dropdown
+  var sel = document.getElementById('ai-model-select-' + s.provider);
+  if (sel) {
     for (var i = 0; i < sel.options.length; i++) {
       if (sel.options[i].value === s.model) { sel.selectedIndex = i; break; }
     }
-  } else {
-    document.getElementById('ai-model-text').value = s.model;
   }
+  // Restore custom override if saved
+  var savedCustom = localStorage.getItem('ai_model_custom') || '';
+  document.getElementById('ai-model-custom').value = savedCustom;
+
   document.getElementById('ai-use-extended-context').checked = s.useExtendedContext;
   // Do NOT pre-fill API key for security
 }
@@ -384,22 +407,32 @@ function buildStage1SystemPrompt(schema) {
     'When the user asks a question, respond with ONLY valid JSON in this exact format:',
     '{',
     '  "sql": "SELECT ... ;",',
-    '  "chart_spec": {',
-    '    "type": "bar|line|scatter|histogram|pie|table",',
-    '    "x": "column_name",',
-    '    "y": "column_name",',
-    '    "color": "optional_grouping_column_or_null",',
-    '    "title": "Descriptive chart title"',
-    '  },',
+    '  "chart_spec": { ... },',
     '  "reasoning": "One sentence explaining your approach"',
     '}',
+    '',
+    'chart_spec types:',
+    '- Standard charts: type = "bar", "line", "scatter", "histogram", "pie", "table"',
+    '  Fields: "x", "y", "color" (optional grouping), "title"',
+    '',
+    '- Choropleth map: type = "map"',
+    '  Use when results contain town names, watershed names, or census block group IDs.',
+    '  Fields: "geography" ("towns"|"watersheds"|"census_bg"), "geo_id_col" (column with geographic ID), "value_col" (numeric column to color by), "title"',
+    '  Geographic ID columns: Town names are uppercase (e.g. "BOSTON"). Watershed names are uppercase (e.g. "CHARLES"). GEOID is a 12-digit string.',
+    '  Common columns: Town/municipality → towns; Watershed/Waterbody → watersheds; GEOID → census_bg',
+    '',
+    '- Point map: type = "scatter_map"',
+    '  Use when results contain latitude and longitude columns.',
+    '  Fields: "lat_col", "lon_col", "text_col" (optional label), "value_col" (optional color/size), "title"',
     '',
     'SQL rules:',
     '- Write valid SQLite SELECT statements only',
     '- Never use INSERT, UPDATE, DELETE, DROP, CREATE, ALTER, or TRUNCATE',
-    '- Use LIMIT 500 unless the user asks for aggregations',
+    '- Use LIMIT 500 for row-level queries; no LIMIT for aggregations by geography',
     '- Column names must exactly match the schema',
-    '- If the question cannot be answered with available tables, set sql to null and explain in reasoning'
+    '- For map queries, always include the geographic ID column (Town, Watershed, GEOID, latitude, longitude)',
+    '- If the question cannot be answered with available tables, set sql to null and explain in reasoning',
+    '- If the user asks a follow-up, refer to prior SQL in the conversation to build on it'
   );
 
   return parts.join('\n');
@@ -412,18 +445,20 @@ function buildStage2SystemPrompt() {
     'Respond with ONLY valid JSON in this exact format:',
     '{',
     '  "answer": "Clear, concise natural language answer (1-3 sentences)",',
-    '  "chart_spec": {',
-    '    "type": "bar|line|scatter|histogram|pie|table",',
-    '    "x": "column_name",',
-    '    "y": "column_name",',
-    '    "color": "optional_grouping_column_or_null",',
-    '    "title": "Descriptive chart title"',
-    '  }',
+    '  "chart_spec": { ... }',
     '}',
+    '',
+    'chart_spec types (choose best for the data):',
+    '- Standard: type = "bar"|"line"|"scatter"|"histogram"|"pie"|"table". Fields: "x", "y", "color", "title"',
+    '- Choropleth map: type = "map". Fields: "geography" ("towns"|"watersheds"|"census_bg"), "geo_id_col", "value_col", "title"',
+    '- Point map: type = "scatter_map". Fields: "lat_col", "lon_col", "text_col", "value_col", "title"',
     '',
     'Guidelines:',
     '- The answer must directly address the user question using the actual data values',
-    '- Refine the chart_spec if the Stage 1 spec does not match the actual result columns',
+    '- If results have a Town or municipality column, prefer type "map" with geography "towns"',
+    '- If results have a Watershed or Waterbody column, prefer type "map" with geography "watersheds"',
+    '- If results have latitude/longitude columns, prefer type "scatter_map"',
+    '- Verify all column names in chart_spec exactly match the actual result columns',
     '- If the data has only one row or is not visual, set chart_spec.type to "table"',
     '- Do not invent numbers not present in the results',
   ].join('\n');
@@ -435,10 +470,11 @@ async function runAnalysis(question) {
   if (!STATE.dbReady) throw new Error('Database not loaded yet.');
   if (STATE.workerBusy) throw new Error('A query is already running. Please wait.');
 
-  // Stage 1: question + schema → SQL + chart_spec
+  // Stage 1: question + schema + history → SQL + chart_spec
   appendChatMessage('assistant', '⏳ Generating SQL query…', 'status');
   var stage1Messages = [
     { role: 'system', content: buildStage1SystemPrompt(STATE.schema) },
+    ...STATE.conversationHistory,
     { role: 'user', content: question },
   ];
 
@@ -469,7 +505,18 @@ async function runAnalysis(question) {
   }
 
   var queryResults = sqlResult.results && sqlResult.results[0];
-  if (!queryResults) throw new Error('Query returned no results.');
+  if (!queryResults) {
+    throw new Error(
+      'Query returned no result set — the SQL may not be a SELECT statement, or the query failed silently.\n\nSQL attempted:\n' + stage1.sql
+    );
+  }
+  if (queryResults.values.length === 0) {
+    throw new Error(
+      'Query returned 0 rows. The filters may not match any records.\n\nSQL:\n' + stage1.sql +
+      '\n\nColumns expected: ' + queryResults.columns.join(', ') +
+      '\n\nTry broadening the query (remove WHERE clauses, check spelling of values).'
+    );
+  }
 
   // Stage 2: question + SQL + preview rows → answer + refined chart_spec
   updateLastStatus('⏳ Interpreting results…');
@@ -498,8 +545,23 @@ async function runAnalysis(question) {
   // Create artifact
   removeLastStatus();
   var chartSpec = stage2.chart_spec || stage1.chart_spec || { type: 'table', x: queryResults.columns[0], y: queryResults.columns[1] };
-  var artifactId = createArtifact(question, stage1.sql, queryResults, chartSpec, stage2.answer);
+  var artifactId = await createArtifact(question, stage1.sql, queryResults, chartSpec, stage2.answer);
   appendChatMessage('assistant', stage2.answer, 'answer', artifactId);
+
+  // Append to conversation history for follow-up context
+  STATE.conversationHistory.push(
+    { role: 'user', content: question },
+    {
+      role: 'assistant',
+      content: 'Answer: ' + stage2.answer + '\n\nSQL used:\n' + stage1.sql +
+                '\n\nResult columns: ' + queryResults.columns.join(', ') +
+                '\nData preview:\n' + formatResultsForLLM(queryResults, 5),
+    }
+  );
+  // Keep only last MAX_HISTORY_TURNS pairs
+  if (STATE.conversationHistory.length > MAX_HISTORY_TURNS * 2) {
+    STATE.conversationHistory = STATE.conversationHistory.slice(-MAX_HISTORY_TURNS * 2);
+  }
 }
 
 async function retrySQLWithError(question, failedSQL, errorMsg) {
@@ -515,6 +577,23 @@ async function retrySQLWithError(question, failedSQL, errorMsg) {
   ];
   var retryText = await callLLM(retryMessages, true);
   return parseJSON(retryText);
+}
+
+// ─── GeoJSON Loading ─────────────────────────────────────────────────────────
+
+function loadGeoJSON(geography) {
+  if (GEO_CACHE[geography]) return Promise.resolve(GEO_CACHE[geography]);
+  var cfg = GEO_CONFIG[geography];
+  if (!cfg) return Promise.reject(new Error('Unknown geography: ' + geography));
+  return fetch(cfg.url)
+    .then(function(r) {
+      if (!r.ok) throw new Error('Failed to load map data (' + r.status + ')');
+      return r.json();
+    })
+    .then(function(data) {
+      GEO_CACHE[geography] = data;
+      return data;
+    });
 }
 
 // ─── Plotly Chart Rendering ──────────────────────────────────────────────────
@@ -603,13 +682,111 @@ function buildPlotlyFigure(chartSpec, queryResults) {
   return { data: data, layout: layout };
 }
 
+function buildMapFigure(chartSpec, queryResults, geojson) {
+  var colData = {};
+  queryResults.columns.forEach(function(col, ci) {
+    colData[col] = queryResults.values.map(function(row) { return row[ci]; });
+  });
+
+  var geography = chartSpec.geography || 'towns';
+  var cfg = GEO_CONFIG[geography] || GEO_CONFIG.towns;
+  var geoIdCol = chartSpec.geo_id_col;
+  var valueCol = chartSpec.value_col;
+
+  var rawIds = colData[geoIdCol] || colData[queryResults.columns[0]] || [];
+  var locations = rawIds.map(cfg.normalize);
+  var zValues = colData[valueCol] || colData[queryResults.columns[1]] || [];
+
+  return {
+    data: [{
+      type: 'choroplethmap',
+      geojson: geojson,
+      locations: locations,
+      z: zValues,
+      featureidkey: cfg.featureidkey,
+      colorscale: 'YlOrRd',
+      marker: { opacity: 0.7, line: { width: 0.5, color: 'white' } },
+      hovertemplate: '%{location}: %{z:,.1f}<extra></extra>',
+      colorbar: { title: { text: valueCol || '' } },
+    }],
+    layout: {
+      title: chartSpec.title || '',
+      map: { style: 'open-street-map', fitbounds: 'locations', projection: { type: 'mercator' } },
+      margin: { r: 0, t: 40, l: 0, b: 0 },
+      autosize: true,
+    },
+  };
+}
+
+function buildScatterMapFigure(chartSpec, queryResults) {
+  var colData = {};
+  queryResults.columns.forEach(function(col, ci) {
+    colData[col] = queryResults.values.map(function(row) { return row[ci]; });
+  });
+
+  var latCol = chartSpec.lat_col;
+  var lonCol = chartSpec.lon_col;
+  var textCol = chartSpec.text_col;
+  var valueCol = chartSpec.value_col;
+
+  var trace = {
+    type: 'scattermap',
+    lat: colData[latCol] || [],
+    lon: colData[lonCol] || [],
+    mode: 'markers',
+    marker: { size: 8, color: '#285858' },
+  };
+  if (textCol && colData[textCol]) {
+    trace.text = colData[textCol];
+    trace.hovertemplate = '%{text}<extra></extra>';
+  }
+  if (valueCol && colData[valueCol]) {
+    trace.marker.color = colData[valueCol];
+    trace.marker.colorscale = 'YlOrRd';
+    trace.marker.showscale = true;
+    trace.marker.colorbar = { title: { text: valueCol } };
+  }
+
+  return {
+    data: [trace],
+    layout: {
+      title: chartSpec.title || '',
+      map: { style: 'open-street-map', fitbounds: 'locations' },
+      margin: { r: 0, t: 40, l: 0, b: 0 },
+      autosize: true,
+    },
+  };
+}
+
+// Async wrapper — handles GeoJSON loading for map types, sync for everything else
+function renderChart(containerId, chartSpec, queryResults) {
+  var type = chartSpec.type;
+
+  if (type === 'map') {
+    var el = document.getElementById(containerId);
+    if (el) el.textContent = 'Loading map data…';
+    return loadGeoJSON(chartSpec.geography || 'towns')
+      .then(function(geojson) {
+        var fig = buildMapFigure(chartSpec, queryResults, geojson);
+        return Plotly.newPlot(containerId, fig.data, fig.layout, { responsive: true });
+      });
+  }
+
+  if (type === 'scatter_map') {
+    var fig = buildScatterMapFigure(chartSpec, queryResults);
+    return Promise.resolve(Plotly.newPlot(containerId, fig.data, fig.layout, { responsive: true }));
+  }
+
+  var fig = buildPlotlyFigure(chartSpec, queryResults);
+  return Promise.resolve(Plotly.newPlot(containerId, fig.data, fig.layout, { responsive: true }));
+}
+
 // ─── Artifact Tray System ─────────────────────────────────────────────────────
 
-function createArtifact(question, sql, queryResults, chartSpec, answerText) {
+async function createArtifact(question, sql, queryResults, chartSpec, answerText) {
   STATE.artifactCounter++;
   var id = STATE.artifactCounter;
 
-  // Store for later retrieval (fullscreen, etc)
   ARTIFACT_STORE[id] = { question, sql, queryResults, chartSpec, answerText };
 
   var el = document.createElement('div');
@@ -626,7 +803,7 @@ function createArtifact(question, sql, queryResults, chartSpec, answerText) {
     '  <button class="ai-artifact-toggle" aria-expanded="true" title="Collapse">▲</button>',
     '  <button class="ai-artifact-fullscreen" title="Fullscreen">⛶</button>',
     '</div>',
-    '<div class="ai-artifact-body">',
+    '<div class="ai-artifact-body" style="display:block">',
     '  <div class="ai-chart-div" id="chart-' + id + '"></div>',
     '  <div class="ai-answer-text">' + escapeHTML(answerText || '') + '</div>',
     '  <div class="ai-sql-section">',
@@ -639,16 +816,13 @@ function createArtifact(question, sql, queryResults, chartSpec, answerText) {
   var list = document.getElementById('ai-artifact-list');
   document.getElementById('ai-artifact-empty').style.display = 'none';
 
-  // Collapse all existing cards
+  // Collapse all existing cards, then insert new one expanded
   collapseAllArtifacts();
-  list.insertBefore(el, list.firstChild); // newest on top
+  list.insertBefore(el, list.firstChild);
 
-  // Wire toggle
   el.querySelector('.ai-artifact-toggle').addEventListener('click', function() {
     toggleArtifact(el);
   });
-
-  // Wire SQL toggle
   el.querySelector('.ai-sql-toggle').addEventListener('click', function() {
     var pre = el.querySelector('.ai-sql-block');
     var btn = el.querySelector('.ai-sql-toggle');
@@ -656,16 +830,13 @@ function createArtifact(question, sql, queryResults, chartSpec, answerText) {
     pre.style.display = hidden ? 'block' : 'none';
     btn.innerHTML = hidden ? 'Hide SQL ▲' : 'Show SQL ▼';
   });
-
-  // Wire fullscreen
   el.querySelector('.ai-artifact-fullscreen').addEventListener('click', function() {
     var d = ARTIFACT_STORE[id];
     openFullscreen(id, d.chartSpec, d.queryResults);
   });
 
-  // Plot chart
-  var fig = buildPlotlyFigure(chartSpec, queryResults);
-  Plotly.newPlot('chart-' + id, fig.data, fig.layout, { responsive: true });
+  // Render chart (async for maps)
+  await renderChart('chart-' + id, chartSpec, queryResults);
 
   return id;
 }
@@ -711,26 +882,21 @@ function openFullscreen(artifactId, chartSpec, queryResults) {
   var inner = document.getElementById('ai-fullscreen-chart');
   inner.innerHTML = '';
   var chartDiv = document.createElement('div');
+  chartDiv.id = 'ai-fullscreen-chart-inner';
   chartDiv.style.width = '100%';
   chartDiv.style.height = '80vh';
   inner.appendChild(chartDiv);
 
   overlay.style.display = 'flex';
 
-  var fig = buildPlotlyFigure(chartSpec, queryResults);
-  Plotly.newPlot(chartDiv, fig.data, fig.layout, { responsive: true });
+  renderChart('ai-fullscreen-chart-inner', chartSpec, queryResults);
 
-  document.getElementById('ai-fullscreen-close').onclick = function() {
+  function closeOverlay() {
     overlay.style.display = 'none';
     Plotly.purge(chartDiv);
-  };
-
-  overlay.onclick = function(e) {
-    if (e.target === overlay) {
-      overlay.style.display = 'none';
-      Plotly.purge(chartDiv);
-    }
-  };
+  }
+  document.getElementById('ai-fullscreen-close').onclick = closeOverlay;
+  overlay.onclick = function(e) { if (e.target === overlay) closeOverlay(); };
 }
 
 // ─── Chat Message System ─────────────────────────────────────────────────────
@@ -826,6 +992,8 @@ async function handleSubmit() {
 
   document.getElementById('ai-submit').disabled = true;
   questionEl.value = '';
+  var startersEl = document.getElementById('ai-starters');
+  if (startersEl) startersEl.style.display = 'none';
 
   appendChatMessage('user', question, 'question');
 
@@ -845,6 +1013,11 @@ document.addEventListener('DOMContentLoaded', function() {
   initWorker();
   populateSettingsUI();
 
+  // Open settings drawer automatically when no API key is saved
+  if (!loadSettings().apiKey) {
+    document.getElementById('ai-settings').setAttribute('open', '');
+  }
+
   document.getElementById('ai-load-db').addEventListener('click', loadDatabase);
   document.getElementById('ai-save-settings').addEventListener('click', saveSettings);
   document.getElementById('ai-provider').addEventListener('change', function() {
@@ -860,5 +1033,16 @@ document.addEventListener('DOMContentLoaded', function() {
       e.preventDefault();
       handleSubmit();
     }
+  });
+
+  // Starter question buttons
+  document.querySelectorAll('.ai-starter-btn').forEach(function(btn) {
+    btn.addEventListener('click', function() {
+      questionEl.value = btn.textContent;
+      var startersEl = document.getElementById('ai-starters');
+      if (startersEl) startersEl.style.display = 'none';
+      questionEl.focus();
+      handleSubmit();
+    });
   });
 });
