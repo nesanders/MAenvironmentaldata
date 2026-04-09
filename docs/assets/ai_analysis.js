@@ -6,7 +6,8 @@
 const STATE = {
   worker: null,
   dbReady: false,
-  schema: null,
+  schema: null,           // fallback: CREATE TABLE strings from sqlite_master
+  semanticContext: null,  // preferred: rich context from db_semantic_context.txt
   extendedContext: null,
   workerBusy: false,
   artifactCounter: 0,
@@ -225,6 +226,24 @@ function fetchExtendedContext() {
     });
 }
 
+function fetchSemanticContext() {
+  // Fetch the pre-generated semantic context (schema + sample rows + column notes).
+  // This is a static asset so it can be fetched immediately on page load,
+  // independently of DB loading. Falls back to raw schema from sqlite_master if unavailable.
+  fetch('assets/db_semantic_context.txt')
+    .then(function(r) {
+      if (!r.ok) throw new Error('HTTP ' + r.status);
+      return r.text();
+    })
+    .then(function(text) {
+      STATE.semanticContext = text;
+      console.log('[AI] Semantic context loaded (' + Math.round(text.length / 1024) + ' KB)');
+    })
+    .catch(function(err) {
+      console.warn('[AI] Semantic context unavailable, will fall back to raw schema:', err.message);
+    });
+}
+
 function onDBReady() {
   var statusEl = document.getElementById('ai-db-status');
   statusEl.querySelector('#ai-db-status-text').textContent = 'Database loaded. Ready.';
@@ -391,16 +410,35 @@ function parseJSON(text) {
 function buildStage1SystemPrompt(schema) {
   var parts = [
     'You are an expert data analyst for Massachusetts environmental data.',
-    'The user is querying a SQLite database. Here is the complete schema:',
-    '',
-    '```sql',
-    schema,
-    '```',
     '',
   ];
 
+  // Prefer the pre-generated semantic context (schema + sample rows + column notes);
+  // fall back to raw CREATE TABLE strings from sqlite_master if unavailable.
+  if (STATE.semanticContext) {
+    parts.push(
+      'The user is querying a SQLite database. The complete schema, sample rows, and column notes follow:',
+      '',
+      STATE.semanticContext,
+      '',
+    );
+  } else {
+    parts.push(
+      'The user is querying a SQLite database. Here is the complete schema:',
+      '',
+      '```sql',
+      schema,
+      '```',
+      '',
+      '## Data Notes',
+      '- Geographic text fields (municipality, Town, waterBody) are stored ALL CAPS.',
+      '  Always filter with: WHERE UPPER(column) = UPPER(\'value\')',
+      '',
+    );
+  }
+
   if (STATE.extendedContext) {
-    parts.push('Background context:', STATE.extendedContext, '');
+    parts.push('## Additional Background Context', STATE.extendedContext, '');
   }
 
   parts.push(
@@ -419,7 +457,7 @@ function buildStage1SystemPrompt(schema) {
     '  Use when results contain town names, watershed names, or census block group IDs.',
     '  Fields: "geography" ("towns"|"watersheds"|"census_bg"), "geo_id_col" (column with geographic ID), "value_col" (numeric column to color by), "title"',
     '  Geographic ID columns: Town names are uppercase (e.g. "BOSTON"). Watershed names are uppercase (e.g. "CHARLES"). GEOID is a 12-digit string.',
-    '  Common columns: Town/municipality → towns; Watershed/Waterbody → watersheds; GEOID → census_bg',
+    '  Common columns: Town/municipality → towns; Watershed/waterBody → watersheds; GEOID → census_bg',
     '',
     '- Point map: type = "scatter_map"',
     '  Use when results contain latitude and longitude columns.',
@@ -429,12 +467,11 @@ function buildStage1SystemPrompt(schema) {
     '- Write valid SQLite SELECT statements only',
     '- Never use INSERT, UPDATE, DELETE, DROP, CREATE, ALTER, or TRUNCATE',
     '- Use LIMIT 500 for row-level queries; no LIMIT for aggregations by geography',
-    '- Column names must exactly match the schema',
-    '- For map queries, always include the geographic ID column (Town, Watershed, GEOID, latitude, longitude)',
+    '- Column names must exactly match the schema above',
+    '- For map queries, always include the geographic ID column (Town, municipality, waterBody, GEOID, latitude, longitude)',
     '- If the question cannot be answered with available tables, set sql to null and explain in reasoning',
     '- If the user asks a follow-up, refer to prior SQL in the conversation to build on it',
-    '- String values in this database are often ALL CAPS (e.g. waterBody = \'MYSTIC RIVER\', municipality = \'BOSTON\'). Always use UPPER() for string filters: WHERE UPPER(column) = UPPER(\'value\') or WHERE UPPER(column) LIKE UPPER(\'%value%\')',
-    '- Common waterBody values include: MYSTIC RIVER, CHARLES RIVER, NEPONSET RIVER, BOSTON HARBOR, MERRIMACK RIVER, CONNECTICUT RIVER, etc. Always uppercase these.'
+    '- For scatter_map queries, do NOT filter on latitude IS NOT NULL or longitude IS NOT NULL — include all rows and let the map handle missing values'
   );
 
   return parts.join('\n');
@@ -507,7 +544,14 @@ async function runAnalysis(question) {
   }
 
   var queryResults = sqlResult.results && sqlResult.results[0];
+  // sql.js returns [] (empty array) for a SELECT that matched 0 rows — results[0] is undefined
   if (!queryResults) {
+    if (Array.isArray(sqlResult.results) && sqlResult.results.length === 0) {
+      throw new Error(
+        'Query returned 0 rows. The filters may not match any records.\n\nSQL:\n' + stage1.sql +
+        '\n\nTry broadening the query (remove WHERE clauses, check spelling of values).'
+      );
+    }
     throw new Error(
       'Query returned no result set — the SQL may not be a SELECT statement, or the query failed silently.\n\nSQL attempted:\n' + stage1.sql
     );
@@ -1056,6 +1100,7 @@ async function handleSubmit() {
 document.addEventListener('DOMContentLoaded', function() {
   initWorker();
   populateSettingsUI();
+  fetchSemanticContext();  // start loading in background immediately
 
   // Open settings drawer automatically when no API key is saved
   if (!loadSettings().apiKey) {

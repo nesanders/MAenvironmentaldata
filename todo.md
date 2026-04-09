@@ -41,3 +41,13 @@ dissolved boundaries, or switching to vectorized `geopandas.sjoin`.
 # Infrastructure
 
 ### Add unit tests
+
+### Develop tests for AI Analysis semantic context (`get_data/generate_semantic_context.py`)
+
+- Verify every DB table has an entry in `TABLE_DESCRIPTIONS`
+- Verify key categorical columns (waterBody, municipality, Town) are flagged as ALL_CAPS in generated output
+- Verify column notes for known quirks are present (e.g. `volumnOfEvent` typo note, `Year` as FLOAT in MAEEADP_CSO)
+- Verify join relationship hints are present in output
+- Verify sample rows are non-empty for all non-skipped tables
+- Regression test: run a set of representative natural-language questions through the LLM (mocked or live) and assert the generated SQL is syntactically valid and references correct table/column names
+- Consider a round-trip integration test: generate SQL from question → execute against AMEND.db → assert non-empty result set

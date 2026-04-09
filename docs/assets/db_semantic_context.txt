@@ -1,0 +1,1318 @@
+# AMEND Database Semantic Context
+Generated: 2026-04-08
+
+## Global Data Notes
+
+- **ALL CAPS strings**: Geographic text fields (municipality, Town, waterBody, DischargesBody) are stored in ALL CAPS.
+  Always filter with: WHERE UPPER(column) = UPPER('value')  or  WHERE UPPER(column) LIKE UPPER('%value%')
+
+- **Preferred tables for common queries**:
+  - CSO discharges → MAEEADP_CSO
+  - Enforcement actions (recent) → MAEEADP_Enforcement
+  - Enforcement with fines/topics (historical, through 2017) → MADEP_enforcement
+  - Staffing (recent) → MADEP_staff_Comptroller
+  - Budget trends → MassBudget_summary (not the wide infadjusted/noinfadjusted tables)
+  - Environmental justice → EPA_EJSCREEN_2023 (more current than 2017)
+
+- **Date formats**: incidentDate, InspectionDate, InspectionDate, EnforcementDate, FinalDecisionDate are YYYY-MM-DD strings.
+  Extract year with: strftime('%Y', date_col) or substr(date_col, 1, 4).
+
+## Key Join Relationships
+
+- **Town-level joins** (use UPPER() on both sides):
+  MAEEADP_CSO.municipality ↔ MAEEADP_Enforcement.Town ↔ MAEEADP_Facility.Town ↔ MAEEADP_Inspection.Town ↔ MAEEADP_Permit.Town
+
+- **Facility-level joins** (integer key):
+  MAEEADP_Facility.Id = MAEEADP_Inspection.FacilityId = MAEEADP_Enforcement.FacilityId = MAEEADP_Permit.FacilityId
+
+- **Staffing + budget by year**:
+  MADEP_staff_Comptroller.year = MassBudget_summary.Year
+
+- **Precipitation + CSO by date**:
+  MA_precipitation_daily.date ↔ MAEEADP_CSO.incidentDate (both YYYY-MM-DD strings; or join on substr(incidentDate,1,4) = CAST(Year AS TEXT))
+
+---
+
+## Table Schemas and Sample Data
+
+### Census_ACS (352 rows)
+Census American Community Survey data for MA subdivisions. Key fields: Subdivision, population_acs52014, per_capita_income_acs52014.
+
+```sql
+CREATE TABLE "Census_ACS" (
+	"index" BIGINT, 
+	population_acs52014 FLOAT, 
+	per_capita_income_acs52014 FLOAT, 
+	"Subdivision" TEXT
+)
+```
+
+/* 5 rows from Census_ACS:
+population_acs52014	per_capita_income_acs52014	Subdivision
+0.0	-666666666.0	County subdivisions not defined
+44750.0	36139.0	Barnstable Town
+19749.0	34308.0	Bourne
+9858.0	37792.0	Brewster
+6129.0	47895.0	Chatham
+*/
+
+---
+
+### Census_statepop (57 rows)
+Massachusetts state population by year (2000–2016). Wide format: each column is a year.
+
+```sql
+CREATE TABLE "Census_statepop" (
+	"index" BIGINT, 
+	"2000" FLOAT, 
+	"2001" FLOAT, 
+	"2002" FLOAT, 
+	"2003" FLOAT, 
+	"2004" FLOAT, 
+	"2005" FLOAT, 
+	"2006" FLOAT, 
+	"2007" FLOAT, 
+	"2008" FLOAT, 
+	"2009" FLOAT, 
+	"2010" FLOAT, 
+	"2011" FLOAT, 
+	"2012" FLOAT, 
+	"2013" FLOAT, 
+	"2014" FLOAT, 
+	"2015" FLOAT, 
+	"2016" FLOAT, 
+	"State" TEXT
+)
+```
+
+/* 5 rows from Census_statepop:
+2000	2001	2002	2003	2004	2005	2006	2007	2008	2009	2010	2011	2012	2013	2014	2015	2016	State
+282162411.0	284968955.0	287625193.0	290107933.0	292805298.0	295516599.0	298379912.0	301231207.0	304093966.0	306771529.0	309348193.0	311663358.0	313998379.0	316204908.0	318563456.0	320896618.0	323127513.0	United States
+53666295.0	53915522.0	54143915.0	54334453.0	54423533.0	54451230.0	54522659.0	54653362.0	54875926.0	55133101.0	55388056.0	55632766.0	55829059.0	55988771.0	56116791.0	56184737.0	56209510.0	Northeast
+64491431.0	64776531.0	65018293.0	65276954.0	65532305.0	65751872.0	66028555.0	66293689.0	66523935.0	66748437.0	66978602.0	67153331.0	67332320.0	67543948.0	67726368.0	67838387.0	67941429.0	Midwest
+100565549.0	101849575.0	103150787.0	104380188.0	105883977.0	107479771.0	109076933.0	110688742.0	112184930.0	113548615.0	114863114.0	116061801.0	117299171.0	118424320.0	119696311.0	121039206.0	122319574.0	South
+63439136.0	64427327.0	65312198.0	66116338.0	66965483.0	67833726.0	68751765.0	69595414.0	70509175.0	71341376.0	72118421.0	72815460.0	73537829.0	74247869.0	75023986.0	75834288.0	76657000.0	West
+*/
+
+**Column notes:**
+- `State`: Wyoming, Wisconsin, West Virginia, West, Washington, Virginia, Vermont, Utah, United States, Texas, Tennessee, South Dakota, South Carolina, South, Rhode Island, Puerto Rico, Pennsylvania, Oregon, Oklahoma, Ohio, Northeast, North Dakota, North Carolina, New York, New Mexico, ... (57 total)
+
+---
+
+### ECOS_budgets (3,210 rows)
+ECOS (Environmental Council of the States) budget survey comparing state environmental agency budgets nationally. Key fields: State, BudgetDetail, value, Year.
+
+```sql
+CREATE TABLE "ECOS_budgets" (
+	"index" BIGINT, 
+	"State" TEXT, 
+	"BudgetDetail" TEXT, 
+	value TEXT, 
+	"Year" TEXT
+)
+```
+
+/* 5 rows from ECOS_budgets:
+State	BudgetDetail	value	Year
+Alabama	Amount from Federal Government	NULL	2012
+Alabama	Amount from Federal Government	16961056	2014
+Alabama	Amount from Federal Government	18374332	2015
+Alabama	Amount from Federal Government	NULL	2011_old
+Alabama	Amount from Federal Government	NULL	2013
+*/
+
+**Column notes:**
+- `State`: Washington, Rhode Island, Ohio, Wyoming, Utah, South Dakota, Kentucky, Wisconsin, Massachusetts, Maine, Indiana, Colorado, Oregon, Oklahoma, Illinois, Idaho, Virginia, Texas, Tennessee, Nevada, Maryland, Montana, Mississippi, South Carolina, New York, ... (51 total)
+- `BudgetDetail`: Status of Budget, Percent from General Fund, Percent from Fees / Other, Amount from General Fund, Amount from Fees / Other, Percent from Federal Government, Amount from Federal Government, Environmental Agency Budget, Amount of Budget from SRF, Environmental Agency Budget (SRF Added), Environmental Agency Budget (No SRF), Environmental Agency Budget Excludes SRF, Percent from General Fund - Operating, Percent from General Fund - Capital, Percent from Fees / Other - Operating, Percent from Fees / Other - Capital, Percent from Federal Government - Operating, Percent from Federal Government - Capital, Percent from Bonds, Environmental Agency Budget - Operating, Environmental Agency Budget - Capital, Capital spending included in the Environmental Agency Budget, Amount from General Fund - Operating, Amount from General Fund - Capital, Amount from Fees / Other - Operating, ... (29 total)
+- `Year`: 2013, 2012, 2011_old, 2015, 2014, 2013_old, 2011, 2010, 2009, 2016
+
+---
+
+### EPARegion1_permits (4,440 rows)
+EPA Region 1 NPDES (water discharge) permit listings for MA facilities. Key fields: Facility_Name, Permit_Number, Date_of_Issuance, Watershed, State, Stage.
+
+```sql
+CREATE TABLE "EPARegion1_permits" (
+	"index" BIGINT, 
+	"City_/_Town_(Receiving_Water)" TEXT, 
+	"Applicant_/_Facility_Name" TEXT, 
+	"Permit_Number" TEXT, 
+	"Date_of_Issuance" TEXT, 
+	"City/Town" TEXT, 
+	"Facility_Name" TEXT, 
+	"Facility_name_clean" TEXT, 
+	"Permit_URL" TEXT, 
+	"Stage" TEXT, 
+	"State" TEXT, 
+	"Watershed" TEXT, 
+	"City_/_Town" TEXT, 
+	"Comment_Period_Dates" TEXT
+)
+```
+
+/* 5 rows from EPARegion1_permits:
+City_/_Town_(Receiving_Water)	Applicant_/_Facility_Name	Permit_Number	Date_of_Issuance	City/Town	Facility_Name	Facility_name_clean	Permit_URL	Stage	State	Watershed	City_/_Town	Comment_Period_Dates
+Ansonia (Naugatuck River)	<a href='https://www.epa.gov/system/files/documents/2025-08/finalct0002968permit-2011.pdf'>Ansonia Copper &amp; Brass, Inc. (pdf)</a> <span class='document__meta'>(82 KB)</span>	CT0002968	08/15/2011	Ansonia	<a href='https://www.epa.gov/system/files/documents/2025-08/finalct0002968permit-2011.pdf'>Ansonia Copper &amp; Brass, Inc. (pdf)</a> <span class='document__meta'>(82 KB)</span>	Ansonia Copper & Brass, Inc. (pdf) (82 KB)	['https://www.epa.gov/system/files/documents/2025-08/finalct0002968permit-2011.pdf']	final	ct	Naugatuck River	NULL	NULL
+Ansonia (Naugatuck River)	<a href='https://www.epa.gov/system/files/documents/2025-08/finalct0002968permitmod-2011.pdf'>Ansonia Copper &amp; Brass, Inc. (Modification) (pdf)</a> <span class='document__meta'>(89 KB)</span>	CT0002968	02/14/2011	Ansonia	<a href='https://www.epa.gov/system/files/documents/2025-08/finalct0002968permitmod-2011.pdf'>Ansonia Copper &amp; Brass, Inc. (Modification) (pdf)</a> <span class='document__meta'>(89 KB)</span>	Ansonia Copper & Brass, Inc. (Modification) (pdf) (89 KB)	['https://www.epa.gov/system/files/documents/2025-08/finalct0002968permitmod-2011.pdf']	final	ct	Naugatuck River	NULL	NULL
+Ansonia (Naugatuck River)	<a href='https://www.epa.gov/system/files/documents/2025-08/finalct0002968permitmod-2008.pdf'>Ansonia Copper &amp; Brass, Inc. (pdf)</a> <span class='document__meta'>(39 KB)</span>	CT0002968	12/01/2008	Ansonia	<a href='https://www.epa.gov/system/files/documents/2025-08/finalct0002968permitmod-2008.pdf'>Ansonia Copper &amp; Brass, Inc. (pdf)</a> <span class='document__meta'>(39 KB)</span>	Ansonia Copper & Brass, Inc. (pdf) (39 KB)	['https://www.epa.gov/system/files/documents/2025-08/finalct0002968permitmod-2008.pdf']	final	ct	Naugatuck River	NULL	NULL
+Ansonia (Naugatuck River)	<a href='https://www.epa.gov/system/files/documents/2025-09/finalct0002968permit-2006.pdf'>Ansonia Copper &amp; Brass, Inc. (pdf)</a> <span class='document__meta'>(759 KB)</span>	CT0002968	03/22/2006	Ansonia	<a href='https://www.epa.gov/system/files/documents/2025-09/finalct0002968permit-2006.pdf'>Ansonia Copper &amp; Brass, Inc. (pdf)</a> <span class='document__meta'>(759 KB)</span>	Ansonia Copper & Brass, Inc. (pdf) (759 KB)	['https://www.epa.gov/system/files/documents/2025-09/finalct0002968permit-2006.pdf']	final	ct	Naugatuck River	NULL	NULL
+Ansonia (Naugatuck River)	<a href='https://www.epa.gov/system/files/documents/2025-07/finalct0100013permitmod-2018.pdf'>Ansonia <abbr title='Water Pollution Control Facility'>WPCF</abbr>, City of (Minor Modification) (pdf)</a> <span class='document__meta'>(112 KB)</span>	CT0100013	02/22/2018	Ansonia	<a href='https://www.epa.gov/system/files/documents/2025-07/finalct0100013permitmod-2018.pdf'>Ansonia <abbr title='Water Pollution Control Facility'>WPCF</abbr>, City of (Minor Modification) (pdf)</a> <span class='document__meta'>(112 KB)</span>	Ansonia WPCF, City of (Minor Modification) (pdf) (112 KB)	['https://www.epa.gov/system/files/documents/2025-07/finalct0100013permitmod-2018.pdf']	final	ct	Naugatuck River	NULL	NULL
+*/
+
+**Column notes:**
+- `Stage`: final, draft
+- `State`: me, ma, ct, vt, ri, nh
+
+---
+
+### EPA_EJSCREEN_2017 (4,985 rows)
+EPA EJScreen environmental justice screening data for MA census block groups (2017). 150+ columns of demographic and environmental burden percentiles. Key fields: ID (GEOID), STATE_NAME, MINORPCT, LOWINCPCT, PM25, CANCER, RESP, PNPL. Percentile columns prefixed P_, indicator columns prefixed B_, text labels prefixed T_.
+
+```sql
+CREATE TABLE "EPA_EJSCREEN_2017" (
+	"index" BIGINT, 
+	"OBJECTID" BIGINT, 
+	"ID" BIGINT, 
+	"ACSTOTPOP" BIGINT, 
+	"ACSIPOVBAS" BIGINT, 
+	"ACSEDUCBAS" BIGINT, 
+	"ACSTOTHH" BIGINT, 
+	"ACSTOTHU" BIGINT, 
+	"MINORPOP" BIGINT, 
+	"MINORPCT" FLOAT, 
+	"LOWINCOME" BIGINT, 
+	"LOWINCPCT" FLOAT, 
+	"LESSHS" BIGINT, 
+	"LESSHSPCT" FLOAT, 
+	"LINGISO" BIGINT, 
+	"LINGISOPCT" FLOAT, 
+	"UNDER5" BIGINT, 
+	"UNDER5PCT" FLOAT, 
+	"OVER64" BIGINT, 
+	"OVER64PCT" FLOAT, 
+	"PRE1960" BIGINT, 
+	"PRE1960PCT" FLOAT, 
+	"VULEOPCT" FLOAT, 
+	"VULSVI6PCT" FLOAT, 
+	"VULEO" FLOAT, 
+	"VULSVI6" FLOAT, 
+	"DISPEO" FLOAT, 
+	"DISPSVI6" FLOAT, 
+	"DSLPM" FLOAT, 
+	"CANCER" FLOAT, 
+	"RESP" FLOAT, 
+	"PTRAF" FLOAT, 
+	"PWDIS" FLOAT, 
+	"PNPL" FLOAT, 
+	"PRMP" FLOAT, 
+	"PTSDF" FLOAT, 
+	"OZONE" FLOAT, 
+	"PM25" FLOAT, 
+	"D_LDPNT_2" FLOAT, 
+	"D_DSLPM_2" FLOAT, 
+	"D_CANCR_2" FLOAT, 
+	"D_RESP_2" FLOAT, 
+	"D_PTRAF_2" FLOAT, 
+	"D_PWDIS_2" FLOAT, 
+	"D_PNPL_2" FLOAT, 
+	"D_PRMP_2" FLOAT, 
+	"D_PTSDF_2" FLOAT, 
+	"D_OZONE_2" FLOAT, 
+	"D_PM25_2" FLOAT, 
+	"STATE_NAME" TEXT, 
+	"ST_ABBREV" TEXT, 
+	"REGION" BIGINT, 
+	"P_MINORPCT" FLOAT, 
+	"P_LWINCPCT" FLOAT, 
+	"P_LESHSPCT" FLOAT, 
+	"P_LNGISPCT" FLOAT, 
+	"P_UNDR5PCT" FLOAT, 
+	"P_OVR64PCT" FLOAT, 
+	"P_LDPNT" FLOAT, 
+	"P_VULEOPCT" FLOAT, 
+	"P_VSVI6PCT" FLOAT, 
+	"P_DSLPM" FLOAT, 
+	"P_CANCR" FLOAT, 
+	"P_RESP" FLOAT, 
+	"P_PTRAF" FLOAT, 
+	"P_PWDIS" FLOAT, 
+	"P_PNPL" FLOAT, 
+	"P_PRMP" FLOAT, 
+	"P_PTSDF" FLOAT, 
+	"P_OZONE" FLOAT, 
+	"P_PM25" FLOAT, 
+	"P_LDPNT_D2" FLOAT, 
+	"P_DSLPM_D2" FLOAT, 
+	"P_CANCR_D2" FLOAT, 
+	"P_RESP_D2" FLOAT, 
+	"P_PTRAF_D2" FLOAT, 
+	"P_PWDIS_D2" FLOAT, 
+	"P_PNPL_D2" FLOAT, 
+	"P_PRMP_D2" FLOAT, 
+	"P_PTSDF_D2" FLOAT, 
+	"P_OZONE_D2" FLOAT, 
+	"P_PM25_D2" FLOAT, 
+	"B_MINORPCT" BIGINT, 
+	"B_LWINCPCT" BIGINT, 
+	"B_LESHSPCT" BIGINT, 
+	"B_LNGISPCT" BIGINT, 
+	"B_UNDR5PCT" BIGINT, 
+	"B_OVR64PCT" BIGINT, 
+	"B_LDPNT" BIGINT, 
+	"B_VULEOPCT" BIGINT, 
+	"B_VSVI6PCT" BIGINT, 
+	"B_DSLPM" BIGINT, 
+	"B_CANCR" BIGINT, 
+	"B_RESP" BIGINT, 
+	"B_PTRAF" BIGINT, 
+	"B_PWDIS" BIGINT, 
+	"B_PNPL" BIGINT, 
+	"B_PRMP" BIGINT, 
+	"B_PTSDF" BIGINT, 
+	"B_OZONE" FLOAT, 
+	"B_PM25" FLOAT, 
+	"B_LDPNT_D2" BIGINT, 
+	"B_DSLPM_D2" BIGINT, 
+	"B_CANCR_D2" BIGINT, 
+	"B_RESP_D2" BIGINT, 
+	"B_PTRAF_D2" BIGINT, 
+	"B_PWDIS_D2" BIGINT, 
+	"B_PNPL_D2" BIGINT, 
+	"B_PRMP_D2" BIGINT, 
+	"B_PTSDF_D2" BIGINT, 
+	"B_OZONE_D2" FLOAT, 
+	"B_PM25_D2" FLOAT, 
+	"T_MINORPCT" TEXT, 
+	"T_LWINCPCT" TEXT, 
+	"T_LESHSPCT" TEXT, 
+	"T_LNGISPCT" TEXT, 
+	"T_UNDR5PCT" TEXT, 
+	"T_OVR64PCT" TEXT, 
+	"T_VULEOPCT" TEXT, 
+	"T_VSVI6PCT" TEXT, 
+	"T_LDPNT" TEXT, 
+	"T_LDPNT_D2" TEXT, 
+	"T_DSLPM" TEXT, 
+	"T_DSLPM_D2" TEXT, 
+	"T_CANCR" TEXT, 
+	"T_CANCR_D2" TEXT, 
+	"T_RESP" TEXT, 
+	"T_RESP_D2" TEXT, 
+	"T_PTRAF" TEXT, 
+	"T_PTRAF_D2" TEXT, 
+	"T_PWDIS" TEXT, 
+	"T_PWDIS_D2" TEXT, 
+	"T_PNPL" TEXT, 
+	"T_PNPL_D2" TEXT, 
+	"T_PRMP" TEXT, 
+	"T_PRMP_D2" TEXT, 
+	"T_PTSDF" TEXT, 
+	"T_PTSDF_D2" TEXT, 
+	"T_OZONE" TEXT, 
+	"T_OZONE_D2" TEXT, 
+	"T_PM25" TEXT, 
+	"T_PM25_D2" TEXT, 
+	"AREALAND" FLOAT, 
+	"AREAWATER" FLOAT, 
+	"NPL_CNT" BIGINT, 
+	"TSDF_CNT" BIGINT, 
+	"Shape_Length" FLOAT, 
+	"Shape_Area" FLOAT
+)
+```
+
+*(Wide table — sample rows omitted. See column notes below.)*
+
+**Column notes:**
+- `STATE_NAME`: Massachusetts
+- `ST_ABBREV`: ALL CAPS. MA
+- `T_PWDIS_D2`: 76%ile, 22%ile, 21%ile, 20%ile, 23%ile, 24%ile, 28%ile, 18%ile, 25%ile, 15%ile, 14%ile, 19%ile, 29%ile, 30%ile, 26%ile, 32%ile, 27%ile, 79%ile, 13%ile, 16%ile, 17%ile, 80%ile, 31%ile, 12%ile, 83%ile, ... (60 total)
+
+---
+
+### EPA_EJSCREEN_2023 (5,116 rows)
+EPA EJScreen environmental justice screening data for MA census block groups (2023). 150+ columns. Similar structure to EPA_EJSCREEN_2017 with additional indicators. Key fields: ID (GEOID), STATE_NAME, CNTY_NAME, MINORPCT, LOWINCPCT, PM25, CANCER.
+
+```sql
+CREATE TABLE "EPA_EJSCREEN_2023" (
+	"index" BIGINT, 
+	"OID_" BIGINT, 
+	"ID" BIGINT, 
+	"STATE_NAME" TEXT, 
+	"ST_ABBREV" TEXT, 
+	"CNTY_NAME" TEXT, 
+	"REGION" BIGINT, 
+	"ACSTOTPOP" FLOAT, 
+	"ACSIPOVBAS" FLOAT, 
+	"ACSEDUCBAS" FLOAT, 
+	"ACSTOTHH" FLOAT, 
+	"ACSTOTHU" FLOAT, 
+	"ACSUNEMPBAS" FLOAT, 
+	"DEMOGIDX_2" FLOAT, 
+	"DEMOGIDX_5" FLOAT, 
+	"PEOPCOLOR" FLOAT, 
+	"MINORPCT" FLOAT, 
+	"LOWINCOME" FLOAT, 
+	"LOWINCPCT" FLOAT, 
+	"UNEMPLOYED" FLOAT, 
+	"UNEMPPCT" FLOAT, 
+	"LINGISO" FLOAT, 
+	"LINGISOPCT" FLOAT, 
+	"LESSHS" FLOAT, 
+	"LESSHSPCT" FLOAT, 
+	"UNDER5" FLOAT, 
+	"UNDER5PCT" FLOAT, 
+	"OVER64" FLOAT, 
+	"OVER64PCT" FLOAT, 
+	"LIFEEXPPCT" FLOAT, 
+	"PM25" FLOAT, 
+	"OZONE" FLOAT, 
+	"DSLPM" FLOAT, 
+	"CANCER" FLOAT, 
+	"RESP" FLOAT, 
+	"RSEI_AIR" FLOAT, 
+	"PTRAF" FLOAT, 
+	"PRE1960" FLOAT, 
+	"PRE1960PCT" FLOAT, 
+	"PNPL" FLOAT, 
+	"PRMP" FLOAT, 
+	"PTSDF" FLOAT, 
+	"UST" FLOAT, 
+	"PWDIS" FLOAT, 
+	"D2_PM25" FLOAT, 
+	"D5_PM25" FLOAT, 
+	"D2_OZONE" FLOAT, 
+	"D5_OZONE" FLOAT, 
+	"D2_DSLPM" FLOAT, 
+	"D5_DSLPM" FLOAT, 
+	"D2_CANCER" FLOAT, 
+	"D5_CANCER" FLOAT, 
+	"D2_RESP" FLOAT, 
+	"D5_RESP" FLOAT, 
+	"D2_RSEI_AIR" FLOAT, 
+	"D5_RSEI_AIR" FLOAT, 
+	"D2_PTRAF" FLOAT, 
+	"D5_PTRAF" FLOAT, 
+	"D2_LDPNT" FLOAT, 
+	"D5_LDPNT" FLOAT, 
+	"D2_PNPL" FLOAT, 
+	"D5_PNPL" FLOAT, 
+	"D2_PRMP" FLOAT, 
+	"D5_PRMP" FLOAT, 
+	"D2_PTSDF" FLOAT, 
+	"D5_PTSDF" FLOAT, 
+	"D2_UST" FLOAT, 
+	"D5_UST" FLOAT, 
+	"D2_PWDIS" FLOAT, 
+	"D5_PWDIS" FLOAT, 
+	"P_DEMOGIDX_2" FLOAT, 
+	"P_DEMOGIDX_5" FLOAT, 
+	"P_PEOPCOLORPCT" FLOAT, 
+	"P_LOWINCPCT" FLOAT, 
+	"P_UNEMPPCT" FLOAT, 
+	"P_LINGISOPCT" FLOAT, 
+	"P_LESSHSPCT" FLOAT, 
+	"P_UNDER5PCT" FLOAT, 
+	"P_OVER64PCT" FLOAT, 
+	"P_LIFEEXPPCT" FLOAT, 
+	"P_PM25" FLOAT, 
+	"P_OZONE" FLOAT, 
+	"P_DSLPM" FLOAT, 
+	"P_CANCER" FLOAT, 
+	"P_RESP" FLOAT, 
+	"P_RSEI_AIR" FLOAT, 
+	"P_PTRAF" FLOAT, 
+	"P_LDPNT" FLOAT, 
+	"P_PNPL" FLOAT, 
+	"P_PRMP" FLOAT, 
+	"P_PTSDF" FLOAT, 
+	"P_UST" FLOAT, 
+	"P_PWDIS" FLOAT, 
+	"P_D2_PM25" FLOAT, 
+	"P_D5_PM25" FLOAT, 
+	"P_D2_OZONE" FLOAT, 
+	"P_D5_OZONE" FLOAT, 
+	"P_D2_DSLPM" FLOAT, 
+	"P_D5_DSLPM" FLOAT, 
+	"P_D2_CANCER" FLOAT, 
+	"P_D5_CANCER" FLOAT, 
+	"P_D2_RESP" FLOAT, 
+	"P_D5_RESP" FLOAT, 
+	"P_D2_RSEI_AIR" FLOAT, 
+	"P_D5_RSEI_AIR" FLOAT, 
+	"P_D2_PTRAF" FLOAT, 
+	"P_D5_PTRAF" FLOAT, 
+	"P_D2_LDPNT" FLOAT, 
+	"P_D5_LDPNT" FLOAT, 
+	"P_D2_PNPL" FLOAT, 
+	"P_D5_PNPL" FLOAT, 
+	"P_D2_PRMP" FLOAT, 
+	"P_D5_PRMP" FLOAT, 
+	"P_D2_PTSDF" FLOAT, 
+	"P_D5_PTSDF" FLOAT, 
+	"P_D2_UST" FLOAT, 
+	"P_D5_UST" FLOAT, 
+	"P_D2_PWDIS" FLOAT, 
+	"P_D5_PWDIS" FLOAT, 
+	"B_DEMOGIDX_2" FLOAT, 
+	"B_DEMOGIDX_5" FLOAT, 
+	"B_PEOPCOLORPCT" FLOAT, 
+	"B_LOWINCPCT" FLOAT, 
+	"B_UNEMPPCT" FLOAT, 
+	"B_LINGISOPCT" FLOAT, 
+	"B_LESSHSPCT" FLOAT, 
+	"B_UNDER5PCT" FLOAT, 
+	"B_OVER64PCT" FLOAT, 
+	"B_LIFEEXPPCT" FLOAT, 
+	"B_PM25" FLOAT, 
+	"B_OZONE" FLOAT, 
+	"B_DSLPM" FLOAT, 
+	"B_CANCER" FLOAT, 
+	"B_RESP" FLOAT, 
+	"B_RSEI_AIR" FLOAT, 
+	"B_PTRAF" FLOAT, 
+	"B_LDPNT" FLOAT, 
+	"B_PNPL" FLOAT, 
+	"B_PRMP" FLOAT, 
+	"B_PTSDF" FLOAT, 
+	"B_UST" FLOAT, 
+	"B_PWDIS" FLOAT, 
+	"B_D2_PM25" FLOAT, 
+	"B_D5_PM25" FLOAT, 
+	"B_D2_OZONE" FLOAT, 
+	"B_D5_OZONE" FLOAT, 
+	"B_D2_DSLPM" FLOAT, 
+	"B_D5_DSLPM" FLOAT, 
+	"B_D2_CANCER" FLOAT, 
+	"B_D5_CANCER" FLOAT, 
+	"B_D2_RESP" FLOAT, 
+	"B_D5_RESP" FLOAT, 
+	"B_D2_RSEI_AIR" FLOAT, 
+	"B_D5_RSEI_AIR" FLOAT, 
+	"B_D2_PTRAF" FLOAT, 
+	"B_D5_PTRAF" FLOAT, 
+	"B_D2_LDPNT" FLOAT, 
+	"B_D5_LDPNT" FLOAT, 
+	"B_D2_PNPL" FLOAT, 
+	"B_D5_PNPL" FLOAT, 
+	"B_D2_PRMP" FLOAT, 
+	"B_D5_PRMP" FLOAT, 
+	"B_D2_PTSDF" FLOAT, 
+	"B_D5_PTSDF" FLOAT, 
+	"B_D2_UST" FLOAT, 
+	"B_D5_UST" FLOAT, 
+	"B_D2_PWDIS" FLOAT, 
+	"B_D5_PWDIS" FLOAT, 
+	"T_DEMOGIDX_2" TEXT, 
+	"T_DEMOGIDX_5" TEXT, 
+	"T_PEOPCOLORPCT" TEXT, 
+	"T_LOWINCPCT" TEXT, 
+	"T_UNEMPPCT" TEXT, 
+	"T_LINGISOPCT" TEXT, 
+	"T_LESSHSPCT" TEXT, 
+	"T_UNDER5PCT" TEXT, 
+	"T_OVER64PCT" TEXT, 
+	"T_LIFEEXPPCT" TEXT, 
+	"T_PM25" TEXT, 
+	"T_OZONE" TEXT, 
+	"T_DSLPM" TEXT, 
+	"T_CANCER" TEXT, 
+	"T_RESP" TEXT, 
+	"T_RSEI_AIR" TEXT, 
+	"T_PTRAF" TEXT, 
+	"T_LDPNT" TEXT, 
+	"T_PNPL" TEXT, 
+	"T_PRMP" TEXT, 
+	"T_PTSDF" TEXT, 
+	"T_UST" TEXT, 
+	"T_PWDIS" TEXT, 
+	"T_D2_PM25" TEXT, 
+	"T_D5_PM25" TEXT, 
+	"T_D2_OZONE" TEXT, 
+	"T_D5_OZONE" TEXT, 
+	"T_D2_DSLPM" TEXT, 
+	"T_D5_DSLPM" TEXT, 
+	"T_D2_CANCER" TEXT, 
+	"T_D5_CANCER" TEXT, 
+	"T_D2_RESP" TEXT, 
+	"T_D5_RESP" TEXT, 
+	"T_D2_RSEI_AIR" TEXT, 
+	"T_D5_RSEI_AIR" TEXT, 
+	"T_D2_PTRAF" TEXT, 
+	"T_D5_PTRAF" TEXT, 
+	"T_D2_LDPNT" TEXT, 
+	"T_D5_LDPNT" TEXT, 
+	"T_D2_PNPL" TEXT, 
+	"T_D5_PNPL" TEXT, 
+	"T_D2_PRMP" TEXT, 
+	"T_D5_PRMP" TEXT, 
+	"T_D2_PTSDF" TEXT, 
+	"T_D5_PTSDF" TEXT, 
+	"T_D2_UST" TEXT, 
+	"T_D5_UST" TEXT, 
+	"T_D2_PWDIS" TEXT, 
+	"T_D5_PWDIS" TEXT, 
+	"AREALAND" FLOAT, 
+	"AREAWATER" FLOAT, 
+	"NPL_CNT" BIGINT, 
+	"TSDF_CNT" BIGINT, 
+	"EXCEED_COUNT_80" BIGINT, 
+	"EXCEED_COUNT_80_SUP" FLOAT, 
+	"Shape_Length" FLOAT, 
+	"Shape_Area" FLOAT
+)
+```
+
+*(Wide table — sample rows omitted. See column notes below.)*
+
+**Column notes:**
+- `STATE_NAME`: Massachusetts
+- `ST_ABBREV`: ALL CAPS. MA
+- `CNTY_NAME`: Middlesex County, Suffolk County, Worcester County, Essex County, Norfolk County, Bristol County, Plymouth County, Hampden County, Barnstable County, Berkshire County, Hampshire County, Franklin County, Dukes County, Nantucket County
+- `T_LINGISOPCT`: 0 %ile, 88 %ile, 93 %ile, 86 %ile, 83 %ile, 80 %ile, 75 %ile, 73 %ile, 66 %ile, 60 %ile, 53 %ile, 99 %ile, 98 %ile, 97 %ile, 96 %ile, 95 %ile, 94 %ile, 92 %ile, 91 %ile, 90 %ile, 89 %ile, 85 %ile, 84 %ile, 81 %ile, 79 %ile, ... (55 total)
+- `T_CANCER`: 3 %ile, 86 %ile, 0 %ile, 100 %ile
+- `T_RESP`: 2 %ile, 49 %ile, 94 %ile, 0 %ile, 100 %ile
+
+---
+
+### MADEP_enforcement (4,348 rows)
+Historical MassDEP enforcement actions extracted from annual reports (through 2017). Different schema from MAEEADP_Enforcement. Contains fine amounts and topic labels. Key fields: Year, Date, Fine, municipality. Boolean columns (order_*, law_*) indicate action type and applicable law.
+
+```sql
+CREATE TABLE "MADEP_enforcement" (
+	"index" BIGINT, 
+	"Year" BIGINT, 
+	"Date" TEXT, 
+	"Text" TEXT, 
+	"order_consent order" BOOLEAN, 
+	"order_unilateral order" BOOLEAN, 
+	order_demand BOOLEAN, 
+	"order_demand notice" BOOLEAN, 
+	order_agreement BOOLEAN, 
+	"order_notice of noncompliance" BOOLEAN, 
+	"order_boil water order" BOOLEAN, 
+	"order_settlement agreement" BOOLEAN, 
+	order_amendment BOOLEAN, 
+	"order_penalty assessment notice" BOOLEAN, 
+	"order_civil administrative penalty" BOOLEAN, 
+	order_labels BOOLEAN, 
+	"order_water supply" BOOLEAN, 
+	"order_attorney general" BOOLEAN, 
+	order_water BOOLEAN, 
+	"order_hazardous waste" BOOLEAN, 
+	order_sewer BOOLEAN, 
+	"order_civil penalty" BOOLEAN, 
+	"order_ supplemental environmental project" BOOLEAN, 
+	order_gasoline BOOLEAN, 
+	order_asbestos BOOLEAN, 
+	order_wetlands BOOLEAN, 
+	order_stormwater BOOLEAN, 
+	law_npdes BOOLEAN, 
+	"law_chapter 91" BOOLEAN, 
+	"Fine" FLOAT, 
+	municipality TEXT
+)
+```
+
+/* 5 rows from MADEP_enforcement:
+Year	Date	Text	order_consent order	order_unilateral order	order_demand	order_demand notice	order_agreement	order_notice of noncompliance	order_boil water order	order_settlement agreement	order_amendment	order_penalty assessment notice	order_civil administrative penalty	order_labels	order_water supply	order_attorney general	order_water	order_hazardous waste	order_sewer
+2004	12/29/04	DEP issued a Unilateral Administrative Order and a $35,355 Penalty Assessment Notice to Assinippi, Inc. This is the second enforcement action for the same violations involving the company, which is the owner of Merchant Row Shopping Mall in Hanover. Today's actions were taken as a result of continued violations involving the Mall's Groundwater Discharge Permit, Operation and Maintenance and modifications to a wastewater treatment facility without approval. Sewage flows from the Mall are directed to a wastewater treatment facility that is permitted to treat an average of 20,000 gallons per day. Due to numerous existing site conditions, the wastewater treatment facility has been experiencing strong odors. The owner of the Mall added several types of odor control devices that in addition to being ineffective lacked the proper approval.	0	0	0	0	0	0	0	0	0	1	0	0	0	0	1	0	0
+2004	12/29/04	DEP entered into a Consent Order with the Texas Instruments Inc. (TI) and Engineered Materials Solutions Inc. (EMSI) to establish a compliance schedule in order to allow TI's wastewater treatment facility in Attleboro to accept hazardous industrial wastewater from EMSI. Both facilities are located at 34 Forest Street in an industrial complex in Attleboro.	1	0	0	0	0	0	0	0	0	0	0	0	0	0	1	0	0
+2004	12/29/04	DEP entered into a Consent Order with a $10,000 Penalty involving the Town of Framingham & Revoli Construction (of North Reading) for Wetlands violations. Revoli, which was hired by Framingham to install a water transmission line, was found in June, 2004 to have violated the Wetlands Protection Act by not controlling erosion, not having siltation controls in place and causing the unpermitted alteration of land under a stream. In addition to the Penalty, Revoli agrees to restore the impacted area.	1	0	0	0	0	0	0	0	0	0	0	0	0	0	1	0	0
+2004	12/28/04	DEP issued a Unilateral Administrative to Gengel C&S Builders for wetlands violations at a subdivision project in Rutland. DEP determined Gengel had failed to prevent erosion and sedimentation resulting in silt deposition into an intermittent stream. DEP's Order requires Gengel to stabilize the site immediately and to provide the Department with a comprehensive erosion control plan and an evaluation of impacts to the stream within 30 days. Penalty assessments are anticipated.12/23/04	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0
+2004	12/21/04	DEP entered into a Consent Order with a $10,000 Penalty involving TJJ Development Corp. for Wetlands violations at the company's Northbridge facility. TJJ failed to comply with several conditions of their Order at their Solid Waste Transfer Station requiring the company to move waste further away from wetlands, to construct the replication area required in the original Order, and to construct storm water improvements on the site.	1	0	0	0	0	0	0	0	0	0	0	0	0	0	1	0	0
+*/
+
+**Column notes:**
+- `municipality`: Mixed case town name.
+- `Fine`: Penalty in dollars.
+- `Year`: Calendar year of enforcement action.
+
+---
+
+### MADEP_staff (12,048 rows)
+MassDEP staffing roster from MA Comptroller/VisibleGovernment data (through 2016). Each row is one employee-year. Key fields: CalendarYear, EmployeeName, JobTitle, Earnings, Seniority.
+
+```sql
+CREATE TABLE "MADEP_staff" (
+	"index" BIGINT, 
+	"CalendarYear" BIGINT, 
+	"EmployeeName" TEXT, 
+	"JobTitle" TEXT, 
+	"Earnings" FLOAT, 
+	"JobType" TEXT, 
+	"JobLevel" TEXT, 
+	"Seniority" BIGINT, 
+	name_first TEXT, 
+	"name_middleI" TEXT, 
+	name_last TEXT
+)
+```
+
+/* 5 rows from MADEP_staff:
+CalendarYear	EmployeeName	JobTitle	Earnings	JobType	JobLevel	Seniority	name_first	name_middleI	name_last
+2004	Doss, Bashier T	Accountant III	50005.0	Accountant	III	0	Bashier	T	Doss
+2004	Strauss, Myrna L	Accountant III	50780.0	Accountant	III	0	Myrna	L	Strauss
+2004	Molyneaux, Jean A	Accountant IV	55912.0	Accountant	IV	0	Jean	A	Molyneaux
+2004	Hawks, Kathleen E	Accountant IV	55667.0	Accountant	IV	0	Kathleen	E	Hawks
+2004	Clowers, Barbara M	Accountant IV	50181.0	Accountant	IV	0	Barbara	M	Clowers
+*/
+
+**Column notes:**
+- `JobType`: Environmental Analyst, Environmental Engineer, OTHER, Regional Planner, Program Coordinator, Director, Counsel, Scientist, Accountant, Commissioner, Administrative Assistant, Auditor, Chemist, Clerk, IT Pro, Laboratory Supervisor
+- `JobLevel`: ALL CAPS. IV, III, NONE, V, II, VI, I
+- `name_middleI`: ALL CAPS. A, M, J, E, L, S, D, R, C, P, B, G, H, T, W, F, K, V, I, N, O, Ann, Y, Marie, Thomas, ... (49 total)
+
+---
+
+### MADEP_staff_Comptroller (13,394 rows)
+MassDEP staffing data from MA Comptroller payroll via SODA API (more recent, updated weekly). Each row is one employee-year. Key fields: year, name_first, name_last, position_title, pay_total_actual, pay_base_actual.
+
+```sql
+CREATE TABLE "MADEP_staff_Comptroller" (
+	"index" BIGINT, 
+	bargaining_group_title TEXT, 
+	contract TEXT, 
+	department_division TEXT, 
+	department_location_zip_code BIGINT, 
+	name_first TEXT, 
+	name_last TEXT, 
+	pay_base_actual FLOAT, 
+	pay_buyout_actual FLOAT, 
+	pay_overtime_actual FLOAT, 
+	pay_total_actual FLOAT, 
+	position_title TEXT, 
+	position_type TEXT, 
+	year BIGINT
+)
+```
+
+/* 5 rows from MADEP_staff_Comptroller:
+bargaining_group_title	contract	department_division	department_location_zip_code	name_first	name_last	pay_base_actual	pay_buyout_actual	pay_overtime_actual	pay_total_actual	position_title	position_type	year
+MOSES - Engineers/Scientists	MOSES - Engineers/Scientists (09)	DEPARTMENT OF ENVIRONMENTAL PROTECTION (EQE)	21084746	Robert	Lucci	68276.59	0.0	0.0	68276.59	Environmental Analyst IV	Full Time Employee	2010
+NAGE - Professional Admin.	NAGE - Professional Admin. (06)	DEPARTMENT OF ENVIRONMENTAL PROTECTION (EQE)	21084746	Steven	Korzen	54946.92	0.0	0.0	54946.92	Program Coordinator III	Part Time Employee	2010
+MOSES - Engineers/Scientists	MOSES - Engineers/Scientists (09)	DEPARTMENT OF ENVIRONMENTAL PROTECTION (EQE)	21084746	Catherine	Finneran	74173.57	0.0	0.0	74173.57	Regional Planner V	Full Time Employee	2010
+MOSES - Engineers/Scientists	MOSES - Engineers/Scientists (09)	DEPARTMENT OF ENVIRONMENTAL PROTECTION (EQE)	16082022	John	Stapler	64586.67	0.0	0.0	64586.67	Environmental Engineer III	Full Time Employee	2010
+MOSES - Engineers/Scientists	MOSES - Engineers/Scientists (09)	DEPARTMENT OF ENVIRONMENTAL PROTECTION (EQE)	23471676	Angela	Gallagher	51676.08	0.0	0.0	51676.08	Environmental Analyst III	Full Time Employee	2010
+*/
+
+**Column notes:**
+- `year`: Calendar year (integer).
+- `pay_total_actual`: Total annual compensation in dollars.
+- `bargaining_group_title`: MOSES - Engineers/Scientists, NAGE - Professional Admin., Managers  (EXE), No Union, Post Retiree, NAGE - Clerical/Administrative, Unclassifieds, Legislative Employees, AFSCME/Council 93
+- `contract`: MOSES - Engineers/Scientists (09), NAGE - Professional Admin. (06), Managers  (EXE) (M99), No Union (NON), Post Retiree (PRT), NAGE - Clerical/Administrative (01), Unclassifieds (000), MOSES - Engineers/Scientists (D09), Legislative Employees (LEG), AFSCME/Council 93 (02)
+- `department_division`: ALL CAPS. DEPARTMENT OF ENVIRONMENTAL PROTECTION (EQE)
+- `position_type`: Full Time Employee, Part Time Employee, Full Time Contractor, Part Time Contractor
+
+---
+
+### MAEEADP_CSO (17,543 rows)
+EEA Data Portal: Combined Sewer Overflow (CSO) and Sanitary Sewer Overflow (SSO) discharge incidents reported to MassDEP. Each row is one discharge event at a specific outfall. Key fields: waterBody, municipality, volumnOfEvent (gallons), latitude/longitude, incidentDate, Year.
+
+```sql
+CREATE TABLE "MAEEADP_CSO" (
+	"index" BIGINT, 
+	"Unnamed: 0" BIGINT, 
+	"incidentId" TEXT, 
+	"incidentNumber" TEXT, 
+	"incidentDate" TEXT, 
+	"incidentTime" TEXT, 
+	"amPm" TEXT, 
+	"reporterClass" TEXT, 
+	"eventType" TEXT, 
+	"permiteeClass" TEXT, 
+	"permiteeName" TEXT, 
+	"permiteeId" TEXT, 
+	"outfallId" TEXT, 
+	municipality TEXT, 
+	"reportingType" TEXT, 
+	location TEXT, 
+	latitude FLOAT, 
+	longitude FLOAT, 
+	"waterBody" TEXT, 
+	"waterBodyDescription" TEXT, 
+	"volumnOfEvent" FLOAT, 
+	"rainfallData" FLOAT, 
+	hours FLOAT, 
+	minutes FLOAT, 
+	month TEXT, 
+	"additionalInformation" TEXT, 
+	"submittedDate" TEXT, 
+	"parentIncidentId" FLOAT, 
+	"Year" FLOAT
+)
+```
+
+/* 5 rows from MAEEADP_CSO:
+Unnamed: 0	incidentId	incidentNumber	incidentDate	incidentTime	amPm	reporterClass	eventType	permiteeClass	permiteeName	permiteeId	outfallId	municipality	reportingType	location	latitude	longitude	waterBody	waterBodyDescription	volumnOfEvent
+0	a7ea2396-94ad-4c08-b25a-26d6a0b52257	22000420	2022-09-06 14:02:15	5:26	AM	Public Notification Report	CSO – Treated	CSO	CITY OF WORCESTER	MA0102997	NULL	NULL	Initial-Ceased	NULL	NULL	NULL	NULL	NULL	NULL
+1	abdc4dbb-8aed-4d3f-ade4-6b37288c669c	22000020	2022-06-30 00:00:00	6:30	PM	Public Notification Report	SSO – Failure of Pump Station or Associated Force Main	Non-CSO	AGAWAM DEPARTMENT OF PUBLIC WORKS	NULL	NULL	NULL	Initial-Ceased	Other	42.0871	-72.6156	Other	Westfield River	NULL
+2	aa1211f5-79ee-4cac-9951-bdf83e2ab388	22000141	2022-07-28 00:00:00	1:00	PM	Public Notification Report	SSO – Discharge Through Wastewater Outfall	Non-CSO	QUINCY, CITY OF	NULL	NULL	NULL	Initial-Ongoing	NULL	NULL	NULL	NULL	NULL	NULL
+3	166b8c6f-97c4-4131-a4d8-f4cce43550a1	22000030	2022-07-12 12:49:37	1:11	PM	Public Notification Report	CSO – Treated	CSO	NULL	NULL	NULL	NULL	Initial-Ceased	NULL	NULL	NULL	NULL	NULL	NULL
+4	79d0098f-50ed-4592-a296-98daf9894ea2	23003424	2023-06-06 16:47:58	09:46	NULL	Public Notification Report	SSO – System Surcharging Under High Flow Conditions	Non-CSO	WEST SPRINGFIELD DEPARTMENT OF PUBLIC WORKS	NULL	NULL	WEST SPRINGFIELD	Initial-Ceased	Other	42.10037	-72.650419	Other	Westfield river	NULL
+*/
+
+**Column notes:**
+- `waterBody`: ALL CAPS (e.g. MYSTIC RIVER, CHARLES RIVER). Use UPPER() for filtering.
+- `municipality`: ALL CAPS town name (e.g. BOSTON, CAMBRIDGE). Use UPPER() for filtering.
+- `volumnOfEvent`: Discharge volume in gallons. WARNING: column name is misspelled "volumn" (not "volume").
+- `Year`: Stored as FLOAT (e.g. 2020.0). Use CAST(Year AS INTEGER) if needed.
+- `incidentDate`: Format: YYYY-MM-DD string.
+- `eventType`: Values: CSO, SSO, UNPERMITTED, etc.
+- `amPm`: ALL CAPS. PM, AM
+- `reporterClass`: Verified Data Report, Public Notification Report, No Events for the month
+- `permiteeClass`: CSO, Non-CSO
+- `permiteeName`: ALL CAPS. CITY OF NEW BEDFORD, CITY OF FALL RIVER, SPRINGFIELD WATER & SEWER COMMISSION, CITY OF HOLYOKE, LOWELL REGIONAL WASTEWATER UTILITY, CITY OF CHICOPEE, CITY OF HAVERHILL, CITY OF FITCHBURG, BOSTON WATER & SEWER COMMISSION, MASSACHUSETTS WATER RESOURCES AUTHORITY, LYNN WATER & SEWER COMMISSION, TOWN OF MONTAGUE, CITY OF CAMBRIDGE, GREATER LAWRENCE SANITARY DISTRICT, BILLERICA WASTEWATER TREATMENT FACILITY, ATTLEBORO WASTEWATER TREATMENT FACILITY, CITY OF WORCESTER, CITY OF SOMERVILLE, CITY OF GLOUCESTER, CITY OF CHELSEA, REVERE, CITY OF, CITY OF TAUNTON, BRAINTREE, TOWN OF, AMESBURY WATER POLLUTION ABATEMENT PLANT, UPPER BLACKSTONE WATER POLLUTION ABATEMENT DISTRICT, ... (66 total)
+- `permiteeId`: ALL CAPS. MA0100781, MA0100382, MA0101613, MA0101630, MA0100633, MA0101508, MA0101621, MA0100986, MA0101192, MA0103284, MA0100552, MA0100137, MA0101974, MA0100447, MA0101711, MA0100595, MA0102997, MA0101982, MA0100625, MA0101877, MA0100897, MA0101745, MA0102369, MA0101923, MA0101214, ... (44 total)
+- `reportingType`: Initial-Ceased, Initial-Ongoing, Ongoing, Ceased
+- `month`: Feb, Jan, Sep, Nov, Oct, Dec, Jun, Mar, Jul, Apr, Aug, May
+
+---
+
+### MAEEADP_DrinkingWater (168,875 rows)
+EEA Data Portal: Annual drinking water quality monitoring results by water system. Key fields: Year, PWSName (public water system name), ContaminantGroup, Result.
+
+```sql
+CREATE TABLE "MAEEADP_DrinkingWater" (
+	"index" BIGINT, 
+	"Year" BIGINT, 
+	"PWSName" TEXT, 
+	"ContaminantGroup" TEXT, 
+	"RaworFinished" TEXT, 
+	"Result" BIGINT
+)
+```
+
+/* 5 rows from MAEEADP_DrinkingWater:
+Year	PWSName	ContaminantGroup	RaworFinished	Result
+1978	LANCASTER WATER DEPARTMENT	RADIO	F	1
+1984	LANCASTER WATER DEPARTMENT	RADIO	F	1
+1987	LANCASTER WATER DEPARTMENT	RADIO	F	1
+1987	MEDFIELD STATE HOSPITAL	RADIO	F	1
+1987	NORTON WATER DEPARTMENT	NITRAT	F	1
+*/
+
+**Column notes:**
+- `ContaminantGroup`: ALL CAPS. NITRAT, SECCON, NITRIT, VOC, INORG, SODIUM, THM, PERCHL, SOC, HAA5, PFAS, RADIO, PCE, TOC, ASBEST, MN, RADIUM, BROMAT, ARSEN, CHLRTE, IRON, ALPHA, RADON, BROMID, 1,4-DI, ... (47 total)
+- `RaworFinished`: ALL CAPS. F, R
+
+---
+
+### MAEEADP_Enforcement (54,995 rows)
+EEA Data Portal: MassDEP enforcement actions against regulated entities, 1996–present. Each row is one action. Key fields: Town, Program, EnforcementType, PenaltyAssessed, FacilityId, FacilityName, EnforcementDate. Use with MAEEADP_Facility via FacilityId.
+
+```sql
+CREATE TABLE "MAEEADP_Enforcement" (
+	"index" BIGINT, 
+	"Id" BIGINT, 
+	"Town" TEXT, 
+	"Program" TEXT, 
+	"EnforcementType" TEXT, 
+	"PenaltyAssessed" FLOAT, 
+	"FacilityId" BIGINT, 
+	"FacilityName" TEXT, 
+	"EnforcementDate" TEXT
+)
+```
+
+/* 5 rows from MAEEADP_Enforcement:
+Id	Town	Program	EnforcementType	PenaltyAssessed	FacilityId	FacilityName	EnforcementDate
+888115	TRURO	WATER SUPPLY/DRINKING WATER	Notice Of Non-Compliance	NULL	6770	PILGRIM SPRING MOTEL	1996-05-12T00:00:00
+920270	TEWKSBURY	REGULATED ACTIVITY(S)	Notice Of Non-Compliance	NULL	134212	MURO PHARMACEUTICAL INC	1996-01-03T00:00:00
+920751	HAVERHILL	REGULATED ACTIVITY(S)	Notice Of Non-Compliance	NULL	162840	HALE HOSPITAL	1996-01-09T00:00:00
+921162	LAWRENCE	REGULATED ACTIVITY(S)	Notice Of Non-Compliance	NULL	209498	FRUIT SALAD INC	1996-01-05T00:00:00
+931836	LYNN	REGULATED ACTIVITY(S)	Administrative Consent Order With Penalty	20000.0	260320	TURNER TRUCKING AND SALVAGE	1996-01-11T00:00:00
+*/
+
+**Column notes:**
+- `Town`: ALL CAPS town name. Use UPPER() for filtering.
+- `EnforcementDate`: Format: YYYY-MM-DD string.
+- `PenaltyAssessed`: Penalty in dollars. Many rows are 0 (non-monetary actions).
+- `Program`: Regulatory program (e.g. Wetlands, Waterways, Air, Solid Waste).
+- `FacilityId`: Joins to MAEEADP_Facility.Id.
+- `EnforcementType`: Notice Of Non-Compliance, Administrative Consent Order With Penalty, Reporting Penalty Assessment Notice, Administrative Consent Order No Penalty, Unilateral Administrative Order, Penalty Assessment Notice, Field Notice Of Non Compliance, Demand Action, BOIL ORDER, FEDERAL ADMINISTRATIVE ORDER AGAINST PWS, FEDERAL NOTICE OF NONCOMPLIANCE AGAINST PWS
+
+---
+
+### MAEEADP_Facility (53,458 rows)
+EEA Data Portal: Regulated facilities tracked by MassDEP/EEA. Key fields: Id (joins to FacilityId in other tables), Town, FacilityType, FacilityName, Program, Active.
+
+```sql
+CREATE TABLE "MAEEADP_Facility" (
+	"index" BIGINT, 
+	"Id" BIGINT, 
+	"StreetName" TEXT, 
+	"Town" TEXT, 
+	"FacilityType" TEXT, 
+	"FacilityName" TEXT, 
+	"Program" TEXT, 
+	"ProgramSpecificId" TEXT, 
+	"Active" BOOLEAN
+)
+```
+
+/* 5 rows from MAEEADP_Facility:
+Id	StreetName	Town	FacilityType	FacilityName	Program	ProgramSpecificId	Active
+5815	3 COLUMBIA ST	ADAMS	PUBLIC WATER SUPPLY SYSTEM	ADAMS FIRE DISTRICT	WATER SUPPLY/DRINKING WATER	1004000	1
+5816	1000 SUFFIELD ST	AGAWAM	PUBLIC WATER SUPPLY SYSTEM	AGAWAM WATER DEPARTMENT	WATER SUPPLY/DRINKING WATER	1005000	1
+5817	586 SOUTH PLEASANT ST	AMHERST	PUBLIC WATER SUPPLY SYSTEM	AMHERST DPW  WATER DIVISION	WATER SUPPLY/DRINKING WATER	1008000	1
+5818	69  MAIN STREET	ASHFIELD	PUBLIC WATER SUPPLY SYSTEM	ASHFIELD WATER DISTRICT	WATER SUPPLY/DRINKING WATER	1013000	1
+5819	206 JABISH STREET	BELCHERTOWN	PUBLIC WATER SUPPLY SYSTEM	BELCHERTOWN WATER DISTRICT	WATER SUPPLY/DRINKING WATER	1024000	1
+*/
+
+**Column notes:**
+- `Town`: ALL CAPS town name. Use UPPER() for filtering.
+- `Id`: Primary key. Joins to FacilityId in MAEEADP_Enforcement, MAEEADP_Inspection, MAEEADP_Permit.
+- `Active`: Boolean: 1 = active facility.
+- `FacilityType`: ALL CAPS. DEP REGULATED FACILITY, PUBLIC WATER SUPPLY SYSTEM, RELEASE, CROSS CONNECTION, UNDERGROUND INJECTION WELL(S), WATER MANAGEMENT ACT FACILITY, GROUNDWATER FACILITY
+- `Program`: ALL CAPS. REGULATED ACTIVITY(S), WATER SUPPLY/DRINKING WATER, WASTE SITE CLEANUP, AIR AND WASTE, WATERSHED MANAGEMENT
+
+---
+
+### MAEEADP_Inspection (84,144 rows)
+EEA Data Portal: MassDEP inspection records for regulated facilities. Key fields: Town, Program, FacilityId, FacilityName, InspectionType, InspectionDate.
+
+```sql
+CREATE TABLE "MAEEADP_Inspection" (
+	"index" BIGINT, 
+	"Id" BIGINT, 
+	"Town" TEXT, 
+	"Program" TEXT, 
+	"FacilityId" BIGINT, 
+	"FacilityName" TEXT, 
+	"InspectionType" TEXT, 
+	"InspectionDate" TEXT
+)
+```
+
+/* 5 rows from MAEEADP_Inspection:
+Id	Town	Program	FacilityId	FacilityName	InspectionType	InspectionDate
+795486	WATERTOWN	REGULATED ACTIVITY(S)	130767	MICROSEMI INCORPORATED	ReInspection	1996-02-12T00:00:00
+920425	AUBURN	REGULATED ACTIVITY(S)	269280	FLAGG PALMER PRECAST INC	Unannounced Multimedia Inspection	1996-01-04T00:00:00
+920794	PRINCETON	REGULATED ACTIVITY(S)	157601	PRINCETON TOWN OF MUNICIPAL LI	ReInspection	1996-01-05T00:00:00
+920796	WEST BOYLSTON	REGULATED ACTIVITY(S)	157585	WEST BOYLSTON TOWN OF MUNI LIG	ReInspection	1996-01-05T00:00:00
+931821	ACTON	WATER SUPPLY/DRINKING WATER	5941	SOMERSET HILLS CONDOMINIUMS	COMPREHENSIVE COMPLIANCE EVALUATION	1996-01-11T00:00:00
+*/
+
+**Column notes:**
+- `Town`: ALL CAPS town name. Use UPPER() for filtering.
+- `InspectionDate`: Format: YYYY-MM-DD string.
+- `FacilityId`: Joins to MAEEADP_Facility.Id.
+- `Program`: ALL CAPS. REGULATED ACTIVITY(S), WATER SUPPLY/DRINKING WATER
+- `InspectionType`: Unannounced Multimedia Inspection, SANITARY SURVEY, Unannounced Single-Media Inspection, Solid Waste Inspect with Enforcement Potential, ReInspection, Assess Reporting Problems or Inclusion to Regulated Universe, Solid Waste Visit Limited Enforcement Potential, Limited Inspect for Compliance Indicators/Field Presence, Site Visit But Not Full Inspection, Announced Single-Media Inspection, Drive By Inspection, FACILITY SELF REPORTING, Compliance Evaluation-Review of Compliance Data & Reports, BWR/BRP Announced Inspection Related Activity, Multiple Visits to Identify/Document a Problem, Inspect Permitted Construction/Site Prior to Permit Decision, Level 1 Assessment rTCR, OTHER, BWR/BRP Unannounced Inspection Related Activity, COMPREHENSIVE COMPLIANCE EVALUATION, Announced Multimedia Inspection, PERMIT (QUALIFICATION/REVIEW/COMPLIANCE), TECHNICAL ASSISTANCE (NON-SPECIFIC), Level 2 Assessment rTCR, Solid Waste Pre-Permit Limited Enforcement Potential, ... (51 total)
+
+---
+
+### MAEEADP_Permit (101,058 rows)
+EEA Data Portal: Environmental permits issued by MassDEP. Key fields: Town, PermitType, Subtype, Program, Status, FacilityId, FacilityName, FinalDecisionDate.
+
+```sql
+CREATE TABLE "MAEEADP_Permit" (
+	"index" BIGINT, 
+	"Id" TEXT, 
+	"FacilityName" TEXT, 
+	"PermitNumber" TEXT, 
+	"PermitType" TEXT, 
+	"Subtype" TEXT, 
+	"Program" TEXT, 
+	"StreetName" TEXT, 
+	"Town" TEXT, 
+	"Status" TEXT, 
+	"FacilityId" FLOAT, 
+	"FinalDecisionDate" TEXT, 
+	"DateApplied" TEXT
+)
+```
+
+/* 5 rows from MAEEADP_Permit:
+Id	FacilityName	PermitNumber	PermitType	Subtype	Program	StreetName	Town	Status	FacilityId	FinalDecisionDate	DateApplied
+EEA00PES000000009H	KEVIN JAMES BUCKLAND	AL-0023695	AL	PESTICIDE CREDENTIAL	PESTICIDE	6 SHARON LANE	SANDWICH	Active	NULL	2025-10-29T10:29:20	NULL
+EEA00PES00000000BO	STEVEN F LINDBERG	AL-0024786	AL	PESTICIDE CREDENTIAL	PESTICIDE	114 CEDAR ST.	HOLLISTON	Active	NULL	2024-12-29T20:07:51	NULL
+EEA00PES00000000L6	THEODORE   STAVROPOULOS	AL-0028475	AL	PESTICIDE CREDENTIAL	PESTICIDE	35 RESERVOIR ROAD	MILFORD	Active	NULL	2025-10-16T06:17:43	NULL
+EEA00PES00000000L7	JASON LEWIS MOSELY	AL-0028489	AL	PESTICIDE CREDENTIAL	PESTICIDE	33 CEDAR ST	BOSTON	Active	NULL	2022-12-28T07:02:27	NULL
+EEA00PES00000000L8	KENNETH   FIALKOSKY	AL-0028553	AL	PESTICIDE CREDENTIAL	PESTICIDE	30 AUBURN AVE # 1	WOBURN	Expired	NULL	2019-07-01T14:54:30	NULL
+*/
+
+**Column notes:**
+- `Town`: ALL CAPS town name. Use UPPER() for filtering.
+- `FinalDecisionDate`: Format: YYYY-MM-DD string.
+- `FacilityId`: Joins to MAEEADP_Facility.Id.
+- `Status`: e.g. Active, Expired, Terminated.
+- `Program`: ALL CAPS. PESTICIDE, WATER POLLUTION CONTROL, WETLANDS & WATERWAYS, WATER SUPPLY/DRINKING WATER, SOLID WASTE MGMT, HAZARDOUS WASTE, WATERSHED MANAGEMENT, AIR QUALITY CONTROL, TOXIC USE REDUCTION, WASTE SITE CLEANUP, PLANT INDUSTRIES, INDUSTRIAL WASTEWATER, LAWRENCE/WALL EXPERIMENT STA, FEED PROGRAM
+
+---
+
+### MA_precipitation_daily (9,862 rows)
+Daily precipitation averages across Massachusetts weather stations (NOAA ACIS). Key fields: date (YYYY-MM-DD), precip_in_avg (inches), n_stations.
+
+```sql
+CREATE TABLE "MA_precipitation_daily" (
+	"index" BIGINT, 
+	date TEXT, 
+	precip_in_avg FLOAT, 
+	n_stations BIGINT
+)
+```
+
+/* 5 rows from MA_precipitation_daily:
+date	precip_in_avg	n_stations
+2000-01-01	0.0	83
+2000-01-02	0.02	80
+2000-01-03	0.1190410958904109	73
+2000-01-04	0.3363218390804597	87
+2000-01-05	0.5697560975609756	82
+*/
+
+---
+
+### MassBudget_infadjusted (72 rows)
+MA environmental budget line items, inflation-adjusted. Wide-format pivot: each column is a fiscal year (FY01_float through FY24_Sen_float). Use MassBudget_summary instead for simpler trend queries.
+
+```sql
+CREATE TABLE "MassBudget_infadjusted" (
+	"index" BIGINT, 
+	"LineItem" TEXT, 
+	"LineItemName" TEXT, 
+	"FY01" TEXT, 
+	"FY02" TEXT, 
+	"FY03" TEXT, 
+	"FY04" TEXT, 
+	"FY05" TEXT, 
+	"FY06" TEXT, 
+	"FY07" TEXT, 
+	"FY08" TEXT, 
+	"FY09" TEXT, 
+	"FY10" TEXT, 
+	"FY11" TEXT, 
+	"FY12" TEXT, 
+	"FY13" TEXT, 
+	"FY14" TEXT, 
+	"FY15" TEXT, 
+	"FY16" TEXT, 
+	"FY17" TEXT, 
+	"FY18" TEXT, 
+	"FY19" TEXT, 
+	"FY20" TEXT, 
+	"FY21" TEXT, 
+	"FY22_GAA" TEXT, 
+	"FY22" TEXT, 
+	"FY23_Gov" TEXT, 
+	"FY23_HWM" TEXT, 
+	"FY23_Hou" TEXT, 
+	"FY23_SWM" TEXT, 
+	"FY23_Leg" TEXT, 
+	"FY23_GAA" TEXT, 
+	"FY23_Current" TEXT, 
+	"FY24_Gov" TEXT, 
+	"FY24_HWM" TEXT, 
+	"FY24_Hou" TEXT, 
+	"FY24_SWM" TEXT, 
+	"FY24_Sen" TEXT, 
+	"FY01_float" FLOAT, 
+	"FY02_float" FLOAT, 
+	"FY03_float" FLOAT, 
+	"FY04_float" FLOAT, 
+	"FY05_float" FLOAT, 
+	"FY06_float" FLOAT, 
+	"FY07_float" FLOAT, 
+	"FY08_float" FLOAT, 
+	"FY09_float" FLOAT, 
+	"FY10_float" FLOAT, 
+	"FY11_float" FLOAT, 
+	"FY12_float" FLOAT, 
+	"FY13_float" FLOAT, 
+	"FY14_float" FLOAT, 
+	"FY15_float" FLOAT, 
+	"FY16_float" FLOAT, 
+	"FY17_float" FLOAT, 
+	"FY18_float" FLOAT, 
+	"FY19_float" FLOAT, 
+	"FY20_float" FLOAT, 
+	"FY21_float" FLOAT, 
+	"FY22_GAA_float" FLOAT, 
+	"FY22_float" FLOAT, 
+	"FY23_Gov_float" FLOAT, 
+	"FY23_HWM_float" FLOAT, 
+	"FY23_Hou_float" FLOAT, 
+	"FY23_SWM_float" FLOAT, 
+	"FY23_Leg_float" FLOAT, 
+	"FY23_GAA_float" FLOAT, 
+	"FY23_Current_float" FLOAT, 
+	"FY24_Gov_float" FLOAT, 
+	"FY24_HWM_float" FLOAT, 
+	"FY24_Hou_float" FLOAT, 
+	"FY24_SWM_float" FLOAT, 
+	"FY24_Sen_float" FLOAT
+)
+```
+
+*(Wide table — sample rows omitted. See column notes below.)*
+
+**Column notes:**
+- `LineItem`: 7100-0350, 7100-0300, 7100-0207, 7006-1003, 7006-1002, 7006-1001, 7006-1000, 2520-1500, 2520-1400, 2520-1300, 2520-1200, 2520-1100, 2520-1000, 2520-0900, 2520-0300, 2511-3002, 2350-0104, 2350-0100, 2260-8881, 2260-8875, 2260-8872, 2260-8871, 2260-8870, 2250-2010, 2250-2002, ... (72 total)
+- `LineItemName`: Toxics Use Retained Revenue, Mass. Clean Water Trust Fund, Environmental Law Enforcement Private Details Retained Revenue, Environmental Law Enforcement, Wetlands Permitting Fee Retained Revenue, Watershed Permitting, Water and Sewer Services and Special Projects, Water Technology Innovation Grant Program, Upper Cape Water Supply Commission, Toxics Use Reduction Institute Study, Toxics Use Reduction Institute - UMass Lowell, Toxics Use Reduction Act, Suffolk County Mosquito Control, State Revolving Fund Administration, State Climatologist, Solid Waste Master Plan, Safe Drinking Water Act, Residential Conservation Service Program, Recycling and Solid Waste Master Plan Operations, Recycling Coordination Redemption Centers, Recycling Coordination, Plymouth County Mosquito Control, PFAS Water Contamination Treatment, Office of Geographic and Environmental Information, Norfolk County Mosquito Control, ... (68 total)
+- `FY01`: 0, 267,443, 812,451, 6,835,848, 6,453,937, 56,822,930, 535,822, 533,995, 4,260,926, 4,095,557, 399,471, 360,930, 3,278,736, 3,098,848, 3,006,320, 28,259,065, 2,363,501, 2,304,018, 17,530,055, 167,100, 15,636,503, 12,118,673, 1,801,083, 1,237,035
+- `FY02`: 0, 437,983, 87,597, 726,703, 625,566, 6,078,597, 53,405,059, 5,897,472, 5,611,497, 4,329,994, 346,383, 3,213,601, 3,008,849, 28,848,846, 201,320, 2,930,781, 2,496,211, 2,282,700, 17,417,740, 161,973, 15,384,922, 12,263,518, 1,980,287, 1,712,516, 1,186,413
+- `FY03`: 0, 85,708, 660,603, 573,060, 5,496,811, 49,420,857, 428,542, 338,917, 3,942,208, 3,725,974, 3,552,607, 3,083,245, 27,001,790, 2,796,794, 2,511,599, 2,074,174, 195,746, 16,651,078, 11,071,650, 1,694,500, 1,651,095
+- `FY04`: 0, 677,957, 560,692, 5,892,641, 47,196,107, 467,581, 419,293, 331,602, 3,312,898, 3,010,039, 25,639,018, 209,647, 2,526,148, 2,179,191, 167,717, 16,271,937, 10,458,887, 1,911,731, 1,590,074, 1,540,956
+- `FY05`: 0, 651,301, 544,337, 47,665,327, 453,942, 407,063, 321,930, 3,485,512, 3,056,912, 23,186,895, 203,531, 2,835,375, 2,452,463, 2,238,846, 2,115,625, 162,825, 15,797,300, 12,335,058, 1,994,961, 1,953,902, 1,496,008, 1,465,123
+- `FY06`: 0, 392,245, 9,899,465, 627,593, 536,052, 47,319,588, 440,796, 313,796, 310,211, 3,672,432, 22,453,808, 2,954,381, 2,745,209, 2,384,985, 2,157,349, 2,047,050, 196,123, 16,579,812, 1,945,877, 1,882,778, 1,633,943, 1,570,651, 1,441,552
+- `FY07`: 0, 9,709,717, 764,619, 675,012, 667,382, 565,972, 52,423,300, 458,771, 304,823, 3,609,410, 3,062,985, 23,887,116, 2,785,784, 2,433,365, 2,102,702, 2,088,829, 2,024,631, 191,155, 16,751,454, 1,835,085, 1,651,577, 1,574,867, 1,470,509
+- `FY08`: 0, 810,995, 797,538, 737,268, 650,866, 556,903, 51,300,608, 442,361, 3,163,553, 3,022,794, 296,783, 23,764,518, 2,827,356, 2,723,835, 2,401,525, 2,262,622, 184,317, 16,267,014, 11,384,515, 1,769,444, 1,546,540, 1,514,527, 1,449,073
+- `FY09`: 0, 799,794, 79,979, 727,086, 600,216, 585,314, 49,001,215, 437,114, 421,622, 3,898,996, 290,778, 24,031,285, 2,914,290, 2,788,306, 2,779,082, 2,428,523, 2,403,298, 2,123,506, 15,698,284, 10,148,612, 1,582,093, 1,570,423, 1,534,863, 1,462,038
+- `FY10`: 0, 810,095, 8,705,530, 79,200, 69,041, 642,128, 492,648, 40,831,932, 4,215,846, 395,999, 375,569, 316,800, 284,562, 22,151,307, 2,386,758, 2,266,762, 2,097,011, 13,198,545, 12,581,015, 1,220,942, 1,196,900
+- `FY11`: 0, 8,120,730, 67,154, 475,641, 423,596, 4,308,254, 4,149,378, 388,297, 368,263, 36,308,230, 282,398, 281,446, 2,340,035, 2,068,415, 19,565,122, 12,285,650, 11,370,880, 1,454,778, 1,191,254
+- `FY12`: 0, 9,406,357, 65,238, 473,889, 411,511, 4,187,297, 4,122,549, 377,218, 357,757, 33,856,790, 278,609, 205,755, 2,286,957, 16,424,492, 116,595, 11,935,135, 10,263,844, 1,734,517, 1,399,140, 1,095,432
+- `FY13`: 0, 877,032, 85,205, 776,854, 7,723,933, 519,392, 505,863, 404,690, 4,691,299, 4,209,984, 34,566,861, 3,372,418, 297,118, 18,156,615, 12,108,745, 114,662, 10,369,017, 1,971,705, 1,925,003, 1,589,086, 1,111,909
+- `FY14`: 0, 3,320,749, 863,595, 7,679,008, 510,691, 498,113, 4,849,928, 4,145,482, 398,490, 36,374,514, 297,686, 18,080,125, 126,781, 12,516,667, 12,167,720, 112,905, 1,979,292, 1,972,771, 1,527,549, 1,117,495
+- `FY15`: 0, 3,297,157, 964,748, 857,460, 75,905, 7,789,422, 659,431, 514,635, 4,815,472, 4,116,031, 395,659, 38,297,401, 295,572, 18,390,329, 17,904, 13,718,417, 12,859,580, 105,509, 1,995,524, 1,984,469, 1,537,882, 1,118,173, 1,055,090
+- `FY16`: 0, 851,800, 8,269,420, 75,404, 622,325, 524,063, 517,199, 484,758, 433,892, 4,783,690, 4,151,053, 393,047, 38,624,265, 3,275,395, 3,275,394, 293,621, 2,004,082, 2,001,328, 18,879,246, 16,389,401, 14,506,181, 104,813, 1,592,158, 1,110,792
+- `FY17`: 0, 3,215,572, 9,344,477, 836,242, 781,059, 74,026, 546,647, 487,051, 475,905, 4,696,319, 4,075,237, 31,390,973, 288,258, 192,934, 15,752,962, 14,129,235, 12,983,646, 102,898, 1,666,752, 1,583,140, 1,507,313
+- `FY18`: 0, 817,907, 766,450, 73,874, 529,315, 471,760, 465,470, 4,593,351, 336,382, 31,115,409, 3,985,886, 3,145,069, 3,020,210, 2,688,638, 188,704, 15,504,091, 12,969,444, 12,298,581, 100,642, 10,311,200, 1,638,020, 1,482,861
+- `FY19`: 0, 3,081,192, 801,295, 73,684, 616,238, 49,299, 462,423, 456,016, 4,746,869, 35,902,044, 3,904,931, 267,926, 2,711,449, 2,704,053, 16,022,196, 13,781,202, 13,125,876, 13,000,639, 11,820,139, 1,848,715, 1,436,364, 1,047,605
+- `FY20`: 0, 3,033,252, 788,827, 77,398, 643,049, 606,648, 5,112,500, 5,095,863, 48,532, 473,822, 38,925,410, 3,893,045, 271,038, 2,718,950, 2,669,262, 2,661,981, 16,642,033, 15,640,121, 14,311,602, 11,801,979, 1,949,376, 1,767,112, 1,532,971, 1,089,959
+- `FY21`: 0, 2,965,375, 79,937, 771,175, 628,659, 593,071, 51,657, 5,072,946, 47,582,400, 47,446, 468,167, 4,981,829, 3,423,788, 278,223, 2,672,723, 2,626,135, 16,651,323, 16,355,889, 14,634,465, 13,950,377, 1,913,532, 1,507,416, 1,186,150, 1,068,155
+- `FY22_GAA`: 0, 2,767,147, 996,752, 76,052, 719,624, 586,635, 553,426, 44,274, 436,872, 4,910,929, 37,007,108, 3,194,917, 259,626, 2,494,058, 2,450,584, 16,612,528, 16,369,397, 14,986,852, 14,486,330, 1,785,619, 1,406,650
+- `FY22`: 0, 2,767,147, 996,752, 76,052, 719,624, 586,635, 553,426, 44,274, 436,872, 4,998,941, 4,910,929, 37,007,108, 332,058, 259,626, 2,494,058, 2,369,783, 17,476,255, 16,143,533, 15,937,400, 14,667,017, 14,486,330, 10,614,774, 1,785,619, 1,406,650
+- `FY23_Gov`: 0, 2,656,251, 994,047, 78,985, 690,785, 563,125, 531,247, 5,415,964, 450,041, 42,500, 38,495,372, 3,958,825, 3,066,877, 264,126, 2,504,139, 19,353,606, 18,569,599, 16,697,929, 14,510,221, 1,830,474, 1,463,900
+- `FY23_HWM`: 0, 2,656,251, 994,047, 78,986, 690,785, 563,125, 531,247, 450,041, 43,807,874, 42,500, 4,993,751, 4,214,676, 3,066,877, 264,126, 2,504,139, 17,498,875, 16,697,929, 15,725,833, 14,510,222, 1,830,473, 1,463,901
+- `FY23_Hou`: 0, 2,656,251, 994,047, 78,986, 690,785, 563,125, 531,247, 5,445,314, 450,041, 43,839,749, 42,500, 4,214,676, 3,066,877, 264,126, 2,504,139, 17,498,875, 16,697,929, 16,522,708, 14,510,222, 1,830,473, 1,528,416
+- `FY23_SWM`: 0, 2,656,251, 994,047, 78,985, 690,785, 563,125, 531,246, 5,415,964, 5,312,501, 47,812,511, 450,041, 42,500, 3,066,877, 264,126, 2,504,139, 18,569,599, 16,697,929, 15,725,831, 14,510,221, 1,830,473, 1,463,901
+- `FY23_Leg`: 0, 2,656,251, 994,047, 78,986, 743,747, 690,785, 563,125, 5,764,064, 5,415,964, 48,237,512, 450,041, 42,500, 3,066,877, 264,126, 2,504,139, 18,569,599, 17,590,519, 16,697,929, 15,041,471, 1,830,473, 1,528,416
+- `FY23_GAA`: 0, 2,656,251, 994,047, 78,986, 743,747, 690,785, 563,125, 5,764,064, 5,415,964, 48,237,512, 450,041, 42,500, 3,066,877, 264,126, 2,504,139, 18,569,599, 17,590,519, 16,697,929, 15,041,471, 1,830,473, 1,528,416
+- `FY23_Current`: 0, 2,656,251, 994,047, 79,687,519, 78,986, 743,747, 690,785, 6,223,228, 563,125, 5,415,964, 48,237,512, 450,041, 42,500, 3,066,877, 264,126, 2,504,139, 19,400,377, 18,269,411, 162,562,539, 16,697,929, 159,375,038, 15,041,471, 106,250,026, 1,830,473, 1,528,416
+- `FY24_Gov`: 0, 2,500,000, 940,506, 74,340, 650,150, 530,000, 51,969,763, 5,293,590, 499,997, 423,568, 40,000, 248,588, 21,344,151, 2,888,473, 2,367,015, 18,172,987, 15,747,479, 14,988,215, 10,003,414, 1,722,798, 1,378,862
+- `FY24_HWM`: 0, 2,500,000, 940,506, 74,340, 650,150, 530,000, 5,207,018, 499,997, 47,558,783, 423,568, 40,000, 248,589, 20,313,207, 2,888,473, 2,367,016, 15,747,479, 15,547,134, 14,988,216, 10,003,414, 1,722,798, 1,378,862
+- `FY24_Hou`: 0, 2,500,000, 940,506, 74,340, 650,150, 530,000, 5,207,018, 499,997, 47,613,783, 423,568, 40,000, 248,589, 20,313,207, 2,888,473, 2,417,016, 16,752,134, 15,747,479, 14,988,216, 10,248,414, 1,722,798, 1,378,862
+- `FY24_SWM`: 0, 2,500,000, 940,506, 74,084, 650,150, 530,000, 51,883,191, 5,207,018, 499,997, 423,568, 40,000, 248,589, 2,888,473, 2,367,016, 19,282,062, 18,086,415, 15,747,479, 14,988,216, 10,003,414, 1,722,504, 1,378,862
+- `FY24_Sen`: 0, 2,500,000, 940,506, 74,084, 650,150, 530,000, 51,983,191, 5,207,018, 423,568, 40,000, 248,589, 20,287,200, 2,888,473, 2,367,016, 19,282,062, 15,747,479, 15,238,216, 10,003,414, 1,722,504, 1,378,862, 1,149,997
+
+---
+
+### MassBudget_noinfadjusted (72 rows)
+MA environmental budget line items, nominal dollars (not inflation-adjusted). Wide-format pivot. Use MassBudget_summary for trend queries.
+
+```sql
+CREATE TABLE "MassBudget_noinfadjusted" (
+	"index" BIGINT, 
+	"LineItem" TEXT, 
+	"LineItemName" TEXT, 
+	"FY01" TEXT, 
+	"FY02" TEXT, 
+	"FY03" TEXT, 
+	"FY04" TEXT, 
+	"FY05" TEXT, 
+	"FY06" TEXT, 
+	"FY07" TEXT, 
+	"FY08" TEXT, 
+	"FY09" TEXT, 
+	"FY10" TEXT, 
+	"FY11" TEXT, 
+	"FY12" TEXT, 
+	"FY13" TEXT, 
+	"FY14" TEXT, 
+	"FY15" TEXT, 
+	"FY16" TEXT, 
+	"FY17" TEXT, 
+	"FY18" TEXT, 
+	"FY19" TEXT, 
+	"FY20" TEXT, 
+	"FY21" TEXT, 
+	"FY22_GAA" TEXT, 
+	"FY22" TEXT, 
+	"FY23_Gov" TEXT, 
+	"FY23_HWM" TEXT, 
+	"FY23_Hou" TEXT, 
+	"FY23_SWM" TEXT, 
+	"FY23_Leg" TEXT, 
+	"FY23_GAA" TEXT, 
+	"FY23_Current" TEXT, 
+	"FY24_Gov" TEXT, 
+	"FY24_HWM" TEXT, 
+	"FY24_Hou" TEXT, 
+	"FY24_SWM" TEXT, 
+	"FY24_Sen" TEXT, 
+	"FY01_float" FLOAT, 
+	"FY02_float" FLOAT, 
+	"FY03_float" FLOAT, 
+	"FY04_float" FLOAT, 
+	"FY05_float" FLOAT, 
+	"FY06_float" FLOAT, 
+	"FY07_float" FLOAT, 
+	"FY08_float" FLOAT, 
+	"FY09_float" FLOAT, 
+	"FY10_float" FLOAT, 
+	"FY11_float" FLOAT, 
+	"FY12_float" FLOAT, 
+	"FY13_float" FLOAT, 
+	"FY14_float" FLOAT, 
+	"FY15_float" FLOAT, 
+	"FY16_float" FLOAT, 
+	"FY17_float" FLOAT, 
+	"FY18_float" FLOAT, 
+	"FY19_float" FLOAT, 
+	"FY20_float" FLOAT, 
+	"FY21_float" FLOAT, 
+	"FY22_GAA_float" FLOAT, 
+	"FY22_float" FLOAT, 
+	"FY23_Gov_float" FLOAT, 
+	"FY23_HWM_float" FLOAT, 
+	"FY23_Hou_float" FLOAT, 
+	"FY23_SWM_float" FLOAT, 
+	"FY23_Leg_float" FLOAT, 
+	"FY23_GAA_float" FLOAT, 
+	"FY23_Current_float" FLOAT, 
+	"FY24_Gov_float" FLOAT, 
+	"FY24_HWM_float" FLOAT, 
+	"FY24_Hou_float" FLOAT, 
+	"FY24_SWM_float" FLOAT, 
+	"FY24_Sen_float" FLOAT
+)
+```
+
+*(Wide table — sample rows omitted. See column notes below.)*
+
+**Column notes:**
+- `LineItem`: 7100-0350, 7100-0300, 7100-0207, 7006-1003, 7006-1002, 7006-1001, 7006-1000, 2520-1500, 2520-1400, 2520-1300, 2520-1200, 2520-1100, 2520-1000, 2520-0900, 2520-0300, 2511-3002, 2350-0104, 2350-0100, 2260-8881, 2260-8875, 2260-8872, 2260-8871, 2260-8870, 2250-2010, 2250-2002, ... (72 total)
+- `LineItemName`: Toxics Use Retained Revenue, Mass. Clean Water Trust Fund, Environmental Law Enforcement Private Details Retained Revenue, Environmental Law Enforcement, Wetlands Permitting Fee Retained Revenue, Watershed Permitting, Water and Sewer Services and Special Projects, Water Technology Innovation Grant Program, Upper Cape Water Supply Commission, Toxics Use Reduction Institute Study, Toxics Use Reduction Institute - UMass Lowell, Toxics Use Reduction Act, Suffolk County Mosquito Control, State Revolving Fund Administration, State Climatologist, Solid Waste Master Plan, Safe Drinking Water Act, Residential Conservation Service Program, Recycling and Solid Waste Master Plan Operations, Recycling Coordination Redemption Centers, Recycling Coordination, Plymouth County Mosquito Control, PFAS Water Contamination Treatment, Office of Geographic and Environmental Information, Norfolk County Mosquito Control, ... (68 total)
+- `FY01`: 0, 150,000, 93,721, 9,832,031, 8,770,000, 693,812, 6,796,965, 455,677, 31,870,112, 300,525, 3,834,002, 3,619,801, 299,500, 224,050, 202,434, 2,389,813, 2,297,063, 15,849,580, 1,838,935, 1,738,042, 1,686,146, 1,325,610, 1,292,248, 1,010,168
+- `FY02`: 0, 250,000, 977,502, 92,454, 9,942,023, 8,781,693, 7,000,000, 677,203, 50,000, 414,801, 357,072, 30,483,537, 3,469,655, 3,366,269, 3,203,035, 2,471,555, 197,715, 16,466,883, 114,913, 1,834,319, 1,717,447, 1,672,886, 1,424,834, 1,302,962, 1,130,345
+- `FY03`: 0, 988,526, 963,205, 9,713,795, 6,458,905, 50,000, 385,378, 334,308, 3,206,693, 28,830,810, 250,000, 2,299,779, 2,173,634, 2,072,496, 197,715, 15,752,124, 114,193, 1,798,683, 1,631,575, 1,465,200, 1,210,018
+- `FY04`: 0, 948,068, 918,782, 9,702,003, 6,236,022, 404,226, 334,308, 3,513,437, 28,140,275, 278,791, 250,000, 197,715, 15,287,045, 125,000, 100,000, 1,975,287, 1,794,710, 1,506,194, 1,299,324, 1,139,853
+- `FY05`: 0, 400,000, 918,782, 9,702,003, 899,814, 7,575,647, 334,308, 29,273,935, 278,791, 250,000, 2,140,647, 197,715, 14,240,365, 125,000, 100,000, 1,877,420, 1,741,362, 1,506,194, 1,375,000, 1,299,323, 1,225,217, 1,200,000
+- `FY06`: 0, 250,000, 918,782, 6,309,486, 400,000, 341,656, 30,159,434, 280,944, 200,000, 2,340,647, 197,715, 14,311,075, 125,000, 10,567,246, 1,882,993, 1,749,676, 1,520,085, 1,375,000, 1,304,700, 1,240,217, 1,200,000, 1,041,404, 1,001,064
+- `FY07`: 0, 961,596, 6,349,383, 500,000, 441,404, 436,415, 370,101, 34,280,671, 300,000, 2,360,267, 2,002,949, 199,330, 15,620,275, 125,000, 10,954,119, 1,821,681, 1,591,227, 1,375,000, 1,365,928, 1,323,948, 1,200,000, 1,080,000, 1,029,838
+- `FY08`: 0, 982,731, 7,720,741, 550,000, 540,874, 500,000, 441,404, 377,680, 34,791,004, 300,000, 201,272, 2,145,456, 2,049,996, 16,116,601, 125,000, 11,031,950, 1,917,454, 1,847,248, 1,628,664, 1,534,463, 1,200,000, 1,048,831, 1,027,121
+- `FY09`: 0, 6,978,967, 550,000, 55,000, 500,000, 412,755, 402,507, 33,697,007, 300,593, 289,940, 2,681,250, 2,004,090, 199,961, 16,525,761, 10,795,348, 1,917,454, 1,911,111, 1,670,039, 1,652,693, 1,460,286, 1,087,969, 1,079,944, 1,055,490, 1,005,410
+- `FY10`: 0, 9,165,670, 847,878, 831,182, 8,736,829, 6,045,516, 562,567, 55,000, 47,945, 445,923, 342,117, 28,355,551, 275,000, 260,812, 220,000, 2,927,675, 197,613, 15,382,875, 1,657,473, 1,574,143, 1,456,260
+- `FY11`: 0, 843,672, 8,700,962, 8,053,102, 5,751,276, 47,560, 336,859, 300,000, 3,051,198, 275,000, 260,812, 25,714,271, 200,000, 2,938,679, 199,326, 13,856,441, 1,657,263, 1,464,896, 1,030,305
+- `FY12`: 0, 85,000, 8,700,962, 798,593, 7,482,556, 6,857,430, 47,560, 345,475, 300,000, 3,052,627, 3,005,424, 275,000, 260,812, 24,682,305, 203,112, 150,000, 11,973,797, 1,667,239, 1,264,499, 1,020,002
+- `FY13`: 0, 85,000, 824,267, 8,976,307, 7,686,633, 650,151, 63,163, 575,888, 5,725,812, 385,030, 375,000, 300,000, 3,477,696, 3,120,894, 25,624,684, 220,256, 2,500,000, 13,459,640, 1,461,641, 1,427,019, 1,178,002
+- `FY14`: 0, 2,500,000, 95,446, 9,423,075, 9,160,373, 85,000, 841,297, 650,151, 5,781,081, 384,470, 375,000, 300,000, 3,651,230, 3,120,894, 27,384,269, 224,111, 13,611,481, 1,490,094, 1,485,185, 1,150,003
+- `FY15`: 0, 2,500,000, 9,750,506, 847,831, 800,000, 80,000, 731,500, 650,151, 57,553, 500,000, 5,906,166, 390,211, 300,000, 3,651,230, 3,120,894, 29,038,198, 224,111, 13,944,080, 13,575, 10,401,701, 1,513,064, 1,504,682, 1,166,067
+- `FY16`: 0, 2,500,000, 847,831, 80,000, 650,151, 6,311,774, 57,553, 475,000, 400,000, 394,761, 370,000, 331,175, 300,000, 3,651,232, 3,168,361, 29,480,620, 224,111, 14,409,902, 12,509,486, 11,072,087, 1,529,649, 1,527,547, 1,215,241
+- `FY17`: 0, 2,500,000, 80,000, 7,265,020, 650,150, 607,247, 57,553, 425,000, 378,666, 370,000, 3,651,232, 3,168,361, 24,405,437, 224,111, 150,000, 12,247,404, 10,985,010, 10,094,353, 1,295,844, 1,230,839, 1,171,886
+- `FY18`: 0, 9,776,081, 80,000, 8,196,322, 650,150, 609,247, 58,722, 420,750, 375,000, 370,000, 3,651,232, 3,168,361, 267,388, 24,733,484, 2,500,000, 2,400,750, 2,137,185, 150,000, 12,324,125, 10,309,347, 1,302,054, 1,178,719
+- `FY19`: 0, 2,500,000, 9,590,558, 850,000, 650,150, 59,785, 500,000, 40,000, 375,198, 370,000, 3,851,488, 3,168,361, 29,130,000, 217,388, 2,200,000, 2,193,999, 13,000,000, 11,181,715, 10,650,000, 10,548,386, 1,500,000, 1,165,429
+- `FY20`: 0, 2,500,000, 9,727,167, 898,342, 650,150, 63,791, 530,000, 499,998, 40,000, 4,213,712, 4,200,000, 390,523, 32,082,245, 3,208,640, 223,389, 2,240,953, 2,200,000, 2,193,999, 13,716,330, 12,890,556, 11,795,594, 1,606,672, 1,456,450, 1,263,472
+- `FY21`: 0, 2,500,000, 900,523, 67,392, 650,150, 530,000, 499,997, 43,550, 40,115,000, 40,000, 4,276,817, 4,200,000, 394,695, 234,560, 2,886,472, 2,253,276, 2,213,999, 14,038,128, 13,789,058, 12,337,788, 11,761,058, 1,613,230, 1,270,848, 1,000,000
+- `FY22_GAA`: 0, 2,500,000, 900,523, 68,710, 650,150, 530,000, 499,997, 40,000, 4,436,817, 394,695, 33,434,358, 234,561, 2,886,472, 2,253,276, 2,213,999, 15,008,717, 14,789,058, 13,539,987, 13,087,787, 1,613,231, 1,270,849
+- `FY22`: 0, 2,500,000, 900,523, 9,590,000, 68,710, 650,150, 530,000, 499,997, 40,000, 4,516,332, 4,436,817, 394,695, 33,434,358, 300,000, 234,561, 2,253,276, 2,140,999, 15,789,058, 14,585,000, 14,398,767, 13,251,030, 13,087,787, 1,613,231, 1,270,849
+- `FY23_Gov`: 0, 2,500,000, 935,573, 74,339, 650,150, 530,000, 5,097,377, 499,997, 423,568, 40,000, 36,230,930, 3,725,952, 248,589, 2,886,472, 2,356,836, 18,215,154, 17,477,265, 15,715,694, 13,656,675, 1,722,799, 1,377,788
+- `FY23_HWM`: 0, 2,500,000, 935,573, 74,340, 650,150, 530,000, 499,997, 423,568, 41,230,930, 40,000, 4,700,000, 3,966,753, 248,589, 2,886,472, 2,356,836, 16,469,525, 15,715,694, 14,800,780, 13,656,676, 1,722,798, 1,377,789
+- `FY23_Hou`: 0, 2,500,000, 935,573, 74,340, 650,150, 530,000, 5,125,000, 499,997, 423,568, 41,260,930, 40,000, 3,966,753, 248,589, 2,886,472, 2,356,836, 16,469,525, 15,715,694, 15,550,780, 13,656,676, 1,722,798, 1,438,509
+- `FY23_SWM`: 0, 2,500,000, 935,573, 74,339, 650,150, 530,000, 5,097,377, 5,000,000, 499,996, 45,000,000, 423,568, 40,000, 248,589, 2,886,472, 2,356,836, 17,477,265, 15,715,694, 14,800,779, 13,656,675, 1,722,798, 1,377,789
+- `FY23_Leg`: 0, 2,500,000, 935,573, 74,340, 699,997, 650,150, 530,000, 5,425,000, 5,097,377, 45,400,000, 423,568, 40,000, 248,589, 2,886,472, 2,356,836, 17,477,265, 16,555,779, 15,715,694, 14,156,675, 1,722,798, 1,438,509
+- `FY23_GAA`: 0, 2,500,000, 935,573, 74,340, 699,997, 650,150, 530,000, 5,425,000, 5,097,377, 45,400,000, 423,568, 40,000, 248,589, 2,886,472, 2,356,836, 17,477,265, 16,555,779, 15,715,694, 14,156,675, 1,722,798, 1,438,509
+- `FY23_Current`: 0, 2,500,000, 935,573, 75,000,000, 74,340, 699,997, 650,150, 530,000, 5,857,154, 5,097,377, 45,400,000, 423,568, 40,000, 248,589, 2,886,472, 2,356,836, 18,259,174, 17,194,736, 153,000,000, 150,000,000, 15,715,694, 14,156,675, 100,000,000, 1,722,798, 1,438,509
+- `FY24_Gov`: 0, 2,500,000, 940,506, 74,340, 650,150, 530,000, 51,969,763, 5,293,590, 499,997, 423,568, 40,000, 248,588, 21,344,151, 2,888,473, 2,367,015, 18,172,987, 15,747,479, 14,988,215, 10,003,414, 1,722,798, 1,378,862
+- `FY24_HWM`: 0, 2,500,000, 940,506, 74,340, 650,150, 530,000, 5,207,018, 499,997, 47,558,783, 423,568, 40,000, 248,589, 20,313,207, 2,888,473, 2,367,016, 15,747,479, 15,547,134, 14,988,216, 10,003,414, 1,722,798, 1,378,862
+- `FY24_Hou`: 0, 2,500,000, 940,506, 74,340, 650,150, 530,000, 5,207,018, 499,997, 47,613,783, 423,568, 40,000, 248,589, 20,313,207, 2,888,473, 2,417,016, 16,752,134, 15,747,479, 14,988,216, 10,248,414, 1,722,798, 1,378,862
+- `FY24_SWM`: 0, 2,500,000, 940,506, 74,084, 650,150, 530,000, 51,883,191, 5,207,018, 499,997, 423,568, 40,000, 248,589, 2,888,473, 2,367,016, 19,282,062, 18,086,415, 15,747,479, 14,988,216, 10,003,414, 1,722,504, 1,378,862
+- `FY24_Sen`: 0, 2,500,000, 940,506, 74,084, 650,150, 530,000, 51,983,191, 5,207,018, 423,568, 40,000, 248,589, 20,287,200, 2,888,473, 2,367,016, 19,282,062, 15,747,479, 15,238,216, 10,003,414, 1,722,504, 1,378,862, 1,149,997
+
+---
+
+### MassBudget_summary (26 rows)
+Annual MA environmental agency budget totals (FY2001–present). PREFERRED table for budget trend queries. Key fields: Year, FiscalYear, DEPAdministration_inf_float (inflation-adjusted DEP budget), TotalBudget_inf_float, GovernorsBudget.
+
+```sql
+CREATE TABLE "MassBudget_summary" (
+	"index" BIGINT, 
+	"Year" BIGINT, 
+	"DEPAdministration_noinf_float" FLOAT, 
+	"DCRAdministration_noinf_float" FLOAT, 
+	"EEAAdministration_noinf_float" FLOAT, 
+	"FishGameAdministration_noinf_float" FLOAT, 
+	"DEPAdministration_inf_float" FLOAT, 
+	"DCRAdministration_inf_float" FLOAT, 
+	"EEAAdministration_inf_float" FLOAT, 
+	"FishGameAdministration_inf_float" FLOAT, 
+	"TotalBudget_noinf_float" FLOAT, 
+	"TotalBudget_inf_float" FLOAT, 
+	"FiscalYear" TEXT, 
+	"GovernorsBudget" BIGINT
+)
+```
+
+/* 5 rows from MassBudget_summary:
+Year	DEPAdministration_noinf_float	DCRAdministration_noinf_float	EEAAdministration_noinf_float	FishGameAdministration_noinf_float	DEPAdministration_inf_float	DCRAdministration_inf_float	EEAAdministration_inf_float	FishGameAdministration_inf_float	TotalBudget_noinf_float	TotalBudget_inf_float	FiscalYear	GovernorsBudget
+2001	31870112.0	NULL	NULL	NULL	58639783.62464401	NULL	NULL	NULL	31870112.0	58639783.62464401	FY01	0
+2002	30483537.0	NULL	NULL	NULL	55531618.84328444	NULL	NULL	NULL	30483537.0	55531618.84328444	FY02	0
+2003	28830810.0	NULL	NULL	NULL	51267603.03205201	NULL	NULL	NULL	28830810.0	51267603.03205201	FY03	0
+2004	28140275.0	NULL	NULL	NULL	47816787.16088732	NULL	NULL	NULL	28140275.0	47816787.16088732	FY04	0
+2005	28373935.0	22773098.0	7575647.0	450001.0	46511944.61930363	37330778.159108855	12418371.78098116	737663.6899545746	59172681.0	96998758.24934822	FY05	0
+*/
+
+**Column notes:**
+- `DEPAdministration_inf_float`: DEP budget, inflation-adjusted to current dollars.
+- `TotalBudget_inf_float`: Total EEA agency budget, inflation-adjusted.
+- `GovernorsBudget`: Governor's recommended budget for DEP.
+- `FiscalYear`: Fiscal year label (e.g. FY2023).
+
+---
+
+### NECIR_CSO_2011 (181 rows)
+New England Center for Investigative Reporting: CSO outfall locations and 2011 discharge volumes. Key fields: Municipality, DischargesBody, 2011_Discharges_MGal, Latitude, Longitude.
+
+```sql
+CREATE TABLE "NECIR_CSO_2011" (
+	"index" BIGINT, 
+	"Latitude" FLOAT, 
+	"Longitude" FLOAT, 
+	"Nearest_Pipe_Address" TEXT, 
+	"Municipality" TEXT, 
+	"DischargesBody" TEXT, 
+	"2011_Discharges_MGal" TEXT, 
+	"2011_Discharge_N" TEXT, 
+	"Notes" TEXT
+)
+```
+
+/* 5 rows from NECIR_CSO_2011:
+Latitude	Longitude	Nearest_Pipe_Address	Municipality	DischargesBody	2011_Discharges_MGal	2011_Discharge_N	Notes
+41.8805425498	-71.0923419214	500 West Water St.	Taunton	Taunton River	3.66	2	loc. from DES DES draft data
+42.2466365031	-71.8019968665	Quinsigamond Ave.	Worcester	Mill Brook to Blackstone River	not avail	not avail	loc. from DES DES draft data
+42.5811467749	-71.8218996722	Cleghorn St at Oakhill Rd.	Fitchburg	Nashua River	0.16	7	loc. from DES draft data
+42.5734765373	-71.789371552	479 Water St. at Burnett St.	Fitchburg	Birch Brook	0.17	8	loc. from DES draft data
+42.5855845964	-71.7777258006	Boutelle St. at Lunenburg St.	Fitchburg	Baker Brook	0.38	11	loc. from DES draft data
+*/
+
+**Column notes:**
+- `Municipality`: Chicopee, New Bedford, Springfield, Boston, Fall River, Holyoke, Haverhill, Fitchburg, Lowell, Cambridge, Gloucester, Somerville, Montague, Lynn, Lawrence, Worcester, Taunton
+- `DischargesBody`: Connecticut River, Chicopee River, Merrimack River, Inner Harbor, Nashua River, Mt Hope Bay, Mill River, Clark's Cove, New Bed. Outer Hrbr, Upper Inner Harbor, Quequechan River, Alewife Brook, Taunton River, Reserved Channel, Fort Point Channel, Taunton, Upper Charles River, N. Dorchester Bay, Lynn Harbor, Lower Inner Harbor, Lower Charles River, Harbor Cove, Birch Brook, Wllmnst Bk., Upper Mystic, ... (35 total)
+- `2011_Discharge_N`: 2, 1, 6, 3, 12, 8, 37, 40, 38, 29, 27, 23, 16, 10, 48, 32, 22, 18, 9, 42, 4, 39, 36, 25, 20, ... (52 total)
+- `Notes`: based on model of annual disch., only 2010 avail.; loc. from DES draft data, loc. from DES draft data, source: MWRA, only 2010 avail., approx., loc n/a; 2010 data, approx.; loc n/a 2010 data, approx.; loc n/a., loc. from DES DES draft data, only 2010 avail.;loc. n/a, only 2010 avail., loc. Approx, not avail, loc. n/a, estimated, 2010 data, loc n/a; 210 data
+
+---
+
+### SSAWages (40 rows)
+Social Security Administration Average Wage Index by year (used to adjust staffing pay for inflation). Key fields: Year, AWI, Average amount.
+
+```sql
+CREATE TABLE "SSAWages" (
+	"index" BIGINT, 
+	"Year" BIGINT, 
+	"AWI" FLOAT, 
+	"Increase" TEXT, 
+	"Prior year average amount" TEXT, 
+	"Average amount" FLOAT, 
+	"Number of workers" BIGINT, 
+	"Aggregate wages" BIGINT
+)
+```
+
+/* 5 rows from SSAWages:
+Year	AWI	Increase	Prior year average amount	Average amount	Number of workers	Aggregate wages
+1985	16822.51	4.26%	$15,250.75 	15900.51	114922	1827321
+1986	17321.82	2.97%	15900.51	16372.45	115135	1885046
+1987	18426.51	6.38%	16372.45	17416.59	119557	2082269
+1988	19334.04	4.93%	17416.59	18274.38	122797	2244036
+1989	20099.55	3.96%	18274.38	18997.93	126909	2411003
+*/
+
+**Column notes:**
+- `Increase`: 8.89%, 6.38%, 5.84%, 5.57%, 5.53%, 5.32%, 5.23%, 5.15%, 4.93%, 4.89%, 4.84%, 4.65%, 4.62%, 4.60%, 4.54%, 4.43%, 4.26%, 4.01%, 3.96%, 3.75%, 3.73%, 3.66%, 3.62%, 3.55%, 3.48%, ... (40 total)
+- `Prior year average amount`: 63932.64, 61220.07, 58129.99, 53383.18, 51916.27, 50040.96, 48251.57, 46640.94, 46119.78, 44569.2, 43041.39, 42498.21, 41211.36, 39959.3, 39652.61, 39036.67, 38760.95, 37078.27, 35448.93, 34197.63, 32678.48, 31898.7, 31581.97, 30846.09, 29229.69, ... (40 total)
+
+---

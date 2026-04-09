@@ -10,7 +10,7 @@ This git repository contains code for data acquisition (see `get_data/`), analys
 
 Data is refreshed automatically every Monday at 6am UTC via two GitHub Actions workflows:
 
-- **[Update Data](.github/workflows/update-data.yml):** Fetches all active data sources, validates row counts and schema, assembles the SQLite database, and commits updated CSVs. If any step fails, a GitHub Issue is opened automatically.
+- **[Update Data](.github/workflows/update-data.yml):** Fetches all active data sources, validates row counts and schema, assembles the SQLite database, commits updated CSVs, and regenerates the AI Analysis semantic context. If any step fails, a GitHub Issue is opened automatically.
 - **[Update Charts](.github/workflows/update-charts.yml):** Runs after a successful data update to regenerate Chart.js visualizations. The PySTAN-based CSO regression analysis (`NECIR_CSO_map.py`) is excluded from CI and must be run locally.
 
 ### Failure notifications
@@ -68,6 +68,30 @@ For all scripts including PySTAN CSO regression analysis:
 conda env create -f amend_python_env.yml
 conda activate amend_python
 ```
+
+## AI Analysis
+
+The [AI Analysis page](https://openamend.org/ai_analysis.html) lets users ask natural-language questions about the database. The LLM generates SQL, executes it client-side via sql.js, and renders results with Plotly.
+
+### Semantic context
+
+The LLM is given a rich schema description — `docs/assets/db_semantic_context.txt` — instead of bare `CREATE TABLE` statements. This file includes:
+- Table descriptions and row counts
+- 5 sample rows per table (showing actual value formats, e.g. ALL-CAPS town names)
+- Per-column notes (typos, date formats, join keys)
+- Cross-table join relationships
+
+**The semantic context must be regenerated whenever data sources change** (new tables, renamed columns, schema changes). It is regenerated automatically by `assemble_db.py` on each weekly data update. To regenerate manually:
+
+```bash
+cd get_data
+conda run -n amend_python python generate_semantic_context.py
+```
+
+When adding or changing a data source:
+1. Update `TABLE_DESCRIPTIONS` and `COLUMN_NOTES` in `get_data/generate_semantic_context.py`
+2. Run `generate_semantic_context.py` to regenerate `docs/assets/db_semantic_context.txt`
+3. Commit both files
 
 ## Other tools used
 
