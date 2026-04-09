@@ -134,21 +134,16 @@ function loadDatabase() {
   };
 
   xhr.onerror = function() {
-    statusText.textContent = 'Download failed. Check network connection.';
-    loadBtn.disabled = false;
-    progressWrap.style.display = 'none';
+    setDBError('Download failed. Check network connection.');
   };
 
   xhr.onload = function() {
     if (this.status !== 200) {
-      statusText.textContent = 'Download failed: HTTP ' + this.status +
-        '. Check that the database is accessible. If testing locally, see CORS note below.';
-      loadBtn.disabled = false;
-      progressWrap.style.display = 'none';
+      setDBError('Download failed: HTTP ' + this.status +
+        '. Check that the database is accessible.');
       return;
     }
-    statusText.textContent = 'Opening database in worker...';
-    var uInt8Array = new Uint8Array(this.response);
+    statusText.textContent = 'Opening database in worker…';
     openDBInWorker(this.response)
       .then(function() {
         return loadSchema();
@@ -163,8 +158,7 @@ function loadDatabase() {
         onDBReady();
       })
       .catch(function(err) {
-        statusText.textContent = 'Error: ' + err.message;
-        loadBtn.disabled = false;
+        setDBError('Error: ' + err.message);
       });
   };
 
@@ -246,10 +240,21 @@ function fetchSemanticContext() {
 
 function onDBReady() {
   var statusEl = document.getElementById('ai-db-status');
-  statusEl.querySelector('#ai-db-status-text').textContent = 'Database loaded. Ready.';
+  // Clear any error state and hide the load controls — DB is ready
+  statusEl.classList.remove('ai-db-status--error');
+  statusEl.querySelector('#ai-db-status-text').textContent = '✓ Database loaded.';
   statusEl.querySelector('#ai-db-progress-wrap').style.display = 'none';
+  statusEl.querySelector('#ai-load-db').style.display = 'none';
   document.getElementById('ai-submit').disabled = false;
   document.getElementById('ai-question').placeholder = 'Ask a question about the environmental data... (Shift+Enter for newline, Enter to submit)';
+}
+
+function setDBError(message) {
+  var statusEl = document.getElementById('ai-db-status');
+  statusEl.classList.add('ai-db-status--error');
+  document.getElementById('ai-db-status-text').textContent = message;
+  document.getElementById('ai-load-db').disabled = false;
+  document.getElementById('ai-db-progress-wrap').style.display = 'none';
 }
 
 // ─── Settings Management ──────────────────────────────────────────────────────
@@ -664,7 +669,9 @@ function buildPlotlyFigure(chartSpec, queryResults) {
   var layout = {
     title: title,
     autosize: true,
-    margin: { l: 50, r: 20, t: 40, b: 80 },
+    margin: { l: 60, r: 20, t: 40, b: 80 },
+    xaxis: { title: { text: xKey || '' } },
+    yaxis: { title: { text: yKey || '' } },
   };
 
   if (type === 'table') {
@@ -743,6 +750,16 @@ function buildMapFigure(chartSpec, queryResults, geojson) {
   var locations = rawIds.map(cfg.normalize);
   var zValues = colData[valueCol] || colData[queryResults.columns[1]] || [];
 
+  // Build rich tooltip: include all non-geo, non-value columns as extra lines
+  var extraCols = queryResults.columns.filter(function(c) {
+    return c !== geoIdCol && c !== valueCol && c !== 'index' && c !== 'Unnamed: 0';
+  });
+  var customdata = rawIds.map(function(_, i) {
+    return extraCols.map(function(c) { return colData[c] ? colData[c][i] : ''; });
+  });
+  var hoverLines = ['<b>%{location}</b>', (valueCol || 'value') + ': %{z:,.2f}'];
+  extraCols.forEach(function(c, i) { hoverLines.push(c + ': %{customdata[' + i + ']}'); });
+
   return {
     data: [{
       type: 'choroplethmap',
@@ -752,7 +769,8 @@ function buildMapFigure(chartSpec, queryResults, geojson) {
       featureidkey: cfg.featureidkey,
       colorscale: 'YlOrRd',
       marker: { opacity: 0.7, line: { width: 0.5, color: 'white' } },
-      hovertemplate: '%{location}: %{z:,.1f}<extra></extra>',
+      customdata: customdata,
+      hovertemplate: hoverLines.join('<br>') + '<extra></extra>',
       colorbar: { title: { text: valueCol || '' } },
     }],
     layout: {
@@ -778,7 +796,6 @@ function buildScatterMapFigure(chartSpec, queryResults) {
 
   var latCol = chartSpec.lat_col;
   var lonCol = chartSpec.lon_col;
-  var textCol = chartSpec.text_col;
   var valueCol = chartSpec.value_col;
 
   var rawLat = colData[latCol] || [];
@@ -818,10 +835,21 @@ function buildScatterMapFigure(chartSpec, queryResults) {
     trace.name = nValid + ' of ' + nTotal + ' points (invalid coords filtered)';
   }
 
-  if (textCol && colData[textCol]) {
-    trace.text = applyMask(colData[textCol]);
-    trace.hovertemplate = '%{text}<extra></extra>';
-  }
+  // Rich tooltip: show all non-coordinate columns for each point
+  var tooltipCols = queryResults.columns.filter(function(c) {
+    return c !== latCol && c !== lonCol && c !== 'index' && c !== 'Unnamed: 0';
+  });
+  var maskedValues = applyMask(queryResults.values);
+  trace.text = maskedValues.map(function(row) {
+    var rowMap = {};
+    queryResults.columns.forEach(function(col, ci) { rowMap[col] = row[ci]; });
+    return tooltipCols.map(function(c) {
+      var v = rowMap[c];
+      return '<b>' + c + '</b>: ' + (v !== null && v !== undefined ? v : 'N/A');
+    }).join('<br>');
+  });
+  trace.hovertemplate = '%{text}<extra></extra>';
+
   if (valueCol && colData[valueCol]) {
     var colorVals = applyMask(colData[valueCol]).map(Number);
     trace.marker.color = colorVals;
@@ -892,7 +920,8 @@ async function createArtifact(question, sql, queryResults, chartSpec, answerText
     '  <button class="ai-artifact-fullscreen" title="Fullscreen">⛶</button>',
     '</div>',
     '<div class="ai-artifact-body" style="display:block">',
-    '  <div class="ai-chart-div" id="chart-' + id + '"></div>',
+    '  <div class="ai-chart-div ai-chart-thumbnail" id="chart-' + id + '" title="Click to expand">',
+    '  </div>',
     '  <div class="ai-answer-text">' + escapeHTML(answerText || '') + '</div>',
     '  <div class="ai-sql-section">',
     '    <button class="ai-sql-toggle">Show SQL ▼</button>',
@@ -910,6 +939,12 @@ async function createArtifact(question, sql, queryResults, chartSpec, answerText
 
   el.querySelector('.ai-artifact-toggle').addEventListener('click', function() {
     toggleArtifact(el);
+  });
+
+  // Clicking the chart thumbnail opens fullscreen
+  el.querySelector('.ai-chart-div').addEventListener('click', function() {
+    var d = ARTIFACT_STORE[id];
+    openFullscreen(id, d.chartSpec, d.queryResults);
   });
   el.querySelector('.ai-sql-toggle').addEventListener('click', function() {
     var pre = el.querySelector('.ai-sql-block');
@@ -943,14 +978,22 @@ function collapseAllArtifacts() {
 function toggleArtifact(el) {
   var body = el.querySelector('.ai-artifact-body');
   var btn = el.querySelector('.ai-artifact-toggle');
+  var chartDiv = el.querySelector('.ai-chart-div');
   var isCollapsed = body.style.display === 'none';
   body.style.display = isCollapsed ? 'block' : 'none';
   btn.setAttribute('aria-expanded', isCollapsed ? 'true' : 'false');
   btn.innerHTML = isCollapsed ? '▲' : '▼';
   btn.title = isCollapsed ? 'Collapse' : 'Expand';
   if (isCollapsed) {
+    // Expand chart from thumbnail to full size
+    chartDiv.classList.remove('ai-chart-thumbnail');
+    chartDiv.classList.add('ai-chart-full');
     var id = el.getAttribute('data-artifact-id');
-    Plotly.relayout('chart-' + id, { autosize: true });
+    setTimeout(function() { Plotly.relayout('chart-' + id, { autosize: true }); }, 50);
+  } else {
+    // Return to thumbnail on collapse
+    chartDiv.classList.remove('ai-chart-full');
+    chartDiv.classList.add('ai-chart-thumbnail');
   }
 }
 

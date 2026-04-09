@@ -32,6 +32,12 @@
   font-size: 0.9em;
 }
 
+.ai-db-status--error {
+  background: #fdecea;
+  border-color: #e57373;
+  color: #c62828;
+}
+
 #ai-db-progress {
   width: 150px;
   height: 18px;
@@ -390,8 +396,19 @@
 
 .ai-chart-div {
   width: 100%;
-  min-height: 250px;
+  height: 160px;
   margin-bottom: 10px;
+  cursor: pointer;
+  transition: height 0.25s ease;
+}
+
+.ai-chart-div.ai-chart-thumbnail {
+  height: 160px;
+}
+
+.ai-chart-div.ai-chart-full {
+  height: 300px;
+  cursor: default;
 }
 
 .ai-answer-text {
