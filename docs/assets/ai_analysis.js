@@ -432,7 +432,9 @@ function buildStage1SystemPrompt(schema) {
     '- Column names must exactly match the schema',
     '- For map queries, always include the geographic ID column (Town, Watershed, GEOID, latitude, longitude)',
     '- If the question cannot be answered with available tables, set sql to null and explain in reasoning',
-    '- If the user asks a follow-up, refer to prior SQL in the conversation to build on it'
+    '- If the user asks a follow-up, refer to prior SQL in the conversation to build on it',
+    '- String values in this database are often ALL CAPS (e.g. waterBody = \'MYSTIC RIVER\', municipality = \'BOSTON\'). Always use UPPER() for string filters: WHERE UPPER(column) = UPPER(\'value\') or WHERE UPPER(column) LIKE UPPER(\'%value%\')',
+    '- Common waterBody values include: MYSTIC RIVER, CHARLES RIVER, NEPONSET RIVER, BOSTON HARBOR, MERRIMACK RIVER, CONNECTICUT RIVER, etc. Always uppercase these.'
   );
 
   return parts.join('\n');
@@ -482,7 +484,7 @@ async function runAnalysis(question) {
   var stage1 = parseJSON(stage1Text);
 
   if (!stage1.sql) {
-    throw new Error('Could not generate SQL: ' + (stage1.reasoning || 'unknown reason'));
+    throw new Error('Could not generate SQL: ' + (stage1.reasoning || stage1.error || 'unknown reason'));
   }
 
   // SQL safety check
@@ -711,7 +713,13 @@ function buildMapFigure(chartSpec, queryResults, geojson) {
     }],
     layout: {
       title: chartSpec.title || '',
-      map: { style: 'open-street-map', fitbounds: 'locations', projection: { type: 'mercator' } },
+      // center/zoom = MA default; fitbounds overrides when matched features exist
+      map: {
+        style: 'open-street-map',
+        center: { lat: 42.4, lon: -71.8 },
+        zoom: 7,
+        fitbounds: 'locations',
+      },
       margin: { r: 0, t: 40, l: 0, b: 0 },
       autosize: true,
     },
@@ -729,19 +737,50 @@ function buildScatterMapFigure(chartSpec, queryResults) {
   var textCol = chartSpec.text_col;
   var valueCol = chartSpec.value_col;
 
+  var rawLat = colData[latCol] || [];
+  var rawLon = colData[lonCol] || [];
+
+  // Validate coordinates — filter out nulls and out-of-range values
+  var validMask = rawLat.map(function(lat, i) {
+    var lon = parseFloat(rawLon[i]);
+    lat = parseFloat(lat);
+    return !isNaN(lat) && !isNaN(lon) &&
+           lat >= -90 && lat <= 90 &&
+           lon >= -180 && lon <= 180;
+  });
+
+  var nTotal = rawLat.length;
+  var nValid = validMask.filter(Boolean).length;
+
+  function applyMask(arr) {
+    return (arr || []).filter(function(_, i) { return validMask[i]; });
+  }
+
+  if (nValid === 0) {
+    // No valid coordinates — fall back to a table
+    console.warn('scatter_map: no valid coordinates found in columns', latCol, lonCol, '— falling back to table');
+    return buildPlotlyFigure({ type: 'table' }, queryResults);
+  }
+
   var trace = {
     type: 'scattermap',
-    lat: colData[latCol] || [],
-    lon: colData[lonCol] || [],
+    lat: applyMask(rawLat).map(Number),
+    lon: applyMask(rawLon).map(Number),
     mode: 'markers',
     marker: { size: 8, color: '#285858' },
   };
+
+  if (nValid < nTotal) {
+    trace.name = nValid + ' of ' + nTotal + ' points (invalid coords filtered)';
+  }
+
   if (textCol && colData[textCol]) {
-    trace.text = colData[textCol];
+    trace.text = applyMask(colData[textCol]);
     trace.hovertemplate = '%{text}<extra></extra>';
   }
   if (valueCol && colData[valueCol]) {
-    trace.marker.color = colData[valueCol];
+    var colorVals = applyMask(colData[valueCol]).map(Number);
+    trace.marker.color = colorVals;
     trace.marker.colorscale = 'YlOrRd';
     trace.marker.showscale = true;
     trace.marker.colorbar = { title: { text: valueCol } };
@@ -751,7 +790,12 @@ function buildScatterMapFigure(chartSpec, queryResults) {
     data: [trace],
     layout: {
       title: chartSpec.title || '',
-      map: { style: 'open-street-map', fitbounds: 'locations' },
+      map: {
+        style: 'open-street-map',
+        center: { lat: 42.4, lon: -71.8 },
+        zoom: 7,
+        fitbounds: 'locations',
+      },
       margin: { r: 0, t: 40, l: 0, b: 0 },
       autosize: true,
     },
