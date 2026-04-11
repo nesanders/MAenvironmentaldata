@@ -61,7 +61,14 @@ const GEO_CONFIG = {
   watersheds: {
     url: 'assets/geo_json/watshdp1_geojson_simple.json',
     featureidkey: 'properties.NAME',
-    normalize: function(v) { return String(v).toUpperCase().trim(); },
+    // GeoJSON watershed names are short (e.g. "MYSTIC", "CHARLES") but the DB
+    // waterBody column has full names ("MYSTIC RIVER", "CHARLES RIVER"). Strip
+    // common suffixes so they match.
+    normalize: function(v) {
+      return String(v).toUpperCase().trim()
+        .replace(/\s+(RIVER|WATERSHED|BROOK|CREEK|HARBOR|CHANNEL|POND|LAKE|RESERVOIR|ESTUARY|BAY)$/i, '')
+        .trim();
+    },
   },
   census_bg: {
     url: 'assets/geo_json/cb_2017_25_bg_500k.json',
@@ -953,7 +960,12 @@ function renderChart(containerId, chartSpec, queryResults) {
     return loadGeoJSON(chartSpec.geography || 'towns')
       .then(function(geojson) {
         var fig = buildMapFigure(chartSpec, queryResults, geojson);
+        if (el) el.textContent = '';
         return Plotly.newPlot(containerId, fig.data, fig.layout, { responsive: true });
+      })
+      .catch(function(err) {
+        if (el) el.textContent = 'Map failed to load: ' + err.message;
+        throw err;
       });
   }
 
@@ -996,6 +1008,13 @@ async function createArtifact(question, sql, queryResults, chartSpec, answerText
     '    <button class="ai-sql-toggle">Show SQL ▼</button>',
     '    <pre class="ai-sql-block" style="display:none">' + escapeHTML(sql) + '</pre>',
     '  </div>',
+    '  <div class="ai-data-section">',
+    '    <span class="ai-data-controls">',
+    '      <button class="ai-data-toggle">Show data ▼</button>',
+    '      <button class="ai-csv-btn" style="display:none">⬇ CSV</button>',
+    '    </span>',
+    '    <div class="ai-data-table-wrap" style="display:none"></div>',
+    '  </div>',
     '</div>',
   ].join('');
 
@@ -1021,6 +1040,24 @@ async function createArtifact(question, sql, queryResults, chartSpec, answerText
     var hidden = pre.style.display === 'none';
     pre.style.display = hidden ? 'block' : 'none';
     btn.innerHTML = hidden ? 'Hide SQL ▲' : 'Show SQL ▼';
+  });
+
+  el.querySelector('.ai-data-toggle').addEventListener('click', function() {
+    var wrap = el.querySelector('.ai-data-table-wrap');
+    var btn = el.querySelector('.ai-data-toggle');
+    var csvBtn = el.querySelector('.ai-csv-btn');
+    var hidden = wrap.style.display === 'none';
+    if (hidden && !wrap.dataset.built) {
+      wrap.innerHTML = buildDataTable(queryResults);
+      wrap.dataset.built = '1';
+    }
+    wrap.style.display = hidden ? 'block' : 'none';
+    csvBtn.style.display = hidden ? '' : 'none';
+    btn.innerHTML = hidden ? 'Hide data ▲' : 'Show data ▼';
+  });
+
+  el.querySelector('.ai-csv-btn').addEventListener('click', function() {
+    downloadCSV(queryResults, 'amend-query-' + id + '.csv');
   });
   el.querySelector('.ai-artifact-fullscreen').addEventListener('click', function() {
     var d = ARTIFACT_STORE[id];
@@ -1163,6 +1200,44 @@ function formatResultsForLLM(queryResults, maxRows) {
   var header = cols.join('\t');
   var rows = vals.map(function(r) { return r.join('\t'); });
   return header + '\n' + rows.join('\n');
+}
+
+function buildDataTable(queryResults) {
+  var cols = queryResults.columns;
+  var rows = queryResults.values;
+  var MAX_ROWS = 200;
+  var shown = rows.slice(0, MAX_ROWS);
+  var header = '<tr>' + cols.map(function(c) { return '<th>' + escapeHTML(c) + '</th>'; }).join('') + '</tr>';
+  var body = shown.map(function(row) {
+    return '<tr>' + row.map(function(v) {
+      return '<td>' + escapeHTML(v !== null && v !== undefined ? String(v) : '') + '</td>';
+    }).join('') + '</tr>';
+  }).join('');
+  var note = rows.length > MAX_ROWS
+    ? '<p class="ai-data-note">Showing ' + MAX_ROWS + ' of ' + rows.length + ' rows. Download CSV for full data.</p>'
+    : '';
+  return note + '<table class="ai-data-table"><thead>' + header + '</thead><tbody>' + body + '</tbody></table>';
+}
+
+function downloadCSV(queryResults, filename) {
+  var cols = queryResults.columns;
+  var rows = queryResults.values;
+  var escape = function(v) {
+    var s = v !== null && v !== undefined ? String(v) : '';
+    return s.includes(',') || s.includes('"') || s.includes('\n')
+      ? '"' + s.replace(/"/g, '""') + '"'
+      : s;
+  };
+  var csv = [cols.map(escape).join(',')]
+    .concat(rows.map(function(r) { return r.map(escape).join(','); }))
+    .join('\n');
+  var blob = new Blob([csv], { type: 'text/csv' });
+  var url = URL.createObjectURL(blob);
+  var a = document.createElement('a');
+  a.href = url;
+  a.download = filename;
+  a.click();
+  URL.revokeObjectURL(url);
 }
 
 function escapeHTML(str) {

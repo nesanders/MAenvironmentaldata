@@ -463,6 +463,92 @@
   font-family: 'Courier New', monospace;
 }
 
+/* ─── Data Table ─────────────────────────────────────────────────────────── */
+.ai-data-section {
+  margin-top: 8px;
+}
+
+.ai-data-controls {
+  display: flex;
+  gap: 6px;
+  align-items: center;
+}
+
+.ai-data-toggle {
+  background: none;
+  border: 1px solid #ccc;
+  border-radius: 3px;
+  cursor: pointer;
+  font-size: 0.75em;
+  padding: 3px 8px;
+  color: #285858;
+  font-weight: bold;
+  transition: background-color 0.2s;
+}
+
+.ai-data-toggle:hover {
+  background: #f0f0f0;
+}
+
+.ai-csv-btn {
+  background: none;
+  border: 1px solid #a8d5a2;
+  border-radius: 3px;
+  cursor: pointer;
+  font-size: 0.75em;
+  padding: 3px 8px;
+  color: #285858;
+  font-weight: bold;
+  transition: background-color 0.2s;
+}
+
+.ai-csv-btn:hover {
+  background: #f0f7f0;
+}
+
+.ai-data-table-wrap {
+  margin-top: 6px;
+  overflow-x: auto;
+  max-height: 250px;
+  overflow-y: auto;
+  border: 1px solid #ddd;
+  border-radius: 3px;
+}
+
+.ai-data-table {
+  border-collapse: collapse;
+  font-size: 0.75em;
+  width: 100%;
+  white-space: nowrap;
+}
+
+.ai-data-table th {
+  background: #285858;
+  color: white;
+  padding: 4px 8px;
+  text-align: left;
+  position: sticky;
+  top: 0;
+  z-index: 1;
+}
+
+.ai-data-table td {
+  padding: 3px 8px;
+  border-bottom: 1px solid #eee;
+  color: #333;
+}
+
+.ai-data-table tr:nth-child(even) td {
+  background: #f8f8f8;
+}
+
+.ai-data-note {
+  font-size: 0.75em;
+  color: #888;
+  font-style: italic;
+  margin: 4px 0;
+}
+
 /* ─── Fullscreen Modal ───────────────────────────────────────────────────── */
 .ai-fullscreen-overlay {
   position: fixed;

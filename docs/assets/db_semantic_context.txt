@@ -1,5 +1,5 @@
 # AMEND Database Semantic Context
-Generated: 2026-04-08
+Generated: 2026-04-10
 
 ## Global Data Notes
 
@@ -31,9 +31,39 @@ Generated: 2026-04-08
 - **Precipitation + CSO by date**:
   MA_precipitation_daily.date ↔ MAEEADP_CSO.incidentDate (both YYYY-MM-DD strings; or join on substr(incidentDate,1,4) = CAST(Year AS TEXT))
 
+- **CSO watershed choropleth** (use this pattern for watershed-level CSO aggregations):
+  MAEEADP_CSO JOIN CSO_WatershedMapping ON MAEEADP_CSO.waterBody = CSO_WatershedMapping.waterBody
+  → group by CSO_WatershedMapping.watershed → produce choropleth with geography='watersheds'
+
 ---
 
 ## Table Schemas and Sample Data
+
+### CSO_WatershedMapping (56 rows)
+Lookup table mapping each MAEEADP_CSO.waterBody value to its containing major MA watershed (matching the GeoJSON polygon names in the watershed choropleth map). JOIN: MAEEADP_CSO.waterBody = CSO_WatershedMapping.waterBody. Use this table whenever producing a watershed-level choropleth of CSO data. watershed values match the short ALL-CAPS names in the GeoJSON (e.g. MYSTIC, CHARLES, BLACKSTONE, MERRIMACK). watershed is NULL for the catch-all "Other" entry.
+
+```sql
+CREATE TABLE "CSO_WatershedMapping" (
+	"index" BIGINT, 
+	"waterBody" TEXT, 
+	watershed TEXT
+)
+```
+
+/* 5 rows from CSO_WatershedMapping:
+waterBody	watershed
+ABANDONED FALULAH CANAL	NASHUA
+ACUSHNET RIVER	BUZZARDS BAY
+ALEWIFE BROOK	MYSTIC
+ASSABET RIVER	CONCORD
+BEAVER BROOK	MERRIMACK
+*/
+
+**Column notes:**
+- `waterBody`: ALL CAPS waterBody value from MAEEADP_CSO. Joins on MAEEADP_CSO.waterBody.
+- `watershed`: ALL CAPS major watershed name matching GeoJSON polygon (e.g. MYSTIC, CHARLES, BLACKSTONE). NULL for the "Other" catch-all row.
+
+---
 
 ### Census_ACS (352 rows)
 Census American Community Survey data for MA subdivisions. Key fields: Subdivision, population_acs52014, per_capita_income_acs52014.

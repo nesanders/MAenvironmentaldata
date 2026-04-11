@@ -40,6 +40,12 @@ dissolved boundaries, or switching to vectorized `geopandas.sjoin`.
 
 # Infrastructure
 
+### Make data table in AI Analysis artifact card expandable to full screen
+Currently artifact cards have a fullscreen button for charts. Add an equivalent full-screen
+view for the toggle-able data table (the tabular query results). Should reuse the same
+overlay modal pattern as the chart fullscreen.
+
+
 ### Add unit tests
 
 ### Develop tests for AI Analysis semantic context (`get_data/generate_semantic_context.py`)

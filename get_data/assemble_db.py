@@ -80,6 +80,71 @@ if __name__ == '__main__':
 		new_row.iloc[0, 2:] = 0  # Zero-fill growth columns
 		data_csv['SSAWages'] = pd.concat([data_csv['SSAWages'], new_row], ignore_index=True)
 
+	## Build waterBody → watershed lookup table for CSO choropleth mapping.
+	## GeoJSON watershed polygon names (short, ALL CAPS) are from docs/assets/ma_watersheds.geojson.
+	## Mapping reviewed and approved 2026-04-10.
+	_CSO_WATERSHED_MAP = {
+		'ABANDONED FALULAH CANAL':                          'NASHUA',
+		'ACUSHNET RIVER':                                   'BUZZARDS BAY',
+		'ALEWIFE BROOK':                                    'MYSTIC',
+		'ASSABET RIVER':                                    'CONCORD',
+		'BEAVER BROOK':                                     'MERRIMACK',
+		'BIRCH BROOK @ HEYWOOD ST':                         'NASHUA',
+		'BLACKSTONE RIVER':                                 'BLACKSTONE',
+		'BOSTON INNER HARBOR':                              'MYSTIC',
+		'CHARLES RIVER':                                    'CHARLES',
+		'CHARLES RIVER BASIN':                              'CHARLES',
+		'CHELSEA RIVER':                                    'MYSTIC',
+		'CHICOPEE R.':                                      'CHICOPEE',
+		'CLARK COVE':                                       'BUZZARDS BAY',
+		'CONCORD RIVER':                                    'CONCORD',
+		'CONNECTICUT R.':                                   'CONNECTICUT',
+		'CONNECTICUT RIVER':                                'CONNECTICUT',
+		'DEERFIELD RIVER':                                  'DEERFIELD',
+		'DINGLE BK TO CONNECTICUT R.':                      'CONNECTICUT',
+		'FORT POINT CHANNEL':                               'CHARLES',
+		'FRENCH STREAM':                                    'FRENCH',
+		'GREENWOOD CREEK':                                  'IPSWICH',
+		'HARBOR COVE':                                      'NORTH COAST',
+		'HOUSATONIC RIVER':                                 'HOUSATONIC',
+		'INNER HARBOR':                                     'MYSTIC',
+		'INNER NEW BEDFORD HARBOR':                         'BUZZARDS BAY',
+		'LITTLE MYSTIC CHANNEL':                            'MYSTIC',
+		'LITTLE RIVER':                                     'MERRIMACK',
+		'LYNN HARBOR':                                      'NORTH COAST',
+		'MASSACHUSETTS BAY':                                'NORTH COAST',
+		'MERIMACK RIVER':                                   'MERRIMACK',
+		'MERRIMACK RIVER':                                  'MERRIMACK',
+		'MILL BROOK TO BLACKSTONE RIVER':                   'BLACKSTONE',
+		'MILL R.':                                          'CONNECTICUT',
+		'MOUNT HOPE BAY':                                   'MT HOPE BAY',
+		'MUDDY RIVER':                                      'CHARLES',
+		'MYSTIC RIVER':                                     'MYSTIC',
+		'NAHANT BAY':                                       'NORTH COAST',
+		'NASHUA RIVER':                                     'NASHUA',
+		'NORTH NASHUA RIVER':                               'NASHUA',
+		'OUTER NEW BEDFORD HARBOR':                         'BUZZARDS BAY',
+		'Other':                                            None,
+		'POWER CANAL CONNECTICUT RIVER':                    'CONNECTICUT',
+		'PUNCH BROOK CULVERT @ BOULDER DRIVE VIA PUTNAM ST.': 'NASHUA',
+		'PUNCH BROOK CULVERT @ MAIN ST.':                   'NASHUA',
+		'PUNCH BROOK CULVERT@BOULDER ST VIA MAIN ST':       'NASHUA',
+		'QUEQUECHAN RIVER':                                 'TAUNTON',
+		'QUINEBAUG RIVER':                                  'QUINEBAUG',
+		'RESERVED CHANNEL':                                 'MYSTIC',
+		'SALEM SOUND':                                      'NORTH COAST',
+		'SAUGUS RIVER':                                     'NORTH COAST',
+		'SPICKETT HARBOR':                                  'MERRIMACK',
+		'TAUNTON RIVER':                                    'TAUNTON',
+		'TEN MILE RIVER':                                   'TEN MILE',
+		'TIDAL CREEK TO HERRING RIVER':                     'CAPE COD',
+		'WARE RIVER':                                       'CHICOPEE',
+		'WILLIMANSETT BK':                                  'CHICOPEE',
+	}
+	data_csv['CSO_WatershedMapping'] = pd.DataFrame(
+		list(_CSO_WATERSHED_MAP.items()), columns=['waterBody', 'watershed']
+	)
+
 	data_csv['AMEND_metadata'] = pd.Series({
 		'Website':'https://nesanders.github.io/MAenvironmentaldata/index.html',
 		'GitHub':'https://github.com/nesanders/MAenvironmentaldata',

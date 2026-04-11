@@ -114,6 +114,14 @@ TABLE_DESCRIPTIONS = {
         '150+ columns. Similar structure to EPA_EJSCREEN_2017 with additional indicators. '
         'Key fields: ID (GEOID), STATE_NAME, CNTY_NAME, MINORPCT, LOWINCPCT, PM25, CANCER.'
     ),
+    'CSO_WatershedMapping': (
+        'Lookup table mapping each MAEEADP_CSO.waterBody value to its containing major '
+        'MA watershed (matching the GeoJSON polygon names in the watershed choropleth map). '
+        'JOIN: MAEEADP_CSO.waterBody = CSO_WatershedMapping.waterBody. '
+        'Use this table whenever producing a watershed-level choropleth of CSO data. '
+        'watershed values match the short ALL-CAPS names in the GeoJSON '
+        '(e.g. MYSTIC, CHARLES, BLACKSTONE, MERRIMACK). watershed is NULL for the catch-all "Other" entry.'
+    ),
 }
 
 # ─── Column-level notes for key tables ────────────────────────────────────────
@@ -166,6 +174,10 @@ COLUMN_NOTES = {
         'GovernorsBudget': "Governor's recommended budget for DEP.",
         'FiscalYear': 'Fiscal year label (e.g. FY2023).',
     },
+    'CSO_WatershedMapping': {
+        'waterBody': 'ALL CAPS waterBody value from MAEEADP_CSO. Joins on MAEEADP_CSO.waterBody.',
+        'watershed': 'ALL CAPS major watershed name matching GeoJSON polygon (e.g. MYSTIC, CHARLES, BLACKSTONE). NULL for the "Other" catch-all row.',
+    },
 }
 
 # ─── Columns to skip in sample rows (too wide / noisy) ────────────────────────
@@ -199,6 +211,10 @@ JOIN_RELATIONSHIPS = """
 
 - **Precipitation + CSO by date**:
   MA_precipitation_daily.date ↔ MAEEADP_CSO.incidentDate (both YYYY-MM-DD strings; or join on substr(incidentDate,1,4) = CAST(Year AS TEXT))
+
+- **CSO watershed choropleth** (use this pattern for watershed-level CSO aggregations):
+  MAEEADP_CSO JOIN CSO_WatershedMapping ON MAEEADP_CSO.waterBody = CSO_WatershedMapping.waterBody
+  → group by CSO_WatershedMapping.watershed → produce choropleth with geography='watersheds'
 """
 
 GLOBAL_NOTES = """
