@@ -1,13 +1,13 @@
 ---
 layout: default
-title: AI Analysis
+title: Ask AMEND AI
 author: NES
 ---
 
 <link rel="stylesheet" href="{{ site.url }}{{ site.baseurl }}/assets/ai_analysis.css">
 <script src="https://cdn.plot.ly/plotly-2.35.2.min.js" charset="utf-8"></script>
 
-<h1>{{ site.data.site_config.site_abbrev }} AI Analysis</h1>
+<h1>Ask {{ site.data.site_config.site_abbrev }} AI</h1>
 
 <p>Ask natural-language questions about the AMEND environmental database and get interactive charts and maps as answers.
 Type a question, and an AI model will generate and run a SQL query against the full database, then interpret the results for you.
@@ -113,6 +113,11 @@ Supported providers: <a href="https://console.groq.com" target="_blank">Groq</a>
       <button class="ai-starter-btn">Which Massachusetts watersheds have the highest total CSO discharge?</button>
       <button class="ai-starter-btn">How does DEP's annual budget compare to its staffing levels over time?</button>
       <button class="ai-starter-btn">Map enforcement actions by Massachusetts town</button>
+      <button class="ai-starter-btn">Which towns have the most drinking water violations?</button>
+      <button class="ai-starter-btn">How does total annual CSO discharge correlate with annual rainfall?</button>
+      <button class="ai-starter-btn">What is the trend in average MassDEP employee salary over time?</button>
+      <button class="ai-starter-btn">How many NPDES permits have been issued per year in Massachusetts?</button>
+      <button class="ai-starter-btn">Show the correlation between minority population percentage and CSO discharge volume by town</button>
     </div>
 
     <div class="ai-input-row">
