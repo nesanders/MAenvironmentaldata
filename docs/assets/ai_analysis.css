@@ -295,6 +295,16 @@
   background: #1a3a3a;
 }
 
+.button--secondary {
+  background: transparent;
+  color: #285858;
+  border: 1px solid #285858;
+}
+
+.button--secondary:hover:not(:disabled) {
+  background: #f0f7f0;
+}
+
 .button:disabled {
   background: #999;
   cursor: not-allowed;

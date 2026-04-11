@@ -22,8 +22,9 @@ Supported providers: <a href="https://console.groq.com" target="_blank">Groq</a>
 
 <!-- DB load status bar -->
 <div id="ai-db-status" class="ai-db-status">
-  <span id="ai-db-status-text">Database not loaded.</span>
-  <button id="ai-load-db" class="button">Load Database (~60 MB)</button>
+  <span id="ai-db-status-text">Checking for cached database…</span>
+  <button id="ai-load-db" class="button" style="display:none">Load Database (~84 MB)</button>
+  <button id="ai-refresh-db" class="button button--secondary" style="display:none" title="Re-download the database from the server">↺ Refresh</button>
   <div id="ai-db-progress-wrap" style="display:none">
     <progress id="ai-db-progress" value="0" max="100"></progress>
     <span id="ai-db-progress-label">0%</span>

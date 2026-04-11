@@ -90,7 +90,23 @@ if __name__ == '__main__':
 		print(f'Writing database table {key}')
 		data_csv[key].to_sql(name=key, con=disk_engine, if_exists='append')
 
+	# Upload uncompressed DB (for CI scripts and assemble_db.py compatibility)
 	os.system('gsutil cp AMEND.db gs://openamend-data/amend.db')
+
+	# Upload gzip-compressed DB for browser delivery (~26 MB vs ~85 MB = ~70% egress savings).
+	# Cache-Control: no-transform prevents GCS decompressive transcoding so browsers
+	# receive the compressed bytes (and auto-decompress via Content-Encoding: gzip).
+	print('Compressing AMEND.db for browser delivery...')
+	os.system('gzip -c AMEND.db > amend.db.gz')
+	os.system(
+		'gsutil '
+		'-h "Content-Encoding:gzip" '
+		'-h "Content-Type:application/octet-stream" '
+		'-h "Cache-Control:no-transform,public,max-age=86400" '
+		'cp amend.db.gz gs://openamend-data/amend.db.gz'
+	)
+	os.system('rm amend.db.gz')
+	print('Compressed DB uploaded to gs://openamend-data/amend.db.gz')
 
 	## Generate semantic context for AI Analysis page
 	print('Generating semantic context for AI Analysis...')

@@ -19,7 +19,7 @@ const STATE = {
 const ARTIFACT_STORE = {}; // { [id]: { question, sql, queryResults, chartSpec, answerText } }
 
 // ─── Constants ────────────────────────────────────────────────────────────────
-const DB_URL = 'https://storage.googleapis.com/openamend-data/amend.db';
+const DB_URL = 'https://storage.googleapis.com/openamend-data/amend.db.gz';
 const SCHEMA_QUERY = "SELECT name, sql FROM sqlite_master WHERE type='table' ORDER BY name";
 const MAX_PREVIEW_ROWS = 20;
 const WRITE_BLOCK_RE = /\b(INSERT|UPDATE|DELETE|DROP|CREATE|ALTER|TRUNCATE)\b/i;
@@ -108,18 +108,79 @@ function workerExec(message, transferables) {
   });
 }
 
+// ─── IndexedDB Cache ──────────────────────────────────────────────────────────
+
+const IDB_NAME = 'amend-ai';
+const IDB_STORE = 'db-cache';
+const IDB_KEY = 'amend.db';
+
+function idbOpen() {
+  return new Promise(function(resolve, reject) {
+    var req = indexedDB.open(IDB_NAME, 1);
+    req.onupgradeneeded = function(e) {
+      e.target.result.createObjectStore(IDB_STORE);
+    };
+    req.onsuccess = function(e) { resolve(e.target.result); };
+    req.onerror = function(e) { reject(e.target.error); };
+  });
+}
+
+function idbGet(idb) {
+  return new Promise(function(resolve, reject) {
+    var tx = idb.transaction(IDB_STORE, 'readonly');
+    var req = tx.objectStore(IDB_STORE).get(IDB_KEY);
+    req.onsuccess = function(e) { resolve(e.target.result || null); };
+    req.onerror = function(e) { reject(e.target.error); };
+  });
+}
+
+function idbPut(idb, buffer) {
+  return new Promise(function(resolve, reject) {
+    var tx = idb.transaction(IDB_STORE, 'readwrite');
+    var req = tx.objectStore(IDB_STORE).put(buffer, IDB_KEY);
+    req.onsuccess = function() { resolve(); };
+    req.onerror = function(e) { reject(e.target.error); };
+  });
+}
+
 // ─── Database Loading ─────────────────────────────────────────────────────────
 
-function loadDatabase() {
-  var loadBtn = document.getElementById('ai-load-db');
+function initDatabase() {
+  // Called at page load. Try to restore from IndexedDB cache first.
+  var statusText = document.getElementById('ai-db-status-text');
+  idbOpen()
+    .then(function(idb) {
+      return idbGet(idb).then(function(cached) {
+        if (cached) {
+          statusText.textContent = 'Loading database from cache…';
+          return openAndReady(cached, true);
+        } else {
+          // No cache — show the Load button
+          statusText.textContent = 'Database not loaded.';
+          document.getElementById('ai-load-db').style.display = '';
+        }
+      });
+    })
+    .catch(function() {
+      // IndexedDB unavailable (e.g. private browsing on some browsers) — show Load button
+      statusText.textContent = 'Database not loaded.';
+      document.getElementById('ai-load-db').style.display = '';
+    });
+}
+
+function loadDatabase(forceRefresh) {
+  // Download from network, save to cache, then open.
   var progressWrap = document.getElementById('ai-db-progress-wrap');
   var progressEl = document.getElementById('ai-db-progress');
   var progressLabel = document.getElementById('ai-db-progress-label');
   var statusText = document.getElementById('ai-db-status-text');
+  var loadBtn = document.getElementById('ai-load-db');
+  var refreshBtn = document.getElementById('ai-refresh-db');
 
-  loadBtn.disabled = true;
+  loadBtn.style.display = 'none';
+  refreshBtn.style.display = 'none';
   progressWrap.style.display = 'block';
-  statusText.textContent = 'Downloading database...';
+  statusText.textContent = 'Downloading database…';
 
   var xhr = new XMLHttpRequest();
   xhr.open('GET', DB_URL, true);
@@ -135,34 +196,41 @@ function loadDatabase() {
 
   xhr.onerror = function() {
     setDBError('Download failed. Check network connection.');
+    if (forceRefresh) document.getElementById('ai-refresh-db').style.display = '';
+    else document.getElementById('ai-load-db').style.display = '';
   };
 
   xhr.onload = function() {
     if (this.status !== 200) {
-      setDBError('Download failed: HTTP ' + this.status +
-        '. Check that the database is accessible.');
+      setDBError('Download failed: HTTP ' + this.status + '. Check that the database is accessible.');
+      if (forceRefresh) document.getElementById('ai-refresh-db').style.display = '';
+      else document.getElementById('ai-load-db').style.display = '';
       return;
     }
-    statusText.textContent = 'Opening database in worker…';
-    openDBInWorker(this.response)
-      .then(function() {
-        return loadSchema();
-      })
-      .then(function(schema) {
-        STATE.schema = schema;
-        STATE.dbReady = true;
-        var useExt = loadSettings().useExtendedContext;
-        if (useExt) return loadExtendedContext();
-      })
-      .then(function() {
-        onDBReady();
-      })
-      .catch(function(err) {
-        setDBError('Error: ' + err.message);
-      });
+    var buffer = this.response;
+    statusText.textContent = 'Saving to local cache…';
+    idbOpen()
+      .then(function(idb) { return idbPut(idb, buffer); })
+      .catch(function(e) { console.warn('IndexedDB cache write failed:', e); })
+      .then(function() { return openAndReady(buffer, false); });
   };
 
   xhr.send();
+}
+
+function openAndReady(buffer, fromCache) {
+  var statusText = document.getElementById('ai-db-status-text');
+  statusText.textContent = fromCache ? 'Restoring database from cache…' : 'Opening database…';
+  return openDBInWorker(buffer)
+    .then(function() { return loadSchema(); })
+    .then(function(schema) {
+      STATE.schema = schema;
+      STATE.dbReady = true;
+      var useExt = loadSettings().useExtendedContext;
+      if (useExt) return loadExtendedContext();
+    })
+    .then(function() { onDBReady(fromCache); })
+    .catch(function(err) { setDBError('Error: ' + err.message); });
 }
 
 function openDBInWorker(arrayBuffer) {
@@ -238,22 +306,23 @@ function fetchSemanticContext() {
     });
 }
 
-function onDBReady() {
+function onDBReady(fromCache) {
   var statusEl = document.getElementById('ai-db-status');
-  // Clear any error state and hide the load controls — DB is ready
   statusEl.classList.remove('ai-db-status--error');
-  statusEl.querySelector('#ai-db-status-text').textContent = '✓ Database loaded.';
-  statusEl.querySelector('#ai-db-progress-wrap').style.display = 'none';
-  statusEl.querySelector('#ai-load-db').style.display = 'none';
+  document.getElementById('ai-db-status-text').textContent =
+    fromCache ? '✓ Database loaded from cache.' : '✓ Database loaded.';
+  document.getElementById('ai-db-progress-wrap').style.display = 'none';
+  document.getElementById('ai-load-db').style.display = 'none';
+  document.getElementById('ai-refresh-db').style.display = '';
   document.getElementById('ai-submit').disabled = false;
-  document.getElementById('ai-question').placeholder = 'Ask a question about the environmental data... (Shift+Enter for newline, Enter to submit)';
+  document.getElementById('ai-question').placeholder =
+    'Ask a question about the environmental data… (Shift+Enter for newline, Enter to submit)';
 }
 
 function setDBError(message) {
   var statusEl = document.getElementById('ai-db-status');
   statusEl.classList.add('ai-db-status--error');
   document.getElementById('ai-db-status-text').textContent = message;
-  document.getElementById('ai-load-db').disabled = false;
   document.getElementById('ai-db-progress-wrap').style.display = 'none';
 }
 
@@ -1143,14 +1212,16 @@ async function handleSubmit() {
 document.addEventListener('DOMContentLoaded', function() {
   initWorker();
   populateSettingsUI();
-  fetchSemanticContext();  // start loading in background immediately
+  fetchSemanticContext();
+  initDatabase();  // auto-load from IndexedDB cache if available
 
   // Open settings drawer automatically when no API key is saved
   if (!loadSettings().apiKey) {
     document.getElementById('ai-settings').setAttribute('open', '');
   }
 
-  document.getElementById('ai-load-db').addEventListener('click', loadDatabase);
+  document.getElementById('ai-load-db').addEventListener('click', function() { loadDatabase(false); });
+  document.getElementById('ai-refresh-db').addEventListener('click', function() { loadDatabase(true); });
   document.getElementById('ai-save-settings').addEventListener('click', saveSettings);
   document.getElementById('ai-provider').addEventListener('change', function() {
     updateModelUI(this.value);
