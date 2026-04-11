@@ -205,6 +205,23 @@
   color: #c62828;
 }
 
+.ai-chat-msg ul {
+  margin: 4px 0 4px 16px;
+  padding: 0;
+}
+
+.ai-chat-msg li {
+  margin: 2px 0;
+}
+
+.ai-chat-msg code {
+  background: #e8e8e8;
+  border-radius: 3px;
+  padding: 1px 4px;
+  font-family: 'Courier New', monospace;
+  font-size: 0.9em;
+}
+
 .ai-artifact-link {
   color: #285858;
   font-weight: bold;
@@ -362,6 +379,11 @@
   color: white;
   cursor: pointer;
   user-select: none;
+  transition: background-color 0.15s;
+}
+
+.ai-artifact-header:hover {
+  background: #1f4545;
 }
 
 .ai-artifact-num {
@@ -404,21 +426,28 @@
   display: block;
 }
 
+.ai-chart-area {
+  width: 100%;
+  margin-bottom: 10px;
+}
+
+/* PNG thumbnail shown in collapsed/card state */
+.ai-chart-thumb {
+  width: 100%;
+  display: block;
+  cursor: pointer;
+  border-radius: 3px;
+  border: 1px solid #e0e0e0;
+}
+
+.ai-chart-thumb:hover {
+  opacity: 0.9;
+}
+
+/* Interactive Plotly div shown when card is expanded */
 .ai-chart-div {
   width: 100%;
-  height: 160px;
-  margin-bottom: 10px;
-  cursor: pointer;
-  transition: height 0.25s ease;
-}
-
-.ai-chart-div.ai-chart-thumbnail {
-  height: 160px;
-}
-
-.ai-chart-div.ai-chart-full {
-  height: 300px;
-  cursor: default;
+  height: 320px;
 }
 
 .ai-answer-text {
@@ -490,7 +519,8 @@
   background: #f0f0f0;
 }
 
-.ai-csv-btn {
+.ai-csv-btn,
+.ai-data-fullscreen {
   background: none;
   border: 1px solid #a8d5a2;
   border-radius: 3px;
@@ -502,7 +532,8 @@
   transition: background-color 0.2s;
 }
 
-.ai-csv-btn:hover {
+.ai-csv-btn:hover,
+.ai-data-fullscreen:hover {
   background: #f0f7f0;
 }
 
@@ -573,25 +604,23 @@
 
 .ai-fullscreen-close {
   position: absolute;
-  top: 10px;
-  right: 12px;
-  background: none;
+  top: 12px;
+  right: 14px;
+  background: #285858;
   border: none;
-  font-size: 1.2em;
+  border-radius: 20px;
+  color: white;
   cursor: pointer;
-  color: #333;
-  padding: 0;
-  width: 30px;
-  height: 30px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  border-radius: 3px;
+  font-size: 0.85em;
+  font-weight: bold;
+  padding: 5px 14px;
+  letter-spacing: 0.02em;
   transition: background-color 0.2s;
+  z-index: 1;
 }
 
 .ai-fullscreen-close:hover {
-  background: #f0f0f0;
+  background: #1a3a3a;
 }
 
 #ai-fullscreen-chart {
@@ -654,6 +683,6 @@
   }
 
   .ai-chart-div {
-    min-height: 200px;
+    height: 260px;
   }
 }

@@ -530,6 +530,13 @@ function buildStage1SystemPrompt(schema) {
     '  "reasoning": "One sentence explaining your approach"',
     '}',
     '',
+    'If the question is conversational, a meta-question about the data (e.g. "what datasets are available?"), or cannot be answered with SQL, respond with:',
+    '{',
+    '  "sql": null,',
+    '  "reasoning": null,',
+    '  "answer": "Your full plain-text answer here"',
+    '}',
+    '',
     'chart_spec types:',
     '- Standard charts: type = "bar", "line", "scatter", "histogram", "pie", "table"',
     '  Fields: "x", "y", "color" (optional grouping), "title"',
@@ -545,6 +552,7 @@ function buildStage1SystemPrompt(schema) {
     '  Fields: "lat_col", "lon_col", "text_col" (optional label), "value_col" (optional color/size), "title"',
     '',
     'SQL rules:',
+    '- Never reference the column named "index" — it is a pandas artifact and a reserved SQLite keyword; always omit it',
     '- Write valid SQLite SELECT statements only',
     '- Never use INSERT, UPDATE, DELETE, DROP, CREATE, ALTER, or TRUNCATE',
     '- Use LIMIT 500 for row-level queries; no LIMIT for aggregations by geography',
@@ -601,9 +609,23 @@ async function runAnalysis(question) {
   var stage1Text = await callLLM(stage1Messages, true);
   var stage1 = parseJSON(stage1Text);
 
+  // If the LLM chose not to generate SQL (conversational / meta question), show the
+  // reasoning as a plain chat reply and stop — no artifact, no error.
   if (!stage1.sql) {
-    throw new Error('Could not generate SQL: ' + (stage1.reasoning || stage1.error || 'unknown reason'));
+    var conversationalAnswer = stage1.reasoning || stage1.answer || stage1.error || 'No SQL was generated.';
+    removeLastStatus();
+    appendChatMessage('assistant', conversationalAnswer, 'answer', null);
+    STATE.conversationHistory.push({ role: 'user', content: question });
+    STATE.conversationHistory.push({ role: 'assistant', content: conversationalAnswer });
+    if (STATE.conversationHistory.length > MAX_HISTORY_TURNS * 2) {
+      STATE.conversationHistory = STATE.conversationHistory.slice(-MAX_HISTORY_TURNS * 2);
+    }
+    return;
   }
+
+  // Quote bare `index` keyword (pandas artifact; reserved SQLite word).
+  // Matches `index` that is not already inside quotes and not part of a longer word.
+  stage1.sql = stage1.sql.replace(/\b(index)\b(?=(?:[^"]*"[^"]*")*[^"]*$)/gi, '"index"');
 
   // SQL safety check
   if (WRITE_BLOCK_RE.test(stage1.sql)) {
@@ -951,17 +973,18 @@ function buildScatterMapFigure(chartSpec, queryResults) {
 }
 
 // Async wrapper — handles GeoJSON loading for map types, sync for everything else
-function renderChart(containerId, chartSpec, queryResults) {
+function renderChart(container, chartSpec, queryResults) {
+  // Accept either a DOM element or a string ID
+  var el = (typeof container === 'string') ? document.getElementById(container) : container;
   var type = chartSpec.type;
 
   if (type === 'map') {
-    var el = document.getElementById(containerId);
     if (el) el.textContent = 'Loading map data…';
     return loadGeoJSON(chartSpec.geography || 'towns')
       .then(function(geojson) {
         var fig = buildMapFigure(chartSpec, queryResults, geojson);
         if (el) el.textContent = '';
-        return Plotly.newPlot(containerId, fig.data, fig.layout, { responsive: true });
+        return Plotly.newPlot(el, fig.data, fig.layout, { responsive: false });
       })
       .catch(function(err) {
         if (el) el.textContent = 'Map failed to load: ' + err.message;
@@ -971,11 +994,11 @@ function renderChart(containerId, chartSpec, queryResults) {
 
   if (type === 'scatter_map') {
     var fig = buildScatterMapFigure(chartSpec, queryResults);
-    return Promise.resolve(Plotly.newPlot(containerId, fig.data, fig.layout, { responsive: true }));
+    return Promise.resolve(Plotly.newPlot(el, fig.data, fig.layout, { responsive: false }));
   }
 
   var fig = buildPlotlyFigure(chartSpec, queryResults);
-  return Promise.resolve(Plotly.newPlot(containerId, fig.data, fig.layout, { responsive: true }));
+  return Promise.resolve(Plotly.newPlot(el, fig.data, fig.layout, { responsive: false }));
 }
 
 // ─── Artifact Tray System ─────────────────────────────────────────────────────
@@ -998,10 +1021,11 @@ async function createArtifact(question, sql, queryResults, chartSpec, answerText
     '  <span class="ai-artifact-num">#' + id + '</span>',
     '  <span class="ai-artifact-title">' + escapeHTML(truncQ) + '</span>',
     '  <button class="ai-artifact-toggle" aria-expanded="true" title="Collapse">▲</button>',
-    '  <button class="ai-artifact-fullscreen" title="Fullscreen">⛶</button>',
+    '  <button class="ai-artifact-fullscreen" title="Fullscreen chart">⛶</button>',
     '</div>',
     '<div class="ai-artifact-body" style="display:block">',
-    '  <div class="ai-chart-div ai-chart-thumbnail" id="chart-' + id + '" title="Click to expand">',
+    '  <div class="ai-chart-area">',
+    '    <img class="ai-chart-thumb" id="thumb-' + id + '" alt="Chart thumbnail" style="display:none" title="Click to open fullscreen">',
     '  </div>',
     '  <div class="ai-answer-text">' + escapeHTML(answerText || '') + '</div>',
     '  <div class="ai-sql-section">',
@@ -1012,6 +1036,7 @@ async function createArtifact(question, sql, queryResults, chartSpec, answerText
     '    <span class="ai-data-controls">',
     '      <button class="ai-data-toggle">Show data ▼</button>',
     '      <button class="ai-csv-btn" style="display:none">⬇ CSV</button>',
+    '      <button class="ai-data-fullscreen" style="display:none" title="Fullscreen table">⛶ Table</button>',
     '    </span>',
     '    <div class="ai-data-table-wrap" style="display:none"></div>',
     '  </div>',
@@ -1029,11 +1054,19 @@ async function createArtifact(question, sql, queryResults, chartSpec, answerText
     toggleArtifact(el);
   });
 
-  // Clicking the chart thumbnail opens fullscreen
-  el.querySelector('.ai-chart-div').addEventListener('click', function() {
+  // Clicking the PNG thumbnail opens fullscreen interactive chart
+  el.querySelector('.ai-chart-thumb').addEventListener('click', function() {
     var d = ARTIFACT_STORE[id];
     openFullscreen(id, d.chartSpec, d.queryResults);
   });
+
+  // Clicking the header bar toggles the card open/closed
+  el.querySelector('.ai-artifact-header').addEventListener('click', function(e) {
+    // Don't trigger if a button inside the header was clicked
+    if (e.target.closest('button')) return;
+    toggleArtifact(el);
+  });
+
   el.querySelector('.ai-sql-toggle').addEventListener('click', function() {
     var pre = el.querySelector('.ai-sql-block');
     var btn = el.querySelector('.ai-sql-toggle');
@@ -1046,6 +1079,7 @@ async function createArtifact(question, sql, queryResults, chartSpec, answerText
     var wrap = el.querySelector('.ai-data-table-wrap');
     var btn = el.querySelector('.ai-data-toggle');
     var csvBtn = el.querySelector('.ai-csv-btn');
+    var fsBtn = el.querySelector('.ai-data-fullscreen');
     var hidden = wrap.style.display === 'none';
     if (hidden && !wrap.dataset.built) {
       wrap.innerHTML = buildDataTable(queryResults);
@@ -1053,19 +1087,40 @@ async function createArtifact(question, sql, queryResults, chartSpec, answerText
     }
     wrap.style.display = hidden ? 'block' : 'none';
     csvBtn.style.display = hidden ? '' : 'none';
+    fsBtn.style.display = hidden ? '' : 'none';
     btn.innerHTML = hidden ? 'Hide data ▲' : 'Show data ▼';
   });
 
   el.querySelector('.ai-csv-btn').addEventListener('click', function() {
     downloadCSV(queryResults, 'amend-query-' + id + '.csv');
   });
+  el.querySelector('.ai-data-fullscreen').addEventListener('click', function() {
+    openFullscreenTable(id, queryResults);
+  });
   el.querySelector('.ai-artifact-fullscreen').addEventListener('click', function() {
     var d = ARTIFACT_STORE[id];
     openFullscreen(id, d.chartSpec, d.queryResults);
   });
 
-  // Render chart (async for maps)
-  await renderChart('chart-' + id, chartSpec, queryResults);
+  // Render chart into an off-screen div at full size, capture PNG, then discard
+  var thumbEl = el.querySelector('.ai-chart-thumb');
+  var offscreen = document.createElement('div');
+  offscreen.style.cssText = 'position:fixed;left:-9999px;top:0;width:700px;height:340px;visibility:hidden';
+  document.body.appendChild(offscreen);
+  try {
+    await renderChart(offscreen, chartSpec, queryResults);
+    var imgData = await Plotly.toImage(offscreen, { format: 'png', width: 700, height: 300 });
+    thumbEl.src = imgData;
+    thumbEl.style.display = 'block';
+  } catch (e) {
+    // toImage failed (e.g. table trace or map) — fall back to a message
+    thumbEl.alt = 'Preview unavailable — click ⛶ to view';
+    thumbEl.style.display = 'block';
+    thumbEl.style.minHeight = '40px';
+  } finally {
+    Plotly.purge(offscreen);
+    document.body.removeChild(offscreen);
+  }
 
   return id;
 }
@@ -1084,23 +1139,12 @@ function collapseAllArtifacts() {
 function toggleArtifact(el) {
   var body = el.querySelector('.ai-artifact-body');
   var btn = el.querySelector('.ai-artifact-toggle');
-  var chartDiv = el.querySelector('.ai-chart-div');
   var isCollapsed = body.style.display === 'none';
   body.style.display = isCollapsed ? 'block' : 'none';
   btn.setAttribute('aria-expanded', isCollapsed ? 'true' : 'false');
   btn.innerHTML = isCollapsed ? '▲' : '▼';
   btn.title = isCollapsed ? 'Collapse' : 'Expand';
-  if (isCollapsed) {
-    // Expand chart from thumbnail to full size
-    chartDiv.classList.remove('ai-chart-thumbnail');
-    chartDiv.classList.add('ai-chart-full');
-    var id = el.getAttribute('data-artifact-id');
-    setTimeout(function() { Plotly.relayout('chart-' + id, { autosize: true }); }, 50);
-  } else {
-    // Return to thumbnail on collapse
-    chartDiv.classList.remove('ai-chart-full');
-    chartDiv.classList.add('ai-chart-thumbnail');
-  }
+  // Thumbnail is always shown in the card body — no inline Plotly re-render
 }
 
 function highlightArtifact(artifactId) {
@@ -1113,6 +1157,21 @@ function highlightArtifact(artifactId) {
 }
 
 // ─── Fullscreen Mode ─────────────────────────────────────────────────────────
+
+function openFullscreenTable(_artifactId, queryResults) {
+  var overlay = document.getElementById('ai-fullscreen-overlay');
+  var inner = document.getElementById('ai-fullscreen-chart');
+  inner.innerHTML = buildDataTable(queryResults);
+  inner.style.overflow = 'auto';
+  overlay.style.display = 'flex';
+  function closeOverlay() {
+    overlay.style.display = 'none';
+    inner.innerHTML = '';
+    inner.style.overflow = '';
+  }
+  document.getElementById('ai-fullscreen-close').onclick = closeOverlay;
+  overlay.onclick = function(e) { if (e.target === overlay) closeOverlay(); };
+}
 
 function openFullscreen(artifactId, chartSpec, queryResults) {
   var overlay = document.getElementById('ai-fullscreen-overlay');
@@ -1138,13 +1197,51 @@ function openFullscreen(artifactId, chartSpec, queryResults) {
 
 // ─── Chat Message System ─────────────────────────────────────────────────────
 
+function renderMarkdown(text) {
+  // Minimal safe markdown: bold, inline code, bullet lists, line breaks.
+  // Escapes HTML first so LLM output can't inject tags.
+  var escaped = text
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;');
+
+  // Bold: **text**
+  escaped = escaped.replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>');
+  // Inline code: `text`
+  escaped = escaped.replace(/`([^`]+)`/g, '<code>$1</code>');
+
+  // Split into lines and wrap bullet lists in <ul>
+  var lines = escaped.split('\n');
+  var html = '';
+  var inList = false;
+  for (var i = 0; i < lines.length; i++) {
+    var line = lines[i];
+    var bulletMatch = line.match(/^[\s]*[-*]\s+(.*)/);
+    if (bulletMatch) {
+      if (!inList) { html += '<ul>'; inList = true; }
+      html += '<li>' + bulletMatch[1] + '</li>';
+    } else {
+      if (inList) { html += '</ul>'; inList = false; }
+      html += (line.trim() === '' ? '<br>' : line + '<br>');
+    }
+  }
+  if (inList) html += '</ul>';
+  // Clean up trailing <br> sequences
+  html = html.replace(/(<br>)+$/, '');
+  return html;
+}
+
 function appendChatMessage(role, text, subtype, artifactId) {
   var log = document.getElementById('ai-chat-log');
   var div = document.createElement('div');
   div.className = 'ai-chat-msg ai-chat-msg--' + role;
   if (subtype) div.setAttribute('data-subtype', subtype);
 
+  // Status and error messages are plain text; answers render markdown
+  var useMarkdown = (subtype === 'answer' || (!subtype && role === 'assistant'));
+
   if (subtype === 'answer' && artifactId) {
+    div.innerHTML = renderMarkdown(text) + ' ';
     var link = document.createElement('a');
     link.href = '#artifact-' + artifactId;
     link.textContent = '[Chart #' + artifactId + ']';
@@ -1158,8 +1255,9 @@ function appendChatMessage(role, text, subtype, artifactId) {
       }
       highlightArtifact(artifactId);
     });
-    div.textContent = text + ' ';
     div.appendChild(link);
+  } else if (useMarkdown) {
+    div.innerHTML = renderMarkdown(text);
   } else {
     div.textContent = text;
   }
