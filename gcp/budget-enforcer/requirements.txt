@@ -1,0 +1,2 @@
+# No extra dependencies — uses gsutil (pre-installed in Cloud Functions runtime)
+# and Python stdlib only (base64, json, logging, subprocess)
