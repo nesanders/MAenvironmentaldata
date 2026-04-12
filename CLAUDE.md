@@ -204,6 +204,23 @@ conda run -n amend_python python generate_semantic_context.py
 **Key implementation files:**
 - `get_data/generate_semantic_context.py` — generates semantic context from `AMEND.db`
 - `docs/assets/db_semantic_context.txt` — the generated context (committed, auto-updated)
-- `docs/ai_analysis.html` — page layout (disclaimer, settings, two-panel chat + artifact tray)
+- `docs/ai_analysis.html` — page layout (disclaimer, settings, two-panel chat + artifact tray); also contains starter question buttons
 - `docs/assets/ai_analysis.js` — all client-side logic (~950 lines vanilla JS)
 - `docs/assets/ai_analysis.css` — styles
+
+### Starter questions
+
+Starter question buttons live in `docs/ai_analysis.html` as `.ai-starter-btn` elements inside `#ai-starters`. When updating them, follow these principles:
+- **Prefer trend/historical questions** over point-in-time status questions; current-status questions are only appropriate for datasets with high recency (CSO, enforcement, permits — not 303d which only goes to 2022)
+- **Prioritise cross-dataset joins** — the best questions exercise joins between 2–3 tables (e.g. CSO + precipitation, enforcement + budget, CSO + 303d mapping + impairments)
+- **Cover a range of plot types** — aim for scatter, dual-axis line, bar, choropleth, and stacked bar across the full set
+- **Be broadly representative** — one or two questions per major data asset (CSO, staffing/budget, enforcement, 303d, drinking water, ECOS, NPDES/permits, EJ)
+
+### Semantic context pitfalls
+
+Common LLM SQL errors and how the semantic context addresses them:
+- **ALL-CAPS fields**: `waterBody`, `municipality`, `Town` are stored in ALL CAPS — document this with `UPPER()` examples
+- **Misspelled column**: `volumnOfEvent` (not "volume") — document explicitly in `COLUMN_NOTES`
+- **Year as FLOAT**: `MAEEADP_CSO.Year` is stored as FLOAT (e.g. 2023.0) — note `CAST(Year AS INTEGER)` if needed
+- **Table alias confusion**: lookup/mapping tables (e.g. `CSO_303d_Mapping`, `CSO_WatershedMapping`) have very few columns — add explicit `IMPORTANT: this table has NO [other columns]` warnings in `TABLE_DESCRIPTIONS` and `COLUMN_NOTES` to prevent the LLM from applying filters (e.g. `reportingCycle`) to the wrong alias
+- **Join pattern examples**: add concrete SQL examples to `JOIN_RELATIONSHIPS` for non-obvious multi-table joins; the LLM reliably follows patterns it has seen
