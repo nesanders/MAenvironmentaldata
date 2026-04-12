@@ -35,19 +35,25 @@ Generated: 2026-04-12
   MAEEADP_CSO JOIN CSO_WatershedMapping ON MAEEADP_CSO.waterBody = CSO_WatershedMapping.waterBody
   → group by CSO_WatershedMapping.watershed → produce choropleth with geography='watersheds'
 
+- **303(d) status or TMDL for a named waterbody** (direct lookup — do NOT use CSO_303d_Mapping):
+  SELECT waterbody, hasTmdl, attainment, category FROM EPA_303d_Impairments
+  WHERE waterbody LIKE '%Mystic%'
+  AND reportingCycle = (SELECT MAX(reportingCycle) FROM EPA_303d_Impairments)
+  → reportingCycle and hasTmdl are columns of EPA_303d_Impairments; never put them on CSO_303d_Mapping
+
 - **CSO discharges to 303(d) impaired waters** (two-step join):
   MAEEADP_CSO JOIN CSO_303d_Mapping ON MAEEADP_CSO.waterBody = CSO_303d_Mapping.csoWaterBody
   JOIN EPA_303d_Impairments ON CSO_303d_Mapping.waterbody303d = EPA_303d_Impairments.waterbody
   WHERE EPA_303d_Impairments.reportingCycle = (SELECT MAX(reportingCycle) FROM EPA_303d_Impairments)
   → shows which CSO discharge events occur in waters listed as "Not Supporting"
-  NOTE: 35 of 56 CSO waterways are mapped; unmatched waterways won't appear in results.
+  NOTE: 39 of 56 CSO waterways are mapped; unmatched waterways won't appear in results.
 
 ---
 
 ## Table Schemas and Sample Data
 
 ### CSO_303d_Mapping (39 rows)
-Lookup table: manually verified mapping from CSO waterBody names (ALL CAPS, from MAEEADP_CSO) to 303(d) waterbody names (mixed case, from EPA_303d_Impairments). 35 of 56 CSO-reporting waterways are matched; unmatched ones are absent from this table. Join: MAEEADP_CSO.waterBody = CSO_303d_Mapping.csoWaterBody, then CSO_303d_Mapping.waterbody303d = EPA_303d_Impairments.waterbody. Note: one waterbody name may correspond to multiple assessment units (AUs) in EPA_303d_Impairments since large rivers are divided into segments.
+Lookup table: manually verified mapping from CSO waterBody names (ALL CAPS, from MAEEADP_CSO) to 303(d) waterbody names (mixed case, from EPA_303d_Impairments). 39 of 56 CSO-reporting waterways are matched; unmatched ones are absent from this table. IMPORTANT: This table has ONLY TWO columns: csoWaterBody and waterbody303d. It has NO reportingCycle, NO hasTmdl, NO attainment, NO category column. Those columns live in EPA_303d_Impairments. Always apply reportingCycle filters to EPA_303d_Impairments, never to CSO_303d_Mapping. Join: MAEEADP_CSO.waterBody = CSO_303d_Mapping.csoWaterBody, then CSO_303d_Mapping.waterbody303d = EPA_303d_Impairments.waterbody. Note: one waterbody name may correspond to multiple assessment units (AUs) in EPA_303d_Impairments since large rivers are divided into segments.
 
 ```sql
 CREATE TABLE "CSO_303d_Mapping" (
@@ -68,7 +74,7 @@ BLACKSTONE RIVER	Blackstone River
 
 **Column notes:**
 - `csoWaterBody`: ALL CAPS waterBody value from MAEEADP_CSO. Joins on MAEEADP_CSO.waterBody.
-- `waterbody303d`: Mixed case waterbody name from EPA_303d_Impairments. Joins on EPA_303d_Impairments.waterbody.
+- `waterbody303d`: Mixed case waterbody name from EPA_303d_Impairments. Joins on EPA_303d_Impairments.waterbody. WARNING: this table has no other columns — reportingCycle, hasTmdl, attainment all come from EPA_303d_Impairments, not this table.
 
 ---
 
@@ -229,7 +235,7 @@ Ansonia (Naugatuck River)	<a href='https://www.epa.gov/system/files/documents/20
 ---
 
 ### EPA_303d_Impairments (106,058 rows)
-MassGIS / EPA ATTAINS: Massachusetts 303(d) Integrated List of Waters. Section 303(d) of the Clean Water Act requires MA to identify waterbodies that fail to meet water quality standards. MA submits a biennial Integrated List to EPA on April 1 of even-numbered years; EPA typically approves it within 6-18 months. Available cycles: 2010, 2012, 2014, 2016, 2018, 2022 (2020 not published by MassGIS; 2024/2026 cycle is in draft as of April 2026). One row per (assessment unit x designated use x impairment cause x reporting cycle). Key fields: reportingCycle (year), auId (assessment unit ID), waterbody (name), watershed (MA watershed name), waterType, category (1/2/3/4A/4B/4C/5 — see below), designatedUse, attainment, cause (specific pollutant or stressor), hasTmdl. Category meanings: 1=Fully Supporting, 2=Attaining with concern, 3=Insufficient info, 4A=Impaired+TMDL approved, 4B=Impaired+other plan, 4C=Impaired+alt control, 5=Impaired+TMDL needed (the 303(d) list proper). A TMDL (Total Maximum Daily Load) is a cleanup plan. hasTmdl=1 means category is 4A/4B/4C. Join to MAEEADP_CSO via CSO_303d_Mapping (35 of 56 CSO waterbodies matched). Key question: Are CSO operators discharging into already-impaired waters?
+MassGIS / EPA ATTAINS: Massachusetts 303(d) Integrated List of Waters. Section 303(d) of the Clean Water Act requires MA to identify waterbodies that fail to meet water quality standards. MA submits a biennial Integrated List to EPA on April 1 of even-numbered years; EPA typically approves it within 6-18 months. Available cycles: 2010, 2012, 2014, 2016, 2018, 2022 (2020 not published by MassGIS; 2024/2026 cycle is in draft as of April 2026). One row per (assessment unit x designated use x impairment cause x reporting cycle). Key fields: reportingCycle (year), auId (assessment unit ID), waterbody (name), watershed (MA watershed name), waterType, category (1/2/3/4A/4B/4C/5 — see below), designatedUse, attainment, cause (specific pollutant or stressor), hasTmdl. Category meanings: 1=Fully Supporting, 2=Attaining with concern, 3=Insufficient info, 4A=Impaired+TMDL approved, 4B=Impaired+other plan, 4C=Impaired+alt control, 5=Impaired+TMDL needed (the 303(d) list proper). A TMDL (Total Maximum Daily Load) is a cleanup plan. hasTmdl=1 means category is 4A/4B/4C. Join to MAEEADP_CSO via CSO_303d_Mapping (39 of 56 CSO waterbodies matched). Key question: Are CSO operators discharging into already-impaired waters?
 
 ```sql
 CREATE TABLE "EPA_303d_Impairments" (

@@ -137,13 +137,17 @@ TABLE_DESCRIPTIONS = {
         '4A=Impaired+TMDL approved, 4B=Impaired+other plan, 4C=Impaired+alt control, '
         '5=Impaired+TMDL needed (the 303(d) list proper). '
         'A TMDL (Total Maximum Daily Load) is a cleanup plan. hasTmdl=1 means category is 4A/4B/4C. '
-        'Join to MAEEADP_CSO via CSO_303d_Mapping (35 of 56 CSO waterbodies matched). '
+        'Join to MAEEADP_CSO via CSO_303d_Mapping (39 of 56 CSO waterbodies matched). '
         'Key question: Are CSO operators discharging into already-impaired waters?'
     ),
     'CSO_303d_Mapping': (
         'Lookup table: manually verified mapping from CSO waterBody names (ALL CAPS, from MAEEADP_CSO) '
         'to 303(d) waterbody names (mixed case, from EPA_303d_Impairments). '
-        '35 of 56 CSO-reporting waterways are matched; unmatched ones are absent from this table. '
+        '39 of 56 CSO-reporting waterways are matched; unmatched ones are absent from this table. '
+        'IMPORTANT: This table has ONLY TWO columns: csoWaterBody and waterbody303d. '
+        'It has NO reportingCycle, NO hasTmdl, NO attainment, NO category column. '
+        'Those columns live in EPA_303d_Impairments. Always apply reportingCycle filters to '
+        'EPA_303d_Impairments, never to CSO_303d_Mapping. '
         'Join: MAEEADP_CSO.waterBody = CSO_303d_Mapping.csoWaterBody, '
         'then CSO_303d_Mapping.waterbody303d = EPA_303d_Impairments.waterbody. '
         'Note: one waterbody name may correspond to multiple assessment units (AUs) in EPA_303d_Impairments '
@@ -221,7 +225,7 @@ COLUMN_NOTES = {
     },
     'CSO_303d_Mapping': {
         'csoWaterBody': 'ALL CAPS waterBody value from MAEEADP_CSO. Joins on MAEEADP_CSO.waterBody.',
-        'waterbody303d': 'Mixed case waterbody name from EPA_303d_Impairments. Joins on EPA_303d_Impairments.waterbody.',
+        'waterbody303d': 'Mixed case waterbody name from EPA_303d_Impairments. Joins on EPA_303d_Impairments.waterbody. WARNING: this table has no other columns — reportingCycle, hasTmdl, attainment all come from EPA_303d_Impairments, not this table.',
     },
 }
 
@@ -261,12 +265,18 @@ JOIN_RELATIONSHIPS = """
   MAEEADP_CSO JOIN CSO_WatershedMapping ON MAEEADP_CSO.waterBody = CSO_WatershedMapping.waterBody
   → group by CSO_WatershedMapping.watershed → produce choropleth with geography='watersheds'
 
+- **303(d) status or TMDL for a named waterbody** (direct lookup — do NOT use CSO_303d_Mapping):
+  SELECT waterbody, hasTmdl, attainment, category FROM EPA_303d_Impairments
+  WHERE waterbody LIKE '%Mystic%'
+  AND reportingCycle = (SELECT MAX(reportingCycle) FROM EPA_303d_Impairments)
+  → reportingCycle and hasTmdl are columns of EPA_303d_Impairments; never put them on CSO_303d_Mapping
+
 - **CSO discharges to 303(d) impaired waters** (two-step join):
   MAEEADP_CSO JOIN CSO_303d_Mapping ON MAEEADP_CSO.waterBody = CSO_303d_Mapping.csoWaterBody
   JOIN EPA_303d_Impairments ON CSO_303d_Mapping.waterbody303d = EPA_303d_Impairments.waterbody
   WHERE EPA_303d_Impairments.reportingCycle = (SELECT MAX(reportingCycle) FROM EPA_303d_Impairments)
   → shows which CSO discharge events occur in waters listed as "Not Supporting"
-  NOTE: 35 of 56 CSO waterways are mapped; unmatched waterways won't appear in results.
+  NOTE: 39 of 56 CSO waterways are mapped; unmatched waterways won't appear in results.
 """
 
 GLOBAL_NOTES = """
