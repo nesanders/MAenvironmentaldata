@@ -48,6 +48,7 @@ jobs:
           python get_EEA_data_portal.py
           python get_eea_dp_cso.py
           python get_MA_precipitation.py
+          python get_ATTAINS_303d.py
 
       - name: Validate data
         working-directory: get_data

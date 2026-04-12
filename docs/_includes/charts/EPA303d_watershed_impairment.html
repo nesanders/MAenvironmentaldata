@@ -1,0 +1,79 @@
+{% raw  %}
+<html>
+    <head>
+        <title>MA Watersheds by Impaired Water Count (2022)</title>
+        <script src='https://cdn.jsdelivr.net/npm/chart.js@2.8.0/dist/Chart.bundle.min.js'></script>
+    </head>
+    <body>
+        <div style="width: 700px; height: 450px; max-width: 99%" class="chartjs">
+
+            <canvas id="MA Watersheds by Impaired Water Count (2022)" height="450" width="700"></canvas>
+            <script>
+                Chart.defaults.global.defaultFontSize = 12;
+                var chart_data = {
+                
+                    data: {
+                        labels: ['Cape Cod', 'Buzzards Bay', 'Taunton', 'South Coastal', 'Blackstone', 'Concord (SuAsCo)', 'Nashua', 'Charles', 'North Coastal', 'Merrimack', 'Millers', 'Chicopee'],
+                        datasets: [{'data': [168.0, 117.0, 100.0, 88.0, 86.0, 81.0, 79.0, 74.0, 72.0, 63.0, 61.0, 59.0], 'label': 'Impaired assessment units', 'backgroundColor': 'rgba(54, 110, 179, 0.85)'}]
+                    },
+                    type: 'bar',
+                    options: {
+                        scales: {
+                            yAxes: [{
+                                display: true,
+                                scaleLabel: {
+                                    display: true,
+                                    labelString: 'Watershed'
+                                },
+                                ticks: {
+                                    beginAtZero: true, min: 0
+                                },
+                                "id": "y-axis-0",
+                                "position": "left",
+                                stacked: false
+                            }, {
+                                display: false,
+                                scaleLabel: {
+                                    display: true,
+                                    labelString: ''
+                                },
+                                ticks: {
+                                    beginAtZero: true, min: 0
+                                },
+                                "id": "y-axis-1",
+                                "position": "right"
+                            }],
+                            xAxes: [{
+                                scaleLabel: {
+                                    display: true,
+                                    labelString: 'Impaired assessment units'
+                                },
+                                stacked: false,
+                                ticks: {
+                                    autoSkip: true
+                                }
+                            }]
+                        },
+                        legend: {
+                            display: true
+                            },
+                        tooltips: {
+                            display: true
+                            }
+                    },
+                }
+                
+                
+                
+            </script>
+            <script>
+                {{
+                    var ctx = document.getElementById("MA Watersheds by Impaired Water Count (2022)").getContext("2d");
+                    var mychart = new Chart(ctx, chart_data);
+                }}
+            </script>
+
+        </div>
+    </body>
+</html>
+{% endraw  %}

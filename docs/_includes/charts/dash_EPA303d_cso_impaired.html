@@ -1,0 +1,79 @@
+{% raw  %}
+<html>
+    <head>
+        <title>CSO Discharge Volume by 303(d) Impairment Status</title>
+        <script src='https://cdn.jsdelivr.net/npm/chart.js@2.8.0/dist/Chart.bundle.min.js'></script>
+    </head>
+    <body>
+        <div style="width: 700px; height: 420px; max-width: 99%" class="chartjs">
+
+            <canvas id="CSO Discharge Volume by 303(d) Impairment Status" height="420" width="700"></canvas>
+            <script>
+                Chart.defaults.global.defaultFontSize = 12;
+                var chart_data = {
+                
+                    data: {
+                        labels: ['2022', '2023', '2024', '2025', '2026'],
+                        datasets: [{'data': [1.289486845, 5.400998103, 5.317609031, 2.491985151, 0.43975274], 'label': 'Not Supporting', 'backgroundColor': 'rgba(200, 60, 60, 0.85)', 'stack': 'status'},{'data': [0.152818077, 1.845095751, 2.350365551, 0.579003429, 0.001494799], 'label': 'Not Matched', 'backgroundColor': 'rgba(150, 150, 150, 0.6)', 'stack': 'status'}]
+                    },
+                    type: 'bar',
+                    options: {
+                        scales: {
+                            yAxes: [{
+                                display: true,
+                                scaleLabel: {
+                                    display: true,
+                                    labelString: 'Discharge volume (billion gallons)'
+                                },
+                                ticks: {
+                                    beginAtZero: true, min: 0
+                                },
+                                "id": "y-axis-0",
+                                "position": "left",
+                                stacked: true
+                            }, {
+                                display: false,
+                                scaleLabel: {
+                                    display: true,
+                                    labelString: ''
+                                },
+                                ticks: {
+                                    beginAtZero: true, min: 0
+                                },
+                                "id": "y-axis-1",
+                                "position": "right"
+                            }],
+                            xAxes: [{
+                                scaleLabel: {
+                                    display: true,
+                                    labelString: 'Year'
+                                },
+                                stacked: true,
+                                ticks: {
+                                    autoSkip: true
+                                }
+                            }]
+                        },
+                        legend: {
+                            display: true
+                            },
+                        tooltips: {
+                            display: true
+                            }
+                    },
+                }
+                
+                
+                
+            </script>
+            <script>
+                {{
+                    var ctx = document.getElementById("CSO Discharge Volume by 303(d) Impairment Status").getContext("2d");
+                    var mychart = new Chart(ctx, chart_data);
+                }}
+            </script>
+
+        </div>
+    </body>
+</html>
+{% endraw  %}

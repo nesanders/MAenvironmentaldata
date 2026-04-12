@@ -9,9 +9,22 @@ permalink: /dashboard.html
 Charts on this page are regenerated automatically each Monday morning from the latest available data.
 For full analysis and narrative context, follow the links in each section.
 
-*[GitHub Actions run history](https://github.com/nesanders/MAenvironmentaldata/actions/workflows/update-charts.yml)*
+*For full details on how these dashbpards were built and updated, see the [GitHub Actions run history](https://github.com/nesanders/MAenvironmentaldata/actions/workflows/update-charts.yml)*
 
 ---
+
+**Contents:**
+[MA DEP Staffing](#staffing) &middot;
+[Enforcement Actions](#enforcement) &middot;
+[State Agency Budgets](#budgets) &middot;
+[CSO Discharge Trends](#cso) &middot;
+[303(d) Impaired Waters](#303d) &middot;
+[CSO Data Quality Indicator](#data-quality) &middot;
+[Discharge by Watershed](#watershed)
+
+---
+
+<a name="staffing"></a>
 
 ## MA DEP Staffing
 
@@ -59,6 +72,8 @@ for detailed caveats on data completeness and the merger of the two payroll sour
 
 ---
 
+<a name="enforcement"></a>
+
 ## MA DEP Enforcement Actions
 
 **Enforcement actions measure whether DEP is actively holding polluters accountable.**
@@ -95,6 +110,8 @@ for detailed topic-level analysis.
 
 ---
 
+<a name="budgets"></a>
+
 ## State Environmental Agency Budgets
 
 **State environmental agency budgets vary widely per capita; Massachusetts has the lowest per-capita environmental spending among New England states.**
@@ -124,6 +141,8 @@ comparisons. Budget figures are adjusted for inflation using the SSA Average Wag
 {% include charts/dash_ECOS_budget_percap_peryear_bystate.html %}
 
 ---
+
+<a name="cso"></a>
 
 ## CSO Discharge Trends
 
@@ -164,6 +183,58 @@ the first full calendar year of data is 2023.
 
 ---
 
+<a name="303d"></a>
+
+## 303(d) Impaired Waters
+
+**Massachusetts must identify waterbodies failing water quality standards every two years.
+This data provides the outcome measure for AMEND's regulatory inputs.**
+
+Data: [EPA 303(d) Integrated List of MA Impaired Waters]({{ site.url }}{{ site.baseurl }}/data/EPA_303d_ImpairedWaters.html).
+Full analysis: [MA Impaired Waters: Trends, Causes, and the CSO Connection]({{ site.url }}{{ site.baseurl }}/2026/04/11/ma-impaired-waters-303d.html).
+
+<details>
+<summary>About this data and methodology</summary>
+
+Section 303(d) of the Clean Water Act requires MA to publish a biennial Integrated List of Waters
+identifying waterbodies that fail water quality standards. MA submits the list to EPA on April 1
+of even-numbered years; EPA typically approves it within 6–18 months.
+
+Data is sourced from MassGIS shapefiles. Available cycles: 2010, 2012, 2014, 2016, 2018, 2022.
+The 2024/2026 cycle is currently in draft — AMEND will automatically incorporate it
+when MassGIS publishes the approved data. Because cycles are released biennially, no new data
+appears between cycles.
+
+"Impaired" in the trend chart includes Categories 4A, 4B, 4C (impaired but with a cleanup plan)
+and 5 (impaired, TMDL needed). Category 5 is the "303(d) list" proper. A TMDL (Total Maximum
+Daily Load) is a legally required cleanup plan setting maximum allowable pollutant loads.
+
+CSO discharges are linked to 303(d) status using a manually verified mapping of
+{{ site.data.ts_update_ATTAINS_303d.latest_cycle }} assessment data for 35 of 56 CSO-reporting
+waterways. Unmatched waterways are shown as "Not matched."
+
+</details>
+
+### Trend in impaired water count over time
+
+{% include charts/dash_EPA303d_impaired_trend.html %}
+
+### Causes of impairment ({{ site.data.ts_update_ATTAINS_303d.latest_cycle }})
+
+{% include charts/dash_EPA303d_causes_breakdown.html %}
+
+### CSO discharges to impaired vs. non-impaired waters
+
+{% include charts/dash_EPA303d_cso_impaired.html %}
+
+### TMDL cleanup plan progress
+
+{% include charts/dash_EPA303d_tmdl_trend.html %}
+
+---
+
+<a name="data-quality"></a>
+
 ## Data Quality Indicator: Estimated vs. Measured Discharge Volumes
 
 Data: [MA EEA Data Portal — CSO discharge reports]({{ site.url }}{{ site.baseurl }}/data/EEADP_all.html).
@@ -180,6 +251,8 @@ When operators report discharge volumes rounded to the nearest 1,000 gallons, th
 {% include charts/dash_MAEEADP_dashboard_modeled_vs_metered_fraction.html %}
 
 ---
+
+<a name="watershed"></a>
 
 ## Discharge by Watershed
 

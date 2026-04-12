@@ -145,6 +145,64 @@ if __name__ == '__main__':
 		list(_CSO_WATERSHED_MAP.items()), columns=['waterBody', 'watershed']
 	)
 
+	## Load 303(d) Integrated List of Waters (all available cycles).
+	data_csv['EPA_303d_Impairments'] = pd.read_csv('../docs/data/EPA_303d_impairments.csv',
+	                                               low_memory=False)
+
+	## Build CSO waterBody → 303(d) waterbody name mapping.
+	## Maps each CSO waterBody (ALL CAPS, from MAEEADP_CSO) to the corresponding
+	## waterbody name as it appears in EPA_303d_Impairments.
+	## Only manually verified, exact matches are included; ~30 of ~56 CSO waterbodies matched.
+	## Unmatched CSO waterbodies are simply absent from this table.
+	## Join path: MAEEADP_CSO.waterBody = CSO_303d_Mapping.csoWaterBody
+	##   → CSO_303d_Mapping.waterbody303d = EPA_303d_Impairments.waterbody
+	## Note: one 303d waterbody name may correspond to multiple assessment units (AUs).
+	## Reviewed and approved 2026-04-12.
+	_CSO_303d_MAP = {
+		'ACUSHNET RIVER':             'Acushnet River',
+		'ALEWIFE BROOK':              'Alewife Brook',
+		'ASSABET RIVER':              'Assabet River',
+		'BEAVER BROOK':               'Beaver Brook',
+		'BLACKSTONE RIVER':           'Blackstone River',
+		'BOSTON INNER HARBOR':        'Boston Inner Harbor',
+		'CHARLES RIVER':              'Charles River',
+		'CHARLES RIVER BASIN':        'Charles River',      # CSO alias for same body
+		'CHELSEA RIVER':              'Chelsea River',
+		'CHICOPEE R.':                'Chicopee River',
+		'CONCORD RIVER':              'Concord River',
+		'CONNECTICUT R.':             'Connecticut River',
+		'CONNECTICUT RIVER':          'Connecticut River',
+		'DEERFIELD RIVER':            'Deerfield River',
+		'FRENCH STREAM':              'French Stream',
+		'HOUSATONIC RIVER':           'Housatonic River',
+		'INNER NEW BEDFORD HARBOR':   'New Bedford Inner Harbor',
+		'LITTLE RIVER':               'Little River',
+		'LYNN HARBOR':                'Lynn Harbor',
+		'MERIMACK RIVER':             'Merrimack River',    # CSO typo for Merrimack
+		'MERRIMACK RIVER':            'Merrimack River',
+		'MOUNT HOPE BAY':             'Mount Hope Bay',
+		'MUDDY RIVER':                'Muddy River',
+		'MYSTIC RIVER':               'Mystic River',
+		'NAHANT BAY':                 'Nahant Bay',
+		'NASHUA RIVER':               'Nashua River',
+		'NORTH NASHUA RIVER':         'North Nashua River',
+		'OUTER NEW BEDFORD HARBOR':   'Outer New Bedford Harbor',
+		'QUEQUECHAN RIVER':           'Quequechan River',
+		'QUINEBAUG RIVER':            'Quinebaug River',
+		'SALEM SOUND':                'Salem Sound',
+		'SAUGUS RIVER':               'Saugus River',
+		'TAUNTON RIVER':              'Taunton River',
+		'TEN MILE RIVER':             'Ten Mile River',
+		'WARE RIVER':                 'Ware River',
+		'CLARK COVE':                 'Clarks Cove',            # New Bedford; spelling variant
+		'FORT POINT CHANNEL':         'Boston Inner Harbor',    # BWSC tidal inlet to inner harbor
+		'MILL R.':                    'Mill River',             # Springfield W&S; Connecticut watershed
+		'RESERVED CHANNEL':           'Boston Inner Harbor',    # BWSC South Boston tidal channel
+	}
+	data_csv['CSO_303d_Mapping'] = pd.DataFrame(
+		list(_CSO_303d_MAP.items()), columns=['csoWaterBody', 'waterbody303d']
+	)
+
 	data_csv['AMEND_metadata'] = pd.Series({
 		'Website':'https://nesanders.github.io/MAenvironmentaldata/index.html',
 		'GitHub':'https://github.com/nesanders/MAenvironmentaldata',

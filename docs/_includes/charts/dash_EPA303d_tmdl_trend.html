@@ -1,0 +1,79 @@
+{% raw  %}
+<html>
+    <head>
+        <title>MA 303(d): TMDL Progress Over Time</title>
+        <script src='https://cdn.jsdelivr.net/npm/chart.js@2.8.0/dist/Chart.bundle.min.js'></script>
+    </head>
+    <body>
+        <div style="width: 700px; height: 420px; max-width: 99%" class="chartjs">
+
+            <canvas id="MA 303(d): TMDL Progress Over Time" height="420" width="700"></canvas>
+            <script>
+                Chart.defaults.global.defaultFontSize = 12;
+                var chart_data = {
+                
+                    data: {
+                        labels: ['2010', '2012', '2014', '2016', '2018', '2022'],
+                        datasets: [{'data': [468.0, 511.0, 539.0, 541.0, 588.0, 593.0], 'label': 'Has cleanup plan (TMDL or equivalent)', 'backgroundColor': 'rgba(60, 170, 80, 0.85)', 'stack': 'tmdl'},{'data': [710.0, 720.0, 695.0, 797.0, 887.0, 971.0], 'label': 'No cleanup plan (Category 5)', 'backgroundColor': 'rgba(200, 60, 60, 0.85)', 'stack': 'tmdl'}]
+                    },
+                    type: 'bar',
+                    options: {
+                        scales: {
+                            yAxes: [{
+                                display: true,
+                                scaleLabel: {
+                                    display: true,
+                                    labelString: 'Impaired assessment units'
+                                },
+                                ticks: {
+                                    beginAtZero: true, min: 0
+                                },
+                                "id": "y-axis-0",
+                                "position": "left",
+                                stacked: true
+                            }, {
+                                display: false,
+                                scaleLabel: {
+                                    display: true,
+                                    labelString: ''
+                                },
+                                ticks: {
+                                    beginAtZero: true, min: 0
+                                },
+                                "id": "y-axis-1",
+                                "position": "right"
+                            }],
+                            xAxes: [{
+                                scaleLabel: {
+                                    display: true,
+                                    labelString: 'Reporting cycle'
+                                },
+                                stacked: true,
+                                ticks: {
+                                    autoSkip: true
+                                }
+                            }]
+                        },
+                        legend: {
+                            display: true
+                            },
+                        tooltips: {
+                            display: true
+                            }
+                    },
+                }
+                
+                
+                
+            </script>
+            <script>
+                {{
+                    var ctx = document.getElementById("MA 303(d): TMDL Progress Over Time").getContext("2d");
+                    var mychart = new Chart(ctx, chart_data);
+                }}
+            </script>
+
+        </div>
+    </body>
+</html>
+{% endraw  %}

@@ -122,6 +122,33 @@ TABLE_DESCRIPTIONS = {
         'watershed values match the short ALL-CAPS names in the GeoJSON '
         '(e.g. MYSTIC, CHARLES, BLACKSTONE, MERRIMACK). watershed is NULL for the catch-all "Other" entry.'
     ),
+    'EPA_303d_Impairments': (
+        'MassGIS / EPA ATTAINS: Massachusetts 303(d) Integrated List of Waters. '
+        'Section 303(d) of the Clean Water Act requires MA to identify waterbodies that fail '
+        'to meet water quality standards. MA submits a biennial Integrated List to EPA on '
+        'April 1 of even-numbered years; EPA typically approves it within 6-18 months. '
+        'Available cycles: 2010, 2012, 2014, 2016, 2018, 2022 (2020 not published by MassGIS; '
+        '2024/2026 cycle is in draft as of April 2026). '
+        'One row per (assessment unit x designated use x impairment cause x reporting cycle). '
+        'Key fields: reportingCycle (year), auId (assessment unit ID), waterbody (name), '
+        'watershed (MA watershed name), waterType, category (1/2/3/4A/4B/4C/5 — see below), '
+        'designatedUse, attainment, cause (specific pollutant or stressor), hasTmdl. '
+        'Category meanings: 1=Fully Supporting, 2=Attaining with concern, 3=Insufficient info, '
+        '4A=Impaired+TMDL approved, 4B=Impaired+other plan, 4C=Impaired+alt control, '
+        '5=Impaired+TMDL needed (the 303(d) list proper). '
+        'A TMDL (Total Maximum Daily Load) is a cleanup plan. hasTmdl=1 means category is 4A/4B/4C. '
+        'Join to MAEEADP_CSO via CSO_303d_Mapping (35 of 56 CSO waterbodies matched). '
+        'Key question: Are CSO operators discharging into already-impaired waters?'
+    ),
+    'CSO_303d_Mapping': (
+        'Lookup table: manually verified mapping from CSO waterBody names (ALL CAPS, from MAEEADP_CSO) '
+        'to 303(d) waterbody names (mixed case, from EPA_303d_Impairments). '
+        '35 of 56 CSO-reporting waterways are matched; unmatched ones are absent from this table. '
+        'Join: MAEEADP_CSO.waterBody = CSO_303d_Mapping.csoWaterBody, '
+        'then CSO_303d_Mapping.waterbody303d = EPA_303d_Impairments.waterbody. '
+        'Note: one waterbody name may correspond to multiple assessment units (AUs) in EPA_303d_Impairments '
+        'since large rivers are divided into segments.'
+    ),
 }
 
 # ─── Column-level notes for key tables ────────────────────────────────────────
@@ -178,6 +205,24 @@ COLUMN_NOTES = {
         'waterBody': 'ALL CAPS waterBody value from MAEEADP_CSO. Joins on MAEEADP_CSO.waterBody.',
         'watershed': 'ALL CAPS major watershed name matching GeoJSON polygon (e.g. MYSTIC, CHARLES, BLACKSTONE). NULL for the "Other" catch-all row.',
     },
+    'EPA_303d_Impairments': {
+        'reportingCycle': 'Integer year of biennial assessment (2010, 2012, 2014, 2016, 2018, 2022). Use MAX(reportingCycle) to get most recent.',
+        'auId': 'Assessment unit identifier (e.g. MA51-07). One waterbody may have multiple AUs (river segments).',
+        'waterbody': 'Mixed case (e.g. "Charles River"). NOT all-caps. Use CSO_303d_Mapping for joins to MAEEADP_CSO.',
+        'watershed': 'MA watershed name (mixed case, e.g. "Blackstone", "Cape Cod"). Different from CSO_WatershedMapping watershed (which is ALL CAPS short names).',
+        'waterType': 'Values: RIVER, FRESHWATER LAKE, ESTUARY, COASTAL, WETLAND.',
+        'category': 'Assessment category: 1=Fully Supporting, 2=Attaining, 3=Insufficient Info, 4A=TMDL approved, 4B=Other plan, 4C=Alt control, 5=Impaired+TMDL needed.',
+        'designatedUse': 'Designated use being assessed: Aquatic Life, Recreation, Fish Consumption, Water Supply, Shellfish Harvesting, etc.',
+        'attainment': 'Whether designated use is met: "Not Supporting", "Fully Supporting", "Not Assessed", "Threatened".',
+        'cause': 'Specific pollutant or stressor causing impairment (e.g. FECAL COLIFORM, PHOSPHORUS, MERCURY IN FISH TISSUE). NULL if not impaired.',
+        'source': 'Probable source of impairment (e.g. Municipal point source, Urban runoff). NULL if not impaired.',
+        'tmdlId': 'TMDL document identifier if a cleanup plan exists. NULL means no plan approved.',
+        'hasTmdl': 'Derived: 1 if category is 4A, 4B, or 4C (impaired but has some plan); 0 otherwise.',
+    },
+    'CSO_303d_Mapping': {
+        'csoWaterBody': 'ALL CAPS waterBody value from MAEEADP_CSO. Joins on MAEEADP_CSO.waterBody.',
+        'waterbody303d': 'Mixed case waterbody name from EPA_303d_Impairments. Joins on EPA_303d_Impairments.waterbody.',
+    },
 }
 
 # ─── Columns to skip in sample rows (too wide / noisy) ────────────────────────
@@ -215,6 +260,13 @@ JOIN_RELATIONSHIPS = """
 - **CSO watershed choropleth** (use this pattern for watershed-level CSO aggregations):
   MAEEADP_CSO JOIN CSO_WatershedMapping ON MAEEADP_CSO.waterBody = CSO_WatershedMapping.waterBody
   → group by CSO_WatershedMapping.watershed → produce choropleth with geography='watersheds'
+
+- **CSO discharges to 303(d) impaired waters** (two-step join):
+  MAEEADP_CSO JOIN CSO_303d_Mapping ON MAEEADP_CSO.waterBody = CSO_303d_Mapping.csoWaterBody
+  JOIN EPA_303d_Impairments ON CSO_303d_Mapping.waterbody303d = EPA_303d_Impairments.waterbody
+  WHERE EPA_303d_Impairments.reportingCycle = (SELECT MAX(reportingCycle) FROM EPA_303d_Impairments)
+  → shows which CSO discharge events occur in waters listed as "Not Supporting"
+  NOTE: 35 of 56 CSO waterways are mapped; unmatched waterways won't appear in results.
 """
 
 GLOBAL_NOTES = """

@@ -29,6 +29,7 @@ All fetch scripts are run from `get_data/`:
 3. `get_DEP_staff_SODA.py` — MA Comptroller payroll via SODA API (requires `SECRET_SODA_token`)
 4. `get_EEA_data_portal.py` — EEA portal tables (permit, facility, inspection, enforcement, drinkingWater)
 5. `get_eea_dp_cso.py` — EEA CSO discharge incidents (separate API endpoint)
+5.5. `get_ATTAINS_303d.py` — EPA 303(d) impaired waters from MassGIS shapefiles (biennial data; exits early if all cycles already cached)
 6. `validate_data.py` — schema + row-count checks; writes `docs/data/data_stats.yml`
 7. `assemble_db.py` — builds `AMEND.db` SQLite, uploads to `gs://openamend-data/amend.db`, and regenerates `docs/assets/db_semantic_context.txt`
 
@@ -63,6 +64,7 @@ bash set_cors_gsutil.sh
 - **SSAWages (403)**: The SSA website (`ssa.gov`) blocks automated access despite User-Agent headers. `get_SSAWages.py` script is created but not yet run in CI. Falls back to cached 2023-02-03 version. `assemble_db.py` auto-extends with zero-growth placeholder rows for any year gap.
 - **EPA NPDES page changes**: EPA changed JSON format and column names around 2025; both handled with `isinstance` checks and fallback column detection.
 - **EEA CSOAPI**: Requires `Referer` and `Origin` headers matching the portal URL; plain requests return HTTP 500.  Pagination is 1-indexed.
+- **303(d) data (biennial)**: `get_ATTAINS_303d.py` fetches from MassGIS S3-hosted shapefiles (not the ATTAINS REST API, which times out on `/assessments`). Data updates only biennially (even years); the script exits early if all known cycles are already in the cached CSV. The 2020 cycle was never published by MassGIS. The 2024/2026 cycle is in draft as of April 2026 — the script will auto-detect it when MassGIS publishes the approved shapefile. `CSO_303d_Mapping` in `assemble_db.py` is a manually curated dict (35 verified matches of 56 CSO waterbodies); update it when a new cycle is added by reviewing new assessment unit names against CSO waterBody values.
 
 ## Running scripts
 
@@ -118,10 +120,11 @@ The live dashboard at `/dashboard.html` auto-updates weekly via `update-charts.y
 - Instantiates `CSOAnalysisEEADP` with `end_date=date.today()` for rolling CSO data window, `make_regression=False` (Stan excluded from CI), `make_maps=False` (too heavy for weekly CI)
 - Calls dashboard-specific plot methods: `plot_monthly_volume_and_rainfall()`, `plot_monthly_modeled_vs_metered_fraction()`, `plot_monthly_volume_by_watershed()`, `plot_annual_volume_by_operator()`
 
-**Three refactored analysis scripts** — Each now has a `generate_charts(engine, prefix='')` function:
+**Four refactored analysis scripts** — Each now has a `generate_charts(engine, prefix='')` function:
 - `MADEP_staff.py` — Generates 6 staffing charts
 - `MADEP_enforcements_viz.py` — Generates 6 enforcement charts (overall, vs budget, by type, penalties overall, penalties stacked, topic breakdown); uses `MAEEADP_Enforcement` for counts/fines 1996–2026, `MADEP_enforcement` for topic breakdown through 2017; enforces routine notice filtering to restore enforcement-staffing correlation
 - `ECOS_budgets_viz.py` — Generates 3 budget comparison charts
+- `EPA_303d_viz.py` — Generates 4 dashboard charts (impaired trend, causes, CSO-to-impaired, TMDL progress) + writes `docs/data/facts_EPA303d.yml`; `generate_post_charts()` also generates 2 analysis-post charts (watershed bar chart, folium TMDL map) — requires folium, excluded from CI
 
 **`docs/dashboard.md`** — Jekyll post at `/dashboard.html` that includes the 12 `dash_*.html` chart files. See file for data sources and methodology notes.
 
@@ -154,6 +157,10 @@ Numpy types like `np.float64(0.123)` serialize to strings in JSON, causing "np i
 | CSO by operator (annual trends) | EEA DP CSO | Yes | Top 10 operators shown; updated Monday |
 | CSO modeled vs metered | EEA DP CSO | Yes | Monthly CSO-Untreated (detailed), SSO aggregated annually |
 | CSO by watershed | EEA DP CSO + geography lookup | Yes | Top 8 waterbodies; uses Waterbody fallback if Watershed not available |
+| 303(d) impaired trend | MassGIS shapefiles (biennial) | Auto-detects new cycle | Script exits early if cycles unchanged; new data expected ~2027 for 2024/2026 cycle |
+| 303(d) causes breakdown | MassGIS shapefiles (biennial) | Auto-detects new cycle | Top 15 causes in most recent approved cycle |
+| 303(d) CSO to impaired | MassGIS + EEA DP CSO + CSO_303d_Mapping | Auto (CSO); biennial (303d) | CSO_303d_Mapping must be manually reviewed when a new 303d cycle is added |
+| 303(d) TMDL progress | MassGIS shapefiles (biennial) | Auto-detects new cycle | hasTmdl derived from category column in each cycle's DBF |
 
 Dashboard includes italicized notes where data is static (budget, ECOS, seniority cutoff).
 

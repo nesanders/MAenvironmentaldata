@@ -1,0 +1,11 @@
+reportingCycle,auId,waterbody,watershed,waterType,auSize,sizeUnit,useClass,category,designatedUse,attainment,cause,source,tmdlId,hasTmdl
+2010,MA95020,Buttonwood Park Pond,Buzzards Bay,FRESHWATER LAKE,11.543,ACRES,B,3,Aquatic Life,Not Assessed,,,,0
+2010,MA95091,Little Rocky Pond,Buzzards Bay,FRESHWATER LAKE,9.453,ACRES,B,3,Aesthetic,Not Assessed,,,,0
+2012,MA81092,Notown Reservoir,Nashua,FRESHWATER LAKE,240.0,ACRES,A,3,Public Water Supply,Not Assessed,,,,0
+2012,MA34089,Tighe Carmody Reservoir,Connecticut,FRESHWATER LAKE,353.401,ACRES,A,3,Public Water Supply,Not Assessed,,,,0
+2014,MA35056,Parker Pond,Millers,FRESHWATER LAKE,32.188,ACRES,B,4A,Primary Contact Recreation,Not Supporting,Aquatic Plants (Macrophytes),Source Unknown,4134,1
+2014,MA96260,Round Pond (East),Cape Cod,FRESHWATER LAKE,6.0,ACRES,B,4A,Secondary Contact Recreation,Not Assessed,,,,1
+2016,MA51124,Pratts Pond,Blackstone,FRESHWATER LAKE,4.0,ACRES,B,3,Secondary Contact Recreation,Not Assessed,,,,0
+2016,MA72-23,Sawmill Brook,Charles,RIVER,2.4,MILES,B,5,Primary Contact Recreation,Not Supporting,Organic Enrichment (Sewage) Biological Indicators,Source Unknown,40317,0
+2018,MA32-52,Shaw Brook,Westfield,RIVER,2.2,MILES,B,2,Fish Consumption,Not Assessed,,,,0
+2018,MA91-14,Egypt River,Parker,ESTUARY,0.04,SQUARE MILES,SA,5,Fish Consumption,Not Assessed,,,,0
