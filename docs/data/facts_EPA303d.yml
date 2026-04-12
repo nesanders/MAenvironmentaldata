@@ -16,10 +16,10 @@ tmdl_pct_earliest: 39.7
 tmdl_with_latest: 593
 tmdl_without_latest: 971
 tmdl_pct_latest: 37.9
-n_cso_mapped: 35
+n_cso_mapped: 39
 n_cso_unique_wb: 56
-vol_not_supporting_bgal: 14.9
-vol_not_matched_bgal: 4.9
+vol_not_supporting_bgal: 15.6
+vol_not_matched_bgal: 4.3
 vol_total_bgal: 19.9
 pct_vol_impaired_of_matched: 100.0
-pct_vol_impaired_of_total: 75.2
+pct_vol_impaired_of_total: 78.5

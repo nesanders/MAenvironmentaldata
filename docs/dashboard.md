@@ -210,8 +210,10 @@ and 5 (impaired, TMDL needed). Category 5 is the "303(d) list" proper. A TMDL (T
 Daily Load) is a legally required cleanup plan setting maximum allowable pollutant loads.
 
 CSO discharges are linked to 303(d) status using a manually verified mapping of
-{{ site.data.ts_update_ATTAINS_303d.latest_cycle }} assessment data for 35 of 56 CSO-reporting
-waterways. Unmatched waterways are shown as "Not matched."
+{{ site.data.ts_update_ATTAINS_303d.latest_cycle }} assessment data for
+{{ site.data.facts_EPA303d.n_cso_mapped }} of {{ site.data.facts_EPA303d.n_cso_unique_wb }} CSO-reporting
+waterways. Every matched waterway is rated "Not Supporting" — none discharge into fully supporting waters.
+Unmatched waterways are shown as "Not matched."
 
 </details>
 

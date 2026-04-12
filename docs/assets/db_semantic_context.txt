@@ -46,7 +46,7 @@ Generated: 2026-04-12
 
 ## Table Schemas and Sample Data
 
-### CSO_303d_Mapping (35 rows)
+### CSO_303d_Mapping (39 rows)
 Lookup table: manually verified mapping from CSO waterBody names (ALL CAPS, from MAEEADP_CSO) to 303(d) waterbody names (mixed case, from EPA_303d_Impairments). 35 of 56 CSO-reporting waterways are matched; unmatched ones are absent from this table. Join: MAEEADP_CSO.waterBody = CSO_303d_Mapping.csoWaterBody, then CSO_303d_Mapping.waterbody303d = EPA_303d_Impairments.waterbody. Note: one waterbody name may correspond to multiple assessment units (AUs) in EPA_303d_Impairments since large rivers are divided into segments.
 
 ```sql
