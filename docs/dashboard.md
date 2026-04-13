@@ -221,9 +221,17 @@ Unmatched waterways are shown as "Not matched."
 
 {% include charts/dash_EPA303d_impaired_trend.html %}
 
+### Persistence of impairment: original 2010 cohort vs. newly listed
+
+{% include charts/dash_EPA303d_persistence.html %}
+
 ### Causes of impairment ({{ site.data.ts_update_ATTAINS_303d.latest_cycle }})
 
 {% include charts/dash_EPA303d_causes_breakdown.html %}
+
+### Top impairment causes across all reporting cycles
+
+{% include charts/dash_EPA303d_causes_trend.html %}
 
 ### CSO discharges to impaired vs. non-impaired waters
 

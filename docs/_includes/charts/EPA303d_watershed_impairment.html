@@ -1,20 +1,20 @@
 {% raw  %}
 <html>
     <head>
-        <title>MA Watersheds by Impaired Water Count (2022)</title>
+        <title>MA Watersheds: Impaired Waters by Type (2022)</title>
         <script src='https://cdn.jsdelivr.net/npm/chart.js@2.8.0/dist/Chart.bundle.min.js'></script>
     </head>
     <body>
-        <div style="width: 700px; height: 450px; max-width: 99%" class="chartjs">
+        <div style="width: 700px; height: 620px; max-width: 99%" class="chartjs">
 
-            <canvas id="MA Watersheds by Impaired Water Count (2022)" height="450" width="700"></canvas>
+            <canvas id="MA Watersheds: Impaired Waters by Type (2022)" height="620" width="700"></canvas>
             <script>
                 Chart.defaults.global.defaultFontSize = 12;
                 var chart_data = {
                 
                     data: {
-                        labels: ['Cape Cod', 'Buzzards Bay', 'Taunton', 'South Coastal', 'Blackstone', 'Concord (SuAsCo)', 'Nashua', 'Charles', 'North Coastal', 'Merrimack', 'Millers', 'Chicopee'],
-                        datasets: [{'data': [168.0, 117.0, 100.0, 88.0, 86.0, 81.0, 79.0, 74.0, 72.0, 63.0, 61.0, 59.0], 'label': 'Impaired assessment units', 'backgroundColor': 'rgba(54, 110, 179, 0.85)'}]
+                        labels: ['Cape Cod', 'Buzzards Bay', 'Taunton', 'South Coastal', 'Blackstone', 'Concord (SuAsCo)', 'Nashua', 'Charles', 'North Coastal', 'Merrimack', 'Millers', 'Chicopee', 'Connecticut', 'Boston Harbor: Neponset', 'Housatonic', 'French', 'Ipswich', 'Boston Harbor: Mystic', 'Islands', 'Boston Harbor: Weymouth & Weir', 'Westfield', 'Quinebaug', 'Shawsheen', 'Deerfield', 'Farmington', 'Parker', 'Ten Mile', 'Narragansett Bay (Shore)', 'Mount Hope Bay (Shore)', 'Hudson: Hoosic', 'Boston Harbor (Proper)'],
+                        datasets: [{'data': [17.0, 25.0, 42.0, 30.0, 31.0, 38.0, 42.0, 42.0, 21.0, 30.0, 33.0, 28.0, 22.0, 25.0, 16.0, 10.0, 15.0, 14.0, 2.0, 18.0, 15.0, 14.0, 18.0, 19.0, 12.0, 5.0, 10.0, 12.0, 5.0, 8.0, 0.0], 'label': 'River', 'backgroundColor': 'rgba(54, 110, 179, 0.85)', 'stack': 'type'},{'data': [49.0, 28.0, 48.0, 39.0, 55.0, 43.0, 37.0, 32.0, 22.0, 27.0, 28.0, 31.0, 29.0, 23.0, 22.0, 25.0, 16.0, 12.0, 5.0, 6.0, 13.0, 14.0, 8.0, 4.0, 8.0, 5.0, 9.0, 1.0, 4.0, 5.0, 0.0], 'label': 'Freshwater Lake', 'backgroundColor': 'rgba(60, 170, 80, 0.85)', 'stack': 'type'},{'data': [102.0, 64.0, 10.0, 19.0, 0.0, 0.0, 0.0, 0.0, 29.0, 6.0, 0.0, 0.0, 0.0, 2.0, 0.0, 0.0, 3.0, 4.0, 23.0, 5.0, 0.0, 0.0, 0.0, 0.0, 0.0, 9.0, 0.0, 5.0, 5.0, 0.0, 10.0], 'label': 'Estuary', 'backgroundColor': 'rgba(230, 140, 40, 0.85)', 'stack': 'type'}]
                     },
                     type: 'bar',
                     options: {
@@ -30,7 +30,7 @@
                                 },
                                 "id": "y-axis-0",
                                 "position": "left",
-                                stacked: false
+                                stacked: true
                             }, {
                                 display: false,
                                 scaleLabel: {
@@ -48,7 +48,7 @@
                                     display: true,
                                     labelString: 'Impaired assessment units'
                                 },
-                                stacked: false,
+                                stacked: true,
                                 ticks: {
                                     autoSkip: true
                                 }
@@ -68,7 +68,7 @@
             </script>
             <script>
                 {{
-                    var ctx = document.getElementById("MA Watersheds by Impaired Water Count (2022)").getContext("2d");
+                    var ctx = document.getElementById("MA Watersheds: Impaired Waters by Type (2022)").getContext("2d");
                     var mychart = new Chart(ctx, chart_data);
                 }}
             </script>

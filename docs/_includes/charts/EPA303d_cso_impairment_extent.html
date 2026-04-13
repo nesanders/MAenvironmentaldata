@@ -1,20 +1,20 @@
 {% raw  %}
 <html>
     <head>
-        <title>Top Causes of MA Water Impairment (2022)</title>
+        <title>CSO Discharge Volume vs. Impaired Assessment Units per Waterway (2022 303(d))</title>
         <script src='https://cdn.jsdelivr.net/npm/chart.js@2.8.0/dist/Chart.bundle.min.js'></script>
     </head>
     <body>
-        <div style="width: 700px; height: 500px; max-width: 99%" class="chartjs">
+        <div style="width: 700px; height: 480px; max-width: 99%" class="chartjs">
 
-            <canvas id="Top Causes of MA Water Impairment (2022)" height="500" width="700"></canvas>
+            <canvas id="CSO Discharge Volume vs. Impaired Assessment Units per Waterway (2022 303(d))" height="480" width="700"></canvas>
             <script>
                 Chart.defaults.global.defaultFontSize = 12;
                 var chart_data = {
                 
                     data: {
-                        labels: ['Fecal Coliform', 'Escherichia Coli (E. Coli)', 'Dissolved Oxygen', 'Non-Native Aquatic Plants', 'Mercury In Fish Tissue', 'Nutrient/Eutrophication Biological Indicators', 'Fanwort', 'Fish Passage Barrier', 'Benthic Macroinvertebrates', 'Phosphorus, Total', 'Turbidity', 'Curly-Leaf Pondweed', 'Eurasian Water Milfoil, Myriophyllum Spicatum', 'Nitrogen, Total', 'Pcbs In Fish Tissue'],
-                        datasets: [{'data': [355.0, 324.0, 273.0, 231.0, 204.0, 181.0, 173.0, 140.0, 130.0, 117.0, 116.0, 109.0, 106.0, 105.0, 102.0], 'label': 'Impaired assessment units (2022)', 'backgroundColor': 'rgba(54, 110, 179, 0.85)'}]
+                        labels: ['Merrimack R.', 'Connecticut R.', 'Mount Hope Bay', 'Ten Mile R.', 'Taunton R.', 'Charles R.', 'Acushnet R.', 'North Nashua R.', 'Concord R.', 'Outer New Bedford Harbor', 'Clarks Cove', 'Mystic R.', 'Boston Inner Harbor', 'New Bedford Inner Harbor', 'Lynn Harbor', 'Mill R.', 'Beaver Brook', 'Blackstone R.', 'Alewife Brook', 'Chicopee R.', 'Saugus R.', 'Little R.', 'Quequechan R.', 'French Stream', 'Nashua R.', 'Muddy R.', 'Chelsea R.', 'Nahant Bay', 'Deerfield R.', 'Housatonic R.', 'Salem Sound', 'Ware R.', 'Assabet R.', 'Quinebaug R.'],
+                        datasets: [{'data': [4063.146524, 2626.411023, 1939.308945, 999.999999, 940.523116, 893.783, 752.51499, 626.110468, 595.6704, 400.535559, 358.157359, 342.39374, 218.30175, 211.772806, 146.034804, 116.000428, 67.833, 58.2, 55.994039, 48.604055, 32.154829, 30.364362, 29.512963, 21.541675, 16.758491, 6.4707, 1.724392, 1.335464, 0.66, 0.175, 0.072, 0.016676, 0.0117, 0.0], 'label': 'CSO discharge volume (million gallons, all available years)', 'backgroundColor': 'rgba(54, 110, 179, 0.85)', 'yAxisID': 'y-axis-0'},{'data': [7.0, 5.0, 2.0, 3.0, 4.0, 9.0, 3.0, 4.0, 3.0, 1.0, 1.0, 2.0, 1.0, 1.0, 2.0, 13.0, 11.0, 4.0, 2.0, 3.0, 4.0, 10.0, 1.0, 1.0, 5.0, 1.0, 1.0, 1.0, 2.0, 3.0, 2.0, 4.0, 7.0, 5.0], 'label': 'Impaired assessment units (2022)', 'borderColor': 'rgba(200, 60, 60, 0.85)', 'backgroundColor': 'rgba(200,60,60,0.15)', 'type': 'line', 'fill': false, 'pointRadius': 5, 'yAxisID': 'y-axis-1'}]
                     },
                     type: 'bar',
                     options: {
@@ -23,7 +23,7 @@
                                 display: true,
                                 scaleLabel: {
                                     display: true,
-                                    labelString: 'Impairment cause'
+                                    labelString: 'CSO discharge (million gallons)'
                                 },
                                 ticks: {
                                     beginAtZero: true, min: 0
@@ -32,10 +32,10 @@
                                 "position": "left",
                                 stacked: false
                             }, {
-                                display: false,
+                                display: true,
                                 scaleLabel: {
                                     display: true,
-                                    labelString: ''
+                                    labelString: 'Impaired assessment units'
                                 },
                                 ticks: {
                                     beginAtZero: true, min: 0
@@ -46,7 +46,7 @@
                             xAxes: [{
                                 scaleLabel: {
                                     display: true,
-                                    labelString: 'Impaired assessment units (distinct)'
+                                    labelString: 'Receiving waterway'
                                 },
                                 stacked: false,
                                 ticks: {
@@ -68,7 +68,7 @@
             </script>
             <script>
                 {{
-                    var ctx = document.getElementById("Top Causes of MA Water Impairment (2022)").getContext("2d");
+                    var ctx = document.getElementById("CSO Discharge Volume vs. Impaired Assessment Units per Waterway (2022 303(d))").getContext("2d");
                     var mychart = new Chart(ctx, chart_data);
                 }}
             </script>

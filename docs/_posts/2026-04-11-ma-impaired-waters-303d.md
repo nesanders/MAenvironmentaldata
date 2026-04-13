@@ -50,7 +50,7 @@ In physical terms, impaired river segments grew from {{ site.data.facts_EPA303d.
 
 One question in interpreting this trend is whether the growth reflects actual deterioration or expanded assessment coverage — MA DEP assesses more waterbodies over time, which could mechanically increase the count. Looking at the persistence of existing listings helps address this. Of the {{ site.data.facts_EPA303d.impaired_earliest }} AUs impaired in {{ site.data.facts_EPA303d.earliest_cycle }}, {{ site.data.facts_EPA303d.n_persistent }} ({{ site.data.facts_EPA303d.pct_persistent }}%) remained impaired through {{ site.data.facts_EPA303d.latest_cycle }}. Only {{ site.data.facts_EPA303d.n_delisted }} ({{ site.data.facts_EPA303d.pct_delisted }}%) were delisted over the twelve-year period. The overall growth in the list is primarily driven by the addition of newly assessed AUs rather than by recovery of previously listed ones.
 
-The dominant water types are rivers and freshwater lakes, which together account for the majority of impaired AUs in every cycle. Estuaries represent a smaller but ecologically important category that appears in the data beginning with later cycles as assessment coverage expanded into coastal waters.
+The dominant water types are rivers and freshwater lakes, which together account for the majority of impaired AUs in every cycle. Estuaries are also present throughout the dataset — 239 impaired estuary AUs were recorded in 2010 — and remain a consistent and ecologically important category across all reporting cycles.
 
 ---
 
@@ -62,6 +62,30 @@ Of the {{ site.data.facts_EPA303d.impaired_earliest }} waterbody segments listed
 
 Over twelve years, {{ site.data.facts_EPA303d.n_delisted }} AUs were removed from the impaired list — {{ site.data.facts_EPA303d.pct_delisted }}% of those impaired in {{ site.data.facts_EPA303d.earliest_cycle }}. During the same period, {{ site.data.facts_EPA303d.n_newly_added }} AUs were added.
 
+The specific waterbodies that were delisted between {{ site.data.facts_EPA303d.earliest_cycle }} and {{ site.data.facts_EPA303d.latest_cycle }} are listed below. Delisting does not necessarily mean a waterbody has been fully restored — it may reflect updated assessments, reclassification, or that the waterbody is now monitored under a different framework.
+
+<details>
+<summary>Waterbodies delisted between {{ site.data.facts_EPA303d.earliest_cycle }} and {{ site.data.facts_EPA303d.latest_cycle }} ({{ site.data.facts_EPA303d.n_delisted }} assessment units)</summary>
+
+<div style="max-height:360px;overflow-y:auto;margin:1em 0;">
+<table>
+<thead><tr><th>Assessment Unit</th><th>Waterbody</th><th>Watershed</th><th>Type</th><th>Size</th></tr></thead>
+<tbody>
+{% assign delisted = site.data.EPA_303d_delisted %}
+{% for row in delisted %}
+<tr>
+  <td>{{ row["Assessment Unit"] }}</td>
+  <td>{{ row["Waterbody"] }}</td>
+  <td>{{ row["Watershed"] }}</td>
+  <td>{{ row["Type"] | capitalize }}</td>
+  <td>{{ row["Size"] }} {{ row["Unit"] | downcase }}</td>
+</tr>
+{% endfor %}
+</tbody>
+</table>
+</div>
+</details>
+
 ---
 
 ## What Is Causing Impairment?
@@ -69,6 +93,16 @@ Over twelve years, {{ site.data.facts_EPA303d.n_delisted }} AUs were removed fro
 The 2022 cycle identifies over 90 distinct causes of impairment across Massachusetts waterbodies. The most widespread are bacterial indicators — fecal coliform and *E. coli* — followed by dissolved oxygen, non-native aquatic plants, mercury in fish tissue, and nutrients.
 
 {% include charts/EPA303d_causes_breakdown.html %}
+
+The chart below shows how the top causes have changed across all six reporting cycles. Several patterns are notable.
+
+Fecal coliform has been consistently the most common cause throughout the period, but *E. coli* goes from essentially zero to ~300 AUs between the 2014 and 2016 cycles. This does not reflect a sudden biological event: *E. coli* replaced fecal coliform as EPA's recommended bacterial indicator for primary contact recreation in updated assessment guidance, and MA DEP adopted it in the 2016 reporting cycle. The two indicators largely measure the same contamination.
+
+The 2016 cycle also sees dissolved oxygen, nutrient/eutrophication biological indicators, fanwort, and fish passage barriers all appear or increase sharply — several going from near-zero to hundreds of AUs. This reflects methodological and categorical changes in how MA DEP conducted and reported assessments that cycle, not five simultaneous environmental events. Most notably, fanwort was split out from the broader "non-native aquatic plants" category, which explains the corresponding decline in that count after 2016.
+
+Mercury in fish tissue grows steadily across all cycles, as expanding fish tissue monitoring programs identify more affected waterbodies. Fish passage barriers also trend upward in recent cycles, reflecting growing attention to dam and culvert impacts on aquatic connectivity.
+
+{% include charts/EPA303d_causes_trend.html %}
 
 **Bacterial contamination** is the leading cause ({{ site.data.facts_EPA303d.top_cause_1_n }} AUs for {{ site.data.facts_EPA303d.top_cause_1 }}, {{ site.data.facts_EPA303d.top_cause_2_n }} AUs for {{ site.data.facts_EPA303d.top_cause_2 }}). Bacteria from human waste are the primary basis for beach and fishing closures, and can originate from combined sewer overflows (CSOs), sanitary sewer overflows, failing septic systems, and stormwater runoff. The source attribution data for bacterial impairments shows that MS4 municipal stormwater systems are the most commonly cited source, followed by CSOs and septic systems — though "Source Unknown" accounts for the largest share, reflecting the difficulty of attributing impairment to a specific discharge.
 
@@ -88,11 +122,19 @@ The 2022 cycle identifies over 90 distinct causes of impairment across Massachus
 
 Combined sewer overflows (CSOs) are a distinct type of discharge from aging sewage infrastructure in urban areas: during heavy rain events, combined stormwater and sewage systems can overflow, releasing untreated wastewater directly to receiving waters. A natural question is whether these discharges occur in waterbodies that are already impaired under the 303(d) framework.
 
-To examine this, we matched [MA EEA Data Portal CSO discharge records]({{ site.url }}{{ site.baseurl }}/data/EEADP_all.html) — covering June 2022 through present — to 303(d) status for each receiving waterway using a manually verified mapping table. The mapping covers {{ site.data.facts_EPA303d.n_cso_mapped }} of the {{ site.data.facts_EPA303d.n_cso_unique_wb }} distinct CSO-reporting waterways in the EEA Data Portal. Unmatched waterways are shown separately.
+To examine this, we matched [MA EEA Data Portal CSO discharge records]({{ site.url }}{{ site.baseurl }}/data/EEADP_all.html) — covering June 2022 through present — to 303(d) status for each receiving waterway using a manually verified mapping table. The mapping covers {{ site.data.facts_EPA303d.n_cso_mapped }} of the {{ site.data.facts_EPA303d.n_cso_unique_wb }} distinct CSO-reporting waterways in the EEA Data Portal.
+
+The {{ site.data.facts_EPA303d.n_cso_not_matched }} waterways that could not be matched fall into two categories. Some use highly localized names — drainage channels, unnamed brooks, or facility-specific designations — that do not correspond to any named assessment unit in the 303(d) dataset. Others are reported with names that differ enough from the 303(d) assessment unit names (e.g. abbreviations, alternate spellings) that a reliable match could not be established without manual verification for each entry. These unmatched discharges are shown separately in the chart as "Not Matched." Their volume varies year to year because CSO reporting coverage changes as operators update their submissions to the EEA Data Portal.
 
 {% include charts/EPA303d_cso_impaired.html %}
 
 Among the {{ site.data.facts_EPA303d.n_cso_mapped }} matched waterways, all are rated "Not Supporting" in the most recent 303(d) cycle. Of the {{ site.data.facts_EPA303d.vol_total_bgal }} billion gallons of total reported CSO discharge, {{ site.data.facts_EPA303d.pct_vol_impaired_of_total }}% went to these confirmed-impaired waterways; the remaining {{ site.data.facts_EPA303d.vol_not_matched_bgal }} billion gallons discharged to waterways we could not match to a 303(d) record.
+
+The chart below compares the *fraction* of assessed assessment units with bacterial impairment (fecal coliform or *E. coli*) across two groups: waterways that receive CSO discharges (matched in the mapping table) and all other 303(d) waterways. Each point represents one waterway; the y-axis shows the cumulative proportion of waterways at or below a given bacterial fraction. Hover over the red dots to see individual waterway names and AU counts.
+
+{% include charts/EPA303d_cso_bact_cdf.html %}
+
+The separation between the two distributions is substantial. Nearly three-quarters of non-CSO waterways have zero assessed AUs with bacterial impairment — their water quality failures involve other causes. CSO-receiving waterways, by contrast, all show at least 25% bacterial impairment fraction, with most above 65%. This reflects the geographic overlap between aging combined sewer infrastructure and urban waterways where sewage-related bacterial contamination has historically been severe.
 
 This pattern reflects the geographic concentration of combined sewer infrastructure in older urban areas — the same watersheds where water quality impairment has historically been documented. The overlap does not by itself indicate that CSOs are the cause of the 303(d) listings, since impairment assessments reflect multiple pollution sources; but it indicates that CSO discharges are not occurring in waters that already meet standards.
 
@@ -108,7 +150,7 @@ In {{ site.data.facts_EPA303d.earliest_cycle }}, {{ site.data.facts_EPA303d.tmdl
 
 Averaged across reporting cycles, approximately {{ site.data.facts_EPA303d.avg_net_tmdl_per_cycle }} net new TMDLs have been completed per two-year cycle. At that pace, and assuming no new listings, the current backlog of {{ site.data.facts_EPA303d.tmdl_without_latest }} AUs without a plan would not be cleared until around {{ site.data.facts_EPA303d.year_backlog_cleared }}. This is an illustrative projection based on recent rates, not a forecast.
 
-This pattern is not unique to Massachusetts. The National Academies has documented that approximately 21,000 polluted water segments nationally require over 40,000 TMDLs, and states consistently cite limited personnel and funding as constraints on completion. EPA has negotiated multi-year compliance schedules with states in some cases, though meeting those timelines has been challenging.
+This pattern is not unique to Massachusetts. The [National Academies has documented](https://nap.nationalacademies.org/catalog/10146/assessing-the-tmdl-approach-to-water-quality-management) that approximately 21,000 polluted water segments nationally require over 40,000 TMDLs, and states consistently cite limited personnel and funding as constraints on completion.
 
 As noted above, EPA's April 2025 statewide pathogen TMDL for Massachusetts may change the picture for bacterial impairments specifically. By establishing load limits for all pathogen-impaired waters at once, it could formally satisfy the TMDL requirement for a large number of AUs — potentially shifting the fraction shown in future reporting cycles. The practical effect on water quality will depend on how the TMDL is implemented through individual permit requirements and infrastructure improvements.
 
@@ -122,7 +164,7 @@ The map below shows TMDL completion by watershed as of 2022. Circle size reflect
 
 ## Watershed Breakdown
 
-Impairment is not evenly distributed across the state. The watersheds with the most impaired AUs in 2022 include both heavily urbanized areas and coastal watersheds.
+Impairment is not evenly distributed across the state. The watersheds with the most impaired AUs in 2022 include both heavily urbanized areas and coastal watersheds. The chart below breaks down impaired AUs by water type within each watershed.
 
 {% include charts/EPA303d_watershed_impairment.html %}
 
