@@ -68,10 +68,14 @@ _CHARTJS_CDN = "<script src='https://cdn.jsdelivr.net/npm/chart.js@2.8.0/dist/Ch
 
 
 def _write_cso_cdf_html(outpath, cso_points, noncso_fracs):
-    """Write a CDF comparison chart as a Jekyll-compatible HTML file.
+    """Write a ranked-distribution chart as a Jekyll-compatible HTML file.
 
-    Shows the cumulative distribution of bacterial impairment fraction
-    (bacterial-impaired AUs / assessed AUs) for CSO vs. non-CSO waterways.
+    X axis: percentile rank of waterway (0–100%).
+    Y axis: bacterial impairment fraction (bacterial-impaired AUs / assessed AUs).
+
+    CSO waterways shown as labeled dots; non-CSO as a smooth grey line.
+    Reading the chart: at any x-percentile, the y value shows the bacterial
+    fraction for that ranked waterway — CSO line shifted upward = worse impairment.
 
     Parameters
     ----------
@@ -87,17 +91,17 @@ def _write_cso_cdf_html(outpath, cso_points, noncso_fracs):
     n_cso = len(cso_points)
     n_noncso = len(noncso_fracs)
 
-    # Build CDF datasets: x = bacterial fraction, y = cumulative rank / total
+    # Flipped axes: x = percentile rank, y = bacterial fraction
     cso_data_js = json.dumps([
-        {'x': round(float(pt['fraction']), 4),
-         'y': round((i + 1) / n_cso, 4),
+        {'x': round((i + 1) / n_cso, 4),
+         'y': round(float(pt['fraction']), 4),
          'wbname': pt['name'],
          'nbact': int(pt['n_bact']),
          'nassessed': int(pt['n_assessed'])}
         for i, pt in enumerate(cso_points)
     ])
     noncso_data_js = json.dumps([
-        {'x': round(float(f), 4), 'y': round((i + 1) / n_noncso, 4)}
+        {'x': round((i + 1) / n_noncso, 4), 'y': round(float(f), 4)}
         for i, f in enumerate(noncso_fracs)
     ])
 
@@ -128,8 +132,9 @@ var chart_data = {{
                 label: 'CSO-receiving waterways (n={n_cso})',
                 data: {cso_data_js},
                 borderColor: 'rgba(200,60,60,0.85)',
-                backgroundColor: 'rgba(200,60,60,0.75)',
+                backgroundColor: 'rgba(200,60,60,0.8)',
                 showLine: true,
+                fill: false,
                 pointRadius: 5,
                 pointHoverRadius: 7,
                 borderWidth: 2,
@@ -144,14 +149,14 @@ var chart_data = {{
                 ticks: {{ min: 0, max: 1, callback: function(v) {{ return (v*100)+'%'; }} }},
                 scaleLabel: {{
                     display: true,
-                    labelString: 'Fraction of assessed AUs with bacterial impairment'
+                    labelString: 'Waterways ranked by bacterial impairment fraction (percentile)'
                 }}
             }}],
             yAxes: [{{
                 ticks: {{ min: 0, max: 1, callback: function(v) {{ return (v*100)+'%'; }} }},
                 scaleLabel: {{
                     display: true,
-                    labelString: 'Cumulative % of waterways'
+                    labelString: 'Fraction of assessed AUs with bacterial impairment'
                 }}
             }}]
         }},
@@ -610,7 +615,6 @@ def generate_post_charts(engine):
 
     print('Loading data for post charts...')
     df = pd.read_sql_query('SELECT * FROM EPA_303d_Impairments', engine)
-    cso = pd.read_sql_query('SELECT waterBody, volumnOfEvent, Year FROM MAEEADP_CSO', engine)
     mapping = pd.read_sql_query('SELECT * FROM CSO_303d_Mapping', engine)
 
     latest_cycle = int(df['reportingCycle'].max())
@@ -796,6 +800,101 @@ def generate_post_charts(engine):
 
     m.save('../docs/assets/maps/EPA303d_tmdl_map.html')
     print('Map saved.')
+
+    # ── Bacterial impairment rate by pollution source category ────────────────
+    print('Post chart: Bacterial impairment by source group...')
+
+    df_2022_src = df[df['reportingCycle'] == latest_cycle].copy()
+    cso_wbs = set(mapping['waterbody303d'])
+
+    # Classify each Not Supporting row by its dominant source type
+    ns = df_2022_src[
+        (df_2022_src['attainment'] == 'Not Supporting') &
+        df_2022_src['source'].notna()
+    ].copy()
+    ns['source_up'] = ns['source'].str.upper()
+
+    CSO_PAT    = 'COMBINED SEWER'
+    MS4_PAT    = ('MUNICIPAL SEPARATE STORM|DISCHARGES FROM MUNICIPAL SEPARATE|'
+                  'UNSPECIFIED URBAN|ILLICIT CONNECT|'
+                  'MUNICIPAL POINT SOURCE|MUNICIPAL .URBANIZED|'
+                  'WET WEATHER DISCHARGE')
+    SEPTIC_PAT = 'ON-SITE TREATMENT|SEPTIC|DECENTRALIZED'
+    AG_PAT     = 'AGRICULTURE|CROP|GRAZING|PASTURE|LIVESTOCK|MANURE'
+
+    ns['src_group'] = 'Other / Unknown'
+    ns.loc[ns['source_up'].str.contains(AG_PAT,     regex=True), 'src_group'] = 'Agriculture'
+    ns.loc[ns['source_up'].str.contains(SEPTIC_PAT, regex=True), 'src_group'] = 'Septic / on-site systems'
+    ns.loc[ns['source_up'].str.contains(MS4_PAT,    regex=True), 'src_group'] = 'MS4 / urban stormwater'
+    ns.loc[ns['source_up'].str.contains(CSO_PAT,    regex=True), 'src_group'] = 'CSO / wet weather'
+
+    # Assessed AUs per waterbody (exclude Category 3 — insufficient data)
+    assessed_src = (df_2022_src[df_2022_src['category'] != '3']
+                    .groupby('waterbody')['auId'].nunique())
+
+    groups = [
+        ('CSO / wet weather',        True,  None),       # only CSO waterways
+        ('MS4 / urban stormwater',   False, 'MS4 / urban stormwater'),
+        ('Septic / on-site systems', False, 'Septic / on-site systems'),
+        ('Agriculture',              False, 'Agriculture'),
+        ('Other / Unknown',          False, 'Other / Unknown'),
+    ]
+
+    labels_out, bact_rates, n_wbs_out = [], [], []
+    for label, cso_only, grp_name in groups:
+        if cso_only:
+            wbs = list(cso_wbs)
+        else:
+            wbs_with_grp = ns[ns['src_group'] == grp_name]['waterbody'].unique()
+            wbs = [w for w in wbs_with_grp if w not in cso_wbs]
+
+        total_assessed = int(assessed_src[assessed_src.index.isin(wbs)].sum())
+        bact_aus = int(df_2022_src[
+            (df_2022_src['waterbody'].isin(wbs)) &
+            (df_2022_src['category'].isin(['4A', '4B', '4C', '5'])) &
+            (df_2022_src['cause'].fillna('').str.upper().str.contains('FECAL|COLI'))
+        ]['auId'].nunique())
+
+        rate = round(100.0 * bact_aus / total_assessed, 1) if total_assessed > 0 else 0.0
+        labels_out.append(label)
+        bact_rates.append(rate)
+        n_wbs_out.append(len(wbs))
+        print(f'  {label}: {len(wbs)} waterways, {bact_aus}/{total_assessed} AUs = {rate}%')
+
+    # Colour: red for CSO, blue for MS4, shades of grey for others
+    bar_colors = [
+        'rgba(200,60,60,0.85)',
+        'rgba(54,110,179,0.85)',
+        'rgba(100,150,100,0.75)',
+        'rgba(180,140,60,0.75)',
+        'rgba(150,150,150,0.65)',
+    ]
+    colors_js = '[' + ','.join(f"'{c}'" for c in bar_colors) + ']'
+
+    # Build labels with waterway counts
+    display_labels = [
+        f'{lbl} (n={n})' for lbl, n in zip(labels_out, n_wbs_out)
+    ]
+
+    mychart = chartjs.chart(
+        'Bacterial Impairment Rate by Predominant Pollution Source (2022)',
+        'Bar', 700, 440
+    )
+    mychart.set_labels(display_labels)
+    mychart.add_dataset(
+        [float(r) for r in bact_rates],
+        '',
+        backgroundColor=colors_js,
+    )
+    mychart.set_params(
+        JSinline=0,
+        ylabel='Pollution source category',
+        xlabel='% of assessed AUs with fecal coliform or E. coli impairment',
+        scaleBeginAtZero=1,
+        legend=0,
+    )
+    mychart.jekyll_write('../docs/_includes/charts/EPA303d_bacterial_source_groups.html')
+
     print('Post charts done.')
 
 

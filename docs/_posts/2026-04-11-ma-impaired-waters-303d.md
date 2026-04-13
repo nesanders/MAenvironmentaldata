@@ -130,11 +130,17 @@ The {{ site.data.facts_EPA303d.n_cso_not_matched }} waterways that could not be 
 
 Among the {{ site.data.facts_EPA303d.n_cso_mapped }} matched waterways, all are rated "Not Supporting" in the most recent 303(d) cycle. Of the {{ site.data.facts_EPA303d.vol_total_bgal }} billion gallons of total reported CSO discharge, {{ site.data.facts_EPA303d.pct_vol_impaired_of_total }}% went to these confirmed-impaired waterways; the remaining {{ site.data.facts_EPA303d.vol_not_matched_bgal }} billion gallons discharged to waterways we could not match to a 303(d) record.
 
-The chart below compares the *fraction* of assessed assessment units with bacterial impairment (fecal coliform or *E. coli*) across two groups: waterways that receive CSO discharges (matched in the mapping table) and all other 303(d) waterways. Each point represents one waterway; the y-axis shows the cumulative proportion of waterways at or below a given bacterial fraction. Hover over the red dots to see individual waterway names and AU counts.
+The chart below shows each group of waterways ranked by the fraction of their assessed AUs with bacterial impairment (fecal coliform or *E. coli*). Each red dot is one CSO-receiving waterway; hover for the waterway name and AU counts. The grey line shows all other 303(d) waterways.
 
 {% include charts/EPA303d_cso_bact_cdf.html %}
 
-The separation between the two distributions is substantial. Nearly three-quarters of non-CSO waterways have zero assessed AUs with bacterial impairment — their water quality failures involve other causes. CSO-receiving waterways, by contrast, all show at least 25% bacterial impairment fraction, with most above 65%. This reflects the geographic overlap between aging combined sewer infrastructure and urban waterways where sewage-related bacterial contamination has historically been severe.
+Among non-CSO waterways, approximately 74% have zero assessed AUs with bacterial impairment. CSO-receiving waterways range from 25% to 100% bacterial fraction, with most above 65%.
+
+One question raised by this pattern is whether it reflects CSO outfalls specifically, or urbanization more broadly. The bar chart below shows the fraction of assessed AUs with bacterial impairment grouped by the predominant pollution source type attributed to each waterway by assessors. "CSO-receiving" uses the mapping table; all other groups exclude CSO-mapped waterways.
+
+{% include charts/EPA303d_bacterial_source_groups.html %}
+
+Waterways with CSO or MS4/urban stormwater attribution have the highest bacterial impairment rates (72% and 47% of assessed AUs respectively), followed by septic-influenced waterways (42%), agricultural waterways (32%), and others (30%). The gap between CSO and MS4 waterways is partly a function of selection: CSO-mapped waterways were specifically identified because they receive direct sewage discharges, while the MS4 group includes a broader mix of urban waterways. Impairment assessments reflect multiple pollution sources, and source attribution in the 303(d) data is often uncertain — "Source Unknown" is the most commonly recorded source overall.
 
 This pattern reflects the geographic concentration of combined sewer infrastructure in older urban areas — the same watersheds where water quality impairment has historically been documented. The overlap does not by itself indicate that CSOs are the cause of the 303(d) listings, since impairment assessments reflect multiple pollution sources; but it indicates that CSO discharges are not occurring in waters that already meet standards.
 
