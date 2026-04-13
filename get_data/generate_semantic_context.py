@@ -162,8 +162,8 @@ COLUMN_NOTES = {
         'municipality': 'ALL CAPS town name (e.g. BOSTON, CAMBRIDGE). Use UPPER() for filtering.',
         'volumnOfEvent': 'Discharge volume in gallons. WARNING: column name is misspelled "volumn" (not "volume").',
         'Year': 'Stored as FLOAT (e.g. 2020.0). Use CAST(Year AS INTEGER) if needed.',
-        'incidentDate': 'Format: YYYY-MM-DD string.',
-        'eventType': 'Values: CSO, SSO, UNPERMITTED, etc.',
+        'incidentDate': 'Format: YYYY-MM-DD HH:MM:SS datetime string (e.g. "2022-07-02 00:00:00"). NOT a plain date — use substr(incidentDate, 1, 10) to get the YYYY-MM-DD portion for date comparisons.',
+        'eventType': 'Values include: "CSO – UnTreated", "CSO – Treated", "Partially Treated – Blended", "SSO – System Surcharging Under High Flow Conditions", etc. WARNING: there is NO simple "CSO" value — to filter for CSO events use: eventType LIKE \'CSO%\'',
         'latitude': '~97% of records have coordinates (filled from state outfall registry). Do NOT filter on latitude IS NOT NULL.',
         'longitude': '~97% of records have coordinates. Do NOT filter on longitude IS NOT NULL.',
     },
@@ -258,8 +258,15 @@ JOIN_RELATIONSHIPS = """
 - **Staffing + budget by year**:
   MADEP_staff_Comptroller.year = MassBudget_summary.Year
 
-- **Precipitation + CSO by date**:
-  MA_precipitation_daily.date ↔ MAEEADP_CSO.incidentDate (both YYYY-MM-DD strings; or join on substr(incidentDate,1,4) = CAST(Year AS TEXT))
+- **Precipitation + CSO by month** (IMPORTANT: incidentDate is YYYY-MM-DD HH:MM:SS, date is YYYY-MM-DD — never join them directly with =, always aggregate to month first):
+  WITH monthly_cso AS (
+    SELECT strftime('%Y-%m', incidentDate) AS month, SUM(volumnOfEvent) AS total_vol
+    FROM MAEEADP_CSO WHERE eventType LIKE 'CSO%' GROUP BY 1
+  ), monthly_precip AS (
+    SELECT strftime('%Y-%m', date) AS month, SUM(precip_in_avg) AS total_precip
+    FROM MA_precipitation_daily GROUP BY 1
+  )
+  SELECT c.month, c.total_vol, p.total_precip FROM monthly_cso c JOIN monthly_precip p ON c.month = p.month ORDER BY 1
 
 - **CSO watershed choropleth** (use this pattern for watershed-level CSO aggregations):
   MAEEADP_CSO JOIN CSO_WatershedMapping ON MAEEADP_CSO.waterBody = CSO_WatershedMapping.waterBody
@@ -293,7 +300,8 @@ GLOBAL_NOTES = """
   - Budget trends → MassBudget_summary (not the wide infadjusted/noinfadjusted tables)
   - Environmental justice → EPA_EJSCREEN_2023 (more current than 2017)
 
-- **Date formats**: incidentDate, InspectionDate, InspectionDate, EnforcementDate, FinalDecisionDate are YYYY-MM-DD strings.
+- **Date formats**: InspectionDate, EnforcementDate, FinalDecisionDate are YYYY-MM-DD strings.
+  incidentDate (MAEEADP_CSO) is YYYY-MM-DD HH:MM:SS — use substr(incidentDate, 1, 10) or strftime('%Y-%m', incidentDate) to extract date/month.
   Extract year with: strftime('%Y', date_col) or substr(date_col, 1, 4).
 """
 

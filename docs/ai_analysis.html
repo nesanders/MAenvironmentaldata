@@ -4,6 +4,7 @@ title: Ask AMEND AI
 author: NES
 ---
 
+<meta name="build-date" content="{{ site.time | date: '%s' }}">
 <link rel="stylesheet" href="{{ site.url }}{{ site.baseurl }}/assets/ai_analysis.css">
 <script src="https://cdn.plot.ly/plotly-2.35.2.min.js" charset="utf-8"></script>
 
@@ -13,7 +14,38 @@ author: NES
 Type a question, and an AI model will generate and run a SQL query against the full database, then interpret the results for you.
 Supported providers: <a href="https://console.groq.com" target="_blank">Groq</a> (free, default),
 <a href="https://platform.openai.com" target="_blank">OpenAI</a>, and
-<a href="https://aistudio.google.com" target="_blank">Google Gemini</a> — bring your own API key.</p>
+<a href="https://aistudio.google.com" target="_blank">Google Gemini</a> — bring your own API key.
+<button id="ai-tutorial-btn" class="button button--secondary" style="margin-left:1em">▶ Watch demo</button></p>
+
+<!-- Tutorial overlay -->
+<div id="ai-tutorial-overlay" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.7);z-index:10000;align-items:center;justify-content:center">
+  <div style="background:#fff;border-radius:8px;padding:24px;max-width:860px;width:90%;position:relative;max-height:90vh;overflow-y:auto">
+    <button id="ai-tutorial-close" style="position:absolute;top:12px;right:16px;background:none;border:none;font-size:1.4em;cursor:pointer;color:#555" aria-label="Close">✕</button>
+    <h2 style="margin-top:0">How to use Ask AMEND AI</h2>
+    <video src="{{ site.url }}{{ site.baseurl }}/assets/ask-amend-demo.webm" width="100%" controls autoplay muted style="border-radius:4px;margin-bottom:16px"></video>
+    <ol style="margin:0;padding-left:1.4em;line-height:1.8">
+      <li><strong>Load the database</strong> — click "Load Database" and wait for it to finish (~84 MB, cached after first load).</li>
+      <li><strong>Add your API key</strong> — open API Settings, paste a free <a href="https://console.groq.com" target="_blank">Groq</a> key, and save.</li>
+      <li><strong>Ask a question</strong> — click a starter question or type your own, then press Ask.</li>
+      <li><strong>Explore the results</strong> — interact with the chart, view the generated SQL, or browse the raw data table.</li>
+    </ol>
+  </div>
+</div>
+
+<script>
+(function() {
+  var btn   = document.getElementById('ai-tutorial-btn');
+  var overlay = document.getElementById('ai-tutorial-overlay');
+  var close = document.getElementById('ai-tutorial-close');
+  function open()  { overlay.style.display = 'flex'; }
+  function shut()  { overlay.style.display = 'none';
+                     overlay.querySelector('video').pause(); }
+  btn.addEventListener('click', open);
+  close.addEventListener('click', shut);
+  overlay.addEventListener('click', function(e) { if (e.target === overlay) shut(); });
+  document.addEventListener('keydown', function(e) { if (e.key === 'Escape') shut(); });
+})();
+</script>
 
 <!-- Disclaimer banner -->
 <div class="ai-disclaimer">
@@ -92,8 +124,12 @@ Supported providers: <a href="https://console.groq.com" target="_blank">Groq</a>
       Results are generated entirely client-side and may contain errors, misinterpretations, or incomplete analysis.
       The LLM may hallucinate column names, provide SQL with bugs, or draw conclusions not supported by the data.
       <br><br>
-      <strong>Privacy:</strong> Your API key is stored in your browser's localStorage and never sent to our servers.
-      Queries and results are sent to your chosen LLM provider (Groq, OpenAI, or Google).
+      <strong>API Key Security:</strong> Your API key is stored in your browser's localStorage <em>in plain text</em> and is not encrypted.
+      On shared machines, any JavaScript on this page or browser extensions could access it.
+      <strong>Recommendation:</strong> Use restricted/temporary API keys with rate limits or expiration dates if your provider supports them.
+      On shared machines, clear localStorage after use by opening the console (F12) and running <code>localStorage.clear()</code>, or use private browsing.
+      <br><br>
+      <strong>Privacy:</strong> Your API key is never sent to our servers. Queries and results are sent to your chosen LLM provider (Groq, OpenAI, or Google).
       <br><br>
       <strong>Cost:</strong> OpenAI and Google Gemini are paid services; check provider pricing. Groq offers free tier (20 req/min).
     </div>

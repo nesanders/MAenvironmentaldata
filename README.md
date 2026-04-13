@@ -69,6 +69,14 @@ conda env create -f amend_python_env.yml
 conda activate amend_python
 ```
 
+## Ask AMEND AI
+
+The [AI Analysis page](https://openamend.org/ai_analysis.html) lets users ask natural-language questions about the AMEND database. An AI model generates SQL, executes it client-side via sql.js, and renders interactive charts with Plotly — no data leaves your browser.
+
+<video src="docs/assets/ask-amend-demo.webm" width="100%" controls autoplay muted loop>
+  <a href="docs/assets/ask-amend-demo.webm">Watch the demo</a>
+</video>
+
 ## AI Analysis
 
 The [AI Analysis page](https://openamend.org/ai_analysis.html) lets users ask natural-language questions about the database. The LLM generates SQL, executes it client-side via sql.js, and renders results with Plotly.
@@ -92,6 +100,47 @@ When adding or changing a data source:
 1. Update `TABLE_DESCRIPTIONS` and `COLUMN_NOTES` in `get_data/generate_semantic_context.py`
 2. Run `generate_semantic_context.py` to regenerate `docs/assets/db_semantic_context.txt`
 3. Commit both files
+
+### Recording a demo
+
+To create an automated screen-capture demo of the Ask AMEND AI feature:
+
+```bash
+# First time: create the Playwright environment
+conda env create -f environment-playwright.yml
+
+# Record a demo with Groq (free API key)
+GROQ_API_KEY=sk_... conda run -n amend_playwright python record_ai_demo.py
+
+# Or with OpenAI
+OPENAI_API_KEY=sk_... conda run -n amend_playwright python record_ai_demo.py
+
+# Or with Google Gemini
+GOOGLE_API_KEY=... conda run -n amend_playwright python record_ai_demo.py
+
+# Specify starter question (0-8)
+GROQ_API_KEY=sk_... conda run -n amend_playwright python record_ai_demo.py --question 2
+
+# Custom output path
+GROQ_API_KEY=sk_... conda run -n amend_playwright python record_ai_demo.py --output my-demo.webm
+```
+
+**Prerequisites:**
+- Jekyll server running: `cd docs && bundle exec jekyll serve --host localhost --port 4000 --baseurl ""`
+- API key from Groq (free), OpenAI, or Google Gemini
+
+The script records a ~30–45 second demo showing a user asking a natural-language question, the generated SQL, and an interactive chart rendering. The API key is only held in memory during the session and is not persisted to disk. Output is saved as WebM video.
+
+### API key security
+
+The Ask AI page stores API keys in **browser localStorage** (plain text, client-side). This is not cryptographically secured but keeps keys off your servers. On shared machines, any JavaScript on the page or browser extensions could access the key.
+
+**Recommendations:**
+- Use **restricted/temporary API keys** if your provider supports them (rate limits, expiration, scope limitations)
+- On shared machines, clear localStorage after use: open browser console (`F12`), run `localStorage.clear()`, then refresh
+- Or use private/incognito browsing to isolate keys from your regular browsing history
+
+All major providers (Groq, OpenAI, Google Gemini) allow creating limited-scope API keys.
 
 ## Other tools used
 

@@ -224,3 +224,14 @@ Common LLM SQL errors and how the semantic context addresses them:
 - **Year as FLOAT**: `MAEEADP_CSO.Year` is stored as FLOAT (e.g. 2023.0) — note `CAST(Year AS INTEGER)` if needed
 - **Table alias confusion**: lookup/mapping tables (e.g. `CSO_303d_Mapping`, `CSO_WatershedMapping`) have very few columns — add explicit `IMPORTANT: this table has NO [other columns]` warnings in `TABLE_DESCRIPTIONS` and `COLUMN_NOTES` to prevent the LLM from applying filters (e.g. `reportingCycle`) to the wrong alias
 - **Join pattern examples**: add concrete SQL examples to `JOIN_RELATIONSHIPS` for non-obvious multi-table joins; the LLM reliably follows patterns it has seen
+
+### API key security
+
+**Browser storage:** The Ask AI page stores API keys in **browser localStorage** (plain text, client-side). This is not cryptographically secured but keeps keys off your servers. On shared machines, any JavaScript on the page or other browser extensions could access the key. 
+
+**Recommendations for users:**
+- Use **restricted/temporary API keys** if your provider supports them (e.g., API keys with rate limits, expiration dates, or scope limitations)
+- On shared machines, clear browser storage after use (`localStorage.clear()` in browser console), or use private/incognito browsing
+- Providers like Groq, OpenAI, and Gemini all support creating limited-scope keys
+
+**For the demo recording script:** The `record_ai_demo.py` script accepts API keys via environment variables only (`GROQ_API_KEY`, `OPENAI_API_KEY`, `GOOGLE_API_KEY`). Keys are held in memory during recording and never persisted to disk.
