@@ -9,9 +9,11 @@ Dashboard charts (4):
   {prefix}EPA303d_cso_impaired        — Annual CSO volume by 303(d) status
   {prefix}EPA303d_tmdl_trend          — Cumulative TMDL progress by cycle
 
-Analysis-post charts (2, no prefix):
+Analysis-post charts (4, no prefix):
   EPA303d_tmdl_map                   — Folium map: TMDL status of 2022 assessment units
   EPA303d_watershed_impairment       — Top watersheds by impaired AU count
+  EPA303d_persistence                — Cohort chart: persistent vs. new impaired AUs
+  EPA303d_bacterial_sources          — Source attribution for bacterial impairments
 
 See docs/_posts/2026-04-11-ma-impaired-waters-303d.md for the analysis post.
 """
@@ -65,6 +67,7 @@ def generate_charts(engine, prefix=''):
     mapping = pd.read_sql_query('SELECT * FROM CSO_303d_Mapping', engine)
 
     latest_cycle = int(df['reportingCycle'].max())
+    earliest_cycle = int(df['reportingCycle'].min())
     cycles = sorted(df['reportingCycle'].unique())
     print(f'Cycles: {cycles}, latest: {latest_cycle}')
 
@@ -132,7 +135,7 @@ def generate_charts(engine, prefix=''):
     mychart = chartjs.chart(
         f'Top Causes of MA Water Impairment ({latest_cycle})', 'Bar', 700, 500
     )
-    mychart.set_labels(df_causes.index.tolist())
+    mychart.set_labels(df_causes.index.str.title().tolist())
     mychart.add_dataset(
         _to_float_list(df_causes),
         f'Impaired assessment units ({latest_cycle})',
@@ -252,17 +255,14 @@ def generate_charts(engine, prefix=''):
     # ── 5. Facts YAML ─────────────────────────────────────────────────────────
     print('Writing facts YAML...')
 
-    # Cycle counts
-    earliest_cycle = int(df['reportingCycle'].min())
     n_cycles = len(cycles)
-
     df_imp = df[df['category'].isin(['4A', '4B', '4C', '5'])].copy()
     impaired_by_cycle = df_imp.groupby('reportingCycle')['auId'].nunique()
     impaired_earliest = int(impaired_by_cycle[earliest_cycle])
     impaired_latest = int(impaired_by_cycle[latest_cycle])
     impaired_pct_change = round(100 * (impaired_latest - impaired_earliest) / impaired_earliest, 1)
 
-    # Top cause
+    # Top causes
     top_cause = (df[(df['reportingCycle'] == latest_cycle) &
                     (df['attainment'] == 'Not Supporting') &
                     (df['cause'].notna())]
@@ -276,32 +276,31 @@ def generate_charts(engine, prefix=''):
     top_cause_3_n = int(top_cause.iloc[2]) if len(top_cause) > 2 else 0
 
     # TMDL progress
-    tmdl_pivot = (df_imp.groupby(['reportingCycle', 'hasTmdl'])['auId']
-                  .nunique().unstack(fill_value=0))
-    tmdl_with_earliest = int(tmdl_pivot.get(1, pd.Series(0, index=tmdl_pivot.index)).get(earliest_cycle, 0))
-    tmdl_without_earliest = int(tmdl_pivot.get(0, pd.Series(0, index=tmdl_pivot.index)).get(earliest_cycle, 0))
+    tmdl_pivot_facts = (df_imp.groupby(['reportingCycle', 'hasTmdl'])['auId']
+                        .nunique().unstack(fill_value=0))
+    tmdl_with_earliest = int(tmdl_pivot_facts.get(1, pd.Series(0, index=tmdl_pivot_facts.index)).get(earliest_cycle, 0))
+    tmdl_without_earliest = int(tmdl_pivot_facts.get(0, pd.Series(0, index=tmdl_pivot_facts.index)).get(earliest_cycle, 0))
     tmdl_pct_earliest = round(100 * tmdl_with_earliest / impaired_earliest, 1) if impaired_earliest > 0 else 0.0
-    tmdl_with_latest = int(tmdl_pivot.get(1, pd.Series(0, index=tmdl_pivot.index)).get(latest_cycle, 0))
-    tmdl_without_latest = int(tmdl_pivot.get(0, pd.Series(0, index=tmdl_pivot.index)).get(latest_cycle, 0))
+    tmdl_with_latest = int(tmdl_pivot_facts.get(1, pd.Series(0, index=tmdl_pivot_facts.index)).get(latest_cycle, 0))
+    tmdl_without_latest = int(tmdl_pivot_facts.get(0, pd.Series(0, index=tmdl_pivot_facts.index)).get(latest_cycle, 0))
     tmdl_pct_latest = round(100 * tmdl_with_latest / impaired_latest, 1) if impaired_latest > 0 else 0.0
+    # Net TMDLs completed per 2-year cycle (average)
+    tmdl_has_series = tmdl_pivot_facts.get(1, pd.Series(0, index=tmdl_pivot_facts.index))
+    net_tmdls_per_cycle = tmdl_has_series.diff().dropna()
+    avg_net_tmdl_per_cycle = int(round(float(net_tmdls_per_cycle.mean()), 0))
+    # Years to clear backlog at average pace (each cycle = 2 years)
+    years_to_clear_backlog = int(round(tmdl_without_latest / avg_net_tmdl_per_cycle * 2, 0)) if avg_net_tmdl_per_cycle > 0 else 9999
+    year_backlog_cleared = latest_cycle + years_to_clear_backlog
 
     # CSO volume by 303(d) status
-    cso_merged = cso.merge(mapping, left_on='waterBody', right_on='csoWaterBody', how='left')
-    df_latest_status = (df[df['reportingCycle'] == latest_cycle]
-                        [['waterbody', 'attainment']].drop_duplicates().copy())
+    cso_merged2 = cso.merge(mapping, left_on='waterBody', right_on='csoWaterBody', how='left')
+    df_latest_status2 = (df[df['reportingCycle'] == latest_cycle]
+                         [['waterbody', 'attainment']].drop_duplicates().copy())
+    status_by_wb2 = df_latest_status2.groupby('waterbody')['attainment'].agg(aggregate_status)
+    cso_merged2['impairmentStatus'] = cso_merged2['waterbody303d'].map(status_by_wb2).fillna('Not Matched')
+    cso_merged2['volumnOfEvent'] = pd.to_numeric(cso_merged2['volumnOfEvent'], errors='coerce').fillna(0)
 
-    def _aggregate_status(group):
-        if 'Not Supporting' in group.values:
-            return 'Not Supporting'
-        if 'Fully Supporting' in group.values:
-            return 'Fully Supporting'
-        return group.iloc[0]
-
-    status_by_wb = df_latest_status.groupby('waterbody')['attainment'].agg(_aggregate_status)
-    cso_merged['impairmentStatus'] = cso_merged['waterbody303d'].map(status_by_wb).fillna('Not Matched')
-    cso_merged['volumnOfEvent'] = pd.to_numeric(cso_merged['volumnOfEvent'], errors='coerce').fillna(0)
-
-    total_by_status = cso_merged.groupby('impairmentStatus')['volumnOfEvent'].sum()
+    total_by_status = cso_merged2.groupby('impairmentStatus')['volumnOfEvent'].sum()
     vol_not_supporting = float(total_by_status.get('Not Supporting', 0)) / 1e9
     vol_not_matched = float(total_by_status.get('Not Matched', 0)) / 1e9
     vol_total_matched = float(total_by_status.drop('Not Matched', errors='ignore').sum()) / 1e9
@@ -311,9 +310,41 @@ def generate_charts(engine, prefix=''):
 
     # Mapping coverage
     n_cso_mapped = int(mapping.shape[0])
-    all_cso_wb = cso['waterBody'].dropna().unique()
-    n_cso_total = len(all_cso_wb)
     n_cso_unique_wb = cso['waterBody'].dropna().nunique()
+
+    # ── Persistence facts ─────────────────────────────────────────────────────
+    aus_earliest = set(df_imp[df_imp['reportingCycle'] == earliest_cycle]['auId'])
+    aus_latest = set(df_imp[df_imp['reportingCycle'] == latest_cycle]['auId'])
+    n_persistent = len(aus_earliest & aus_latest)
+    n_delisted = len(aus_earliest - aus_latest)
+    n_newly_added = len(aus_latest - aus_earliest)
+    pct_persistent = int(round(100 * n_persistent / len(aus_earliest), 0)) if aus_earliest else 0
+    pct_delisted = int(round(100 * n_delisted / len(aus_earliest), 0)) if aus_earliest else 0
+    # AUs appearing in every single cycle
+    au_cycle_counts = df_imp.groupby('auId')['reportingCycle'].nunique()
+    n_in_all_cycles = int((au_cycle_counts == n_cycles).sum())
+
+    # ── Size-weighted facts ───────────────────────────────────────────────────
+    rivers_imp = df_imp[df_imp['waterType'] == 'RIVER'].drop_duplicates(subset=['reportingCycle', 'auId'])
+    lakes_imp = (df_imp[df_imp['waterType'].str.contains('LAKE', na=False)]
+                 .drop_duplicates(subset=['reportingCycle', 'auId']))
+    river_miles_by_cycle = rivers_imp.groupby('reportingCycle')['auSize'].sum()
+    lake_acres_by_cycle = lakes_imp.groupby('reportingCycle')['auSize'].sum()
+    river_miles_earliest = int(river_miles_by_cycle[earliest_cycle].round(0))
+    river_miles_latest = int(river_miles_by_cycle[latest_cycle].round(0))
+    river_miles_pct_change = int(round(100 * (river_miles_latest - river_miles_earliest) / river_miles_earliest, 0))
+    lake_acres_earliest = int(lake_acres_by_cycle[earliest_cycle].round(0))
+    lake_acres_latest = int(lake_acres_by_cycle[latest_cycle].round(0))
+
+    # ── Swimming use failures ─────────────────────────────────────────────────
+    pcr_fail = int(df[(df['designatedUse'] == 'Primary Contact Recreation') &
+                      (df['attainment'] == 'Not Supporting') &
+                      (df['reportingCycle'] == latest_cycle)]['auId'].nunique())
+    pcr_assessed = int(df[(df['designatedUse'] == 'Primary Contact Recreation') &
+                          (df['reportingCycle'] == latest_cycle) &
+                          (df['attainment'].isin(['Not Supporting', 'Fully Supporting']))
+                          ]['auId'].nunique())
+    pct_pcr_failing = round(100 * pcr_fail / pcr_assessed, 0) if pcr_assessed > 0 else 0
 
     facts = {
         'latest_cycle': latest_cycle,
@@ -334,6 +365,9 @@ def generate_charts(engine, prefix=''):
         'tmdl_with_latest': tmdl_with_latest,
         'tmdl_without_latest': tmdl_without_latest,
         'tmdl_pct_latest': tmdl_pct_latest,
+        'avg_net_tmdl_per_cycle': avg_net_tmdl_per_cycle,
+        'years_to_clear_backlog': years_to_clear_backlog,
+        'year_backlog_cleared': year_backlog_cleared,
         'n_cso_mapped': n_cso_mapped,
         'n_cso_unique_wb': n_cso_unique_wb,
         'vol_not_supporting_bgal': round(vol_not_supporting, 1),
@@ -341,6 +375,20 @@ def generate_charts(engine, prefix=''):
         'vol_total_bgal': round(vol_total, 1),
         'pct_vol_impaired_of_matched': pct_vol_impaired_of_matched,
         'pct_vol_impaired_of_total': pct_vol_impaired_of_total,
+        'n_persistent': n_persistent,
+        'n_delisted': n_delisted,
+        'n_newly_added': n_newly_added,
+        'pct_persistent': pct_persistent,
+        'pct_delisted': pct_delisted,
+        'n_in_all_cycles': n_in_all_cycles,
+        'river_miles_earliest': river_miles_earliest,
+        'river_miles_latest': river_miles_latest,
+        'river_miles_pct_change': river_miles_pct_change,
+        'lake_acres_earliest': lake_acres_earliest,
+        'lake_acres_latest': lake_acres_latest,
+        'pcr_fail': pcr_fail,
+        'pcr_assessed': pcr_assessed,
+        'pct_pcr_failing': int(pct_pcr_failing),
     }
 
     facts_lines = [f'{k}: {v}\n' for k, v in facts.items()]
@@ -354,13 +402,19 @@ def generate_charts(engine, prefix=''):
 def generate_post_charts(engine):
     """Generate analysis-post charts (no prefix, local run only).
 
-    Includes a folium map (requires folium; excluded from CI dashboard).
+    Includes a folium map and two new analytical charts:
+      - EPA303d_persistence: cohort chart showing persistent vs. new impaired AUs
+      - EPA303d_bacterial_sources: source attribution for bacterial impairments
+    Folium map requires folium; excluded from CI dashboard.
     """
     import folium
 
     print('Loading data for post charts...')
     df = pd.read_sql_query('SELECT * FROM EPA_303d_Impairments', engine)
     latest_cycle = int(df['reportingCycle'].max())
+    earliest_cycle = int(df['reportingCycle'].min())
+    cycles = sorted(df['reportingCycle'].unique())
+    df_imp = df[df['category'].isin(['4A', '4B', '4C', '5'])].copy()
 
     # ── Watershed impairment bar chart ────────────────────────────────────────
     print('Post chart: Watershed impairment...')
@@ -388,6 +442,73 @@ def generate_post_charts(engine):
         scaleBeginAtZero=1,
     )
     mychart.jekyll_write('../docs/_includes/charts/EPA303d_watershed_impairment.html')
+
+    # ── Persistence of impairment (cohort chart) ──────────────────────────────
+    print('Post chart: Persistence...')
+
+    aus_earliest = set(df_imp[df_imp['reportingCycle'] == earliest_cycle]['auId'])
+    persistent_counts = []
+    new_since_earliest_counts = []
+
+    for cycle in cycles:
+        cycle_aus = set(df_imp[df_imp['reportingCycle'] == cycle]['auId'])
+        persistent_counts.append(len(cycle_aus & aus_earliest))
+        new_since_earliest_counts.append(len(cycle_aus - aus_earliest))
+
+    mychart = chartjs.chart('MA 303(d): Persistence of Impaired Waters', 'Bar', 700, 420)
+    mychart.set_labels([str(c) for c in cycles])
+    mychart.add_dataset(
+        [float(v) for v in persistent_counts],
+        f'Listed as impaired in {earliest_cycle} (original cohort)',
+        backgroundColor=f"'{RED}'",
+        stack="'cohort'",
+    )
+    mychart.add_dataset(
+        [float(v) for v in new_since_earliest_counts],
+        f'First listed after {earliest_cycle}',
+        backgroundColor=f"'{ORANGE}'",
+        stack="'cohort'",
+    )
+    mychart.set_params(
+        JSinline=0,
+        ylabel='Impaired assessment units',
+        xlabel='Reporting cycle',
+        scaleBeginAtZero=1,
+        stacked=1,
+    )
+    mychart.jekyll_write('../docs/_includes/charts/EPA303d_persistence.html')
+
+    # ── Bacterial impairment source attribution ───────────────────────────────
+    print('Post chart: Bacterial sources...')
+
+    bact = df[(df['reportingCycle'] == latest_cycle) &
+              (df['cause'].fillna('').str.upper().str.contains('FECAL|COLI')) &
+              (df['attainment'] == 'Not Supporting') &
+              (df['source'].notna())].copy()
+
+    # Normalise case variations (some cycles use ALL CAPS, others Title Case)
+    bact['source_norm'] = bact['source'].str.title()
+    src_counts = (bact.groupby('source_norm')['auId']
+                  .nunique()
+                  .sort_values(ascending=False)
+                  .head(10))
+
+    mychart = chartjs.chart(
+        f'Sources of Bacterial Water Impairment ({latest_cycle})', 'Bar', 700, 480
+    )
+    mychart.set_labels(src_counts.index.tolist())
+    mychart.add_dataset(
+        _to_float_list(src_counts),
+        'Assessment units with fecal coliform or E. coli impairment',
+        backgroundColor=f"'{RED}'",
+    )
+    mychart.set_params(
+        JSinline=0,
+        ylabel='Attributed source',
+        xlabel='Impaired assessment units',
+        scaleBeginAtZero=1,
+    )
+    mychart.jekyll_write('../docs/_includes/charts/EPA303d_bacterial_sources.html')
 
     # ── TMDL status map (folium) ──────────────────────────────────────────────
     print('Post chart: TMDL map...')

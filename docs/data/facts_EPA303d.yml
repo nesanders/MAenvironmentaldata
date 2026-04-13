@@ -16,6 +16,9 @@ tmdl_pct_earliest: 39.7
 tmdl_with_latest: 593
 tmdl_without_latest: 971
 tmdl_pct_latest: 37.9
+avg_net_tmdl_per_cycle: 25
+years_to_clear_backlog: 78
+year_backlog_cleared: 2100
 n_cso_mapped: 39
 n_cso_unique_wb: 56
 vol_not_supporting_bgal: 15.6
@@ -23,3 +26,17 @@ vol_not_matched_bgal: 4.3
 vol_total_bgal: 19.9
 pct_vol_impaired_of_matched: 100.0
 pct_vol_impaired_of_total: 78.5
+n_persistent: 1108
+n_delisted: 70
+n_newly_added: 456
+pct_persistent: 94
+pct_delisted: 6
+n_in_all_cycles: 1098
+river_miles_earliest: 1774
+river_miles_latest: 2530
+river_miles_pct_change: 43
+lake_acres_earliest: 82555
+lake_acres_latest: 90502
+pcr_fail: 689
+pcr_assessed: 1062
+pct_pcr_failing: 65

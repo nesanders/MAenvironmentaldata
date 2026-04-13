@@ -1,20 +1,20 @@
 {% raw  %}
 <html>
     <head>
-        <title>Top Causes of MA Water Impairment (2022)</title>
+        <title>Sources of Bacterial Water Impairment (2022)</title>
         <script src='https://cdn.jsdelivr.net/npm/chart.js@2.8.0/dist/Chart.bundle.min.js'></script>
     </head>
     <body>
-        <div style="width: 700px; height: 500px; max-width: 99%" class="chartjs">
+        <div style="width: 700px; height: 480px; max-width: 99%" class="chartjs">
 
-            <canvas id="Top Causes of MA Water Impairment (2022)" height="500" width="700"></canvas>
+            <canvas id="Sources of Bacterial Water Impairment (2022)" height="480" width="700"></canvas>
             <script>
                 Chart.defaults.global.defaultFontSize = 12;
                 var chart_data = {
                 
                     data: {
-                        labels: ['Fecal Coliform', 'Escherichia Coli (E. Coli)', 'Dissolved Oxygen', 'Non-Native Aquatic Plants', 'Mercury In Fish Tissue', 'Nutrient/Eutrophication Biological Indicators', 'Fanwort', 'Fish Passage Barrier', 'Benthic Macroinvertebrates', 'Phosphorus, Total', 'Turbidity', 'Curly-Leaf Pondweed', 'Eurasian Water Milfoil, Myriophyllum Spicatum', 'Nitrogen, Total', 'Pcbs In Fish Tissue'],
-                        datasets: [{'data': [355.0, 324.0, 273.0, 231.0, 204.0, 181.0, 173.0, 140.0, 130.0, 117.0, 116.0, 109.0, 106.0, 105.0, 102.0], 'label': 'Impaired assessment units (2022)', 'backgroundColor': 'rgba(54, 110, 179, 0.85)'}]
+                        labels: ['Source Unknown', 'Discharges From Municipal Separate Storm Sewer Systems (Ms4)', 'Waterfowl', 'Unspecified Urban Stormwater', 'On-Site Treatment Systems (Septic Systems And Similar Decentralized Systems)', 'Combined Sewer Overflows', 'Wastes From Pets', 'Marina/Boating Pumpout Releases', 'Illicit Connections/Hook-Ups To Storm Sewers', 'Agriculture'],
+                        datasets: [{'data': [411.0, 239.0, 68.0, 58.0, 52.0, 42.0, 37.0, 30.0, 26.0, 21.0], 'label': 'Assessment units with fecal coliform or E. coli impairment', 'backgroundColor': 'rgba(200, 60, 60, 0.85)'}]
                     },
                     type: 'bar',
                     options: {
@@ -23,7 +23,7 @@
                                 display: true,
                                 scaleLabel: {
                                     display: true,
-                                    labelString: 'Impairment cause'
+                                    labelString: 'Attributed source'
                                 },
                                 ticks: {
                                     beginAtZero: true, min: 0
@@ -46,7 +46,7 @@
                             xAxes: [{
                                 scaleLabel: {
                                     display: true,
-                                    labelString: 'Impaired assessment units (distinct)'
+                                    labelString: 'Impaired assessment units'
                                 },
                                 stacked: false,
                                 ticks: {
@@ -68,7 +68,7 @@
             </script>
             <script>
                 {{
-                    var ctx = document.getElementById("Top Causes of MA Water Impairment (2022)").getContext("2d");
+                    var ctx = document.getElementById("Sources of Bacterial Water Impairment (2022)").getContext("2d");
                     var mychart = new Chart(ctx, chart_data);
                 }}
             </script>

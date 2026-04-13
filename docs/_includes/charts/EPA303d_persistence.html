@@ -1,20 +1,20 @@
 {% raw  %}
 <html>
     <head>
-        <title>Top Causes of MA Water Impairment (2022)</title>
+        <title>MA 303(d): Persistence of Impaired Waters</title>
         <script src='https://cdn.jsdelivr.net/npm/chart.js@2.8.0/dist/Chart.bundle.min.js'></script>
     </head>
     <body>
-        <div style="width: 700px; height: 500px; max-width: 99%" class="chartjs">
+        <div style="width: 700px; height: 420px; max-width: 99%" class="chartjs">
 
-            <canvas id="Top Causes of MA Water Impairment (2022)" height="500" width="700"></canvas>
+            <canvas id="MA 303(d): Persistence of Impaired Waters" height="420" width="700"></canvas>
             <script>
                 Chart.defaults.global.defaultFontSize = 12;
                 var chart_data = {
                 
                     data: {
-                        labels: ['Fecal Coliform', 'Escherichia Coli (E. Coli)', 'Dissolved Oxygen', 'Non-Native Aquatic Plants', 'Mercury In Fish Tissue', 'Nutrient/Eutrophication Biological Indicators', 'Fanwort', 'Fish Passage Barrier', 'Benthic Macroinvertebrates', 'Phosphorus, Total', 'Turbidity', 'Curly-Leaf Pondweed', 'Eurasian Water Milfoil, Myriophyllum Spicatum', 'Nitrogen, Total', 'Pcbs In Fish Tissue'],
-                        datasets: [{'data': [355.0, 324.0, 273.0, 231.0, 204.0, 181.0, 173.0, 140.0, 130.0, 117.0, 116.0, 109.0, 106.0, 105.0, 102.0], 'label': 'Impaired assessment units (2022)', 'backgroundColor': 'rgba(54, 110, 179, 0.85)'}]
+                        labels: ['2010', '2012', '2014', '2016', '2018', '2022'],
+                        datasets: [{'data': [1178.0, 1161.0, 1161.0, 1109.0, 1104.0, 1108.0], 'label': 'Listed as impaired in 2010 (original cohort)', 'backgroundColor': 'rgba(200, 60, 60, 0.85)', 'stack': 'cohort'},{'data': [0.0, 70.0, 73.0, 229.0, 371.0, 456.0], 'label': 'First listed after 2010', 'backgroundColor': 'rgba(230, 140, 40, 0.85)', 'stack': 'cohort'}]
                     },
                     type: 'bar',
                     options: {
@@ -23,14 +23,14 @@
                                 display: true,
                                 scaleLabel: {
                                     display: true,
-                                    labelString: 'Impairment cause'
+                                    labelString: 'Impaired assessment units'
                                 },
                                 ticks: {
                                     beginAtZero: true, min: 0
                                 },
                                 "id": "y-axis-0",
                                 "position": "left",
-                                stacked: false
+                                stacked: true
                             }, {
                                 display: false,
                                 scaleLabel: {
@@ -46,9 +46,9 @@
                             xAxes: [{
                                 scaleLabel: {
                                     display: true,
-                                    labelString: 'Impaired assessment units (distinct)'
+                                    labelString: 'Reporting cycle'
                                 },
-                                stacked: false,
+                                stacked: true,
                                 ticks: {
                                     autoSkip: true
                                 }
@@ -68,7 +68,7 @@
             </script>
             <script>
                 {{
-                    var ctx = document.getElementById("Top Causes of MA Water Impairment (2022)").getContext("2d");
+                    var ctx = document.getElementById("MA 303(d): Persistence of Impaired Waters").getContext("2d");
                     var mychart = new Chart(ctx, chart_data);
                 }}
             </script>
