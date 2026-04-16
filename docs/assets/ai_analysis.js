@@ -37,7 +37,7 @@ const PROVIDER_CONFIG = {
   },
   gemini: {
     endpoint: 'https://generativelanguage.googleapis.com/v1beta/models/{model}:generateContent',
-    defaultModel: 'gemini-2.0-flash',
+    defaultModel: 'gemini-2.5-flash',
     format: 'gemini',
   },
 };

@@ -19,7 +19,9 @@ TABLE_DESCRIPTIONS = {
         'EEA Data Portal: Combined Sewer Overflow (CSO) and Sanitary Sewer Overflow (SSO) '
         'discharge incidents reported to MassDEP. Each row is one discharge event at a '
         'specific outfall. Key fields: waterBody, municipality, volumnOfEvent (gallons), '
-        'latitude/longitude, incidentDate, Year.'
+        'latitude/longitude, incidentDate, Year. '
+        'IMPORTANT: Data spans June 2022 to present — Year values include 2022, 2023, 2024, 2025, 2026. '
+        'Do NOT assume data ends in 2023; always query the full range and check MAX(Year) if unsure.'
     ),
     'MAEEADP_Enforcement': (
         'EEA Data Portal: MassDEP enforcement actions against regulated entities, 1996–present. '
@@ -278,6 +280,19 @@ JOIN_RELATIONSHIPS = """
   AND reportingCycle = (SELECT MAX(reportingCycle) FROM EPA_303d_Impairments)
   → reportingCycle and hasTmdl are columns of EPA_303d_Impairments; never put them on CSO_303d_Mapping
 
+- **EJSCREEN environmental justice + CSO by county** (no direct municipality join; use county approximation):
+  SELECT e.CNTY_NAME, AVG(e.MINORPCT) AS avg_minority_pct, SUM(c.volumnOfEvent) AS total_cso_gal
+  FROM MAEEADP_CSO c
+  JOIN EPA_EJSCREEN_2023 e ON e.CNTY_NAME = (
+    CASE UPPER(c.municipality)
+      WHEN 'BOSTON' THEN 'Suffolk' WHEN 'CAMBRIDGE' THEN 'Middlesex'
+      WHEN 'LOWELL' THEN 'Middlesex' WHEN 'WORCESTER' THEN 'Worcester'
+      ELSE NULL END)
+  WHERE c.eventType LIKE 'CSO%'
+  GROUP BY e.CNTY_NAME
+  NOTE: EPA_EJSCREEN_2023 has no municipality field — only CNTY_NAME (county). There is NO direct join
+  between EJSCREEN and MAEEADP_CSO.municipality. Always warn the user that results are county-level approximations.
+
 - **CSO discharges to 303(d) impaired waters** (two-step join):
   MAEEADP_CSO JOIN CSO_303d_Mapping ON MAEEADP_CSO.waterBody = CSO_303d_Mapping.csoWaterBody
   JOIN EPA_303d_Impairments ON CSO_303d_Mapping.waterbody303d = EPA_303d_Impairments.waterbody
@@ -299,6 +314,14 @@ GLOBAL_NOTES = """
   - Staffing (recent) → MADEP_staff_Comptroller
   - Budget trends → MassBudget_summary (not the wide infadjusted/noinfadjusted tables)
   - Environmental justice → EPA_EJSCREEN_2023 (more current than 2017)
+
+- **EJSCREEN joins**: EPA_EJSCREEN_2023 is at the census block group level (ID is a 12-digit FIPS code).
+  It has NO municipality or town field. CNTY_NAME is county-level. There is NO direct join to CSO municipality names.
+  To connect EJ data to CSO events, the best approach is to aggregate EJSCREEN to county level using CNTY_NAME
+  and match to CSO data aggregated by UPPER(municipality) → county via a manual lookup, OR note the limitation
+  to the user and provide county-level results instead of town-level.
+  Census_ACS.Subdivision contains MA town names in Title Case (e.g. "Lowell") that can be UPPER()-compared to
+  MAEEADP_CSO.municipality, but Census_ACS has no EJSCREEN percentile data.
 
 - **Date formats**: InspectionDate, EnforcementDate, FinalDecisionDate are YYYY-MM-DD strings.
   incidentDate (MAEEADP_CSO) is YYYY-MM-DD HH:MM:SS — use substr(incidentDate, 1, 10) or strftime('%Y-%m', incidentDate) to extract date/month.
