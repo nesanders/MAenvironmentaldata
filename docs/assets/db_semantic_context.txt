@@ -856,7 +856,7 @@ MOSES - Engineers/Scientists	MOSES - Engineers/Scientists (09)	DEPARTMENT OF ENV
 ---
 
 ### MAEEADP_CSO (17,575 rows)
-EEA Data Portal: Combined Sewer Overflow (CSO) and Sanitary Sewer Overflow (SSO) discharge incidents reported to MassDEP. Each row is one discharge event at a specific outfall. Key fields: waterBody, municipality, volumnOfEvent (gallons), latitude/longitude, incidentDate, Year. IMPORTANT: Data spans June 2022 to present — Year values include 2022, 2023, 2024, 2025, 2026. Do NOT assume data ends in 2023; always query the full range and check MAX(Year) if unsure.
+EEA Data Portal: Combined Sewer Overflow (CSO) and Sanitary Sewer Overflow (SSO) discharge incidents reported to MassDEP. Each row is one discharge event at a specific outfall. Key fields: waterBody, municipality, volumnOfEvent (gallons), latitude/longitude, incidentDate, Year. IMPORTANT: Data spans June 2022 to present — years available: 2022, 2023, 2024, 2025, 2026. Do NOT assume data ends in an earlier year; always query the full range and check MAX(Year) if unsure.
 
 ```sql
 CREATE TABLE "MAEEADP_CSO" (

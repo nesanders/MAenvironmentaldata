@@ -20,8 +20,8 @@ TABLE_DESCRIPTIONS = {
         'discharge incidents reported to MassDEP. Each row is one discharge event at a '
         'specific outfall. Key fields: waterBody, municipality, volumnOfEvent (gallons), '
         'latitude/longitude, incidentDate, Year. '
-        'IMPORTANT: Data spans June 2022 to present — Year values include 2022, 2023, 2024, 2025, 2026. '
-        'Do NOT assume data ends in 2023; always query the full range and check MAX(Year) if unsure.'
+        'IMPORTANT: Data spans June 2022 to present — years available: {cso_year_range}. '
+        'Do NOT assume data ends in an earlier year; always query the full range and check MAX(Year) if unsure.'
     ),
     'MAEEADP_Enforcement': (
         'EEA Data Portal: MassDEP enforcement actions against regulated entities, 1996–present. '
@@ -364,6 +364,21 @@ def format_sample_rows(cur, table, col_names, n=5):
 def generate_semantic_context(db_path):
     conn = sqlite3.connect(db_path)
     cur = conn.cursor()
+
+    # Dynamically patch descriptions that depend on DB contents.
+    try:
+        years = cur.execute(
+            'SELECT CAST(Year AS INTEGER) FROM MAEEADP_CSO '
+            'WHERE Year IS NOT NULL GROUP BY 1 ORDER BY 1'
+        ).fetchall()
+        year_list = ', '.join(str(r[0]) for r in years)
+        TABLE_DESCRIPTIONS['MAEEADP_CSO'] = TABLE_DESCRIPTIONS['MAEEADP_CSO'].format(
+            cso_year_range=year_list
+        )
+    except Exception:
+        TABLE_DESCRIPTIONS['MAEEADP_CSO'] = TABLE_DESCRIPTIONS['MAEEADP_CSO'].format(
+            cso_year_range='2022 onward'
+        )
 
     tables = [
         r[0] for r in cur.execute(
