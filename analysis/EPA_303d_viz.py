@@ -213,9 +213,7 @@ def _add_tick_wrap(path, max_chars=28):
         html = f.read()
     # The wrapper emits:  ticks: {\n                                    \n                                },
     # for yAxes[0]. Insert the callback into the first ticks block.
-    old = 'yAxes: [{'
-    new = old  # find insertion point inside first ticks: {} of yAxes[0]
-    # More robust: replace the first empty ticks block inside yAxes
+    # Replace the first ticks block in yAxes[0] to inject the wrap callback
     target = "ticks: {\n                                    beginAtZero: true, min: 0\n                                },"
     replacement = f"ticks: {{\n                                    beginAtZero: true, min: 0,\n                                    {wrap_js}\n                                }},"
     if target in html:
@@ -794,7 +792,7 @@ def generate_post_charts(engine):
                   .head(10))
 
     mychart = chartjs.chart(
-        f'Sources of Bacterial Water Impairment ({latest_cycle})', 'HorizontalBar', 700, 480
+        f'Sources of Bacterial Water Impairment ({latest_cycle})', 'HorizontalBar', 700, 680
     )
     mychart.set_labels(src_counts.index.tolist())
     mychart.add_dataset(
@@ -804,7 +802,7 @@ def generate_post_charts(engine):
     )
     mychart.set_params(
         JSinline=0,
-        ylabel='Attributed source',
+        ylabel='',
         xlabel='Impaired assessment units',
         scaleBeginAtZero=1,
     )
@@ -1003,8 +1001,8 @@ def generate_post_charts(engine):
     )
     mychart.set_params(
         JSinline=0,
-        ylabel='Pollution source category',
-        xlabel='% of assessed AUs with fecal coliform or E. coli impairment',
+        ylabel='% of assessed AUs with bacterial impairment',
+        xlabel='Pollution source category',
         scaleBeginAtZero=1,
         legend=0,
     )

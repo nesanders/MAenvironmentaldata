@@ -211,7 +211,7 @@ Combined sewer overflows (CSOs) are a distinct type of discharge from aging sewa
 
 To examine this, we matched [MA EEA Data Portal CSO discharge records]({{ site.url }}{{ site.baseurl }}/data/EEADP_all.html) — covering June 2022 through present — to 303(d) status for each receiving waterway using a manually verified mapping table. The mapping covers {{ site.data.facts_EPA303d.n_cso_mapped }} of the {{ site.data.facts_EPA303d.n_cso_unique_wb }} distinct CSO-reporting waterways in the EEA Data Portal.
 
-The {{ site.data.facts_EPA303d.n_cso_not_matched }} waterways that could not be matched fall into two categories. Some use highly localized names — drainage channels, unnamed brooks, or facility-specific designations — that do not correspond to any named assessment unit in the 303(d) dataset. Others are reported with names that differ enough from the 303(d) assessment unit names (e.g. abbreviations, alternate spellings) that a reliable match could not be established without manual verification for each entry. These unmatched discharges are shown separately in the chart as "Status unknown (no 303d match)" — their impairment status is not known, not confirmed clean. Their volume varies year to year because CSO reporting coverage changes as operators update their submissions to the EEA Data Portal.
+The {{ site.data.facts_EPA303d.n_cso_not_matched }} waterways that could not be matched fall into two categories. Some use highly localized names — drainage channels, unnamed brooks, or facility-specific designations — that do not correspond to any named assessment unit in the 303(d) dataset. Others are reported with names that differ enough from the 303(d) assessment unit names (e.g. abbreviations, alternate spellings) that a reliable match could not be established without manual verification for each entry. These unmatched discharges are shown separately in the chart as "Status unknown (no 303d match)" — their impairment status is not known, not confirmed clean.
 
 {% include charts/EPA303d_cso_impaired.html %}
 
@@ -221,7 +221,7 @@ The chart below shows each group of waterways ranked by the fraction of their as
 
 {% include charts/EPA303d_cso_bact_cdf.html %}
 
-Among non-CSO waterways, approximately 74% have zero assessed AUs with bacterial impairment. CSO-receiving waterways range from 25% to 100% bacterial fraction, with most above 65%.
+Among non-CSO waterways, approximately 74% have zero assessed AUs with bacterial impairment. Among CSO-receiving waterways, most have 100% of their assessed AUs with bacterial impairment, and no waterway falls below 25%.
 
 One question raised by this pattern is whether it reflects CSO outfalls specifically, or urbanization more broadly. The bar chart below shows the fraction of assessed AUs with bacterial impairment grouped by the predominant pollution source type attributed to each waterway by assessors. "CSO-receiving" uses the mapping table; all other groups exclude CSO-mapped waterways.
 
@@ -229,7 +229,7 @@ One question raised by this pattern is whether it reflects CSO outfalls specific
 
 Waterways with CSO or MS4/urban stormwater attribution have the highest bacterial impairment rates (72% and 47% of assessed AUs respectively), followed by septic-influenced waterways (42%), agricultural waterways (32%), and others (30%). The gap between CSO and MS4 waterways is partly a function of selection: CSO-mapped waterways were specifically identified because they receive direct sewage discharges, while the MS4 group includes a broader mix of urban waterways. Impairment assessments reflect multiple pollution sources, and source attribution in the 303(d) data is often uncertain — "Source Unknown" is the most commonly recorded source overall.
 
-This pattern reflects the geographic concentration of combined sewer infrastructure in older urban areas — the same watersheds where water quality impairment has historically been documented. The overlap does not by itself indicate that CSOs are the cause of the 303(d) listings, since impairment assessments reflect multiple pollution sources; but it indicates that CSO discharges are not occurring in waters that already meet standards.
+This pattern reflects the geographic concentration of combined sewer infrastructure in older urban areas — the same watersheds where water quality impairment has historically been documented. The overlap does not by itself indicate that CSOs are the cause of the 303(d) listings, since impairment assessments reflect multiple pollution sources.
 
 ---
 
