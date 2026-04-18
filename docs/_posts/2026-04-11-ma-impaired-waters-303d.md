@@ -150,6 +150,7 @@ The {{ site.data.facts_EPA303d.n_delisted }} AUs that left the impaired list fal
 
 {{ site.data.facts_EPA303d.n_delisted_cat3 }} AUs are now listed as Category 3 — insufficient data to make an assessment. These were removed from the impaired list not because of demonstrated improvement, but because current monitoring data is inadequate to support a listing decision.
 
+
 <details>
 <summary>Now Category 3 (insufficient data) — {{ site.data.facts_EPA303d.n_delisted_cat3 }} assessment units</summary>
 <div style="max-height:360px;overflow-y:auto;margin:1em 0;">
@@ -182,11 +183,11 @@ The 2022 cycle identifies over 90 distinct causes of impairment across Massachus
 
 The chart below shows how the top causes have changed across all six reporting cycles. Several patterns are notable.
 
-Fecal coliform has been consistently the most common cause throughout the period, but *E. coli* goes from essentially zero to ~300 AUs between the 2014 and 2016 cycles. This does not reflect a sudden biological event: *E. coli* replaced fecal coliform as EPA's recommended bacterial indicator for primary contact recreation in [EPA's 2012 Recreational Water Quality Criteria](https://www.epa.gov/sites/default/files/2015-10/documents/rwqc2012.pdf) (see page 2), and MA DEP adopted it in the 2016 reporting cycle per its [Surface Water Quality Criteria for Bacteria guidance](https://www.mass.gov/doc/bacteria-surface-water-quality-criteria-for-bacteria-implementation-guidance-for-the-protection-of-human-health-in-waters-designated-for-primary-contact-recreation-cn-5630/download). The two indicators largely measure the same contamination.
+Fecal coliform has been consistently the most common cause throughout the period, but *E. coli* goes from essentially zero to ~300 AUs between the 2014 and 2016 cycles. This does not reflect a sudden biological event: *E. coli* replaced fecal coliform as EPA's recommended bacterial indicator for primary contact recreation in [EPA's 2012 Recreational Water Quality Criteria](https://www.epa.gov/sites/default/files/2015-10/documents/rwqc2012.pdf). MA DEP incorporated *E. coli* assessment criteria into its [2016 Consolidated Assessment and Listing Methodology (CALM)](https://www.mass.gov/files/documents/2016/10/wy/2016calm.pdf), which is why it appears in the 2016 reporting cycle data; the underlying Massachusetts surface water quality standards were formally amended in 2021. The two indicators largely measure the same contamination.
 
 The 2016 cycle also sees dissolved oxygen, nutrient/eutrophication biological indicators, fanwort, and fish passage barriers all appear or increase sharply — several going from near-zero to hundreds of AUs. This reflects methodological and categorical changes in how MA DEP conducted and reported assessments that cycle, not five simultaneous environmental events. Most notably, fanwort was split out from the broader "non-native aquatic plants" category, which explains the corresponding decline in that count after 2016.
 
-Mercury in fish tissue grows steadily across all cycles, as expanding fish tissue monitoring programs identify more affected waterbodies. Fish passage barriers also trend upward in recent cycles, reflecting growing attention to dam and culvert impacts on aquatic connectivity.
+Mercury in fish tissue has increased gradually — from 158 AUs in 2010 to 204 in 2022 — as expanding fish tissue monitoring programs identify more affected waterbodies, though the rate of increase is slow and uneven. Fish passage barriers grew sharply from 18 AUs in 2016 to 112 in 2018, a pattern consistent with the methodological expansions that characterized that cycle rather than a sudden proliferation of physical barriers.
 
 {% include charts/EPA303d_causes_trend.html %}
 
