@@ -606,38 +606,77 @@ def generate_charts(engine, prefix=''):
             return f'"{v:,}"'  # quoted string so YAML parsers don't trip on commas
         return v
 
-    with open('../docs/data/facts_EPA303d.yml', 'w') as fh:
-        fh.writelines([f'{k}: {_fmt(k, v)}\n' for k, v in facts.items()])
-    print('Facts written to ../docs/data/facts_EPA303d.yml')
-
-    # ── 8. Delisted waterbodies CSV ───────────────────────────────────────────
-    print('Writing delisted waterbodies CSV...')
+    # ── 8. Delisted waterbodies CSVs (split by 2022 status) ──────────────────
+    # NOTE: facts YAML is written after this block so group counts can be included.
+    print('Writing delisted waterbodies CSVs...')
 
     delisted_aus = aus_earliest - aus_latest
-    # Last cycle each AU appeared as impaired (delisting happened after this cycle)
+
+    # 2022 status for each delisted AU (any category present in latest cycle)
+    status_2022 = (df[df['reportingCycle'] == latest_cycle]
+                   .groupby('auId')['category'].first())
+
+    def _status_group(au_id):
+        if au_id not in status_2022.index:
+            return 'removed'
+        cat = status_2022[au_id]
+        return 'cat2' if cat == '2' else 'cat3'
+
+    # Last cycle each AU appeared as impaired
     last_listed = (df_imp[df_imp['auId'].isin(delisted_aus)]
                    .groupby('auId')['reportingCycle'].max()
                    .rename('Last Listed'))
-    delisted_df = (df_imp[(df_imp['reportingCycle'] == earliest_cycle) &
-                           (df_imp['auId'].isin(delisted_aus))]
-                   .drop_duplicates(subset=['auId'])
-                   [['auId', 'waterbody', 'watershed', 'waterType', 'auSize', 'sizeUnit']]
-                   .set_index('auId')
-                   .join(last_listed)
-                   .reset_index()
-                   .sort_values(['watershed', 'waterbody'])
-                   .rename(columns={
-                       'auId': 'Assessment Unit',
-                       'waterbody': 'Waterbody',
-                       'watershed': 'Watershed',
-                       'waterType': 'Type',
-                       'auSize': 'Size',
-                       'sizeUnit': 'Unit',
-                   }))
-    delisted_df['Size'] = delisted_df['Size'].round(1)
-    delisted_df['Last Listed'] = delisted_df['Last Listed'].astype(int)
-    delisted_df.to_csv('../docs/data/EPA_303d_delisted.csv', index=False)
-    print(f'Delisted CSV written ({len(delisted_df)} rows).')
+    # Causes from the earliest cycle
+    causes_earliest = (df[(df['reportingCycle'] == earliest_cycle) &
+                          (df['auId'].isin(delisted_aus)) &
+                          df['cause'].notna()]
+                       .groupby('auId')['cause']
+                       .apply(lambda x: '; '.join(sorted(set(x))))
+                       .rename('Causes'))
+
+    base_df = (df_imp[(df_imp['reportingCycle'] == earliest_cycle) &
+                      (df_imp['auId'].isin(delisted_aus))]
+               .drop_duplicates(subset=['auId'])
+               [['auId', 'waterbody', 'watershed', 'waterType', 'auSize', 'sizeUnit']]
+               .set_index('auId')
+               .join(last_listed)
+               .join(causes_earliest)
+               .reset_index())
+    base_df['_group'] = base_df['auId'].map(_status_group)
+    base_df['Size'] = base_df['auSize'].round(1)
+    base_df['Last Listed'] = base_df['Last Listed'].astype(int)
+    base_df = base_df.sort_values(['watershed', 'waterbody'])
+    base_df = base_df.rename(columns={
+        'auId': 'Assessment Unit',
+        'waterbody': 'Waterbody',
+        'watershed': 'Watershed',
+        'waterType': 'Type',
+        'sizeUnit': 'Unit',
+    })
+    cols = ['Assessment Unit', 'Waterbody', 'Watershed', 'Type', 'Size', 'Unit',
+            'Last Listed', 'Causes']
+
+    groups = {'removed': 'EPA_303d_delisted_removed',
+              'cat2':    'EPA_303d_delisted_cat2',
+              'cat3':    'EPA_303d_delisted_cat3'}
+    counts = {}
+    for grp, fname in groups.items():
+        sub = base_df[base_df['_group'] == grp][cols]
+        sub.to_csv(f'../docs/data/{fname}.csv', index=False)
+        counts[grp] = len(sub)
+        print(f'  {fname}.csv: {len(sub)} rows')
+
+    # Keep legacy file for backwards compat (all three combined)
+    base_df[cols].to_csv('../docs/data/EPA_303d_delisted.csv', index=False)
+
+    # Add group counts to facts, then write YAML
+    facts['n_delisted_removed'] = counts['removed']
+    facts['n_delisted_cat2'] = counts['cat2']
+    facts['n_delisted_cat3'] = counts['cat3']
+
+    with open('../docs/data/facts_EPA303d.yml', 'w') as fh:
+        fh.writelines([f'{k}: {_fmt(k, v)}\n' for k, v in facts.items()])
+    print('Facts written to ../docs/data/facts_EPA303d.yml')
 
     print(f'Dashboard charts written (prefix={prefix!r}).')
 

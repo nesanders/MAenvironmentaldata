@@ -44,3 +44,6 @@ pct_pcr_failing: 65
 n_cohort_cat5: 710
 still_no_tmdl: 602
 pct_still_no_tmdl: 85
+n_delisted_removed: 43
+n_delisted_cat2: 18
+n_delisted_cat3: 9

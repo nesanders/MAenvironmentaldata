@@ -62,17 +62,53 @@ Of the {{ site.data.facts_EPA303d.impaired_earliest }} waterbody segments listed
 
 Over twelve years, {{ site.data.facts_EPA303d.n_delisted }} AUs were removed from the impaired list — {{ site.data.facts_EPA303d.pct_delisted }}% of those impaired in {{ site.data.facts_EPA303d.earliest_cycle }}. During the same period, {{ site.data.facts_EPA303d.n_newly_added }} AUs were added.
 
-The specific waterbodies that were delisted between {{ site.data.facts_EPA303d.earliest_cycle }} and {{ site.data.facts_EPA303d.latest_cycle }} are listed below. Delisting does not necessarily mean a waterbody has been fully restored — it may reflect updated assessments, reclassification, or that the waterbody is now monitored under a different framework.
+The {{ site.data.facts_EPA303d.n_delisted }} AUs that left the impaired list fall into three categories based on their status in the 2022 data. Each is shown in a separate table below. Click any column header to sort.
+
+<style>
+.delisted-tbl th { cursor:pointer; user-select:none; }
+.delisted-tbl th::after { content:' ⇅'; font-size:0.75em; opacity:0.4; }
+.delisted-tbl th.asc::after { content:' ↑'; opacity:1; }
+.delisted-tbl th.desc::after { content:' ↓'; opacity:1; }
+</style>
+<script>
+(function(){
+  function makeSortable(tbl) {
+    var ths = tbl.querySelectorAll('thead th');
+    var sortCol = -1, sortAsc = true;
+    ths.forEach(function(th, ci){
+      th.addEventListener('click', function(){
+        var tbody = tbl.querySelector('tbody');
+        var rows = Array.from(tbody.querySelectorAll('tr'));
+        sortAsc = (sortCol === ci) ? !sortAsc : true;
+        sortCol = ci;
+        ths.forEach(function(h){ h.classList.remove('asc','desc'); });
+        th.classList.add(sortAsc ? 'asc' : 'desc');
+        rows.sort(function(a, b){
+          var av = a.cells[ci].textContent.trim();
+          var bv = b.cells[ci].textContent.trim();
+          var an = parseFloat(av), bn = parseFloat(bv);
+          var cmp = (!isNaN(an) && !isNaN(bn)) ? an - bn : av.localeCompare(bv);
+          return sortAsc ? cmp : -cmp;
+        });
+        rows.forEach(function(r){ tbody.appendChild(r); });
+      });
+    });
+  }
+  document.addEventListener('DOMContentLoaded', function(){
+    document.querySelectorAll('.delisted-tbl').forEach(makeSortable);
+  });
+})();
+</script>
+
+{{ site.data.facts_EPA303d.n_delisted_removed }} AUs no longer appear in the 2022 assessment data at all. These may have been consolidated into differently numbered assessment units, removed from the assessment universe, or in some cases genuinely improved to the point of no longer requiring listing.
 
 <details>
-<summary>Waterbodies delisted between {{ site.data.facts_EPA303d.earliest_cycle }} and {{ site.data.facts_EPA303d.latest_cycle }} ({{ site.data.facts_EPA303d.n_delisted }} assessment units)</summary>
-
+<summary>Removed from assessment entirely — {{ site.data.facts_EPA303d.n_delisted_removed }} assessment units</summary>
 <div style="max-height:360px;overflow-y:auto;margin:1em 0;">
-<table>
-<thead><tr><th>Assessment Unit</th><th>Waterbody</th><th>Watershed</th><th>Type</th><th>Size</th><th>Last Listed</th></tr></thead>
+<table class="delisted-tbl">
+<thead><tr><th>Assessment Unit</th><th>Waterbody</th><th>Watershed</th><th>Type</th><th>Size</th><th>Last Listed</th><th>Causes ({{ site.data.facts_EPA303d.earliest_cycle }})</th></tr></thead>
 <tbody>
-{% assign delisted = site.data.EPA_303d_delisted %}
-{% for row in delisted %}
+{% for row in site.data.EPA_303d_delisted_removed %}
 <tr>
   <td>{{ row["Assessment Unit"] }}</td>
   <td>{{ row["Waterbody"] }}</td>
@@ -80,6 +116,55 @@ The specific waterbodies that were delisted between {{ site.data.facts_EPA303d.e
   <td>{{ row["Type"] | capitalize }}</td>
   <td>{{ row["Size"] }} {{ row["Unit"] | downcase }}</td>
   <td>{{ row["Last Listed"] }}</td>
+  <td style="font-size:0.85em">{{ row["Causes"] }}</td>
+</tr>
+{% endfor %}
+</tbody>
+</table>
+</div>
+</details>
+
+{{ site.data.facts_EPA303d.n_delisted_cat2 }} AUs are now listed as Category 2 — meaning they are assessed as meeting water quality standards, though with some concern. This is the clearest indication of improvement among the three groups.
+
+<details>
+<summary>Now Category 2 (meeting standards) — {{ site.data.facts_EPA303d.n_delisted_cat2 }} assessment units</summary>
+<div style="max-height:360px;overflow-y:auto;margin:1em 0;">
+<table class="delisted-tbl">
+<thead><tr><th>Assessment Unit</th><th>Waterbody</th><th>Watershed</th><th>Type</th><th>Size</th><th>Last Listed</th><th>Causes ({{ site.data.facts_EPA303d.earliest_cycle }})</th></tr></thead>
+<tbody>
+{% for row in site.data.EPA_303d_delisted_cat2 %}
+<tr>
+  <td>{{ row["Assessment Unit"] }}</td>
+  <td>{{ row["Waterbody"] }}</td>
+  <td>{{ row["Watershed"] }}</td>
+  <td>{{ row["Type"] | capitalize }}</td>
+  <td>{{ row["Size"] }} {{ row["Unit"] | downcase }}</td>
+  <td>{{ row["Last Listed"] }}</td>
+  <td style="font-size:0.85em">{{ row["Causes"] }}</td>
+</tr>
+{% endfor %}
+</tbody>
+</table>
+</div>
+</details>
+
+{{ site.data.facts_EPA303d.n_delisted_cat3 }} AUs are now listed as Category 3 — insufficient data to make an assessment. These were removed from the impaired list not because of demonstrated improvement, but because current monitoring data is inadequate to support a listing decision.
+
+<details>
+<summary>Now Category 3 (insufficient data) — {{ site.data.facts_EPA303d.n_delisted_cat3 }} assessment units</summary>
+<div style="max-height:360px;overflow-y:auto;margin:1em 0;">
+<table class="delisted-tbl">
+<thead><tr><th>Assessment Unit</th><th>Waterbody</th><th>Watershed</th><th>Type</th><th>Size</th><th>Last Listed</th><th>Causes ({{ site.data.facts_EPA303d.earliest_cycle }})</th></tr></thead>
+<tbody>
+{% for row in site.data.EPA_303d_delisted_cat3 %}
+<tr>
+  <td>{{ row["Assessment Unit"] }}</td>
+  <td>{{ row["Waterbody"] }}</td>
+  <td>{{ row["Watershed"] }}</td>
+  <td>{{ row["Type"] | capitalize }}</td>
+  <td>{{ row["Size"] }} {{ row["Unit"] | downcase }}</td>
+  <td>{{ row["Last Listed"] }}</td>
+  <td style="font-size:0.85em">{{ row["Causes"] }}</td>
 </tr>
 {% endfor %}
 </tbody>
@@ -97,7 +182,7 @@ The 2022 cycle identifies over 90 distinct causes of impairment across Massachus
 
 The chart below shows how the top causes have changed across all six reporting cycles. Several patterns are notable.
 
-Fecal coliform has been consistently the most common cause throughout the period, but *E. coli* goes from essentially zero to ~300 AUs between the 2014 and 2016 cycles. This does not reflect a sudden biological event: *E. coli* replaced fecal coliform as EPA's recommended bacterial indicator for primary contact recreation in updated assessment guidance, and MA DEP adopted it in the 2016 reporting cycle. The two indicators largely measure the same contamination.
+Fecal coliform has been consistently the most common cause throughout the period, but *E. coli* goes from essentially zero to ~300 AUs between the 2014 and 2016 cycles. This does not reflect a sudden biological event: *E. coli* replaced fecal coliform as EPA's recommended bacterial indicator for primary contact recreation in [EPA's 2012 Recreational Water Quality Criteria](https://www.epa.gov/sites/default/files/2015-10/documents/rwqc2012.pdf) (see page 2), and MA DEP adopted it in the 2016 reporting cycle per its [Surface Water Quality Criteria for Bacteria guidance](https://www.mass.gov/doc/bacteria-surface-water-quality-criteria-for-bacteria-implementation-guidance-for-the-protection-of-human-health-in-waters-designated-for-primary-contact-recreation-cn-5630/download). The two indicators largely measure the same contamination.
 
 The 2016 cycle also sees dissolved oxygen, nutrient/eutrophication biological indicators, fanwort, and fish passage barriers all appear or increase sharply — several going from near-zero to hundreds of AUs. This reflects methodological and categorical changes in how MA DEP conducted and reported assessments that cycle, not five simultaneous environmental events. Most notably, fanwort was split out from the broader "non-native aquatic plants" category, which explains the corresponding decline in that count after 2016.
 
