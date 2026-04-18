@@ -6,11 +6,11 @@ ancillary: 0
 
 *This post is in DRAFT status. It has not yet been fully completed and reviewed.*
 
-> **Recent development:** In April 2025, EPA finalized a [Statewide Total Maximum Daily Load for Pathogen-Impaired Waters](https://www.epa.gov/system/files/documents/2025-04/final-ma-statewide-tmdl-pathogen-impaired-waters.pdf) in Massachusetts — a single framework cleanup plan covering all waterbodies impaired by fecal coliform and *E. coli*. Because bacterial contamination is the most common cause of impairment in the state, this action could formally resolve the TMDL requirement for hundreds of assessment units. Whether it leads to measurable improvements in water quality depends on subsequent permit revisions, infrastructure investment, and enforcement. The data below reflects conditions through the 2022 reporting cycle, before this TMDL was finalized.
+> **Recent development:** In April 2025, EPA finalized a [Statewide Total Maximum Daily Load for Pathogen-Impaired Waters](https://www.epa.gov/system/files/documents/2025-04/final-ma-statewide-tmdl-pathogen-impaired-waters.pdf) in Massachusetts — a single framework cleanup plan covering all waterbodies impaired by fecal coliform and *E. coli*. Because bacterial contamination is the most common cause of impairment in the state, this action could formally resolve the TMDL requirement for hundreds of assessment units. Whether it leads to measurable improvements in water quality depends on subsequent permit revisions, infrastructure investment, and enforcement. The data below reflects conditions through the 2022 reporting cycle, before this statewide TMDL was finalized.
 
-Massachusetts has been formally identifying waterbodies that fail water quality standards since at least 2002. Under [Section 303(d) of the Clean Water Act](https://www.epa.gov/tmdl/overview-impaired-waters-and-total-maximum-daily-loads), states must submit a biennial **Integrated List of Waters** to EPA identifying every waterbody that fails to meet its water quality standards — and for each, develop a **Total Maximum Daily Load (TMDL)**, a cleanup plan specifying the maximum pollutant load a waterbody can receive and still meet standards.
+Massachusetts has been [formally identifying](https://www.epa.gov/tmdl/region-1-approved-tmdls-state#tmdl-ma) (see also the [state TMDL   website](https://www.mass.gov/total-maximum-daily-loads-tmdls)) waterbodies that fail water quality standards since at least 2000. Under [Section 303(d) of the Clean Water Act](https://www.epa.gov/tmdl/overview-listing-impaired-waters-under-cwa-section-303d), states must submit a biennial ["303(d) list"](https://www.epa.gov/tmdl/impaired-waters-restoration-process-listing)] to EPA identifying every waterbody that fails to meet its water quality standards — and for each, develop a [**Total Maximum Daily Load (TMDL)**](https://www.epa.gov/tmdl/overview-total-maximum-daily-loads-tmdls), a cleanup plan specifying the maximum pollutant load a waterbody can receive and still meet standards.
 
-The 303(d) list is an important complement to data on regulatory activity (permitting, inspections, enforcement): it reflects measured environmental conditions rather than government actions. The data used here comes from [MassGIS](https://www.mass.gov/info-details/massgis-data-massdep-2022-integrated-list-of-waters-305b303d), which publishes each approved reporting cycle as GIS shapefiles with associated attribute tables. Available cycles: 2010, 2012, 2014, 2016, 2018, and 2022 (the 2020 cycle was never published by MassGIS). This analysis covers {{ site.data.facts_EPA303d.n_cycles }} reporting cycles spanning twelve years.
+The 303(d) list is an important complement to data on regulatory activity (permitting, inspections, enforcement): it reflects measured environmental conditions rather than government actions. The data used here comes from [MassGIS](https://www.mass.gov/info-details/massgis-data-massdep-2022-integrated-list-of-waters-305b303d), which publishes each approved reporting cycle as GIS shapefiles with associated attribute tables. So far, the available reporting cycles are 2010, 2012, 2014, 2016, 2018, and 2022 (the 2020 cycle was never published by MassGIS). This analysis thus covers {{ site.data.facts_EPA303d.n_cycles }} reporting cycles spanning twelve years.
 
 *[The code used to produce this analysis can be viewed and downloaded here](https://github.com/nesanders/MAenvironmentaldata/blob/master/analysis/EPA_303d_viz.py)*
 
@@ -22,7 +22,7 @@ A **303(d) listing** means a waterbody has failed to meet its designated use sta
 
 Each waterbody is assessed at the level of an **Assessment Unit (AU)**: a discrete, named segment of a waterbody with its own unique identifier. A single river may have multiple AUs assessed independently.
 
-The assessment uses five categories:
+The assessment uses five [categories](https://floridadep.gov/dear/watershed-assessment-section/content/impaired-waters-listing-process#:~:text=What%20are%20the%20assessment%20categories):
 
 | Category | Meaning |
 |----------|---------|
@@ -46,11 +46,11 @@ The count of impaired assessment units has grown in each reporting cycle, from {
 
 {% include charts/EPA303d_impaired_trend.html %}
 
-In physical terms, impaired river segments grew from {{ site.data.facts_EPA303d.river_miles_earliest }} to {{ site.data.facts_EPA303d.river_miles_latest }} miles over this period (a {{ site.data.facts_EPA303d.river_miles_pct_change }}% increase), and impaired lake area grew from {{ site.data.facts_EPA303d.lake_acres_earliest | number_with_delimiter }} to {{ site.data.facts_EPA303d.lake_acres_latest | number_with_delimiter }} acres.
+In physical terms, impaired river segments grew from {{ site.data.facts_EPA303d.river_miles_earliest }} to {{ site.data.facts_EPA303d.river_miles_latest }} miles over this period (a {{ site.data.facts_EPA303d.river_miles_pct_change }}% increase), and impaired lake area grew from {{ site.data.facts_EPA303d.lake_acres_earliest }} to {{ site.data.facts_EPA303d.lake_acres_latest }} acres.
 
 One question in interpreting this trend is whether the growth reflects actual deterioration or expanded assessment coverage — MA DEP assesses more waterbodies over time, which could mechanically increase the count. Looking at the persistence of existing listings helps address this. Of the {{ site.data.facts_EPA303d.impaired_earliest }} AUs impaired in {{ site.data.facts_EPA303d.earliest_cycle }}, {{ site.data.facts_EPA303d.n_persistent }} ({{ site.data.facts_EPA303d.pct_persistent }}%) remained impaired through {{ site.data.facts_EPA303d.latest_cycle }}. Only {{ site.data.facts_EPA303d.n_delisted }} ({{ site.data.facts_EPA303d.pct_delisted }}%) were delisted over the twelve-year period. The overall growth in the list is primarily driven by the addition of newly assessed AUs rather than by recovery of previously listed ones.
 
-The dominant water types are rivers and freshwater lakes, which together account for the majority of impaired AUs in every cycle. Estuaries are also present throughout the dataset — 239 impaired estuary AUs were recorded in 2010 — and remain a consistent and ecologically important category across all reporting cycles.
+The dominant water types are rivers and freshwater lakes, which together account for the majority of impaired AUs in every cycle. 573 impaired freshwater lakes and 366 impaired river AUs were present in 2010, growing to 648 and 620, respectively, in 2026. Estuaries are the third largest category — 239 impaired estuary AUs were recorded in 2010, growing to 296 in 2022. Rivers therefore had the greatest growth in recorded impaired AUs over this period.
 
 ---
 
@@ -155,6 +155,12 @@ For every Category 5 impaired waterbody, MA DEP and EPA must develop a TMDL befo
 In {{ site.data.facts_EPA303d.earliest_cycle }}, {{ site.data.facts_EPA303d.tmdl_with_earliest }} of {{ site.data.facts_EPA303d.impaired_earliest }} impaired AUs had a completed TMDL ({{ site.data.facts_EPA303d.tmdl_pct_earliest }}%). In {{ site.data.facts_EPA303d.latest_cycle }}, {{ site.data.facts_EPA303d.tmdl_with_latest }} of {{ site.data.facts_EPA303d.impaired_latest }} had one ({{ site.data.facts_EPA303d.tmdl_pct_latest }}%). The number of AUs without a cleanup plan grew from {{ site.data.facts_EPA303d.tmdl_without_earliest }} to {{ site.data.facts_EPA303d.tmdl_without_latest }} over the same period.
 
 Averaged across reporting cycles, approximately {{ site.data.facts_EPA303d.avg_net_tmdl_per_cycle }} net new TMDLs have been completed per two-year cycle. At that pace, and assuming no new listings, the current backlog of {{ site.data.facts_EPA303d.tmdl_without_latest }} AUs without a plan would not be cleared until around {{ site.data.facts_EPA303d.year_backlog_cleared }}. This is an illustrative projection based on recent rates, not a forecast.
+
+The chart below tracks what happened to the {{ site.data.facts_EPA303d.n_cohort_cat5 }} AUs that were listed as Category 5 (TMDL needed, none yet) in 2010 — the earliest cycle in our data. Because 2010 is our starting point, the true wait for many of these AUs is longer than the chart shows; some had already been listed for years before 2010.
+
+{% include charts/EPA303d_tmdl_survival.html %}
+
+By 2022, {{ site.data.facts_EPA303d.pct_still_no_tmdl }}% of that original cohort — {{ site.data.facts_EPA303d.still_no_tmdl }} AUs — still had no completed cleanup plan.
 
 This pattern is not unique to Massachusetts. The [National Academies has documented](https://nap.nationalacademies.org/catalog/10146/assessing-the-tmdl-approach-to-water-quality-management) that approximately 21,000 polluted water segments nationally require over 40,000 TMDLs, and states consistently cite limited personnel and funding as constraints on completion.
 

@@ -1,0 +1,79 @@
+{% raw  %}
+<html>
+    <head>
+        <title>TMDL Progress for 2010 Category-5 Cohort (710 AUs)</title>
+        <script src='https://cdn.jsdelivr.net/npm/chart.js@2.8.0/dist/Chart.bundle.min.js'></script>
+    </head>
+    <body>
+        <div style="width: 700px; height: 400px; max-width: 99%" class="chartjs">
+
+            <canvas id="TMDL Progress for 2010 Category-5 Cohort (710 AUs)" height="400" width="700"></canvas>
+            <script>
+                Chart.defaults.global.defaultFontSize = 12;
+                var chart_data = {
+                
+                    data: {
+                        labels: ['2010', '2012', '2014', '2016', '2018', '2022'],
+                        datasets: [{'data': [100.0, 95.6, 91.8, 88.6, 87.7, 84.8], 'label': 'AUs first listed Category 5 in 2010 still without a cleanup plan', 'borderColor': 'rgba(200, 60, 60, 0.85)', 'backgroundColor': 'rgba(200,60,60,0.08)', 'fill': true, 'pointRadius': 5}]
+                    },
+                    type: 'line',
+                    options: {
+                        scales: {
+                            yAxes: [{
+                                display: true,
+                                scaleLabel: {
+                                    display: true,
+                                    labelString: '% still without TMDL'
+                                },
+                                ticks: {
+                                    
+                                },
+                                "id": "y-axis-0",
+                                "position": "left",
+                                stacked: false
+                            }, {
+                                display: false,
+                                scaleLabel: {
+                                    display: true,
+                                    labelString: ''
+                                },
+                                ticks: {
+                                    
+                                },
+                                "id": "y-axis-1",
+                                "position": "right"
+                            }],
+                            xAxes: [{
+                                scaleLabel: {
+                                    display: true,
+                                    labelString: 'Reporting cycle'
+                                },
+                                stacked: false,
+                                ticks: {
+                                    autoSkip: true
+                                }
+                            }]
+                        },
+                        legend: {
+                            display: true
+                            },
+                        tooltips: {
+                            display: true
+                            }
+                    },
+                }
+                
+                
+                
+            </script>
+            <script>
+                {{
+                    var ctx = document.getElementById("TMDL Progress for 2010 Category-5 Cohort (710 AUs)").getContext("2d");
+                    var mychart = new Chart(ctx, chart_data);
+                }}
+            </script>
+
+        </div>
+    </body>
+</html>
+{% endraw  %}

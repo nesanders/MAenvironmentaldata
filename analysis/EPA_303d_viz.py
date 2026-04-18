@@ -500,6 +500,15 @@ def generate_charts(engine, prefix=''):
     mapped_wb = set(mapping['csoWaterBody'])
     n_cso_not_matched = len(all_cso_wb - mapped_wb)
 
+    # TMDL survival cohort facts (for post text)
+    cat5_cohort = set(df_imp[(df_imp['reportingCycle'] == earliest_cycle) &
+                              (df_imp['category'] == '5')]['auId'])
+    n_cohort_cat5 = len(cat5_cohort)
+    got_tmdl_ever = df_imp[(df_imp['auId'].isin(cat5_cohort)) &
+                           (df_imp['hasTmdl'] == 1)]['auId'].nunique()
+    still_no_tmdl = n_cohort_cat5 - got_tmdl_ever
+    pct_still_no_tmdl = int(round(100 * still_no_tmdl / n_cohort_cat5, 0)) if n_cohort_cat5 > 0 else 0
+
     # Persistence
     aus_latest = set(df_imp[df_imp['reportingCycle'] == latest_cycle]['auId'])
     n_persistent = len(aus_earliest & aus_latest)
@@ -576,9 +585,29 @@ def generate_charts(engine, prefix=''):
         'pcr_fail': pcr_fail,
         'pcr_assessed': pcr_assessed,
         'pct_pcr_failing': pct_pcr_failing,
+        'n_cohort_cat5': n_cohort_cat5,
+        'still_no_tmdl': still_no_tmdl,
+        'pct_still_no_tmdl': pct_still_no_tmdl,
     }
+    # Keys where large integers should be comma-formatted for display in the post
+    _COMMA_FORMAT_KEYS = {
+        'river_miles_earliest', 'river_miles_latest',
+        'lake_acres_earliest', 'lake_acres_latest',
+        'pcr_fail', 'pcr_assessed',
+        'impaired_earliest', 'impaired_latest',
+        'tmdl_with_earliest', 'tmdl_without_earliest',
+        'tmdl_with_latest', 'tmdl_without_latest',
+        'n_in_all_cycles', 'n_persistent', 'n_delisted', 'n_newly_added',
+        'n_cohort_cat5', 'still_no_tmdl',
+    }
+
+    def _fmt(k, v):
+        if k in _COMMA_FORMAT_KEYS and isinstance(v, int) and v >= 1000:
+            return f'"{v:,}"'  # quoted string so YAML parsers don't trip on commas
+        return v
+
     with open('../docs/data/facts_EPA303d.yml', 'w') as fh:
-        fh.writelines([f'{k}: {v}\n' for k, v in facts.items()])
+        fh.writelines([f'{k}: {_fmt(k, v)}\n' for k, v in facts.items()])
     print('Facts written to ../docs/data/facts_EPA303d.yml')
 
     # ── 8. Delisted waterbodies CSV ───────────────────────────────────────────
@@ -894,6 +923,49 @@ def generate_post_charts(engine):
         legend=0,
     )
     mychart.jekyll_write('../docs/_includes/charts/EPA303d_bacterial_source_groups.html')
+
+    # ── TMDL acquisition survival: 2010 Cat-5 cohort ──────────────────────────
+    print('Post chart: TMDL survival (2010 Cat-5 cohort)...')
+
+    cycles = sorted(df['reportingCycle'].unique())
+    earliest_cycle = int(cycles[0])
+
+    # AUs that were Cat 5 (no TMDL) in the earliest cycle
+    cat5_earliest = set(df[(df['reportingCycle'] == earliest_cycle) &
+                           (df['category'] == '5')]['auId'])
+    n_cohort = len(cat5_earliest)
+
+    # For each subsequent cycle, count how many have still never had a TMDL
+    still_waiting = []
+    for cyc in cycles:
+        got_tmdl_by_now = df[(df['auId'].isin(cat5_earliest)) &
+                             (df['reportingCycle'] <= cyc) &
+                             (df['hasTmdl'] == 1)]['auId'].nunique()
+        still_waiting.append(float(n_cohort - got_tmdl_by_now))
+
+    pct_still_waiting = [round(100 * v / n_cohort, 1) for v in still_waiting]
+
+    mychart = chartjs.chart(
+        f'TMDL Progress for {earliest_cycle} Category-5 Cohort ({n_cohort} AUs)',
+        'Line', 700, 400,
+    )
+    mychart.set_labels([str(c) for c in cycles])
+    mychart.add_dataset(
+        pct_still_waiting,
+        f'AUs first listed Category 5 in {earliest_cycle} still without a cleanup plan',
+        borderColor=f"'{RED}'",
+        backgroundColor=f"'rgba(200,60,60,0.08)'",
+        fill='true',
+        pointRadius='5',
+    )
+    mychart.set_params(
+        JSinline=0,
+        ylabel='% still without TMDL',
+        xlabel='Reporting cycle',
+        scaleBeginAtZero=0,
+    )
+    mychart.jekyll_write('../docs/_includes/charts/EPA303d_tmdl_survival.html')
+    print(f'Survival chart done: {pct_still_waiting[-1]}% still waiting by {cycles[-1]}')
 
     print('Post charts done.')
 
