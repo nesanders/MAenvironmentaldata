@@ -756,7 +756,7 @@ def generate_post_charts(engine):
                   .head(10))
 
     mychart = chartjs.chart(
-        f'Sources of Bacterial Water Impairment ({latest_cycle})', 'Bar', 700, 480
+        f'Sources of Bacterial Water Impairment ({latest_cycle})', 'HorizontalBar', 700, 480
     )
     mychart.set_labels(src_counts.index.tolist())
     mychart.add_dataset(
