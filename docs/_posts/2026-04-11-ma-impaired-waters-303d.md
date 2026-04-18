@@ -54,7 +54,7 @@ The dominant water types are rivers and freshwater lakes, which together account
 
 ---
 
-## How Many Impaired Waters Have Been Cleaned Up?
+## How Many Impaired Waters Have Been Delisted?
 
 Of the {{ site.data.facts_EPA303d.impaired_earliest }} waterbody segments listed as impaired in {{ site.data.facts_EPA303d.earliest_cycle }}, {{ site.data.facts_EPA303d.n_in_all_cycles }} appear as impaired in all six reporting cycles — continuously listed for at least twelve years. The chart below tracks that original {{ site.data.facts_EPA303d.earliest_cycle }} cohort alongside AUs first listed in later cycles.
 
@@ -69,7 +69,7 @@ The specific waterbodies that were delisted between {{ site.data.facts_EPA303d.e
 
 <div style="max-height:360px;overflow-y:auto;margin:1em 0;">
 <table>
-<thead><tr><th>Assessment Unit</th><th>Waterbody</th><th>Watershed</th><th>Type</th><th>Size</th></tr></thead>
+<thead><tr><th>Assessment Unit</th><th>Waterbody</th><th>Watershed</th><th>Type</th><th>Size</th><th>Last Listed</th></tr></thead>
 <tbody>
 {% assign delisted = site.data.EPA_303d_delisted %}
 {% for row in delisted %}
@@ -79,6 +79,7 @@ The specific waterbodies that were delisted between {{ site.data.facts_EPA303d.e
   <td>{{ row["Watershed"] }}</td>
   <td>{{ row["Type"] | capitalize }}</td>
   <td>{{ row["Size"] }} {{ row["Unit"] | downcase }}</td>
+  <td>{{ row["Last Listed"] }}</td>
 </tr>
 {% endfor %}
 </tbody>

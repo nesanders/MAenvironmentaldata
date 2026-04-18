@@ -614,10 +614,17 @@ def generate_charts(engine, prefix=''):
     print('Writing delisted waterbodies CSV...')
 
     delisted_aus = aus_earliest - aus_latest
+    # Last cycle each AU appeared as impaired (delisting happened after this cycle)
+    last_listed = (df_imp[df_imp['auId'].isin(delisted_aus)]
+                   .groupby('auId')['reportingCycle'].max()
+                   .rename('Last Listed'))
     delisted_df = (df_imp[(df_imp['reportingCycle'] == earliest_cycle) &
                            (df_imp['auId'].isin(delisted_aus))]
                    .drop_duplicates(subset=['auId'])
                    [['auId', 'waterbody', 'watershed', 'waterType', 'auSize', 'sizeUnit']]
+                   .set_index('auId')
+                   .join(last_listed)
+                   .reset_index()
                    .sort_values(['watershed', 'waterbody'])
                    .rename(columns={
                        'auId': 'Assessment Unit',
@@ -628,6 +635,7 @@ def generate_charts(engine, prefix=''):
                        'sizeUnit': 'Unit',
                    }))
     delisted_df['Size'] = delisted_df['Size'].round(1)
+    delisted_df['Last Listed'] = delisted_df['Last Listed'].astype(int)
     delisted_df.to_csv('../docs/data/EPA_303d_delisted.csv', index=False)
     print(f'Delisted CSV written ({len(delisted_df)} rows).')
 
