@@ -318,6 +318,11 @@ def generate_charts(engine, prefix=''):
     cso_g = cso_g.reindex(cso_years)
 
     status_order = ['Not Supporting', 'Fully Supporting', 'Not Matched']
+    status_labels = {
+        'Not Supporting': 'Confirmed impaired (Not Supporting)',
+        'Fully Supporting': 'Fully Supporting',
+        'Not Matched': 'Status unknown (no 303d match)',
+    }
     status_colors = {'Not Supporting': RED, 'Fully Supporting': GREEN, 'Not Matched': GREY}
 
     mychart = chartjs.chart('CSO Discharge Volume by 303(d) Impairment Status', 'Bar', 700, 420)
@@ -327,7 +332,7 @@ def generate_charts(engine, prefix=''):
             continue
         mychart.add_dataset(
             _to_float_list(cso_g[status]),
-            status,
+            status_labels[status],
             backgroundColor=f"'{status_colors[status]}'",
             stack="'status'",
         )
