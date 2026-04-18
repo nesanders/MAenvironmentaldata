@@ -1,0 +1,79 @@
+{% raw  %}
+<html>
+    <head>
+        <title>Bacterial Impairment Rate by Predominant Pollution Source (2022)</title>
+        <script src='https://cdn.jsdelivr.net/npm/chart.js@2.8.0/dist/Chart.bundle.min.js'></script>
+    </head>
+    <body>
+        <div style="width: 700px; height: 440px; max-width: 99%" class="chartjs">
+
+            <canvas id="Bacterial Impairment Rate by Predominant Pollution Source (2022)" height="440" width="700"></canvas>
+            <script>
+                Chart.defaults.global.defaultFontSize = 12;
+                var chart_data = {
+                
+                    data: {
+                        labels: ['CSO / wet weather (n=34)', 'MS4 / urban stormwater (n=300)', 'Septic / on-site systems (n=129)', 'Agriculture (n=102)', 'Other / Unknown (n=1118)'],
+                        datasets: [{'data': [72.3, 46.6, 42.0, 31.8, 29.9], 'label': '', 'backgroundColor': ['rgba(200,60,60,0.85)','rgba(54,110,179,0.85)','rgba(100,150,100,0.75)','rgba(180,140,60,0.75)','rgba(150,150,150,0.65)']}]
+                    },
+                    type: 'bar',
+                    options: {
+                        scales: {
+                            yAxes: [{
+                                display: true,
+                                scaleLabel: {
+                                    display: true,
+                                    labelString: '% of AUs with bacterial impairment'
+                                },
+                                ticks: {
+                                    beginAtZero: true, min: 0
+                                },
+                                "id": "y-axis-0",
+                                "position": "left",
+                                stacked: false
+                            }, {
+                                display: false,
+                                scaleLabel: {
+                                    display: true,
+                                    labelString: ''
+                                },
+                                ticks: {
+                                    beginAtZero: true, min: 0
+                                },
+                                "id": "y-axis-1",
+                                "position": "right"
+                            }],
+                            xAxes: [{
+                                scaleLabel: {
+                                    display: true,
+                                    labelString: 'Pollution source category'
+                                },
+                                stacked: false,
+                                ticks: {
+                                    autoSkip: true
+                                }
+                            }]
+                        },
+                        legend: {
+                            display: false
+                            },
+                        tooltips: {
+                            display: true
+                            }
+                    },
+                }
+                
+                
+                
+            </script>
+            <script>
+                {{
+                    var ctx = document.getElementById("Bacterial Impairment Rate by Predominant Pollution Source (2022)").getContext("2d");
+                    var mychart = new Chart(ctx, chart_data);
+                }}
+            </script>
+
+        </div>
+    </body>
+</html>
+{% endraw  %}

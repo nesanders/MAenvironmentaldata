@@ -10,6 +10,7 @@ from sqlalchemy import create_engine
 import MADEP_staff
 import MADEP_enforcements_viz
 import ECOS_budgets_viz
+import EPA_303d_viz
 from EEA_DP_CSO_map import CSOAnalysisEEADP
 
 PREFIX = 'dash_'
@@ -48,3 +49,6 @@ csoa.plot_monthly_volume_by_watershed()
 
 # Use annual operator timeseries for dashboard instead of static bar chart
 csoa.plot_annual_volume_by_operator(outpath='../docs/_includes/charts/dash_MAEEADP_dashboard_volume_per_operator.html', top_n=10)
+
+# --- 303(d) impaired waters charts (4 charts) ---
+EPA_303d_viz.generate_charts(engine, prefix=PREFIX)

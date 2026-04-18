@@ -19,7 +19,9 @@ TABLE_DESCRIPTIONS = {
         'EEA Data Portal: Combined Sewer Overflow (CSO) and Sanitary Sewer Overflow (SSO) '
         'discharge incidents reported to MassDEP. Each row is one discharge event at a '
         'specific outfall. Key fields: waterBody, municipality, volumnOfEvent (gallons), '
-        'latitude/longitude, incidentDate, Year.'
+        'latitude/longitude, incidentDate, Year. '
+        'IMPORTANT: Data spans June 2022 to present — years available: {cso_year_range}. '
+        'Do NOT assume data ends in an earlier year; always query the full range and check MAX(Year) if unsure.'
     ),
     'MAEEADP_Enforcement': (
         'EEA Data Portal: MassDEP enforcement actions against regulated entities, 1996–present. '
@@ -122,6 +124,37 @@ TABLE_DESCRIPTIONS = {
         'watershed values match the short ALL-CAPS names in the GeoJSON '
         '(e.g. MYSTIC, CHARLES, BLACKSTONE, MERRIMACK). watershed is NULL for the catch-all "Other" entry.'
     ),
+    'EPA_303d_Impairments': (
+        'MassGIS / EPA ATTAINS: Massachusetts 303(d) Integrated List of Waters. '
+        'Section 303(d) of the Clean Water Act requires MA to identify waterbodies that fail '
+        'to meet water quality standards. MA submits a biennial Integrated List to EPA on '
+        'April 1 of even-numbered years; EPA typically approves it within 6-18 months. '
+        'Available cycles: 2010, 2012, 2014, 2016, 2018, 2022 (2020 not published by MassGIS; '
+        '2024/2026 cycle is in draft as of April 2026). '
+        'One row per (assessment unit x designated use x impairment cause x reporting cycle). '
+        'Key fields: reportingCycle (year), auId (assessment unit ID), waterbody (name), '
+        'watershed (MA watershed name), waterType, category (1/2/3/4A/4B/4C/5 — see below), '
+        'designatedUse, attainment, cause (specific pollutant or stressor), hasTmdl. '
+        'Category meanings: 1=Fully Supporting, 2=Attaining with concern, 3=Insufficient info, '
+        '4A=Impaired+TMDL approved, 4B=Impaired+other plan, 4C=Impaired+alt control, '
+        '5=Impaired+TMDL needed (the 303(d) list proper). '
+        'A TMDL (Total Maximum Daily Load) is a cleanup plan. hasTmdl=1 means category is 4A/4B/4C. '
+        'Join to MAEEADP_CSO via CSO_303d_Mapping (39 of 56 CSO waterbodies matched). '
+        'Key question: Are CSO operators discharging into already-impaired waters?'
+    ),
+    'CSO_303d_Mapping': (
+        'Lookup table: manually verified mapping from CSO waterBody names (ALL CAPS, from MAEEADP_CSO) '
+        'to 303(d) waterbody names (mixed case, from EPA_303d_Impairments). '
+        '39 of 56 CSO-reporting waterways are matched; unmatched ones are absent from this table. '
+        'IMPORTANT: This table has ONLY TWO columns: csoWaterBody and waterbody303d. '
+        'It has NO reportingCycle, NO hasTmdl, NO attainment, NO category column. '
+        'Those columns live in EPA_303d_Impairments. Always apply reportingCycle filters to '
+        'EPA_303d_Impairments, never to CSO_303d_Mapping. '
+        'Join: MAEEADP_CSO.waterBody = CSO_303d_Mapping.csoWaterBody, '
+        'then CSO_303d_Mapping.waterbody303d = EPA_303d_Impairments.waterbody. '
+        'Note: one waterbody name may correspond to multiple assessment units (AUs) in EPA_303d_Impairments '
+        'since large rivers are divided into segments.'
+    ),
 }
 
 # ─── Column-level notes for key tables ────────────────────────────────────────
@@ -131,8 +164,8 @@ COLUMN_NOTES = {
         'municipality': 'ALL CAPS town name (e.g. BOSTON, CAMBRIDGE). Use UPPER() for filtering.',
         'volumnOfEvent': 'Discharge volume in gallons. WARNING: column name is misspelled "volumn" (not "volume").',
         'Year': 'Stored as FLOAT (e.g. 2020.0). Use CAST(Year AS INTEGER) if needed.',
-        'incidentDate': 'Format: YYYY-MM-DD string.',
-        'eventType': 'Values: CSO, SSO, UNPERMITTED, etc.',
+        'incidentDate': 'Format: YYYY-MM-DD HH:MM:SS datetime string (e.g. "2022-07-02 00:00:00"). NOT a plain date — use substr(incidentDate, 1, 10) to get the YYYY-MM-DD portion for date comparisons.',
+        'eventType': 'Values include: "CSO – UnTreated", "CSO – Treated", "Partially Treated – Blended", "SSO – System Surcharging Under High Flow Conditions", etc. WARNING: there is NO simple "CSO" value — to filter for CSO events use: eventType LIKE \'CSO%\'',
         'latitude': '~97% of records have coordinates (filled from state outfall registry). Do NOT filter on latitude IS NOT NULL.',
         'longitude': '~97% of records have coordinates. Do NOT filter on longitude IS NOT NULL.',
     },
@@ -178,6 +211,24 @@ COLUMN_NOTES = {
         'waterBody': 'ALL CAPS waterBody value from MAEEADP_CSO. Joins on MAEEADP_CSO.waterBody.',
         'watershed': 'ALL CAPS major watershed name matching GeoJSON polygon (e.g. MYSTIC, CHARLES, BLACKSTONE). NULL for the "Other" catch-all row.',
     },
+    'EPA_303d_Impairments': {
+        'reportingCycle': 'Integer year of biennial assessment (2010, 2012, 2014, 2016, 2018, 2022). Use MAX(reportingCycle) to get most recent.',
+        'auId': 'Assessment unit identifier (e.g. MA51-07). One waterbody may have multiple AUs (river segments).',
+        'waterbody': 'Mixed case (e.g. "Charles River"). NOT all-caps. Use CSO_303d_Mapping for joins to MAEEADP_CSO.',
+        'watershed': 'MA watershed name (mixed case, e.g. "Blackstone", "Cape Cod"). Different from CSO_WatershedMapping watershed (which is ALL CAPS short names).',
+        'waterType': 'Values: RIVER, FRESHWATER LAKE, ESTUARY, COASTAL, WETLAND.',
+        'category': 'Assessment category: 1=Fully Supporting, 2=Attaining, 3=Insufficient Info, 4A=TMDL approved, 4B=Other plan, 4C=Alt control, 5=Impaired+TMDL needed.',
+        'designatedUse': 'Designated use being assessed: Aquatic Life, Recreation, Fish Consumption, Water Supply, Shellfish Harvesting, etc.',
+        'attainment': 'Whether designated use is met: "Not Supporting", "Fully Supporting", "Not Assessed", "Threatened".',
+        'cause': 'Specific pollutant or stressor causing impairment (e.g. FECAL COLIFORM, PHOSPHORUS, MERCURY IN FISH TISSUE). NULL if not impaired.',
+        'source': 'Probable source of impairment (e.g. Municipal point source, Urban runoff). NULL if not impaired.',
+        'tmdlId': 'TMDL document identifier if a cleanup plan exists. NULL means no plan approved.',
+        'hasTmdl': 'Derived: 1 if category is 4A, 4B, or 4C (impaired but has some plan); 0 otherwise.',
+    },
+    'CSO_303d_Mapping': {
+        'csoWaterBody': 'ALL CAPS waterBody value from MAEEADP_CSO. Joins on MAEEADP_CSO.waterBody.',
+        'waterbody303d': 'Mixed case waterbody name from EPA_303d_Impairments. Joins on EPA_303d_Impairments.waterbody. WARNING: this table has no other columns — reportingCycle, hasTmdl, attainment all come from EPA_303d_Impairments, not this table.',
+    },
 }
 
 # ─── Columns to skip in sample rows (too wide / noisy) ────────────────────────
@@ -209,12 +260,45 @@ JOIN_RELATIONSHIPS = """
 - **Staffing + budget by year**:
   MADEP_staff_Comptroller.year = MassBudget_summary.Year
 
-- **Precipitation + CSO by date**:
-  MA_precipitation_daily.date ↔ MAEEADP_CSO.incidentDate (both YYYY-MM-DD strings; or join on substr(incidentDate,1,4) = CAST(Year AS TEXT))
+- **Precipitation + CSO by month** (IMPORTANT: incidentDate is YYYY-MM-DD HH:MM:SS, date is YYYY-MM-DD — never join them directly with =, always aggregate to month first):
+  WITH monthly_cso AS (
+    SELECT strftime('%Y-%m', incidentDate) AS month, SUM(volumnOfEvent) AS total_vol
+    FROM MAEEADP_CSO WHERE eventType LIKE 'CSO%' GROUP BY 1
+  ), monthly_precip AS (
+    SELECT strftime('%Y-%m', date) AS month, SUM(precip_in_avg) AS total_precip
+    FROM MA_precipitation_daily GROUP BY 1
+  )
+  SELECT c.month, c.total_vol, p.total_precip FROM monthly_cso c JOIN monthly_precip p ON c.month = p.month ORDER BY 1
 
 - **CSO watershed choropleth** (use this pattern for watershed-level CSO aggregations):
   MAEEADP_CSO JOIN CSO_WatershedMapping ON MAEEADP_CSO.waterBody = CSO_WatershedMapping.waterBody
   → group by CSO_WatershedMapping.watershed → produce choropleth with geography='watersheds'
+
+- **303(d) status or TMDL for a named waterbody** (direct lookup — do NOT use CSO_303d_Mapping):
+  SELECT waterbody, hasTmdl, attainment, category FROM EPA_303d_Impairments
+  WHERE waterbody LIKE '%Mystic%'
+  AND reportingCycle = (SELECT MAX(reportingCycle) FROM EPA_303d_Impairments)
+  → reportingCycle and hasTmdl are columns of EPA_303d_Impairments; never put them on CSO_303d_Mapping
+
+- **EJSCREEN environmental justice + CSO by county** (no direct municipality join; use county approximation):
+  SELECT e.CNTY_NAME, AVG(e.MINORPCT) AS avg_minority_pct, SUM(c.volumnOfEvent) AS total_cso_gal
+  FROM MAEEADP_CSO c
+  JOIN EPA_EJSCREEN_2023 e ON e.CNTY_NAME = (
+    CASE UPPER(c.municipality)
+      WHEN 'BOSTON' THEN 'Suffolk' WHEN 'CAMBRIDGE' THEN 'Middlesex'
+      WHEN 'LOWELL' THEN 'Middlesex' WHEN 'WORCESTER' THEN 'Worcester'
+      ELSE NULL END)
+  WHERE c.eventType LIKE 'CSO%'
+  GROUP BY e.CNTY_NAME
+  NOTE: EPA_EJSCREEN_2023 has no municipality field — only CNTY_NAME (county). There is NO direct join
+  between EJSCREEN and MAEEADP_CSO.municipality. Always warn the user that results are county-level approximations.
+
+- **CSO discharges to 303(d) impaired waters** (two-step join):
+  MAEEADP_CSO JOIN CSO_303d_Mapping ON MAEEADP_CSO.waterBody = CSO_303d_Mapping.csoWaterBody
+  JOIN EPA_303d_Impairments ON CSO_303d_Mapping.waterbody303d = EPA_303d_Impairments.waterbody
+  WHERE EPA_303d_Impairments.reportingCycle = (SELECT MAX(reportingCycle) FROM EPA_303d_Impairments)
+  → shows which CSO discharge events occur in waters listed as "Not Supporting"
+  NOTE: 39 of 56 CSO waterways are mapped; unmatched waterways won't appear in results.
 """
 
 GLOBAL_NOTES = """
@@ -231,7 +315,16 @@ GLOBAL_NOTES = """
   - Budget trends → MassBudget_summary (not the wide infadjusted/noinfadjusted tables)
   - Environmental justice → EPA_EJSCREEN_2023 (more current than 2017)
 
-- **Date formats**: incidentDate, InspectionDate, InspectionDate, EnforcementDate, FinalDecisionDate are YYYY-MM-DD strings.
+- **EJSCREEN joins**: EPA_EJSCREEN_2023 is at the census block group level (ID is a 12-digit FIPS code).
+  It has NO municipality or town field. CNTY_NAME is county-level. There is NO direct join to CSO municipality names.
+  To connect EJ data to CSO events, the best approach is to aggregate EJSCREEN to county level using CNTY_NAME
+  and match to CSO data aggregated by UPPER(municipality) → county via a manual lookup, OR note the limitation
+  to the user and provide county-level results instead of town-level.
+  Census_ACS.Subdivision contains MA town names in Title Case (e.g. "Lowell") that can be UPPER()-compared to
+  MAEEADP_CSO.municipality, but Census_ACS has no EJSCREEN percentile data.
+
+- **Date formats**: InspectionDate, EnforcementDate, FinalDecisionDate are YYYY-MM-DD strings.
+  incidentDate (MAEEADP_CSO) is YYYY-MM-DD HH:MM:SS — use substr(incidentDate, 1, 10) or strftime('%Y-%m', incidentDate) to extract date/month.
   Extract year with: strftime('%Y', date_col) or substr(date_col, 1, 4).
 """
 
@@ -271,6 +364,21 @@ def format_sample_rows(cur, table, col_names, n=5):
 def generate_semantic_context(db_path):
     conn = sqlite3.connect(db_path)
     cur = conn.cursor()
+
+    # Dynamically patch descriptions that depend on DB contents.
+    try:
+        years = cur.execute(
+            'SELECT CAST(Year AS INTEGER) FROM MAEEADP_CSO '
+            'WHERE Year IS NOT NULL GROUP BY 1 ORDER BY 1'
+        ).fetchall()
+        year_list = ', '.join(str(r[0]) for r in years)
+        TABLE_DESCRIPTIONS['MAEEADP_CSO'] = TABLE_DESCRIPTIONS['MAEEADP_CSO'].format(
+            cso_year_range=year_list
+        )
+    except Exception:
+        TABLE_DESCRIPTIONS['MAEEADP_CSO'] = TABLE_DESCRIPTIONS['MAEEADP_CSO'].format(
+            cso_year_range='2022 onward'
+        )
 
     tables = [
         r[0] for r in cur.execute(

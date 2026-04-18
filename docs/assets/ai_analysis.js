@@ -37,7 +37,7 @@ const PROVIDER_CONFIG = {
   },
   gemini: {
     endpoint: 'https://generativelanguage.googleapis.com/v1beta/models/{model}:generateContent',
-    defaultModel: 'gemini-2.0-flash',
+    defaultModel: 'gemini-2.5-flash',
     format: 'gemini',
   },
 };
@@ -299,7 +299,7 @@ function fetchSemanticContext() {
   // Fetch the pre-generated semantic context (schema + sample rows + column notes).
   // This is a static asset so it can be fetched immediately on page load,
   // independently of DB loading. Falls back to raw schema from sqlite_master if unavailable.
-  fetch('assets/db_semantic_context.txt')
+  fetch('assets/db_semantic_context.txt?v=' + document.querySelector('meta[name="build-date"]')?.content || Date.now())
     .then(function(r) {
       if (!r.ok) throw new Error('HTTP ' + r.status);
       return r.text();

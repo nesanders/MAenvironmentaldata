@@ -55,6 +55,10 @@ DATASETS = {
     'MA_precipitation_daily.csv': [
         'date', 'precip_in_avg', 'n_stations',
     ],
+    'EPA_303d_impairments.csv': [
+        'reportingCycle', 'auId', 'waterbody', 'watershed', 'waterType',
+        'category', 'designatedUse', 'attainment',
+    ],
 }
 
 # Minimum absolute row counts as a hard floor (catches total fetch failures).
@@ -66,6 +70,7 @@ MIN_ROWS = {
     'EEADP_enforcement.csv': 100,
     'EEADP_CSO.csv': 100,
     'MA_precipitation_daily.csv': 8000,  # ~25 years × 365 days
+    'EPA_303d_impairments.csv': 80000,  # 6 cycles × ~14k+ rows each
 }
 
 # Allow small row decreases (%) due to data source updates, API changes, etc.

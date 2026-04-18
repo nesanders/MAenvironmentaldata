@@ -24,7 +24,10 @@ All data, code for data gathering and cleaning, code for analysis, and web devel
 * US Environmental Protection Agency (EPA) Environmental Justice (EJ) community data
 * US Environmental Protection Agency (EPA) Region 1 NPDES permits
 * US Census and Social Security Administration population and wage data
+* EPA 303(d) Integrated List of MA Impaired Waters — waterbodies failing water quality standards (MassGIS, biennial 2010–2022)
 
 ## Analysis
 
 Through a series of [living analysis documents]({{ site.url }}{{ site.baseurl }}/posts.html) that help readers explore, interpret, and add context to the {{ site.data.site_config.site_abbrev }} data archive, this site is meant to enable and promote further analysis of the environmental protection and regulatory policy in Massachusetts.
+
+{{ site.data.site_config.site_abbrev }} also provides a [dashboard]({{ site.url }}{{ site.baseurl }}/dashboard.html) of up to date, interactive graphics of key environmental data and an [Ask AMEND AI]({{ site.url }}{{ site.baseurl }}/ai_analysis.html) tool to automatically perform analysis and generate data visualizations based on your queries.

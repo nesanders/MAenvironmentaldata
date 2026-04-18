@@ -1,5 +1,5 @@
 # AMEND Database Semantic Context
-Generated: 2026-04-10
+Generated: 2026-04-16
 
 ## Global Data Notes
 
@@ -14,7 +14,16 @@ Generated: 2026-04-10
   - Budget trends → MassBudget_summary (not the wide infadjusted/noinfadjusted tables)
   - Environmental justice → EPA_EJSCREEN_2023 (more current than 2017)
 
-- **Date formats**: incidentDate, InspectionDate, InspectionDate, EnforcementDate, FinalDecisionDate are YYYY-MM-DD strings.
+- **EJSCREEN joins**: EPA_EJSCREEN_2023 is at the census block group level (ID is a 12-digit FIPS code).
+  It has NO municipality or town field. CNTY_NAME is county-level. There is NO direct join to CSO municipality names.
+  To connect EJ data to CSO events, the best approach is to aggregate EJSCREEN to county level using CNTY_NAME
+  and match to CSO data aggregated by UPPER(municipality) → county via a manual lookup, OR note the limitation
+  to the user and provide county-level results instead of town-level.
+  Census_ACS.Subdivision contains MA town names in Title Case (e.g. "Lowell") that can be UPPER()-compared to
+  MAEEADP_CSO.municipality, but Census_ACS has no EJSCREEN percentile data.
+
+- **Date formats**: InspectionDate, EnforcementDate, FinalDecisionDate are YYYY-MM-DD strings.
+  incidentDate (MAEEADP_CSO) is YYYY-MM-DD HH:MM:SS — use substr(incidentDate, 1, 10) or strftime('%Y-%m', incidentDate) to extract date/month.
   Extract year with: strftime('%Y', date_col) or substr(date_col, 1, 4).
 
 ## Key Join Relationships
@@ -28,16 +37,75 @@ Generated: 2026-04-10
 - **Staffing + budget by year**:
   MADEP_staff_Comptroller.year = MassBudget_summary.Year
 
-- **Precipitation + CSO by date**:
-  MA_precipitation_daily.date ↔ MAEEADP_CSO.incidentDate (both YYYY-MM-DD strings; or join on substr(incidentDate,1,4) = CAST(Year AS TEXT))
+- **Precipitation + CSO by month** (IMPORTANT: incidentDate is YYYY-MM-DD HH:MM:SS, date is YYYY-MM-DD — never join them directly with =, always aggregate to month first):
+  WITH monthly_cso AS (
+    SELECT strftime('%Y-%m', incidentDate) AS month, SUM(volumnOfEvent) AS total_vol
+    FROM MAEEADP_CSO WHERE eventType LIKE 'CSO%' GROUP BY 1
+  ), monthly_precip AS (
+    SELECT strftime('%Y-%m', date) AS month, SUM(precip_in_avg) AS total_precip
+    FROM MA_precipitation_daily GROUP BY 1
+  )
+  SELECT c.month, c.total_vol, p.total_precip FROM monthly_cso c JOIN monthly_precip p ON c.month = p.month ORDER BY 1
 
 - **CSO watershed choropleth** (use this pattern for watershed-level CSO aggregations):
   MAEEADP_CSO JOIN CSO_WatershedMapping ON MAEEADP_CSO.waterBody = CSO_WatershedMapping.waterBody
   → group by CSO_WatershedMapping.watershed → produce choropleth with geography='watersheds'
 
+- **303(d) status or TMDL for a named waterbody** (direct lookup — do NOT use CSO_303d_Mapping):
+  SELECT waterbody, hasTmdl, attainment, category FROM EPA_303d_Impairments
+  WHERE waterbody LIKE '%Mystic%'
+  AND reportingCycle = (SELECT MAX(reportingCycle) FROM EPA_303d_Impairments)
+  → reportingCycle and hasTmdl are columns of EPA_303d_Impairments; never put them on CSO_303d_Mapping
+
+- **EJSCREEN environmental justice + CSO by county** (no direct municipality join; use county approximation):
+  SELECT e.CNTY_NAME, AVG(e.MINORPCT) AS avg_minority_pct, SUM(c.volumnOfEvent) AS total_cso_gal
+  FROM MAEEADP_CSO c
+  JOIN EPA_EJSCREEN_2023 e ON e.CNTY_NAME = (
+    CASE UPPER(c.municipality)
+      WHEN 'BOSTON' THEN 'Suffolk' WHEN 'CAMBRIDGE' THEN 'Middlesex'
+      WHEN 'LOWELL' THEN 'Middlesex' WHEN 'WORCESTER' THEN 'Worcester'
+      ELSE NULL END)
+  WHERE c.eventType LIKE 'CSO%'
+  GROUP BY e.CNTY_NAME
+  NOTE: EPA_EJSCREEN_2023 has no municipality field — only CNTY_NAME (county). There is NO direct join
+  between EJSCREEN and MAEEADP_CSO.municipality. Always warn the user that results are county-level approximations.
+
+- **CSO discharges to 303(d) impaired waters** (two-step join):
+  MAEEADP_CSO JOIN CSO_303d_Mapping ON MAEEADP_CSO.waterBody = CSO_303d_Mapping.csoWaterBody
+  JOIN EPA_303d_Impairments ON CSO_303d_Mapping.waterbody303d = EPA_303d_Impairments.waterbody
+  WHERE EPA_303d_Impairments.reportingCycle = (SELECT MAX(reportingCycle) FROM EPA_303d_Impairments)
+  → shows which CSO discharge events occur in waters listed as "Not Supporting"
+  NOTE: 39 of 56 CSO waterways are mapped; unmatched waterways won't appear in results.
+
 ---
 
 ## Table Schemas and Sample Data
+
+### CSO_303d_Mapping (39 rows)
+Lookup table: manually verified mapping from CSO waterBody names (ALL CAPS, from MAEEADP_CSO) to 303(d) waterbody names (mixed case, from EPA_303d_Impairments). 39 of 56 CSO-reporting waterways are matched; unmatched ones are absent from this table. IMPORTANT: This table has ONLY TWO columns: csoWaterBody and waterbody303d. It has NO reportingCycle, NO hasTmdl, NO attainment, NO category column. Those columns live in EPA_303d_Impairments. Always apply reportingCycle filters to EPA_303d_Impairments, never to CSO_303d_Mapping. Join: MAEEADP_CSO.waterBody = CSO_303d_Mapping.csoWaterBody, then CSO_303d_Mapping.waterbody303d = EPA_303d_Impairments.waterbody. Note: one waterbody name may correspond to multiple assessment units (AUs) in EPA_303d_Impairments since large rivers are divided into segments.
+
+```sql
+CREATE TABLE "CSO_303d_Mapping" (
+	"index" BIGINT, 
+	"csoWaterBody" TEXT, 
+	waterbody303d TEXT
+)
+```
+
+/* 5 rows from CSO_303d_Mapping:
+csoWaterBody	waterbody303d
+ACUSHNET RIVER	Acushnet River
+ALEWIFE BROOK	Alewife Brook
+ASSABET RIVER	Assabet River
+BEAVER BROOK	Beaver Brook
+BLACKSTONE RIVER	Blackstone River
+*/
+
+**Column notes:**
+- `csoWaterBody`: ALL CAPS waterBody value from MAEEADP_CSO. Joins on MAEEADP_CSO.waterBody.
+- `waterbody303d`: Mixed case waterbody name from EPA_303d_Impairments. Joins on EPA_303d_Impairments.waterbody. WARNING: this table has no other columns — reportingCycle, hasTmdl, attainment all come from EPA_303d_Impairments, not this table.
+
+---
 
 ### CSO_WatershedMapping (56 rows)
 Lookup table mapping each MAEEADP_CSO.waterBody value to its containing major MA watershed (matching the GeoJSON polygon names in the watershed choropleth map). JOIN: MAEEADP_CSO.waterBody = CSO_WatershedMapping.waterBody. Use this table whenever producing a watershed-level choropleth of CSO data. watershed values match the short ALL-CAPS names in the GeoJSON (e.g. MYSTIC, CHARLES, BLACKSTONE, MERRIMACK). watershed is NULL for the catch-all "Other" entry.
@@ -158,7 +226,7 @@ Alabama	Amount from Federal Government	NULL	2013
 
 ---
 
-### EPARegion1_permits (4,440 rows)
+### EPARegion1_permits (4,444 rows)
 EPA Region 1 NPDES (water discharge) permit listings for MA facilities. Key fields: Facility_Name, Permit_Number, Date_of_Issuance, Watershed, State, Stage.
 
 ```sql
@@ -192,6 +260,57 @@ Ansonia (Naugatuck River)	<a href='https://www.epa.gov/system/files/documents/20
 **Column notes:**
 - `Stage`: final, draft
 - `State`: me, ma, ct, vt, ri, nh
+
+---
+
+### EPA_303d_Impairments (106,058 rows)
+MassGIS / EPA ATTAINS: Massachusetts 303(d) Integrated List of Waters. Section 303(d) of the Clean Water Act requires MA to identify waterbodies that fail to meet water quality standards. MA submits a biennial Integrated List to EPA on April 1 of even-numbered years; EPA typically approves it within 6-18 months. Available cycles: 2010, 2012, 2014, 2016, 2018, 2022 (2020 not published by MassGIS; 2024/2026 cycle is in draft as of April 2026). One row per (assessment unit x designated use x impairment cause x reporting cycle). Key fields: reportingCycle (year), auId (assessment unit ID), waterbody (name), watershed (MA watershed name), waterType, category (1/2/3/4A/4B/4C/5 — see below), designatedUse, attainment, cause (specific pollutant or stressor), hasTmdl. Category meanings: 1=Fully Supporting, 2=Attaining with concern, 3=Insufficient info, 4A=Impaired+TMDL approved, 4B=Impaired+other plan, 4C=Impaired+alt control, 5=Impaired+TMDL needed (the 303(d) list proper). A TMDL (Total Maximum Daily Load) is a cleanup plan. hasTmdl=1 means category is 4A/4B/4C. Join to MAEEADP_CSO via CSO_303d_Mapping (39 of 56 CSO waterbodies matched). Key question: Are CSO operators discharging into already-impaired waters?
+
+```sql
+CREATE TABLE "EPA_303d_Impairments" (
+	"index" BIGINT, 
+	"reportingCycle" BIGINT, 
+	"auId" TEXT, 
+	waterbody TEXT, 
+	watershed TEXT, 
+	"waterType" TEXT, 
+	"auSize" FLOAT, 
+	"sizeUnit" TEXT, 
+	"useClass" TEXT, 
+	category TEXT, 
+	"designatedUse" TEXT, 
+	attainment TEXT, 
+	cause TEXT, 
+	source TEXT, 
+	"tmdlId" TEXT, 
+	"hasTmdl" BIGINT
+)
+```
+
+/* 5 rows from EPA_303d_Impairments:
+reportingCycle	auId	waterbody	watershed	waterType	auSize	sizeUnit	useClass	category	designatedUse	attainment	cause	source	tmdlId	hasTmdl
+2010	MA11-01	North Branch Hoosic River	Hoosic	RIVER	4.281	MILES	B	2	Aesthetic	Fully Supporting	NULL	NULL	NULL	0
+2010	MA11-01	North Branch Hoosic River	Hoosic	RIVER	4.281	MILES	B	2	Fish Consumption	Not Assessed	NULL	NULL	NULL	0
+2010	MA11-01	North Branch Hoosic River	Hoosic	RIVER	4.281	MILES	B	2	Aquatic Life	Fully Supporting	NULL	NULL	NULL	0
+2010	MA11-01	North Branch Hoosic River	Hoosic	RIVER	4.281	MILES	B	2	Primary Contact Recreation	Fully Supporting	NULL	NULL	NULL	0
+2010	MA11-01	North Branch Hoosic River	Hoosic	RIVER	4.281	MILES	B	2	Secondary Contact Recreation	Fully Supporting	NULL	NULL	NULL	0
+*/
+
+**Column notes:**
+- `reportingCycle`: Integer year of biennial assessment (2010, 2012, 2014, 2016, 2018, 2022). Use MAX(reportingCycle) to get most recent.
+- `auId`: Assessment unit identifier (e.g. MA51-07). One waterbody may have multiple AUs (river segments).
+- `waterbody`: Mixed case (e.g. "Charles River"). NOT all-caps. Use CSO_303d_Mapping for joins to MAEEADP_CSO.
+- `watershed`: MA watershed name (mixed case, e.g. "Blackstone", "Cape Cod"). Different from CSO_WatershedMapping watershed (which is ALL CAPS short names).
+- `waterType`: Values: RIVER, FRESHWATER LAKE, ESTUARY, COASTAL, WETLAND.
+- `category`: Assessment category: 1=Fully Supporting, 2=Attaining, 3=Insufficient Info, 4A=TMDL approved, 4B=Other plan, 4C=Alt control, 5=Impaired+TMDL needed.
+- `designatedUse`: Designated use being assessed: Aquatic Life, Recreation, Fish Consumption, Water Supply, Shellfish Harvesting, etc.
+- `attainment`: Whether designated use is met: "Not Supporting", "Fully Supporting", "Not Assessed", "Threatened".
+- `cause`: Specific pollutant or stressor causing impairment (e.g. FECAL COLIFORM, PHOSPHORUS, MERCURY IN FISH TISSUE). NULL if not impaired.
+- `source`: Probable source of impairment (e.g. Municipal point source, Urban runoff). NULL if not impaired.
+- `tmdlId`: TMDL document identifier if a cleanup plan exists. NULL means no plan approved.
+- `hasTmdl`: Derived: 1 if category is 4A, 4B, or 4C (impaired but has some plan); 0 otherwise.
+- `sizeUnit`: ALL CAPS. ACRES, MILES, SQUARE MILES
+- `useClass`: ALL CAPS. B, SA, A, SB, B\WWF, SB(CSO), B\CWF, B(CSO), B\TWS, B\WWF\TWS, B(CSO)\WWF
 
 ---
 
@@ -736,8 +855,8 @@ MOSES - Engineers/Scientists	MOSES - Engineers/Scientists (09)	DEPARTMENT OF ENV
 
 ---
 
-### MAEEADP_CSO (17,543 rows)
-EEA Data Portal: Combined Sewer Overflow (CSO) and Sanitary Sewer Overflow (SSO) discharge incidents reported to MassDEP. Each row is one discharge event at a specific outfall. Key fields: waterBody, municipality, volumnOfEvent (gallons), latitude/longitude, incidentDate, Year.
+### MAEEADP_CSO (17,575 rows)
+EEA Data Portal: Combined Sewer Overflow (CSO) and Sanitary Sewer Overflow (SSO) discharge incidents reported to MassDEP. Each row is one discharge event at a specific outfall. Key fields: waterBody, municipality, volumnOfEvent (gallons), latitude/longitude, incidentDate, Year. IMPORTANT: Data spans June 2022 to present — years available: 2022, 2023, 2024, 2025, 2026. Do NOT assume data ends in an earlier year; always query the full range and check MAX(Year) if unsure.
 
 ```sql
 CREATE TABLE "MAEEADP_CSO" (
@@ -787,8 +906,8 @@ Unnamed: 0	incidentId	incidentNumber	incidentDate	incidentTime	amPm	reporterClas
 - `municipality`: ALL CAPS town name (e.g. BOSTON, CAMBRIDGE). Use UPPER() for filtering.
 - `volumnOfEvent`: Discharge volume in gallons. WARNING: column name is misspelled "volumn" (not "volume").
 - `Year`: Stored as FLOAT (e.g. 2020.0). Use CAST(Year AS INTEGER) if needed.
-- `incidentDate`: Format: YYYY-MM-DD string.
-- `eventType`: Values: CSO, SSO, UNPERMITTED, etc.
+- `incidentDate`: Format: YYYY-MM-DD HH:MM:SS datetime string (e.g. "2022-07-02 00:00:00"). NOT a plain date — use substr(incidentDate, 1, 10) to get the YYYY-MM-DD portion for date comparisons.
+- `eventType`: Values include: "CSO – UnTreated", "CSO – Treated", "Partially Treated – Blended", "SSO – System Surcharging Under High Flow Conditions", etc. WARNING: there is NO simple "CSO" value — to filter for CSO events use: eventType LIKE 'CSO%'
 - `latitude`: ~97% of records have coordinates (filled from state outfall registry). Do NOT filter on latitude IS NOT NULL.
 - `longitude`: ~97% of records have coordinates. Do NOT filter on longitude IS NOT NULL.
 - `amPm`: ALL CAPS. PM, AM
@@ -797,11 +916,11 @@ Unnamed: 0	incidentId	incidentNumber	incidentDate	incidentTime	amPm	reporterClas
 - `permiteeName`: ALL CAPS. CITY OF NEW BEDFORD, CITY OF FALL RIVER, SPRINGFIELD WATER & SEWER COMMISSION, CITY OF HOLYOKE, LOWELL REGIONAL WASTEWATER UTILITY, CITY OF CHICOPEE, CITY OF HAVERHILL, CITY OF FITCHBURG, BOSTON WATER & SEWER COMMISSION, MASSACHUSETTS WATER RESOURCES AUTHORITY, LYNN WATER & SEWER COMMISSION, TOWN OF MONTAGUE, CITY OF CAMBRIDGE, GREATER LAWRENCE SANITARY DISTRICT, BILLERICA WASTEWATER TREATMENT FACILITY, ATTLEBORO WASTEWATER TREATMENT FACILITY, CITY OF WORCESTER, CITY OF SOMERVILLE, CITY OF GLOUCESTER, CITY OF CHELSEA, REVERE, CITY OF, CITY OF TAUNTON, BRAINTREE, TOWN OF, AMESBURY WATER POLLUTION ABATEMENT PLANT, UPPER BLACKSTONE WATER POLLUTION ABATEMENT DISTRICT, ... (66 total)
 - `permiteeId`: ALL CAPS. MA0100781, MA0100382, MA0101613, MA0101630, MA0100633, MA0101508, MA0101621, MA0100986, MA0101192, MA0103284, MA0100552, MA0100137, MA0101974, MA0100447, MA0101711, MA0100595, MA0102997, MA0101982, MA0100625, MA0101877, MA0100897, MA0101745, MA0102369, MA0101923, MA0101214, ... (44 total)
 - `reportingType`: Initial-Ceased, Initial-Ongoing, Ongoing, Ceased
-- `month`: Feb, Jan, Sep, Nov, Oct, Dec, Jun, Mar, Jul, Apr, Aug, May
+- `month`: Feb, Jan, Sep, Nov, Oct, Dec, Mar, Jun, Jul, Apr, Aug, May
 
 ---
 
-### MAEEADP_DrinkingWater (168,875 rows)
+### MAEEADP_DrinkingWater (168,948 rows)
 EEA Data Portal: Annual drinking water quality monitoring results by water system. Key fields: Year, PWSName (public water system name), ContaminantGroup, Result.
 
 ```sql
@@ -825,12 +944,12 @@ Year	PWSName	ContaminantGroup	RaworFinished	Result
 */
 
 **Column notes:**
-- `ContaminantGroup`: ALL CAPS. NITRAT, SECCON, NITRIT, VOC, INORG, SODIUM, THM, PERCHL, SOC, HAA5, PFAS, RADIO, PCE, TOC, ASBEST, MN, RADIUM, BROMAT, ARSEN, CHLRTE, IRON, ALPHA, RADON, BROMID, 1,4-DI, ... (47 total)
+- `ContaminantGroup`: ALL CAPS. NITRAT, SECCON, NITRIT, VOC, INORG, SODIUM, THM, PERCHL, SOC, HAA5, PFAS, RADIO, PCE, TOC, ASBEST, MN, RADIUM, BROMAT, CHLRTE, ARSEN, IRON, ALPHA, RADON, BROMID, 1,4-DI, ... (47 total)
 - `RaworFinished`: ALL CAPS. F, R
 
 ---
 
-### MAEEADP_Enforcement (54,995 rows)
+### MAEEADP_Enforcement (55,116 rows)
 EEA Data Portal: MassDEP enforcement actions against regulated entities, 1996–present. Each row is one action. Key fields: Town, Program, EnforcementType, PenaltyAssessed, FacilityId, FacilityName, EnforcementDate. Use with MAEEADP_Facility via FacilityId.
 
 ```sql
@@ -866,7 +985,7 @@ Id	Town	Program	EnforcementType	PenaltyAssessed	FacilityId	FacilityName	Enforcem
 
 ---
 
-### MAEEADP_Facility (53,458 rows)
+### MAEEADP_Facility (53,474 rows)
 EEA Data Portal: Regulated facilities tracked by MassDEP/EEA. Key fields: Id (joins to FacilityId in other tables), Town, FacilityType, FacilityName, Program, Active.
 
 ```sql
@@ -901,7 +1020,7 @@ Id	StreetName	Town	FacilityType	FacilityName	Program	ProgramSpecificId	Active
 
 ---
 
-### MAEEADP_Inspection (84,144 rows)
+### MAEEADP_Inspection (84,188 rows)
 EEA Data Portal: MassDEP inspection records for regulated facilities. Key fields: Town, Program, FacilityId, FacilityName, InspectionType, InspectionDate.
 
 ```sql
@@ -931,11 +1050,11 @@ Id	Town	Program	FacilityId	FacilityName	InspectionType	InspectionDate
 - `InspectionDate`: Format: YYYY-MM-DD string.
 - `FacilityId`: Joins to MAEEADP_Facility.Id.
 - `Program`: ALL CAPS. REGULATED ACTIVITY(S), WATER SUPPLY/DRINKING WATER
-- `InspectionType`: Unannounced Multimedia Inspection, SANITARY SURVEY, Unannounced Single-Media Inspection, Solid Waste Inspect with Enforcement Potential, ReInspection, Assess Reporting Problems or Inclusion to Regulated Universe, Solid Waste Visit Limited Enforcement Potential, Limited Inspect for Compliance Indicators/Field Presence, Site Visit But Not Full Inspection, Announced Single-Media Inspection, Drive By Inspection, FACILITY SELF REPORTING, Compliance Evaluation-Review of Compliance Data & Reports, BWR/BRP Announced Inspection Related Activity, Multiple Visits to Identify/Document a Problem, Inspect Permitted Construction/Site Prior to Permit Decision, Level 1 Assessment rTCR, OTHER, BWR/BRP Unannounced Inspection Related Activity, COMPREHENSIVE COMPLIANCE EVALUATION, Announced Multimedia Inspection, PERMIT (QUALIFICATION/REVIEW/COMPLIANCE), TECHNICAL ASSISTANCE (NON-SPECIFIC), Level 2 Assessment rTCR, Solid Waste Pre-Permit Limited Enforcement Potential, ... (51 total)
+- `InspectionType`: Unannounced Multimedia Inspection, SANITARY SURVEY, Unannounced Single-Media Inspection, Solid Waste Inspect with Enforcement Potential, ReInspection, Assess Reporting Problems or Inclusion to Regulated Universe, Solid Waste Visit Limited Enforcement Potential, Limited Inspect for Compliance Indicators/Field Presence, Site Visit But Not Full Inspection, Announced Single-Media Inspection, Drive By Inspection, FACILITY SELF REPORTING, Compliance Evaluation-Review of Compliance Data & Reports, BWR/BRP Announced Inspection Related Activity, Multiple Visits to Identify/Document a Problem, Inspect Permitted Construction/Site Prior to Permit Decision, Level 1 Assessment rTCR, OTHER, BWR/BRP Unannounced Inspection Related Activity, COMPREHENSIVE COMPLIANCE EVALUATION, Announced Multimedia Inspection, PERMIT (QUALIFICATION/REVIEW/COMPLIANCE), Level 2 Assessment rTCR, TECHNICAL ASSISTANCE (NON-SPECIFIC), Solid Waste Pre-Permit Limited Enforcement Potential, ... (51 total)
 
 ---
 
-### MAEEADP_Permit (101,058 rows)
+### MAEEADP_Permit (101,053 rows)
 EEA Data Portal: Environmental permits issued by MassDEP. Key fields: Town, PermitType, Subtype, Program, Status, FacilityId, FacilityName, FinalDecisionDate.
 
 ```sql
@@ -1252,23 +1371,23 @@ Annual MA environmental agency budget totals (FY2001–present). PREFERRED table
 CREATE TABLE "MassBudget_summary" (
 	"index" BIGINT, 
 	"Year" BIGINT, 
-	"DEPAdministration_noinf_float" FLOAT, 
-	"DCRAdministration_noinf_float" FLOAT, 
-	"EEAAdministration_noinf_float" FLOAT, 
-	"FishGameAdministration_noinf_float" FLOAT, 
-	"DEPAdministration_inf_float" FLOAT, 
-	"DCRAdministration_inf_float" FLOAT, 
-	"EEAAdministration_inf_float" FLOAT, 
-	"FishGameAdministration_inf_float" FLOAT, 
-	"TotalBudget_noinf_float" FLOAT, 
-	"TotalBudget_inf_float" FLOAT, 
+	"DEPAdministration_noinf" FLOAT, 
+	"DCRAdministration_noinf" FLOAT, 
+	"EEAAdministration_noinf" FLOAT, 
+	"FishGameAdministration_noinf" FLOAT, 
+	"DEPAdministration_inf" FLOAT, 
+	"DCRAdministration_inf" FLOAT, 
+	"EEAAdministration_inf" FLOAT, 
+	"FishGameAdministration_inf" FLOAT, 
+	"TotalBudget_noinf" FLOAT, 
+	"TotalBudget_inf" FLOAT, 
 	"FiscalYear" TEXT, 
 	"GovernorsBudget" BIGINT
 )
 ```
 
 /* 5 rows from MassBudget_summary:
-Year	DEPAdministration_noinf_float	DCRAdministration_noinf_float	EEAAdministration_noinf_float	FishGameAdministration_noinf_float	DEPAdministration_inf_float	DCRAdministration_inf_float	EEAAdministration_inf_float	FishGameAdministration_inf_float	TotalBudget_noinf_float	TotalBudget_inf_float	FiscalYear	GovernorsBudget
+Year	DEPAdministration_noinf	DCRAdministration_noinf	EEAAdministration_noinf	FishGameAdministration_noinf	DEPAdministration_inf	DCRAdministration_inf	EEAAdministration_inf	FishGameAdministration_inf	TotalBudget_noinf	TotalBudget_inf	FiscalYear	GovernorsBudget
 2001	31870112.0	NULL	NULL	NULL	67615072.53270285	NULL	NULL	NULL	31870112.0	67615072.53270285	FY01	0
 2002	30483537.0	NULL	NULL	NULL	64031178.21821397	NULL	NULL	NULL	30483537.0	64031178.21821397	FY02	0
 2003	28830810.0	NULL	NULL	NULL	59114520.60906299	NULL	NULL	NULL	28830810.0	59114520.60906299	FY03	0

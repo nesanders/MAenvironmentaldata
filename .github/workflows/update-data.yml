@@ -12,8 +12,9 @@ jobs:
   update-data:
     runs-on: ubuntu-latest
     permissions:
-      contents: write   # to commit updated CSVs
-      issues: write     # to open failure issues
+      contents: write       # to push branch
+      issues: write         # to open failure issues
+      pull-requests: write  # to create PR
 
     steps:
       - uses: actions/checkout@v4
@@ -48,6 +49,7 @@ jobs:
           python get_EEA_data_portal.py
           python get_eea_dp_cso.py
           python get_MA_precipitation.py
+          python get_ATTAINS_303d.py
 
       - name: Validate data
         working-directory: get_data
@@ -57,14 +59,27 @@ jobs:
         working-directory: get_data
         run: python assemble_db.py
 
-      - name: Commit changes
+      - name: Commit and open PR
+        env:
+          GH_TOKEN: ${{ github.token }}
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
           git add docs/data/
-          git diff --staged --quiet \
-            || git commit -m "Auto-update data $(date -u +%Y-%m-%d)" \
-            && git push
+          if git diff --staged --quiet; then
+            echo "No data changes — skipping PR."
+            exit 0
+          fi
+          BRANCH="auto/data-$(date -u +%Y-%m-%d)"
+          git checkout -b "$BRANCH"
+          git commit -m "Auto-update data $(date -u +%Y-%m-%d)"
+          git push origin "$BRANCH"
+          gh pr create \
+            --title "Auto-update data $(date -u +%Y-%m-%d)" \
+            --body "Automated weekly data refresh. Merging this will trigger the chart-update workflow." \
+            --base main \
+            --head "$BRANCH"
+          gh pr merge "$BRANCH" --auto --squash
 
       - name: Open issue on failure
         if: failure()

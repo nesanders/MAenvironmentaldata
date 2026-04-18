@@ -29,6 +29,7 @@ All fetch scripts are run from `get_data/`:
 3. `get_DEP_staff_SODA.py` — MA Comptroller payroll via SODA API (requires `SECRET_SODA_token`)
 4. `get_EEA_data_portal.py` — EEA portal tables (permit, facility, inspection, enforcement, drinkingWater)
 5. `get_eea_dp_cso.py` — EEA CSO discharge incidents (separate API endpoint)
+5.5. `get_ATTAINS_303d.py` — EPA 303(d) impaired waters from MassGIS shapefiles (biennial data; exits early if all cycles already cached)
 6. `validate_data.py` — schema + row-count checks; writes `docs/data/data_stats.yml`
 7. `assemble_db.py` — builds `AMEND.db` SQLite, uploads to `gs://openamend-data/amend.db`, and regenerates `docs/assets/db_semantic_context.txt`
 
@@ -63,6 +64,7 @@ bash set_cors_gsutil.sh
 - **SSAWages (403)**: The SSA website (`ssa.gov`) blocks automated access despite User-Agent headers. `get_SSAWages.py` script is created but not yet run in CI. Falls back to cached 2023-02-03 version. `assemble_db.py` auto-extends with zero-growth placeholder rows for any year gap.
 - **EPA NPDES page changes**: EPA changed JSON format and column names around 2025; both handled with `isinstance` checks and fallback column detection.
 - **EEA CSOAPI**: Requires `Referer` and `Origin` headers matching the portal URL; plain requests return HTTP 500.  Pagination is 1-indexed.
+- **303(d) data (biennial)**: `get_ATTAINS_303d.py` fetches from MassGIS S3-hosted shapefiles (not the ATTAINS REST API, which times out on `/assessments`). Data updates only biennially (even years); the script exits early if all known cycles are already in the cached CSV. The 2020 cycle was never published by MassGIS. The 2024/2026 cycle is in draft as of April 2026 — the script will auto-detect it when MassGIS publishes the approved shapefile. `CSO_303d_Mapping` in `assemble_db.py` is a manually curated dict (35 verified matches of 56 CSO waterbodies); update it when a new cycle is added by reviewing new assessment unit names against CSO waterBody values.
 
 ## Running scripts
 
@@ -118,10 +120,11 @@ The live dashboard at `/dashboard.html` auto-updates weekly via `update-charts.y
 - Instantiates `CSOAnalysisEEADP` with `end_date=date.today()` for rolling CSO data window, `make_regression=False` (Stan excluded from CI), `make_maps=False` (too heavy for weekly CI)
 - Calls dashboard-specific plot methods: `plot_monthly_volume_and_rainfall()`, `plot_monthly_modeled_vs_metered_fraction()`, `plot_monthly_volume_by_watershed()`, `plot_annual_volume_by_operator()`
 
-**Three refactored analysis scripts** — Each now has a `generate_charts(engine, prefix='')` function:
+**Four refactored analysis scripts** — Each now has a `generate_charts(engine, prefix='')` function:
 - `MADEP_staff.py` — Generates 6 staffing charts
 - `MADEP_enforcements_viz.py` — Generates 6 enforcement charts (overall, vs budget, by type, penalties overall, penalties stacked, topic breakdown); uses `MAEEADP_Enforcement` for counts/fines 1996–2026, `MADEP_enforcement` for topic breakdown through 2017; enforces routine notice filtering to restore enforcement-staffing correlation
 - `ECOS_budgets_viz.py` — Generates 3 budget comparison charts
+- `EPA_303d_viz.py` — Generates 4 dashboard charts (impaired trend, causes, CSO-to-impaired, TMDL progress) + writes `docs/data/facts_EPA303d.yml`; `generate_post_charts()` also generates 2 analysis-post charts (watershed bar chart, folium TMDL map) — requires folium, excluded from CI
 
 **`docs/dashboard.md`** — Jekyll post at `/dashboard.html` that includes the 12 `dash_*.html` chart files. See file for data sources and methodology notes.
 
@@ -154,6 +157,10 @@ Numpy types like `np.float64(0.123)` serialize to strings in JSON, causing "np i
 | CSO by operator (annual trends) | EEA DP CSO | Yes | Top 10 operators shown; updated Monday |
 | CSO modeled vs metered | EEA DP CSO | Yes | Monthly CSO-Untreated (detailed), SSO aggregated annually |
 | CSO by watershed | EEA DP CSO + geography lookup | Yes | Top 8 waterbodies; uses Waterbody fallback if Watershed not available |
+| 303(d) impaired trend | MassGIS shapefiles (biennial) | Auto-detects new cycle | Script exits early if cycles unchanged; new data expected ~2027 for 2024/2026 cycle |
+| 303(d) causes breakdown | MassGIS shapefiles (biennial) | Auto-detects new cycle | Top 15 causes in most recent approved cycle |
+| 303(d) CSO to impaired | MassGIS + EEA DP CSO + CSO_303d_Mapping | Auto (CSO); biennial (303d) | CSO_303d_Mapping must be manually reviewed when a new 303d cycle is added |
+| 303(d) TMDL progress | MassGIS shapefiles (biennial) | Auto-detects new cycle | hasTmdl derived from category column in each cycle's DBF |
 
 Dashboard includes italicized notes where data is static (budget, ECOS, seniority cutoff).
 
@@ -197,6 +204,34 @@ conda run -n amend_python python generate_semantic_context.py
 **Key implementation files:**
 - `get_data/generate_semantic_context.py` — generates semantic context from `AMEND.db`
 - `docs/assets/db_semantic_context.txt` — the generated context (committed, auto-updated)
-- `docs/ai_analysis.html` — page layout (disclaimer, settings, two-panel chat + artifact tray)
+- `docs/ai_analysis.html` — page layout (disclaimer, settings, two-panel chat + artifact tray); also contains starter question buttons
 - `docs/assets/ai_analysis.js` — all client-side logic (~950 lines vanilla JS)
 - `docs/assets/ai_analysis.css` — styles
+
+### Starter questions
+
+Starter question buttons live in `docs/ai_analysis.html` as `.ai-starter-btn` elements inside `#ai-starters`. When updating them, follow these principles:
+- **Prefer trend/historical questions** over point-in-time status questions; current-status questions are only appropriate for datasets with high recency (CSO, enforcement, permits — not 303d which only goes to 2022)
+- **Prioritise cross-dataset joins** — the best questions exercise joins between 2–3 tables (e.g. CSO + precipitation, enforcement + budget, CSO + 303d mapping + impairments)
+- **Cover a range of plot types** — aim for scatter, dual-axis line, bar, choropleth, and stacked bar across the full set
+- **Be broadly representative** — one or two questions per major data asset (CSO, staffing/budget, enforcement, 303d, drinking water, ECOS, NPDES/permits, EJ)
+
+### Semantic context pitfalls
+
+Common LLM SQL errors and how the semantic context addresses them:
+- **ALL-CAPS fields**: `waterBody`, `municipality`, `Town` are stored in ALL CAPS — document this with `UPPER()` examples
+- **Misspelled column**: `volumnOfEvent` (not "volume") — document explicitly in `COLUMN_NOTES`
+- **Year as FLOAT**: `MAEEADP_CSO.Year` is stored as FLOAT (e.g. 2023.0) — note `CAST(Year AS INTEGER)` if needed
+- **Table alias confusion**: lookup/mapping tables (e.g. `CSO_303d_Mapping`, `CSO_WatershedMapping`) have very few columns — add explicit `IMPORTANT: this table has NO [other columns]` warnings in `TABLE_DESCRIPTIONS` and `COLUMN_NOTES` to prevent the LLM from applying filters (e.g. `reportingCycle`) to the wrong alias
+- **Join pattern examples**: add concrete SQL examples to `JOIN_RELATIONSHIPS` for non-obvious multi-table joins; the LLM reliably follows patterns it has seen
+
+### API key security
+
+**Browser storage:** The Ask AI page stores API keys in **browser localStorage** (plain text, client-side). This is not cryptographically secured but keeps keys off your servers. On shared machines, any JavaScript on the page or other browser extensions could access the key. 
+
+**Recommendations for users:**
+- Use **restricted/temporary API keys** if your provider supports them (e.g., API keys with rate limits, expiration dates, or scope limitations)
+- On shared machines, clear browser storage after use (`localStorage.clear()` in browser console), or use private/incognito browsing
+- Providers like Groq, OpenAI, and Gemini all support creating limited-scope keys
+
+**For the demo recording script:** The `record_ai_demo.py` script accepts API keys via environment variables only (`GROQ_API_KEY`, `OPENAI_API_KEY`, `GOOGLE_API_KEY`). Keys are held in memory during recording and never persisted to disk.

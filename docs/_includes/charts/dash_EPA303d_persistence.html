@@ -1,0 +1,79 @@
+{% raw  %}
+<html>
+    <head>
+        <title>MA 303(d): Persistence of Impaired Waters</title>
+        <script src='https://cdn.jsdelivr.net/npm/chart.js@2.8.0/dist/Chart.bundle.min.js'></script>
+    </head>
+    <body>
+        <div style="width: 700px; height: 420px; max-width: 99%" class="chartjs">
+
+            <canvas id="MA 303(d): Persistence of Impaired Waters" height="420" width="700"></canvas>
+            <script>
+                Chart.defaults.global.defaultFontSize = 12;
+                var chart_data = {
+                
+                    data: {
+                        labels: ['2010', '2012', '2014', '2016', '2018', '2022'],
+                        datasets: [{'data': [1178.0, 1161.0, 1161.0, 1109.0, 1104.0, 1108.0], 'label': 'Listed as impaired in 2010 (original cohort)', 'backgroundColor': 'rgba(200, 60, 60, 0.85)', 'stack': 'cohort'},{'data': [0.0, 70.0, 73.0, 229.0, 371.0, 456.0], 'label': 'First listed after 2010', 'backgroundColor': 'rgba(230, 140, 40, 0.85)', 'stack': 'cohort'}]
+                    },
+                    type: 'bar',
+                    options: {
+                        scales: {
+                            yAxes: [{
+                                display: true,
+                                scaleLabel: {
+                                    display: true,
+                                    labelString: 'Impaired assessment units'
+                                },
+                                ticks: {
+                                    beginAtZero: true, min: 0
+                                },
+                                "id": "y-axis-0",
+                                "position": "left",
+                                stacked: true
+                            }, {
+                                display: false,
+                                scaleLabel: {
+                                    display: true,
+                                    labelString: ''
+                                },
+                                ticks: {
+                                    beginAtZero: true, min: 0
+                                },
+                                "id": "y-axis-1",
+                                "position": "right"
+                            }],
+                            xAxes: [{
+                                scaleLabel: {
+                                    display: true,
+                                    labelString: 'Reporting cycle'
+                                },
+                                stacked: true,
+                                ticks: {
+                                    autoSkip: true
+                                }
+                            }]
+                        },
+                        legend: {
+                            display: true
+                            },
+                        tooltips: {
+                            display: true
+                            }
+                    },
+                }
+                
+                
+                
+            </script>
+            <script>
+                {{
+                    var ctx = document.getElementById("MA 303(d): Persistence of Impaired Waters").getContext("2d");
+                    var mychart = new Chart(ctx, chart_data);
+                }}
+            </script>
+
+        </div>
+    </body>
+</html>
+{% endraw  %}

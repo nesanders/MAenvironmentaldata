@@ -1,9 +1,13 @@
 name: Update Charts
 
 on:
-  workflow_run:
-    workflows: ["Update Data"]
-    types: [completed]
+  # Trigger when data files land on main (after the data-update PR auto-merges).
+  # This replaces the old workflow_run trigger so sequencing is correct:
+  # data PR merges → push event fires → charts regenerate with fresh data.
+  push:
+    branches: [main]
+    paths:
+      - 'docs/data/**'
   workflow_dispatch:       # Allow manual trigger from GitHub UI
 
 concurrency:
@@ -15,12 +19,11 @@ env:
 
 jobs:
   update-charts:
-    # Only run if the Update Data workflow succeeded (or manual dispatch)
-    if: github.event_name == 'workflow_dispatch' || github.event.workflow_run.conclusion == 'success'
     runs-on: ubuntu-latest
     permissions:
-      contents: write   # to commit updated charts
-      issues: write     # to open failure issues
+      contents: write       # to push branch
+      issues: write         # to open failure issues
+      pull-requests: write  # to create PR
 
     steps:
       - uses: actions/checkout@v4
@@ -41,14 +44,33 @@ jobs:
         run: |
           echo "updated: $(date -u +'%Y-%m-%d %H:%M:%S')" > docs/data/ts_update_dashboard.yml
 
-      - name: Commit changes
+      - name: Commit and open PR
+        env:
+          GH_TOKEN: ${{ github.token }}
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
-          git add docs/_includes/charts/dash_*.html docs/data/facts_dash_*.yml docs/data/facts_DEPstaff.yml docs/data/facts_DEPenforce.yml docs/data/facts_ECOSbudgets.yml docs/data/ts_update_dashboard.yml
-          git diff --staged --quiet \
-            || git commit -m "Auto-update dashboard charts $(date -u +%Y-%m-%d)" \
-            && git push
+          git add docs/_includes/charts/dash_*.html \
+                  docs/data/facts_dash_*.yml \
+                  docs/data/facts_DEPstaff.yml \
+                  docs/data/facts_DEPenforce.yml \
+                  docs/data/facts_ECOSbudgets.yml \
+                  docs/data/facts_EPA303d.yml \
+                  docs/data/ts_update_dashboard.yml
+          if git diff --staged --quiet; then
+            echo "No chart changes — skipping PR."
+            exit 0
+          fi
+          BRANCH="auto/charts-$(date -u +%Y-%m-%d)"
+          git checkout -b "$BRANCH"
+          git commit -m "Auto-update dashboard charts $(date -u +%Y-%m-%d)"
+          git push origin "$BRANCH"
+          gh pr create \
+            --title "Auto-update dashboard charts $(date -u +%Y-%m-%d)" \
+            --body "Automated chart regeneration triggered by data update." \
+            --base main \
+            --head "$BRANCH"
+          gh pr merge "$BRANCH" --auto --squash
 
       - name: Open issue on failure
         if: failure()

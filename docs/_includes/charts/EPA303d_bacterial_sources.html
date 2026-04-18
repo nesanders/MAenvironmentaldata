@@ -1,0 +1,80 @@
+{% raw  %}
+<html>
+    <head>
+        <title>Sources of Bacterial Water Impairment (2022)</title>
+        <script src='https://cdn.jsdelivr.net/npm/chart.js@2.8.0/dist/Chart.bundle.min.js'></script>
+    </head>
+    <body>
+        <div style="width: 700px; height: 680px; max-width: 99%" class="chartjs">
+
+            <canvas id="Sources of Bacterial Water Impairment (2022)" height="680" width="700"></canvas>
+            <script>
+                Chart.defaults.global.defaultFontSize = 12;
+                var chart_data = {
+                
+                    data: {
+                        labels: ['Source Unknown', 'Discharges From Municipal Separate Storm Sewer Systems (Ms4)', 'Waterfowl', 'Unspecified Urban Stormwater', 'On-Site Treatment Systems (Septic Systems And Similar Decentralized Systems)', 'Combined Sewer Overflows', 'Wastes From Pets', 'Marina/Boating Pumpout Releases', 'Illicit Connections/Hook-Ups To Storm Sewers', 'Agriculture'],
+                        datasets: [{'data': [411.0, 239.0, 68.0, 58.0, 52.0, 42.0, 37.0, 30.0, 26.0, 21.0], 'label': 'Assessment units with fecal coliform or E. coli impairment', 'backgroundColor': 'rgba(200, 60, 60, 0.85)'}]
+                    },
+                    type: 'horizontalBar',
+                    options: {
+                        scales: {
+                            yAxes: [{
+                                display: true,
+                                scaleLabel: {
+                                    display: true,
+                                    labelString: ''
+                                },
+                                ticks: {
+                                    beginAtZero: true, min: 0,
+                                    callback: function(label) { var words = label.split(' '); var lines = []; var line = ''; words.forEach(function(w) {   if ((line + ' ' + w).trim().length > 23 && line) {     lines.push(line); line = w;   } else { line = (line ? line + ' ' : '') + w; } }); if (line) lines.push(line); return lines; },
+                                },
+                                "id": "y-axis-0",
+                                "position": "left",
+                                stacked: false
+                            }, {
+                                display: false,
+                                scaleLabel: {
+                                    display: true,
+                                    labelString: ''
+                                },
+                                ticks: {
+                                    beginAtZero: true, min: 0
+                                },
+                                "id": "y-axis-1",
+                                "position": "right"
+                            }],
+                            xAxes: [{
+                                scaleLabel: {
+                                    display: true,
+                                    labelString: 'Impaired assessment units'
+                                },
+                                stacked: false,
+                                ticks: {
+                                    autoSkip: true
+                                }
+                            }]
+                        },
+                        legend: {
+                            display: true
+                            },
+                        tooltips: {
+                            display: true
+                            }
+                    },
+                }
+                
+                
+                
+            </script>
+            <script>
+                {{
+                    var ctx = document.getElementById("Sources of Bacterial Water Impairment (2022)").getContext("2d");
+                    var mychart = new Chart(ctx, chart_data);
+                }}
+            </script>
+
+        </div>
+    </body>
+</html>
+{% endraw  %}

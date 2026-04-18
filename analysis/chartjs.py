@@ -9,7 +9,7 @@ import numpy as np
 import six
 from six.moves import range
 
-ctypes = ["Bar", "Pie", "Doughnut", "PolarArea", "Radar", "Line", "Scatter"]
+ctypes = ["Bar", "HorizontalBar", "Pie", "Doughnut", "PolarArea", "Radar", "Line", "Scatter"]
 
 def js_str(x):
     out = '{'
@@ -103,13 +103,13 @@ class chart:
         ## Other data types expect data as list scatter expects array and is handled separately below
         if self.ctype != 'Scatter': data = ['null' if np.isnan(d) else d for d in data]
         
-        if self.ctype in ["Bar","Radar","Line"]: # Line, radar or bar charts
+        if self.ctype in ["Bar", "HorizontalBar", "Radar","Line"]: # Line, radar or bar charts
             if len(data) != len(self.labels):
                 raise ValueError("Data must be the same size as labels.")
-            
+
             appendargs = {'data':data, 'label':"'"+dataset_label+"'"}
             appendargs.update(six.iteritems(kwargs))
-            
+
             self.data.append(js_str(appendargs))
             
         elif self.ctype in ["Pie","Doughnut","Polar"]: # Pie, doughnut or polar charts
@@ -133,7 +133,7 @@ class chart:
 
     # Make a chart canvas part
     def make_chart_canvas(self):
-        if self.ctype in ["Bar", "Radar", "Line", "Scatter"]:  
+        if self.ctype in ["Bar", "HorizontalBar", "Radar", "Line", "Scatter"]:  
             dataset = """{{
                 
                     data: {{
@@ -189,7 +189,7 @@ class chart:
                 """.format(
                     str(self.labels), 
                     '['+','.join([str(c) for c in self.data])+']', 
-                    str(self.ctype).lower(), 
+                    'horizontalBar' if self.ctype == 'HorizontalBar' else str(self.ctype).lower(),
                     self.ylabel, 
                     self.xlabel,
                     self.scaleBeginAtZero,

@@ -40,6 +40,14 @@ dissolved boundaries, or switching to vectorized `geopandas.sjoin`.
 
 # Infrastructure
 
+### Make an animated demo of the Ask AMEND AI feature
+
+Create a short screen-capture animation (GIF or video) showing a user asking a natural-language
+question in the Ask AMEND AI interface, the SQL being generated, and an interactive chart or
+table appearing as the result. Embed on the About page or README to help new visitors understand
+what the feature does before trying it themselves.
+
+### Evaluate if python chartjs is still the right plotting library to use and migrate if need be
 
 ### Add unit tests
 
