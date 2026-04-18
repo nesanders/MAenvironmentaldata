@@ -191,6 +191,39 @@ var chart_data = {{
         f.write(html)
 
 
+def _add_tick_wrap(path, max_chars=28):
+    """Patch a Chart.js HorizontalBar HTML file to word-wrap long y-axis labels.
+
+    Injects a ticks.callback into yAxes[0] that splits labels into arrays
+    of lines no longer than max_chars. Chart.js 2.8 renders array labels
+    as multi-line ticks automatically.
+    """
+    wrap_js = (
+        f"callback: function(label) {{"
+        f" var words = label.split(' '); var lines = []; var line = '';"
+        f" words.forEach(function(w) {{"
+        f"   if ((line + ' ' + w).trim().length > {max_chars} && line) {{"
+        f"     lines.push(line); line = w;"
+        f"   }} else {{ line = (line ? line + ' ' : '') + w; }}"
+        f" }});"
+        f" if (line) lines.push(line);"
+        f" return lines; }},"
+    )
+    with open(path) as f:
+        html = f.read()
+    # The wrapper emits:  ticks: {\n                                    \n                                },
+    # for yAxes[0]. Insert the callback into the first ticks block.
+    old = 'yAxes: [{'
+    new = old  # find insertion point inside first ticks: {} of yAxes[0]
+    # More robust: replace the first empty ticks block inside yAxes
+    target = "ticks: {\n                                    beginAtZero: true, min: 0\n                                },"
+    replacement = f"ticks: {{\n                                    beginAtZero: true, min: 0,\n                                    {wrap_js}\n                                }},"
+    if target in html:
+        html = html.replace(target, replacement, 1)
+        with open(path, 'w') as f:
+            f.write(html)
+
+
 def _to_float_list(series):
     """Convert pandas Series / numpy array to list of Python floats for JSON safety."""
     return [float(v) if pd.notna(v) else None for v in series]
@@ -776,6 +809,7 @@ def generate_post_charts(engine):
         scaleBeginAtZero=1,
     )
     mychart.jekyll_write('../docs/_includes/charts/EPA303d_bacterial_sources.html')
+    _add_tick_wrap('../docs/_includes/charts/EPA303d_bacterial_sources.html')
 
     # ── CDF: bacterial impairment fraction, CSO vs. non-CSO waterways ─────────
     print('Post chart: CSO bacterial impairment CDF...')
