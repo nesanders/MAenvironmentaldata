@@ -27,7 +27,7 @@
                                 },
                                 ticks: {
                                     beginAtZero: true, min: 0,
-                                    callback: function(label) { var words = label.split(' '); var lines = []; var line = ''; words.forEach(function(w) {   if ((line + ' ' + w).trim().length > 28 && line) {     lines.push(line); line = w;   } else { line = (line ? line + ' ' : '') + w; } }); if (line) lines.push(line); return lines; },
+                                    callback: function(label) { var words = label.split(' '); var lines = []; var line = ''; words.forEach(function(w) {   if ((line + ' ' + w).trim().length > 23 && line) {     lines.push(line); line = w;   } else { line = (line ? line + ' ' : '') + w; } }); if (line) lines.push(line); return lines; },
                                 },
                                 "id": "y-axis-0",
                                 "position": "left",

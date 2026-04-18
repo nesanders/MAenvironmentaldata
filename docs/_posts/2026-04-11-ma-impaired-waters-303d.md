@@ -241,7 +241,7 @@ For every Category 5 impaired waterbody, MA DEP and EPA must develop a TMDL befo
 
 In {{ site.data.facts_EPA303d.earliest_cycle }}, {{ site.data.facts_EPA303d.tmdl_with_earliest }} of {{ site.data.facts_EPA303d.impaired_earliest }} impaired AUs had a completed TMDL ({{ site.data.facts_EPA303d.tmdl_pct_earliest }}%). In {{ site.data.facts_EPA303d.latest_cycle }}, {{ site.data.facts_EPA303d.tmdl_with_latest }} of {{ site.data.facts_EPA303d.impaired_latest }} had one ({{ site.data.facts_EPA303d.tmdl_pct_latest }}%). The number of AUs without a cleanup plan grew from {{ site.data.facts_EPA303d.tmdl_without_earliest }} to {{ site.data.facts_EPA303d.tmdl_without_latest }} over the same period.
 
-Averaged across reporting cycles, approximately {{ site.data.facts_EPA303d.avg_net_tmdl_per_cycle }} net new TMDLs have been completed per two-year cycle. At that pace, and assuming no new listings, the current backlog of {{ site.data.facts_EPA303d.tmdl_without_latest }} AUs without a plan would not be cleared until around {{ site.data.facts_EPA303d.year_backlog_cleared }}. This is an illustrative projection based on recent rates, not a forecast.
+Averaged across reporting cycles, approximately {{ site.data.facts_EPA303d.avg_net_tmdl_per_cycle }} net new TMDLs have been completed per two-year cycle. At that pace, and assuming no new listings, the current backlog of {{ site.data.facts_EPA303d.tmdl_without_latest }} AUs without a plan would not be cleared until around {{ site.data.facts_EPA303d.year_backlog_cleared }}. (However, see the note at the top of this page about the new statewide TMDL.)
 
 The chart below tracks what happened to the {{ site.data.facts_EPA303d.n_cohort_cat5 }} AUs that were listed as Category 5 (TMDL needed, none yet) in 2010 — the earliest cycle in our data. Because 2010 is our starting point, the true wait for many of these AUs is longer than the chart shows; some had already been listed for years before 2010.
 
@@ -275,16 +275,14 @@ Cape Cod's high count reflects its shallow, nutrient-sensitive coastal ponds and
 
 The 303(d) Integrated List provides the most direct available measure of water quality conditions in Massachusetts waterbodies. Several patterns are visible in the data from {{ site.data.facts_EPA303d.earliest_cycle }} through {{ site.data.facts_EPA303d.latest_cycle }}:
 
-- The count of impaired AUs has grown in every reporting cycle, from {{ site.data.facts_EPA303d.impaired_earliest }} to {{ site.data.facts_EPA303d.impaired_latest }}. Most of this growth reflects newly assessed waterbodies rather than deterioration of previously passing ones, though the overall list of impaired waters has not declined.
+- The count of impaired AUs has grown in every reporting cycle, from {{ site.data.facts_EPA303d.impaired_earliest }} to {{ site.data.facts_EPA303d.impaired_latest }}. Most of this growth reflects newly assessed waterbodies rather than deterioration of previously passing ones, but it is also true that few AUs have been removed from assessment (whether because of improved water quality or for any other reason).
 
 - Bacterial contamination — fecal coliform and *E. coli* — is the most commonly cited cause of impairment, attributable to a mix of sources including stormwater, CSOs, and septic systems. {{ site.data.facts_EPA303d.pct_pcr_failing }}% of assessed waterbodies do not meet the standard for safe swimming.
 
-- Among CSO-reporting waterways that could be matched to 303(d) records, all are classified as impaired in the 2022 cycle. CSO infrastructure is concentrated in urban areas where water quality impairment has historically been documented.
+- Among CSO-reporting waterways that could be matched to 303(d) records, all are classified as impaired in the 2022 cycle.
 
-- The fraction of impaired AUs with a completed TMDL has remained roughly flat at 38–40% across all six cycles, while the absolute number without a plan has grown. EPA's April 2025 statewide pathogen TMDL may affect this metric in future cycles, though its water quality impact will depend on implementation.
-
-- Massachusetts's 2024 Integrated List is in draft as of spring 2026. When approved and published by MassGIS, this analysis will update automatically.
+- The fraction of impaired AUs with a completed TMDL has remained roughly flat at 38–40% across all six cycles, while the absolute number without a plan has grown. EPA's April 2025 statewide pathogen TMDL changes this situation, though its water quality impact remains to be seen.
 
 ---
 
-*This post was prepared with assistance from [Claude](https://www.anthropic.com/claude), an AI assistant, which helped structure the analysis, write code, and draft text. All data, methodology, and conclusions were reviewed and approved by [the site author](https://github.com/nesanders).*
+*This post was prepared with assistance from [Claude](https://www.anthropic.com/claude), an AI assistant, which helped structure the analysis, write code, and draft text. All data, text, methodology, and conclusions were reviewed and approved by [the site author](https://github.com/nesanders).*

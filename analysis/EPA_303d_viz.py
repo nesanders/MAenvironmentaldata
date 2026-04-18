@@ -807,7 +807,7 @@ def generate_post_charts(engine):
         scaleBeginAtZero=1,
     )
     mychart.jekyll_write('../docs/_includes/charts/EPA303d_bacterial_sources.html')
-    _add_tick_wrap('../docs/_includes/charts/EPA303d_bacterial_sources.html')
+    _add_tick_wrap('../docs/_includes/charts/EPA303d_bacterial_sources.html', 23)
 
     # ── CDF: bacterial impairment fraction, CSO vs. non-CSO waterways ─────────
     print('Post chart: CSO bacterial impairment CDF...')
@@ -1001,7 +1001,7 @@ def generate_post_charts(engine):
     )
     mychart.set_params(
         JSinline=0,
-        ylabel='% of assessed AUs with bacterial impairment',
+        ylabel='% of AUs with bacterial impairment',
         xlabel='Pollution source category',
         scaleBeginAtZero=1,
         legend=0,
@@ -1046,7 +1046,7 @@ def generate_post_charts(engine):
         JSinline=0,
         ylabel='% still without TMDL',
         xlabel='Reporting cycle',
-        scaleBeginAtZero=0,
+        scaleBeginAtZero=1,
     )
     mychart.jekyll_write('../docs/_includes/charts/EPA303d_tmdl_survival.html')
     print(f'Survival chart done: {pct_still_waiting[-1]}% still waiting by {cycles[-1]}')
