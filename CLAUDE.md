@@ -8,7 +8,9 @@ All Python scripts run in the `amend_python` conda environment:
 conda activate amend_python
 ```
 
-Scripts that are part of the CI pipeline use `requirements-ci.txt` (no PySTAN, geopandas, or joblib; scipy is imported inline only where needed and is not listed).  The full conda env is needed to run the analysis/visualization scripts locally.
+Scripts that are part of the CI pipeline use `requirements-ci.txt`. The only excluded dep is PySTAN (`stan`). Everything else needed by `dashboard_charts.py` and its transitive imports must be listed there. The full conda env is needed to run the analysis/visualization scripts locally.
+
+**When adding a new import to any script in the `dashboard_charts.py` call chain**, check whether the package is in `requirements-ci.txt` and add it with a pinned version if not. The full import chain is: `dashboard_charts.py` → `MADEP_staff`, `MADEP_enforcements_viz`, `ECOS_budgets_viz`, `EPA_303d_viz`, `EEA_DP_CSO_map` → `NECIR_CSO_map` → `cso_maps`. To find the pinned version: `conda run -n amend_python python -c "import pkg_resources; print(pkg_resources.get_distribution('PKGNAME').version)"`.
 
 ## Repository layout
 
