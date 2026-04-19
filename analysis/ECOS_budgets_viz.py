@@ -50,7 +50,7 @@ def generate_charts(engine, prefix=''):
 	inf_target = '2024'
 	## Restrict to relevant years and calculate correction factors (2024 dollars)
 	inf_data_sel = inf_data.reindex(ECOS_years)
-	inf_data_sel['correct'] = inf_data_sel['AWI'].loc[inf_target] / inf_data_sel['AWI']
+	inf_data_sel['correct'] = inf_data.loc[inf_target, 'AWI'] / inf_data_sel['AWI']
 
 	## Establish file to export facts
 	fact_file = '../docs/data/facts_ECOSbudgets.yml'

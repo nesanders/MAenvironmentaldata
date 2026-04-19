@@ -2,77 +2,71 @@
 <html>
     <head>
         <title>DEP Enforcements versus budget</title>
-        <script src='https://cdn.jsdelivr.net/npm/chart.js@2.8.0/dist/Chart.bundle.min.js'></script>
+        <script src='https://cdn.jsdelivr.net/npm/chart.js@4.4.4/dist/chart.umd.min.js'></script>
     </head>
     <body>
         <div style="width: 640px; height: 480px; max-width: 99%" class="chartjs">
 
             <canvas id="DEP Enforcements versus budget" height="480" width="640"></canvas>
             <script>
-                Chart.defaults.global.defaultFontSize = 12;
+                Chart.defaults.font.size = 12;
                 var chart_data = {
-                
+
                     data: {
-                        labels: ['2001', '2002', '2003', '2004', '2005', '2006', '2007', '2008', '2009', '2010', '2011', '2012', '2013', '2014', '2015', '2016', '2017', '2018', '2019', '2020', '2021', '2022', '2023', '2024', '2025', '2026'],
-                        datasets: [{'data': [270, 283, 454, 422, 605, 590, 495, 546, 499, 361, 441, 364, 431, 401, 249, 290, 334, 319, 369, 233, 369, 319, 314, 339, 341, 69], 'label': 'Number of enforcements', 'backgroundColor': 'rgba(50,50,50,0.5)', 'type': 'line', 'fill': false, 'borderWidth': 2, 'stack': 'annual', 'yAxisID': 'y-axis-0'},{'data': [58.63978362464401, 55.53161884328444, 51.26760303205201, 47.81678716088732, 46.51194461930363, 47.26631772839283, 51.0180866053805, 50.98509815466856, 53.97012499325573, 43.07945643803581, 36.24145881788992, 33.73366466417782, 35.04061255549124, 36.951498777876246, 36.52701041135038, 36.7626353469861, 30.13886201205062, 28.73160493546709, 32.61649011580224, 34.93498374275373, 40.115, 33.434358, 45.4, 52.038191, 'null', 'null'], 'label': 'DEP administrative budget', 'borderColor': '#ff7f0e', 'fill': false, 'borderWidth': 2, 'stack': 'annual', 'type': 'line', 'yAxisID': 'y-axis-1'}]
+                        labels: ["2001", "2002", "2003", "2004", "2005", "2006", "2007", "2008", "2009", "2010", "2011", "2012", "2013", "2014", "2015", "2016", "2017", "2018", "2019", "2020", "2021", "2022", "2023", "2024", "2025", "2026"],
+                        datasets: [{'data': [270, 283, 454, 422, 605, 590, 495, 546, 499, 361, 441, 364, 431, 401, 249, 290, 334, 319, 369, 233, 369, 319, 314, 339, 341, 115], 'label': 'Number of enforcements', 'backgroundColor': 'rgba(50,50,50,0.5)', 'type': 'line', 'fill': false, 'borderWidth': 2, 'stack': 'annual', 'yAxisID': 'y'},{'data': [67.61507253270285, 64.03117821821397, 59.11452060906299, 55.13552970897133, 53.630970557496916, 54.50080651757284, 58.826813693302746, 58.78877609579202, 62.23068521836106, 49.673112547145536, 41.78850458160208, 38.896872431563395, 40.40385917341901, 42.60722184875473, 42.11776213526644, 42.389451355941304, 34.751856419563936, 33.12920736760928, 37.60870536390118, 40.28206302422945, 46.254922289813294, 36.60585418435639, 47.59754731934593, 52.038191, null, null], 'label': 'DEP administrative budget', 'borderColor': '#ff7f0e', 'fill': false, 'borderWidth': 2, 'stack': 'annual', 'type': 'line', 'yAxisID': 'y1'}]
                     },
                     type: 'line',
                     options: {
                         scales: {
-                            yAxes: [{
+                            y: {
                                 display: true,
-                                scaleLabel: {
+                                title: {
                                     display: true,
-                                    labelString: 'Number of enforcements'
+                                    text: 'Number of enforcements'
                                 },
-                                ticks: {
-                                    
-                                },
-                                "id": "y-axis-0",
-                                "position": "left",
+                                position: 'left',
                                 stacked: false
-                            }, {
+                            },
+                            y1: {
                                 display: true,
-                                scaleLabel: {
+                                title: {
                                     display: true,
-                                    labelString: 'Funding level ($M, 2024 dollars)'
+                                    text: 'Funding level ($M, 2024 dollars)'
                                 },
-                                ticks: {
-                                    
-                                },
-                                "id": "y-axis-1",
-                                "position": "right"
-                            }],
-                            xAxes: [{
-                                scaleLabel: {
+                                position: 'right'
+                            },
+                            x: {
+                                title: {
                                     display: true,
-                                    labelString: 'Year'
+                                    text: 'Year'
                                 },
                                 stacked: false,
                                 ticks: {
                                     autoSkip: true
                                 }
-                            }]
-                        },
-                        legend: {
-                            display: true
-                            },
-                        tooltips: {
-                            display: true
                             }
-                    },
+                        },
+                        plugins: {
+                            legend: {
+                                display: true
+                            },
+                            tooltip: {
+                                enabled: true
+                            }
+                        }
+                    }
                 }
-                
                 
                 
             </script>
             <script>
-                {{
+                {
+
                     var ctx = document.getElementById("DEP Enforcements versus budget").getContext("2d");
                     var mychart = new Chart(ctx, chart_data);
-                }}
+                }
             </script>
-
         </div>
     </body>
 </html>

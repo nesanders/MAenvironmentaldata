@@ -188,7 +188,7 @@ def generate_charts(engine, prefix=''):
 		type="'line'", fill = "false",
 		borderWidth = 2,
 		stack="'annual'", yAxisID="'y'")
-	mychart.add_dataset((f_data['DEPAdministration_inf_float'].loc[years]/1e6).values.tolist(), "DEP administrative budget",
+	mychart.add_dataset((f_data['DEPAdministration_inf'].loc[years]/1e6).values.tolist(), "DEP administrative budget",
 		borderColor = "'"+color_cycle[1]+"'", fill = "false",
 		borderWidth = 2,
 		stack="'annual'", type="'line'", yAxisID="'y1'")
@@ -200,7 +200,7 @@ def generate_charts(engine, prefix=''):
 
 	## Output correlation level
 	from scipy.stats import pearsonr
-	pr = pearsonr(s_data_g.values, (f_data['DEPAdministration_inf_float'].loc[years]/1e6).values)
+	pr = pearsonr(s_data_g.values, (f_data['DEPAdministration_inf'].loc[years]/1e6).values)
 	with open(fact_file, 'a') as f:
 		f.write('cor_enforcement_funding: %0.0f'%(pr[0]*100)+'\n')
 

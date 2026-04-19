@@ -84,7 +84,7 @@ def generate_charts(engine, prefix=''):
 		type="'line'", fill = "false",
 		borderWidth = 2,
 		stack="'annual'", yAxisID="'y'")
-	mychart.add_dataset((f_data['DEPAdministration_inf_float'].loc[years]/1e6).values.tolist(), "DEP administrative budget",
+	mychart.add_dataset((f_data['DEPAdministration_inf'].loc[years]/1e6).values.tolist(), "DEP administrative budget",
 		borderColor = "'"+color_cycle[1]+"'", fill = "false",
 		borderWidth = 2,
 		stack="'annual'", type="'line'", yAxisID="'y1'")
@@ -97,7 +97,7 @@ def generate_charts(engine, prefix=''):
 
 
 	from scipy.stats import pearsonr
-	pr = pearsonr(s_data_g.loc[years].values, (f_data['DEPAdministration_inf_float'].loc[years]/1e6).values)
+	pr = pearsonr(s_data_g.loc[years].values, (f_data['DEPAdministration_inf'].loc[years]/1e6).values)
 	with open('../docs/data/facts_DEPstaff.yml', 'w') as f:
 		f.write('cor_staff_funding: %0.0f'%(pr[0]*100)+'\n')
 		f.write('cor_staff_funding_p: %0.2f'%(pr[1]*100)+'\n')

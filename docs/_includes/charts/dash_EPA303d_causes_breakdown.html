@@ -2,77 +2,72 @@
 <html>
     <head>
         <title>Top Causes of MA Water Impairment (2022)</title>
-        <script src='https://cdn.jsdelivr.net/npm/chart.js@2.8.0/dist/Chart.bundle.min.js'></script>
+        <script src='https://cdn.jsdelivr.net/npm/chart.js@4.4.4/dist/chart.umd.min.js'></script>
     </head>
     <body>
         <div style="width: 700px; height: 500px; max-width: 99%" class="chartjs">
 
             <canvas id="Top Causes of MA Water Impairment (2022)" height="500" width="700"></canvas>
             <script>
-                Chart.defaults.global.defaultFontSize = 12;
+                Chart.defaults.font.size = 12;
                 var chart_data = {
-                
+
                     data: {
-                        labels: ['Fecal Coliform', 'Escherichia Coli (E. Coli)', 'Dissolved Oxygen', 'Non-Native Aquatic Plants', 'Mercury In Fish Tissue', 'Nutrient/Eutrophication Biological Indicators', 'Fanwort', 'Fish Passage Barrier', 'Benthic Macroinvertebrates', 'Phosphorus, Total', 'Turbidity', 'Curly-Leaf Pondweed', 'Eurasian Water Milfoil, Myriophyllum Spicatum', 'Nitrogen, Total', 'Pcbs In Fish Tissue'],
+                        labels: ["Fecal Coliform", "Escherichia Coli (E. Coli)", "Dissolved Oxygen", "Non-Native Aquatic Plants", "Mercury In Fish Tissue", "Nutrient/Eutrophication Biological Indicators", "Fanwort", "Fish Passage Barrier", "Benthic Macroinvertebrates", "Phosphorus, Total", "Turbidity", "Curly-Leaf Pondweed", "Eurasian Water Milfoil, Myriophyllum Spicatum", "Nitrogen, Total", "Pcbs In Fish Tissue"],
                         datasets: [{'data': [355.0, 324.0, 273.0, 231.0, 204.0, 181.0, 173.0, 140.0, 130.0, 117.0, 116.0, 109.0, 106.0, 105.0, 102.0], 'label': 'Impaired assessment units (2022)', 'backgroundColor': 'rgba(54, 110, 179, 0.85)'}]
                     },
                     type: 'bar',
                     options: {
                         scales: {
-                            yAxes: [{
+                            y: {
                                 display: true,
-                                scaleLabel: {
+                                title: {
                                     display: true,
-                                    labelString: 'Impairment cause'
+                                    text: 'Impairment cause'
                                 },
-                                ticks: {
-                                    beginAtZero: true, min: 0
-                                },
-                                "id": "y-axis-0",
-                                "position": "left",
+                            beginAtZero: true,
+                                position: 'left',
                                 stacked: false
-                            }, {
+                            },
+                            y1: {
                                 display: false,
-                                scaleLabel: {
+                                title: {
                                     display: true,
-                                    labelString: ''
+                                    text: ''
                                 },
-                                ticks: {
-                                    beginAtZero: true, min: 0
-                                },
-                                "id": "y-axis-1",
-                                "position": "right"
-                            }],
-                            xAxes: [{
-                                scaleLabel: {
+                                position: 'right'
+                            },
+                            x: {
+                                title: {
                                     display: true,
-                                    labelString: 'Impaired assessment units (distinct)'
+                                    text: 'Impaired assessment units (distinct)'
                                 },
                                 stacked: false,
                                 ticks: {
                                     autoSkip: true
                                 }
-                            }]
-                        },
-                        legend: {
-                            display: true
-                            },
-                        tooltips: {
-                            display: true
                             }
-                    },
+                        },
+                        plugins: {
+                            legend: {
+                                display: true
+                            },
+                            tooltip: {
+                                enabled: true
+                            }
+                        }
+                    }
                 }
-                
                 
                 
             </script>
             <script>
-                {{
+                {
+
                     var ctx = document.getElementById("Top Causes of MA Water Impairment (2022)").getContext("2d");
                     var mychart = new Chart(ctx, chart_data);
-                }}
+                }
             </script>
-
         </div>
     </body>
 </html>

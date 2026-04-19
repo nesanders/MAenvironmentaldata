@@ -5,9 +5,41 @@ Updated by nesanders for Chart.js 4.x.
 """
 from __future__ import annotations
 
+import json
+import math
 from typing import Any
 
 import numpy as np
+
+
+class _NumpyEncoder(json.JSONEncoder):
+    """JSON encoder that converts numpy scalars and NaN/Inf to JS-safe values."""
+
+    def default(self, obj: Any) -> Any:
+        if isinstance(obj, np.integer):
+            return int(obj)
+        if isinstance(obj, np.floating):
+            return None if math.isnan(float(obj)) else float(obj)
+        if isinstance(obj, np.ndarray):
+            return obj.tolist()
+        return super().default(obj)
+
+    def encode(self, obj: Any) -> str:
+        # Override to handle nan/inf in plain Python floats too
+        if isinstance(obj, float):
+            if math.isnan(obj) or math.isinf(obj):
+                return "null"
+        return super().encode(obj)
+
+    def iterencode(self, obj: Any, **kwargs: Any):  # type: ignore[override]
+        # Patch floats inside containers via default chunked encoding
+        for chunk in super().iterencode(obj, **kwargs):
+            yield chunk
+
+
+def _to_json(value: Any) -> str:
+    """Serialize *value* to a JSON string safe for embedding in JS literals."""
+    return json.dumps(value, cls=_NumpyEncoder)
 
 
 CHART_TYPES = [
@@ -143,12 +175,25 @@ class Chart:
             strings must be pre-quoted, e.g. ``backgroundColor="'red'"``.
         """
         if self.ctype != "Scatter":
-            data = ["null" if np.isnan(d) else d for d in data]
+            # Coerce numpy scalars to Python natives; map NaN/None → null
+            clean: list[Any] = []
+            for d in data:
+                if d is None:
+                    clean.append(None)
+                elif isinstance(d, np.integer):
+                    clean.append(int(d))
+                elif isinstance(d, np.floating):
+                    clean.append(None if math.isnan(float(d)) else float(d))
+                elif isinstance(d, float) and math.isnan(d):
+                    clean.append(None)
+                else:
+                    clean.append(d)
+            data = clean
 
         if self.ctype in ("Bar", "HorizontalBar", "Radar", "Line"):
             if len(data) != len(self.labels):
                 raise ValueError("Data length must match labels length.")
-            args: dict[str, Any] = {"data": data, "label": f"'{dataset_label}'"}
+            args: dict[str, Any] = {"data": _to_json(data), "label": f"'{dataset_label}'"}
             args.update(kwargs)
             self.data.append(_js_obj(args))
 
@@ -451,7 +496,7 @@ class Chart:
                     }}
                 }}
                 """.format(
-                labels=str(self.labels),
+                labels=_to_json(self.labels),
                 datasets="[" + ",".join(str(c) for c in self.data) + "]",
                 ctype=chart_type,
                 index_axis=index_axis,

@@ -26,7 +26,7 @@ mychart.set_labels(data_summary['FiscalYear'].values.tolist())
 mychart.set_params(js_inline= 0, ylabel = 'Total Budget ($M)', xlabel='Fiscal Year')
 
 mychart.add_dataset(
-	(data_summary['TotalBudget_noinf_float'].values/1e6).tolist(), "Total environmental budget\\n(not inflation adjusted)",
+	(data_summary['TotalBudget_noinf'].values/1e6).tolist(), "Total environmental budget\\n(not inflation adjusted)",
 	borderDash = '[10,15]', borderColor = "'rgba(0,0,0,0.5)'", fill = "false",
 	stepped = 'true',
 	)
@@ -36,13 +36,13 @@ mychart.add_dataset(
 	#)
 	
 mychart.add_dataset(
-	(data_summary['DEPAdministration_noinf_float'].values/1e6).tolist(), "DEP administration (not inflation adjusted)",
+	(data_summary['DEPAdministration_noinf'].values/1e6).tolist(), "DEP administration (not inflation adjusted)",
 	borderDash = '[10,15]', borderColor = "'"+color_cycle[0]+"'", fill = "false",
 	stepped = 'true',
 	)
 
 mychart.add_dataset(
-	(data_summary['DEPAdministration_inf_float'].values/1e6).tolist(), "DEP administration (inflation adjusted)",
+	(data_summary['DEPAdministration_inf'].values/1e6).tolist(), "DEP administration (inflation adjusted)",
 	borderColor = "'"+color_cycle[0]+"'", fill = "true",
 	stepped = 'true',
 	)
