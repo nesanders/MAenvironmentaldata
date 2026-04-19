@@ -34,7 +34,13 @@ import numpy as np
 from shapely.geometry import Point, shape
 from shapely.strtree import STRtree
 import sqlalchemy
-import stan
+# stan (pystan3) is only used in fit_stan_model(), which is only called when
+# make_regression=True. CI runs with make_regression=False and does not install
+# stan, so we make the import optional to avoid a ModuleNotFoundError at import time.
+try:
+    import stan
+except ImportError:
+    stan = None
 
 # Create a joblib cache
 memory = Memory('necir_cso_data_cache', verbose=1)
@@ -659,8 +665,8 @@ class CSOAnalysis():
     # Regression modeling methods
     # -------------------------
     
-    def fit_stan_model(self, col: str, data_egs_merge: pd.DataFrame, level_df: pd.DataFrame, 
-        df_cso_level: pd.DataFrame, level_col: str='Watershed') -> Tuple[stan.fit.Fit, pd.DataFrame, dict, np.ndarray]:
+    def fit_stan_model(self, col: str, data_egs_merge: pd.DataFrame, level_df: pd.DataFrame,
+        df_cso_level: pd.DataFrame, level_col: str='Watershed') -> Tuple[Any, pd.DataFrame, dict, np.ndarray]:
         """Fit Stan model for a particular EJ characteristic (`col`)
         """
         logging.info(f'Building stan model for {col}')
