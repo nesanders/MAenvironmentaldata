@@ -8,7 +8,6 @@ from sqlalchemy import create_engine
 import chartjs
 import json
 import ast
-from scipy.stats import pearsonr
 
 import matplotlib as mpl
 
@@ -114,8 +113,8 @@ def generate_charts(engine, prefix=''):
 		"Number of enforcements",
 		backgroundColor="'rgba(50,50,200,0.8)'",
 		stack="'annual'", yAxisID="'y'",)
-	mychart.set_params(JSinline = 0, ylabel = 'Total reported enforcement actions', xlabel='Year',
-		scaleBeginAtZero=1)
+	mychart.set_params(js_inline= 0, ylabel = 'Total reported enforcement actions', xlabel='Year',
+		scale_begin_at_zero=1)
 
 	mychart.jekyll_write(f'../docs/_includes/charts/{prefix}MADEP_enforcement_overall.html')
 
@@ -135,8 +134,8 @@ def generate_charts(engine, prefix=''):
 		"Reported penalties",
 		backgroundColor="'rgba(50,50,200,0.8)'",
 		stack="'annual'", yAxisID="'y'",)
-	mychart.set_params(JSinline = 0, ylabel = 'Sum of reported penalties ($M)', xlabel='Year',
-		scaleBeginAtZero=1)
+	mychart.set_params(js_inline= 0, ylabel = 'Sum of reported penalties ($M)', xlabel='Year',
+		scale_begin_at_zero=1)
 
 	mychart.jekyll_write(f'../docs/_includes/charts/{prefix}MADEP_enforcement_fines_overall.html')
 
@@ -167,8 +166,8 @@ def generate_charts(engine, prefix=''):
 	mychart.add_dataset((s_data_g_na.apply(get_other)/1e6).tolist(),
 		"All other penalties (ranks {0}+)".format(TOP_N + 1),
 		backgroundColor="'rgba(200,200,200,0.7)'",)
-	mychart.set_params(JSinline = 0, ylabel = 'Sum of reported penalties ($M)', xlabel='Year',
-		scaleBeginAtZero=1, stacked=1, legend=0)
+	mychart.set_params(js_inline= 0, ylabel = 'Sum of reported penalties ($M)', xlabel='Year',
+		scale_begin_at_zero=1, stacked=1, legend=0)
 
 	mychart.jekyll_write(f'../docs/_includes/charts/{prefix}MADEP_enforcement_fines_overall_stacked.html')
 
@@ -193,9 +192,9 @@ def generate_charts(engine, prefix=''):
 		borderColor = "'"+color_cycle[1]+"'", fill = "false",
 		borderWidth = 2,
 		stack="'annual'", type="'line'", yAxisID="'y1'")
-	mychart.set_params(JSinline = 0, ylabel = 'Number of enforcements', xlabel='Year',
+	mychart.set_params(js_inline= 0, ylabel = 'Number of enforcements', xlabel='Year',
 		y2nd = 1, y2nd_title = 'Funding level ($M, 2024 dollars)',
-		scaleBeginAtZero=0)
+		scale_begin_at_zero=0)
 
 	mychart.jekyll_write(f'../docs/_includes/charts/{prefix}MADEP_enforcement_vsbudget.html')
 
@@ -226,8 +225,8 @@ def generate_charts(engine, prefix=''):
 			backgroundColor="'"+(color_cycle*10)[i]+"'",
 			stack="'annual'", yAxisID="'y'", fill = "false",
 			hidden = 'false' if topic in visible_topics else 'true')
-	mychart.set_params(JSinline = 0, ylabel = 'Reported enforcement actions (% of annual total)', xlabel='Year',
-		scaleBeginAtZero=1)
+	mychart.set_params(js_inline= 0, ylabel = 'Reported enforcement actions (% of annual total)', xlabel='Year',
+		scale_begin_at_zero=1)
 
 	mychart.jekyll_write(f'../docs/_includes/charts/{prefix}MADEP_enforcement_bytopic.html')
 
@@ -276,8 +275,8 @@ def generate_charts(engine, prefix=''):
 			backgroundColor="'"+color+"'",
 			stack="'annual'", yAxisID="'y'")
 
-	mychart.set_params(JSinline = 0, ylabel = 'Number of enforcement actions', xlabel='Year',
-		scaleBeginAtZero=1, stacked=1)
+	mychart.set_params(js_inline= 0, ylabel = 'Number of enforcement actions', xlabel='Year',
+		scale_begin_at_zero=1, stacked=1)
 
 	mychart.jekyll_write(f'../docs/_includes/charts/{prefix}MADEP_enforcement_bytype.html')
 

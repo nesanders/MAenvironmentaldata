@@ -204,9 +204,9 @@ class CSOAnalysisEEADP(CSOAnalysis):
         except FileNotFoundError:
             pass  # Skip rainfall if data not available
 
-        mychart.set_params(JSinline=0, ylabel='Number of discharges', xlabel='Month',
+        mychart.set_params(js_inline=0, ylabel='Number of discharges', xlabel='Month',
             y2nd=1, y2nd_title='Precipitation (inches)',
-            scaleBeginAtZero=1)
+            scale_begin_at_zero=1)
         mychart.stacked = 'true'
 
         mychart.jekyll_write(outpath)
@@ -231,8 +231,8 @@ class CSOAnalysisEEADP(CSOAnalysis):
                 event_type,
                 backgroundColor="'rgba({},0.8)'".format(", ".join([str(x) for x in hex2rgb(COLOR_CYCLE[i])])),
                 yAxisID="'y'")
-        mychart.set_params(JSinline=0, ylabel='Volume of discharges (millions of gallons)', xlabel='Date',
-            scaleBeginAtZero=1)
+        mychart.set_params(js_inline=0, ylabel='Volume of discharges (millions of gallons)', xlabel='Date',
+            scale_begin_at_zero=1)
         mychart.stacked = 'true'
 
         mychart.jekyll_write(outpath)
@@ -273,8 +273,8 @@ class CSOAnalysisEEADP(CSOAnalysis):
                 event_type,
                 backgroundColor="'rgba({},0.8)'".format(", ".join([str(x) for x in hex2rgb(COLOR_CYCLE[i])])),
                 yAxisID="'y'")
-        mychart.set_params(JSinline=0, ylabel='Volume of discharges (millions of gallons)', xlabel='Sewer operator (permittee)',
-            scaleBeginAtZero=1)
+        mychart.set_params(js_inline=0, ylabel='Volume of discharges (millions of gallons)', xlabel='Sewer operator (permittee)',
+            scale_begin_at_zero=1)
         mychart.stacked = 'true'
 
         mychart.jekyll_write(outpath)
@@ -301,8 +301,8 @@ class CSOAnalysisEEADP(CSOAnalysis):
                 event_type,
                 backgroundColor="'rgba({},0.8)'".format(", ".join([str(x) for x in hex2rgb(COLOR_CYCLE[i])])),
                 yAxisID="'y'")
-        mychart.set_params(JSinline=0, ylabel='Volume of discharges (millions of gallons)', xlabel='Water body',
-            scaleBeginAtZero=1)
+        mychart.set_params(js_inline=0, ylabel='Volume of discharges (millions of gallons)', xlabel='Water body',
+            scale_begin_at_zero=1)
         mychart.stacked = 'true'
 
         mychart.jekyll_write(outpath)
@@ -353,10 +353,10 @@ class CSOAnalysisEEADP(CSOAnalysis):
             )
 
         mychart.set_params(
-            JSinline=0,
+            js_inline=0,
             ylabel='Reports with likely-modeled volume (%)',
             xlabel='Year',
-            scaleBeginAtZero=True,
+            scale_begin_at_zero=True,
         )
         mychart.y_min = 0
         mychart.y_max = 100
@@ -431,10 +431,10 @@ class CSOAnalysisEEADP(CSOAnalysis):
             stack="'rain'",
         )
         mychart.set_params(
-            JSinline=0,
+            js_inline=0,
             ylabel='Total discharge (millions of gallons)',
             xlabel='Calendar year  (* 2022 reporting began June 30)',
-            scaleBeginAtZero=1,
+            scale_begin_at_zero=1,
             stacked=1,
             y2nd='true',
             y2nd_title='Heavy rain days (\u22651 inch/day, MA station average)',
@@ -478,10 +478,10 @@ class CSOAnalysisEEADP(CSOAnalysis):
             yAxisID="'y'",
         )
         mychart_v.set_params(
-            JSinline=0,
+            js_inline=0,
             ylabel='Total discharge volume (millions of gallons)',
             xlabel='Calendar year  (* 2022 reporting began June 30)',
-            scaleBeginAtZero=1,
+            scale_begin_at_zero=1,
         )
         mychart_v.jekyll_write(outpath_volume)
 
@@ -496,10 +496,10 @@ class CSOAnalysisEEADP(CSOAnalysis):
             yAxisID="'y'",
         )
         mychart_c.set_params(
-            JSinline=0,
+            js_inline=0,
             ylabel='Number of discharge reports',
             xlabel='Calendar year  (* 2022 reporting began June 30)',
-            scaleBeginAtZero=1,
+            scale_begin_at_zero=1,
         )
         mychart_c.jekyll_write(outpath_count)
 
@@ -550,10 +550,10 @@ class CSOAnalysisEEADP(CSOAnalysis):
                 yAxisID="'y'",
             )
         mychart.set_params(
-            JSinline=0,
+            js_inline=0,
             ylabel='Discharge volume (millions of gallons)',
             xlabel='Calendar year',
-            scaleBeginAtZero=1,
+            scale_begin_at_zero=1,
         )
         mychart.jekyll_write(outpath)
 
@@ -699,12 +699,12 @@ class CSOAnalysisEEADP(CSOAnalysis):
             fill='false',
         )
         mychart.set_params(
-            JSinline=0,
+            js_inline=0,
             ylabel='Days with discharge reported (%)',
             xlabel=f'Prior {window_days*24}-hr precipitation (MA station avg)',
             y2nd='true',
             y2nd_title='Number of days in bin',
-            scaleBeginAtZero=True,
+            scale_begin_at_zero=True,
             stacked=1,
         )
         # Tooltip: % label for discharge stacks, count for the days-in-bin line
@@ -773,7 +773,7 @@ class CSOAnalysisEEADP(CSOAnalysis):
             )
 
         mychart.set_params(
-            JSinline=0,
+            js_inline=0,
             ylabel='Total discharge that day (millions of gallons, log scale)',
             xlabel=f'Precipitation in prior {window_days*24} hours (inches, MA station avg)',
             yaxis_type='logarithmic',
@@ -820,10 +820,10 @@ class CSOAnalysisEEADP(CSOAnalysis):
             borderWidth=1,
         )
         hist_chart.set_params(
-            JSinline=0,
+            js_inline=0,
             ylabel='Number of days',
             xlabel=f'Prior {window_days*24}-hr precipitation (inches)',
-            scaleBeginAtZero=True,
+            scale_begin_at_zero=True,
             legend=False,
             x_autoskip=False,
         )
@@ -920,7 +920,7 @@ class CSOAnalysisEEADP(CSOAnalysis):
             )
 
         mychart.set_params(
-            JSinline=0,
+            js_inline=0,
             ylabel='Cumulative fraction (%)',
             xlabel=f'Prior {window_days*24}-hr precipitation (inches, MA station avg)',
         )
@@ -999,12 +999,12 @@ class CSOAnalysisEEADP(CSOAnalysis):
         )
 
         mychart.set_params(
-            JSinline=0,
+            js_inline=0,
             ylabel='Total discharge volume (million gallons)',
             xlabel='Month',
             y2nd=1,
             y2nd_title='Precipitation (inches)',
-            scaleBeginAtZero=1
+            scale_begin_at_zero=1
         )
 
         mychart.jekyll_write(outpath)
@@ -1093,10 +1093,10 @@ class CSOAnalysisEEADP(CSOAnalysis):
         )
 
         mychart.set_params(
-            JSinline=0,
+            js_inline=0,
             ylabel='% with likely-modeled volumes (rounded to 1000 gal)',
             xlabel='Month',
-            scaleBeginAtZero=1
+            scale_begin_at_zero=1
         )
         mychart.y_min = 0
         mychart.y_max = 100
@@ -1174,10 +1174,10 @@ class CSOAnalysisEEADP(CSOAnalysis):
             )
 
         mychart.set_params(
-            JSinline=0,
+            js_inline=0,
             ylabel='Discharge volume (million gallons)',
             xlabel='Month',
-            scaleBeginAtZero=0
+            scale_begin_at_zero=0
         )
         mychart.jekyll_write(outpath)
         print(f'  Wrote monthly volume by watershed chart to {outpath}')
@@ -1506,7 +1506,7 @@ class CSOAnalysisEEADP(CSOAnalysis):
             )
 
         mychart.set_params(
-            JSinline=0,
+            js_inline=0,
             ylabel='EJ-CSO correlation (2\u02e3 burden ratio, watershed level)',
             xlabel='Calendar year',
         )

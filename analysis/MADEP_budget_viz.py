@@ -23,7 +23,7 @@ data_summary.sort_values(by='Year', inplace=True)
 ## Establish chart
 mychart = chartjs.chart("DEP budget data", "Line", 640, 480)
 mychart.set_labels(data_summary['FiscalYear'].values.tolist())
-mychart.set_params(JSinline = 0, ylabel = 'Total Budget ($M)', xlabel='Fiscal Year')
+mychart.set_params(js_inline= 0, ylabel = 'Total Budget ($M)', xlabel='Fiscal Year')
 
 mychart.add_dataset(
 	(data_summary['TotalBudget_noinf_float'].values/1e6).tolist(), "Total environmental budget\\n(not inflation adjusted)",

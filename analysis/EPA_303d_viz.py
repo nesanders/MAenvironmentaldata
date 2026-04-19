@@ -261,10 +261,10 @@ def generate_charts(engine, prefix=''):
             stack="'type'",
         )
     mychart.set_params(
-        JSinline=0,
+        js_inline=0,
         ylabel='Impaired assessment units (distinct)',
         xlabel='Reporting cycle',
-        scaleBeginAtZero=1,
+        scale_begin_at_zero=1,
         stacked=1,
     )
     mychart.jekyll_write(f'../docs/_includes/charts/{prefix}EPA303d_impaired_trend.html')
@@ -288,10 +288,10 @@ def generate_charts(engine, prefix=''):
         backgroundColor=f"'{BLUE}'",
     )
     mychart.set_params(
-        JSinline=0,
+        js_inline=0,
         ylabel='Impairment cause',
         xlabel='Impaired assessment units (distinct)',
-        scaleBeginAtZero=1,
+        scale_begin_at_zero=1,
     )
     mychart.jekyll_write(f'../docs/_includes/charts/{prefix}EPA303d_causes_breakdown.html')
 
@@ -342,10 +342,10 @@ def generate_charts(engine, prefix=''):
             stack="'status'",
         )
     mychart.set_params(
-        JSinline=0,
+        js_inline=0,
         ylabel='Discharge volume (billion gallons)',
         xlabel='Year',
-        scaleBeginAtZero=1,
+        scale_begin_at_zero=1,
         stacked=1,
     )
     mychart.jekyll_write(f'../docs/_includes/charts/{prefix}EPA303d_cso_impaired.html')
@@ -373,10 +373,10 @@ def generate_charts(engine, prefix=''):
             stack="'tmdl'",
         )
     mychart.set_params(
-        JSinline=0,
+        js_inline=0,
         ylabel='Impaired assessment units',
         xlabel='Reporting cycle',
-        scaleBeginAtZero=1,
+        scale_begin_at_zero=1,
         stacked=1,
     )
     mychart.jekyll_write(f'../docs/_includes/charts/{prefix}EPA303d_tmdl_trend.html')
@@ -407,10 +407,10 @@ def generate_charts(engine, prefix=''):
         stack="'cohort'",
     )
     mychart.set_params(
-        JSinline=0,
+        js_inline=0,
         ylabel='Impaired assessment units',
         xlabel='Reporting cycle',
-        scaleBeginAtZero=1,
+        scale_begin_at_zero=1,
         stacked=1,
     )
     mychart.jekyll_write(f'../docs/_includes/charts/{prefix}EPA303d_persistence.html')
@@ -446,10 +446,10 @@ def generate_charts(engine, prefix=''):
             pointRadius='4',
         )
     mychart.set_params(
-        JSinline=0,
+        js_inline=0,
         ylabel='Impaired assessment units (distinct)',
         xlabel='Reporting cycle',
-        scaleBeginAtZero=1,
+        scale_begin_at_zero=1,
     )
     mychart.jekyll_write(f'../docs/_includes/charts/{prefix}EPA303d_causes_trend.html')
 
@@ -744,10 +744,10 @@ def generate_post_charts(engine):
             stack="'type'",
         )
     mychart.set_params(
-        JSinline=0,
+        js_inline=0,
         ylabel='Watershed',
         xlabel='Impaired assessment units',
-        scaleBeginAtZero=1,
+        scale_begin_at_zero=1,
         stacked=1,
     )
     mychart.jekyll_write('../docs/_includes/charts/EPA303d_watershed_impairment.html')
@@ -775,10 +775,10 @@ def generate_post_charts(engine):
         backgroundColor=f"'{RED}'",
     )
     mychart.set_params(
-        JSinline=0,
+        js_inline=0,
         ylabel='',
         xlabel='Impaired assessment units',
-        scaleBeginAtZero=1,
+        scale_begin_at_zero=1,
     )
     mychart.set_tick_wrap(23, axis='y')
     mychart.jekyll_write('../docs/_includes/charts/EPA303d_bacterial_sources.html')
@@ -974,10 +974,10 @@ def generate_post_charts(engine):
         backgroundColor=colors_js,
     )
     mychart.set_params(
-        JSinline=0,
+        js_inline=0,
         ylabel='% of AUs with bacterial impairment',
         xlabel='Pollution source category',
-        scaleBeginAtZero=1,
+        scale_begin_at_zero=1,
         legend=0,
     )
     mychart.jekyll_write('../docs/_includes/charts/EPA303d_bacterial_source_groups.html')
@@ -1017,10 +1017,10 @@ def generate_post_charts(engine):
         pointRadius='5',
     )
     mychart.set_params(
-        JSinline=0,
+        js_inline=0,
         ylabel='% still without TMDL',
         xlabel='Reporting cycle',
-        scaleBeginAtZero=1,
+        scale_begin_at_zero=1,
     )
     mychart.jekyll_write('../docs/_includes/charts/EPA303d_tmdl_survival.html')
     print(f'Survival chart done: {pct_still_waiting[-1]}% still waiting by {cycles[-1]}')

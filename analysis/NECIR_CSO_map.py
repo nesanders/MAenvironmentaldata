@@ -526,8 +526,8 @@ class CSOAnalysis():
                 col_label,
                 backgroundColor="'rgba({},0.8)'".format(", ".join([str(x) for x in hex2rgb(COLOR_CYCLE[i])])),
                 yAxisID="'y'")
-        mychart.set_params(JSinline = 0, ylabel = 'Fraction of households', xlabel='Watershed',
-            scaleBeginAtZero=1, x_autoskip=False)
+        mychart.set_params(js_inline= 0, ylabel = 'Fraction of households', xlabel='Watershed',
+            scale_begin_at_zero=1, x_autoskip=False)
 
         mychart.jekyll_write(outpath)
 
@@ -550,8 +550,8 @@ class CSOAnalysis():
                 col_label,
                 backgroundColor="'rgba({},0.8)'".format(", ".join([str(x) for x in hex2rgb(COLOR_CYCLE[i])])),
                 yAxisID="'y'")
-        mychart.set_params(JSinline = 0, ylabel = 'Fraction of households', xlabel=self.municipality_col,
-            scaleBeginAtZero=1, x_autoskip=True)
+        mychart.set_params(js_inline= 0, ylabel = 'Fraction of households', xlabel=self.municipality_col,
+            scale_begin_at_zero=1, x_autoskip=True)
 
         mychart.jekyll_write(outpath)
     
@@ -618,12 +618,12 @@ class CSOAnalysis():
 
             ## Set overall chart parameters
             mychart.set_params(
-                JSinline = 0,
+                js_inline= 0,
                 ylabel = f'Total volume of discharge ({self.cso_data_year}; Millions of gallons)',
                 xlabel=col_label,
                 yaxis_type='linear',
                 y2nd = 0,
-                scaleBeginAtZero=1,
+                scale_begin_at_zero=1,
                 custom_tooltips = f"""
                             mode: 'nearest',
                             callbacks: {{

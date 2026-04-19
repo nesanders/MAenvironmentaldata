@@ -79,8 +79,8 @@ def generate_charts(engine, prefix=''):
 			backgroundColor="'"+(color_cycle*10)[i]+"'",
 			stack="'annual'", yAxisID="'y'", fill = "false",
 			hidden = 'false' if state in ['Massachusetts','New Hampshire','Vermont','Maine','Rhode Island'] else 'true')
-	mychart.set_params(JSinline = 0, ylabel = 'Reported Environmental Agency Budget (ECOS, $M)', xlabel='Year',
-		scaleBeginAtZero=1)
+	mychart.set_params(js_inline= 0, ylabel = 'Reported Environmental Agency Budget (ECOS, $M)', xlabel='Year',
+		scale_begin_at_zero=1)
 
 	mychart.jekyll_write(f'../docs/_includes/charts/{prefix}ECOS_budget_peryear_bystate.html')
 
@@ -105,8 +105,8 @@ def generate_charts(engine, prefix=''):
 			backgroundColor="'"+(color_cycle*10)[i]+"'",
 			stack="'annual'", yAxisID="'y'", fill = "false",
 			hidden = 'false' if state in ['Massachusetts','New Hampshire','Vermont','Maine','Rhode Island'] else 'true')
-	mychart.set_params(JSinline = 0, ylabel = 'Reported Environmental Agency Budget (ECOS, $k per capita)', xlabel='Year',
-		scaleBeginAtZero=1)
+	mychart.set_params(js_inline= 0, ylabel = 'Reported Environmental Agency Budget (ECOS, $k per capita)', xlabel='Year',
+		scale_begin_at_zero=1)
 
 	mychart.jekyll_write(f'../docs/_includes/charts/{prefix}ECOS_budget_percap_peryear_bystate.html')
 
@@ -133,8 +133,8 @@ def generate_charts(engine, prefix=''):
 			backgroundColor="'"+(color_cycle*10)[i]+"'",
 			stack="'annual'", yAxisID="'y'", fill = "false",
 			hidden = 'false' if state in ['Massachusetts','New Hampshire','Vermont','Maine','Rhode Island'] else 'true')
-	mychart.set_params(JSinline = 0, ylabel = 'Environmental Agency Budget % from Federal Government (ECOS)', xlabel='Year',
-		scaleBeginAtZero=1)
+	mychart.set_params(js_inline= 0, ylabel = 'Environmental Agency Budget % from Federal Government (ECOS)', xlabel='Year',
+		scale_begin_at_zero=1)
 
 	mychart.jekyll_write(f'../docs/_includes/charts/{prefix}ECOS_fedcont_peryear_bystate.html')
 

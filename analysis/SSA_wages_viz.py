@@ -9,9 +9,9 @@ mychart = chartjs.chart("SSA wage data", "Line", 640, 480)
 mychart.set_labels(ssadata.Year.values.tolist())
 mychart.add_dataset(ssadata['AWI'].values.tolist(), "AWI")
 mychart.set_params(
-	fillColor = "rgba(220,220,220,0.5)", strokeColor = "rgba(220,220,220,0.8)", 
-	highlightFill = "rgba(220,220,220,0.75)", highlightStroke = "rgba(220,220,220,1)",
-	JSinline = 0, ylabel = 'AWI', xlabel='Year')
+	fill_color= "rgba(220,220,220,0.5)", stroke_color= "rgba(220,220,220,0.8)", 
+	highlight_fill= "rgba(220,220,220,0.75)", highlight_stroke= "rgba(220,220,220,1)",
+	js_inline= 0, ylabel = 'AWI', xlabel='Year')
 
 ## Write out
 #with open('../docs/_includes/charts/SSAwages.html', 'w') as f:
