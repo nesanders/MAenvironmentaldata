@@ -1,4 +1,3 @@
-from __future__ import absolute_import
 import pandas as pd
 import numpy as np
 from sqlalchemy import create_engine
@@ -78,7 +77,7 @@ def generate_charts(engine, prefix=''):
 			vals_list,
 			state,
 			backgroundColor="'"+(color_cycle*10)[i]+"'",
-			stack="'annual'", yAxisID= "'y-axis-0'", fill = "false",
+			stack="'annual'", yAxisID="'y'", fill = "false",
 			hidden = 'false' if state in ['Massachusetts','New Hampshire','Vermont','Maine','Rhode Island'] else 'true')
 	mychart.set_params(JSinline = 0, ylabel = 'Reported Environmental Agency Budget (ECOS, $M)', xlabel='Year',
 		scaleBeginAtZero=1)
@@ -104,7 +103,7 @@ def generate_charts(engine, prefix=''):
 			vals_list,
 			state,
 			backgroundColor="'"+(color_cycle*10)[i]+"'",
-			stack="'annual'", yAxisID= "'y-axis-0'", fill = "false",
+			stack="'annual'", yAxisID="'y'", fill = "false",
 			hidden = 'false' if state in ['Massachusetts','New Hampshire','Vermont','Maine','Rhode Island'] else 'true')
 	mychart.set_params(JSinline = 0, ylabel = 'Reported Environmental Agency Budget (ECOS, $k per capita)', xlabel='Year',
 		scaleBeginAtZero=1)
@@ -132,7 +131,7 @@ def generate_charts(engine, prefix=''):
 			vals_list,
 			state,
 			backgroundColor="'"+(color_cycle*10)[i]+"'",
-			stack="'annual'", yAxisID= "'y-axis-0'", fill = "false",
+			stack="'annual'", yAxisID="'y'", fill = "false",
 			hidden = 'false' if state in ['Massachusetts','New Hampshire','Vermont','Maine','Rhode Island'] else 'true')
 	mychart.set_params(JSinline = 0, ylabel = 'Environmental Agency Budget % from Federal Government (ECOS)', xlabel='Year',
 		scaleBeginAtZero=1)

@@ -1,4 +1,3 @@
-from __future__ import absolute_import
 import sys
 import os
 sys.path.insert(0, os.path.dirname(__file__))
@@ -114,7 +113,7 @@ def generate_charts(engine, prefix=''):
 	mychart.add_dataset(s_data_g.values.tolist(),
 		"Number of enforcements",
 		backgroundColor="'rgba(50,50,200,0.8)'",
-		stack="'annual'", yAxisID= "'y-axis-0'",)
+		stack="'annual'", yAxisID="'y'",)
 	mychart.set_params(JSinline = 0, ylabel = 'Total reported enforcement actions', xlabel='Year',
 		scaleBeginAtZero=1)
 
@@ -135,7 +134,7 @@ def generate_charts(engine, prefix=''):
 	mychart.add_dataset((s_data_g.Fine/1e6).tolist(),
 		"Reported penalties",
 		backgroundColor="'rgba(50,50,200,0.8)'",
-		stack="'annual'", yAxisID= "'y-axis-0'",)
+		stack="'annual'", yAxisID="'y'",)
 	mychart.set_params(JSinline = 0, ylabel = 'Sum of reported penalties ($M)', xlabel='Year',
 		scaleBeginAtZero=1)
 
@@ -189,11 +188,11 @@ def generate_charts(engine, prefix=''):
 		backgroundColor="'rgba(50,50,50,0.5)'",
 		type="'line'", fill = "false",
 		borderWidth = 2,
-		stack="'annual'", yAxisID= "'y-axis-0'")
+		stack="'annual'", yAxisID="'y'")
 	mychart.add_dataset((f_data['DEPAdministration_inf_float'].loc[years]/1e6).values.tolist(), "DEP administrative budget",
 		borderColor = "'"+color_cycle[1]+"'", fill = "false",
 		borderWidth = 2,
-		stack="'annual'", type="'line'", yAxisID= "'y-axis-1'")
+		stack="'annual'", type="'line'", yAxisID="'y1'")
 	mychart.set_params(JSinline = 0, ylabel = 'Number of enforcements', xlabel='Year',
 		y2nd = 1, y2nd_title = 'Funding level ($M, 2024 dollars)',
 		scaleBeginAtZero=0)
@@ -225,7 +224,7 @@ def generate_charts(engine, prefix=''):
 			(s_data_g.sum()[topic] / s_data_g.count()[topic].astype(float) * 100).tolist(),
 			topic.split('_')[1].strip().title(),
 			backgroundColor="'"+(color_cycle*10)[i]+"'",
-			stack="'annual'", yAxisID= "'y-axis-0'", fill = "false",
+			stack="'annual'", yAxisID="'y'", fill = "false",
 			hidden = 'false' if topic in visible_topics else 'true')
 	mychart.set_params(JSinline = 0, ylabel = 'Reported enforcement actions (% of annual total)', xlabel='Year',
 		scaleBeginAtZero=1)
@@ -275,7 +274,7 @@ def generate_charts(engine, prefix=''):
 		mychart.add_dataset(s_data_enftype[enftype].values.tolist(),
 			label,
 			backgroundColor="'"+color+"'",
-			stack="'annual'", yAxisID="'y-axis-0'")
+			stack="'annual'", yAxisID="'y'")
 
 	mychart.set_params(JSinline = 0, ylabel = 'Number of enforcement actions', xlabel='Year',
 		scaleBeginAtZero=1, stacked=1)

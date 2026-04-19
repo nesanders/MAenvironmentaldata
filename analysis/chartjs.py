@@ -2,12 +2,9 @@
 # Python ChartJS - (C) 2015 Patrick Lambert - Provided under the MIT License - https://github.com/dendory/chartjs
 # Uses the ChartJS JavaScript implementation by Nick Downie
 #
-# Updated by nesanders to support chart.js 2.6 features
+# Updated by nesanders to support Chart.js 4.x
 #
-from __future__ import absolute_import
 import numpy as np
-import six
-from six.moves import range
 
 ctypes = ["Bar", "HorizontalBar", "Pie", "Doughnut", "PolarArea", "Radar", "Line", "Scatter"]
 
@@ -21,7 +18,7 @@ def js_str(x):
 class chart:
     # Set labels for all chart types
     def set_labels(self, labels):
-        self.labels = [str(c) for c in labels] # convert from e.g. unicode type, which js will not recognize
+        self.labels = [str(c) for c in labels]  # convert from e.g. unicode type, which js will not recognize
 
     # Set individual colors for pie, doughnut and polar charts
     def set_colors(self, colors):
@@ -32,18 +29,18 @@ class chart:
         self.highlights = highlights
 
     # Set global parameters, and color parameters for a whole line, radar or bar chart
-    def set_params(self, 
-        fillColor = None, strokeColor = None, 
-        highlightFill = None, highlightStroke = None, 
-        barValueSpacing = None, 
-        scaleShowGridLines = None, pointColor = None, pointStrokeColor = None, 
-        pointHighlightFill = None, pointHighlightStroke = None, 
-        JSinline = None, scaleBeginAtZero = None,
-        y2nd = None, y2nd_title = None,
-        xlabel = None, ylabel = None, stacked=None, 
+    def set_params(self,
+        fillColor=None, strokeColor=None,
+        highlightFill=None, highlightStroke=None,
+        barValueSpacing=None,
+        scaleShowGridLines=None, pointColor=None, pointStrokeColor=None,
+        pointHighlightFill=None, pointHighlightStroke=None,
+        JSinline=None, scaleBeginAtZero=None,
+        y2nd=None, y2nd_title=None,
+        xlabel=None, ylabel=None, stacked=None,
         legend=None, tooltips=None, custom_tooltips=None, yaxis_type=None, x_autoskip=None,
         fontsize=12):
-        
+
         if fillColor:
             self.fillColor = fillColor
         if strokeColor:
@@ -54,7 +51,7 @@ class chart:
             self.highlightStroke = highlightStroke
         if barValueSpacing:
             self.barValueSpacing = barValueSpacing
-        if scaleShowGridLines != None:
+        if scaleShowGridLines is not None:
             self.scaleShowGridLines = scaleShowGridLines
         if pointColor:
             self.pointColor = pointColor
@@ -64,32 +61,32 @@ class chart:
             self.pointHighlightFill = pointHighlightFill
         if pointHighlightStroke:
             self.pointHighlightStroke = pointHighlightStroke
-        if JSinline != None:
+        if JSinline is not None:
             if JSinline:
                 self.js = jsinline
             else:
                 self.js = jsurl
         if scaleBeginAtZero:
-            self.scaleBeginAtZero = "beginAtZero: true, min: 0"
+            self.scaleBeginAtZero = True
         if y2nd:
             self.y2nd = 'true'
-        if y2nd_title != None:
+        if y2nd_title is not None:
             self.y2nd_title = y2nd_title
-        if xlabel != None:
+        if xlabel is not None:
             self.xlabel = xlabel
-        if ylabel != None:
+        if ylabel is not None:
             self.ylabel = ylabel
-        if stacked != None:
+        if stacked is not None:
             self.stacked = 'true'
-        if legend == False:
+        if legend is False:
             self.legend = 'false'
-        if tooltips == False:
+        if tooltips is False:
             self.tooltips = 'false'
-        if custom_tooltips == None:
+        if custom_tooltips is None:
             self.custom_tooltips = ''
         else:
-            self.custom_tooltips = ", "+custom_tooltips
-        if yaxis_type != None:
+            self.custom_tooltips = ", " + custom_tooltips
+        if yaxis_type is not None:
             self.yaxis_type = yaxis_type
         if x_autoskip is False:
             self.x_autoskip = 'false'
@@ -97,111 +94,203 @@ class chart:
             self.x_autoskip = 'true'
         self.fontsize = fontsize
 
+    def set_tick_wrap(self, max_chars=28, axis='y'):
+        """Word-wrap long axis tick labels by injecting a ticks.callback.
+
+        Useful for HorizontalBar charts with long category names on the y-axis.
+        Chart.js renders an array return value as multi-line tick text.
+
+        Parameters
+        ----------
+        max_chars : int
+            Maximum characters per line before wrapping.
+        axis : str
+            Scale key to apply the callback to ('x' or 'y').
+        """
+        self.tick_callbacks[axis] = (
+            f"var words = String(value).split(' '); var lines = []; var line = '';"
+            f" words.forEach(function(w) {{"
+            f"  if ((line + ' ' + w).trim().length > {max_chars} && line) {{"
+            f"   lines.push(line); line = w;"
+            f"  }} else {{ line = (line ? line + ' ' : '') + w; }}"
+            f" }});"
+            f" if (line) lines.push(line);"
+            f" return lines;"
+        )
+
+    def set_locale_ticks(self, axis='y'):
+        """Format axis tick labels with locale-aware number formatting (toLocaleString).
+
+        Replaces numbers with comma-separated strings (e.g. 1000 → "1,000").
+        Passes non-numeric values through unchanged.
+
+        Parameters
+        ----------
+        axis : str
+            Scale key to apply the callback to ('x' or 'y').
+        """
+        self.tick_callbacks[axis] = (
+            "return typeof value === 'number' ? value.toLocaleString() : value;"
+        )
+
+    def set_ticks_callback(self, axis, callback_body_js):
+        """Inject a custom ticks.callback for an axis scale.
+
+        Parameters
+        ----------
+        axis : str
+            Scale key ('x' or 'y').
+        callback_body_js : str
+            JavaScript function body (without the ``function(value, index, ticks) {``
+            wrapper — just the body statements, including a ``return`` statement).
+        """
+        self.tick_callbacks[axis] = callback_body_js
+
     # Add a dataset to the chart
-    def add_dataset(self, data, dataset_label = '', **kwargs):
-        
-        ## Other data types expect data as list scatter expects array and is handled separately below
-        if self.ctype != 'Scatter': data = ['null' if np.isnan(d) else d for d in data]
-        
-        if self.ctype in ["Bar", "HorizontalBar", "Radar","Line"]: # Line, radar or bar charts
+    def add_dataset(self, data, dataset_label='', **kwargs):
+
+        ## Other data types expect data as list; scatter expects array and is handled separately below
+        if self.ctype != 'Scatter':
+            data = ['null' if np.isnan(d) else d for d in data]
+
+        if self.ctype in ["Bar", "HorizontalBar", "Radar", "Line"]:  # Line, radar or bar charts
             if len(data) != len(self.labels):
                 raise ValueError("Data must be the same size as labels.")
 
-            appendargs = {'data':data, 'label':"'"+dataset_label+"'"}
-            appendargs.update(six.iteritems(kwargs))
+            appendargs = {'data': data, 'label': "'" + dataset_label + "'"}
+            appendargs.update(kwargs.items())
 
             self.data.append(js_str(appendargs))
-            
-        elif self.ctype in ["Pie","Doughnut","Polar"]: # Pie, doughnut or polar charts
+
+        elif self.ctype in ["Pie", "Doughnut", "Polar"]:  # Pie, doughnut or polar charts
             if len(data) != len(self.labels) or len(data) != len(self.highlights) or len(data) != len(self.colors):
                 raise ValueError("Data, labels, colors and highlights should all have the same number of values for Pie, Doughnut and PolarArea charts.")
-            self.data = [] # Only one dataset can be present for these charts
+            self.data = []  # Only one dataset can be present for these charts
             for i, d in enumerate(data):
                 self.data.append({'value': int(d), 'color': str(self.colors[i]), 'highlight': str(self.highlights[i]), 'label': str(self.labels[i])})
-        
+
         elif self.ctype == 'Scatter':
             data = np.array(data).astype(str)
             data[data == 'nan'] = 'null'
             if len(np.shape(data)) == 2 and np.shape(data)[1] != 2:
                 raise ValueError("Data must be two-dimensional for Scatter charts.")
             appendargs = {
-                'data':'['+', '.join(['{x: '+str(data[i,0])+', y: '+str(data[i,1])+'}' for i in range(len(data))])+']', 
-                'label':"'"+dataset_label+"'"}
-            appendargs.update(six.iteritems(kwargs))
-            
+                'data': '[' + ', '.join(['{x: ' + str(data[i, 0]) + ', y: ' + str(data[i, 1]) + '}' for i in range(len(data))]) + ']',
+                'label': "'" + dataset_label + "'"}
+            appendargs.update(kwargs.items())
+
             self.data.append(js_str(appendargs))
+
+    def _build_scale_ticks(self, axis):
+        """Return a ticks sub-object string for the given axis, or empty string if none needed."""
+        if axis not in self.tick_callbacks:
+            return ''
+        return (
+            f",\n                            ticks: {{"
+            f" callback: function(value, index, ticks) {{ {self.tick_callbacks[axis]} }} }}"
+        )
 
     # Make a chart canvas part
     def make_chart_canvas(self):
-        if self.ctype in ["Bar", "HorizontalBar", "Radar", "Line", "Scatter"]:  
+        if self.ctype in ["Bar", "HorizontalBar", "Radar", "Line", "Scatter"]:
+            # ── y-axis range options ──────────────────────────────────────────
+            y_range_parts = []
+            if self.scaleBeginAtZero:
+                y_range_parts.append('beginAtZero: true')
+            if self.y_min is not None:
+                y_range_parts.append(f'min: {self.y_min}')
+            if self.y_max is not None:
+                y_range_parts.append(f'max: {self.y_max}')
+            y_range = (',\n                            '.join(y_range_parts))
+            if y_range:
+                y_range = '\n                            ' + y_range + ','
+
+            # ── y-axis type (log, etc.) ───────────────────────────────────────
+            y_type = ''
+            if self.yaxis_type is not None:
+                y_type = f'\n                            type: "{self.yaxis_type}",'
+
+            # ── per-axis tick callbacks ───────────────────────────────────────
+            y_ticks  = self._build_scale_ticks('y')
+            x_ticks_cb = ''
+            if 'x' in self.tick_callbacks:
+                x_ticks_cb = (
+                    f",\n                            callback: function(value, index, ticks) "
+                    f"{{ {self.tick_callbacks['x']} }}"
+                )
+
+            # ── HorizontalBar: type='bar' + indexAxis='y' ─────────────────────
+            index_axis = ''
+            if self.ctype == 'HorizontalBar':
+                index_axis = "\n                        indexAxis: 'y',"
+            chart_type = 'bar' if self.ctype == 'HorizontalBar' else self.ctype.lower()
+
             dataset = """{{
-                
+
                     data: {{
-                        labels: {0},
-                        datasets: {1}
+                        labels: {labels},
+                        datasets: {datasets}
                     }},
-                    type: '{2}',
-                    options: {{
+                    type: '{ctype}',
+                    options: {{{index_axis}
                         scales: {{
-                            yAxes: [{{
+                            y: {{
                                 display: true,
-                                scaleLabel: {{
+                                title: {{
                                     display: true,
-                                    labelString: '{3}'
-                                }},
-                                ticks: {{
-                                    {5}
-                                }},
-                                "id": "y-axis-0",
-                                "position": "left",
-                                stacked: {8}{11}
-                            }}, {{
-                                display: {6},
-                                scaleLabel: {{
-                                    display: true,
-                                    labelString: '{7}'
-                                }},
-                                ticks: {{
-                                    {5}
-                                }},
-                                "id": "y-axis-1",
-                                "position": "right"
-                            }}],
-                            xAxes: [{{
-                                scaleLabel: {{
-                                    display: true,
-                                    labelString: '{4}'
-                                }},
-                                stacked: {8},
-                                ticks: {{
-                                    autoSkip: {13}
-                                }}
-                            }}]
-                        }},
-                        legend: {{
-                            display: {9}
+                                    text: '{ylabel}'
+                                }},{y_range}{y_type}
+                                position: 'left',
+                                stacked: {stacked}{y_ticks}
                             }},
-                        tooltips: {{
-                            display: {10}{12}
+                            y1: {{
+                                display: {y2nd},
+                                title: {{
+                                    display: true,
+                                    text: '{y2nd_title}'
+                                }},
+                                position: 'right'
+                            }},
+                            x: {{
+                                title: {{
+                                    display: true,
+                                    text: '{xlabel}'
+                                }},
+                                stacked: {stacked},
+                                ticks: {{
+                                    autoSkip: {x_autoskip}{x_ticks_cb}
+                                }}
                             }}
-                    }},
+                        }},
+                        plugins: {{
+                            legend: {{
+                                display: {legend}
+                            }},
+                            tooltip: {{
+                                enabled: {tooltips}{custom_tooltips}
+                            }}
+                        }}
+                    }}
                 }}
                 """.format(
-                    str(self.labels), 
-                    '['+','.join([str(c) for c in self.data])+']', 
-                    'horizontalBar' if self.ctype == 'HorizontalBar' else str(self.ctype).lower(),
-                    self.ylabel, 
-                    self.xlabel,
-                    self.scaleBeginAtZero,
-                    self.y2nd,
-                    self.y2nd_title,
-                    self.stacked,
-                    self.legend,
-                    self.tooltips,
-                    '' if self.yaxis_type is None else ',\ntype: "'+self.yaxis_type+'"',
-                    self.custom_tooltips,
-                    self.x_autoskip
-                    )
+                labels=str(self.labels),
+                datasets='[' + ','.join([str(c) for c in self.data]) + ']',
+                ctype=chart_type,
+                index_axis=index_axis,
+                ylabel=self.ylabel,
+                xlabel=self.xlabel,
+                y_range=y_range,
+                y_type=y_type,
+                stacked=self.stacked,
+                y2nd=self.y2nd,
+                y2nd_title=self.y2nd_title,
+                y_ticks=y_ticks,
+                x_autoskip=self.x_autoskip,
+                x_ticks_cb=x_ticks_cb,
+                legend=self.legend,
+                tooltips=self.tooltips,
+                custom_tooltips=self.custom_tooltips,
+            )
         else:
             dataset = """
             {0}
@@ -209,9 +298,9 @@ class chart:
         output = """
             <canvas id="{0}" height="{1}" width="{2}"></canvas>
             <script>
-                Chart.defaults.global.defaultFontSize = {5};
+                Chart.defaults.font.size = {5};
                 var chart_data = {3}
-                
+
                 {4}
             </script>
 """.format(str(self.canvas), str(self.height), str(self.width), dataset, self.extra_code, self.fontsize)
@@ -235,7 +324,7 @@ class chart:
             </script>
 """
         return output
-        
+
     # Make a full HTML page
     def make_chart_full_html(self):
         output = """<!doctype html>
@@ -262,15 +351,16 @@ class chart:
         output += "Content-Type: text/html; charset=utf-8\n\n"
         output += self.make_chart_full_html()
         return output
-    
+
     def jekyll_write(self, path, full=1):
         """
         Write out in a way appropriate to include in jekyll sites
         """
         with open(path, 'w') as f:
             f.write("{% raw  %}\n")
-            if full: mc = self.make_chart_full_html()
-            else: 
+            if full:
+                mc = self.make_chart_full_html()
+            else:
                 mc = self.make_chart()
             if full == 0:
                 indents = mc.split('<canvas id=')[0]
@@ -283,12 +373,13 @@ class chart:
 
     def add_extra_code(self, code):
         """
-        Add extra code to the end of the script when writing out, e.g. to update defaults
+        Add extra JavaScript to the end of the chart's <script> block, e.g. to inject
+        data variables (point labels, population arrays) accessible to tooltip callbacks.
         """
         self.extra_code += '\n\n' + code
-    
+
     # Initialize default values
-    def __init__(self, title = "Untitled chart", ctype = "Bar", width = 640, height = 480):
+    def __init__(self, title="Untitled chart", ctype="Bar", width=640, height=480):
         if ctype not in ctypes:
             raise ValueError("Invalid chart type specified.")
         self.title = title
@@ -312,7 +403,9 @@ class chart:
         self.barValueSpacing = 5
         self.scaleShowGridLines = True
         self.js = jsinline
-        self.scaleBeginAtZero = ''
+        self.scaleBeginAtZero = False
+        self.y_min = None
+        self.y_max = None
         self.y2nd = 'false'
         self.y2nd_title = ""
         self.xlabel = ''
@@ -322,8 +415,10 @@ class chart:
         self.tooltips = 'true'
         self.custom_tooltips = ''
         self.yaxis_type = None
+        self.tick_callbacks = {}
         self.extra_code = ''
 
+
 # JavaScript (URL and inline)
-jsurl = "<script src='https://cdn.jsdelivr.net/npm/chart.js@2.8.0/dist/Chart.bundle.min.js'></script>"
+jsurl = "<script src='https://cdn.jsdelivr.net/npm/chart.js@4.4.4/dist/chart.umd.min.js'></script>"
 jsinline = ''

@@ -61,10 +61,10 @@ def generate_charts(engine, prefix=''):
 	mychart.add_dataset(fte_stack.tolist(),
 		"Full time DEP employees",
 		backgroundColor="'rgba(50,50,200,0.8)'",
-		stack="'annual'", yAxisID= "'y-axis-0'",)
+		stack="'annual'", yAxisID="'y'",)
 	mychart.add_dataset((s_data_g.loc[years].values).tolist(), "Total DEP employment",
 		backgroundColor="'rgba(50,50,50,0.5)'",
-		stack="'annual'", yAxisID= "'y-axis-0'")
+		stack="'annual'", yAxisID="'y'")
 	mychart.set_params(JSinline = 0, ylabel = 'Total employment', xlabel='Year',
 		scaleBeginAtZero=1)
 
@@ -83,11 +83,11 @@ def generate_charts(engine, prefix=''):
 		backgroundColor="'rgba(50,50,50,0.5)'",
 		type="'line'", fill = "false",
 		borderWidth = 2,
-		stack="'annual'", yAxisID= "'y-axis-0'")
+		stack="'annual'", yAxisID="'y'")
 	mychart.add_dataset((f_data['DEPAdministration_inf_float'].loc[years]/1e6).values.tolist(), "DEP administrative budget",
 		borderColor = "'"+color_cycle[1]+"'", fill = "false",
 		borderWidth = 2,
-		stack="'annual'", type="'line'", yAxisID= "'y-axis-1'")
+		stack="'annual'", type="'line'", yAxisID="'y1'")
 	mychart.set_params(JSinline = 0, ylabel = 'Total employment', xlabel='Year',
 		y2nd = 1, y2nd_title = 'Funding level ($M, 2024 dollars)',
 		scaleBeginAtZero=0)
@@ -117,13 +117,13 @@ def generate_charts(engine, prefix=''):
 		backgroundColor="'rgba(50,50,50,0.5)'",
 		type="'line'", fill = "false",
 		borderWidth = 2,
-		stack="'annual'", yAxisID= "'y-axis-0'")
+		stack="'annual'", yAxisID="'y'")
 	mychart.add_dataset(
 		(s_data_j.groupby(['year']).BoughtOut.sum().loc[years]).values,
 		"Staff Bought Out",
 		borderColor = "'"+color_cycle[1]+"'", fill = "false",
-		borderWidth = 2, steppedLine = 'true',
-		stack="'annual'", type="'line'", yAxisID= "'y-axis-1'")
+		borderWidth = 2, stepped = 'true',
+		stack="'annual'", type="'line'", yAxisID="'y1'")
 	mychart.set_params(JSinline = 0, ylabel = 'Cost($M)', xlabel='Year',
 		y2nd = 1, y2nd_title = 'Number of personnel',
 		scaleBeginAtZero=1)
