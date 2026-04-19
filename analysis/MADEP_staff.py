@@ -5,8 +5,6 @@ import pandas as pd
 import numpy as np
 from sqlalchemy import create_engine
 import chartjs
-from scipy.stats import pearsonr
-
 import matplotlib as mpl
 color_cycle = [c['color'] for c in list(mpl.rcParams['axes.prop_cycle'])]
 
@@ -98,6 +96,7 @@ def generate_charts(engine, prefix=''):
 
 
 
+	from scipy.stats import pearsonr
 	pr = pearsonr(s_data_g.loc[years].values, (f_data['DEPAdministration_inf_float'].loc[years]/1e6).values)
 	with open('../docs/data/facts_DEPstaff.yml', 'w') as f:
 		f.write('cor_staff_funding: %0.0f'%(pr[0]*100)+'\n')

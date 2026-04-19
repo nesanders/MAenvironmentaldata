@@ -6,6 +6,7 @@ Agencies: DEP (22000100), DCR (28000100+28100100), EEA (20011001+20000100), Fish
 """
 
 import datetime
+import time
 import requests
 import pandas as pd
 
@@ -28,8 +29,16 @@ def fetch_agency_budget(accounts: list) -> pd.DataFrame:
         '$limit': 500,
         '$select': 'fiscal_year,original_enacted_budget',
     }
-    resp = requests.get(CTHRU_URL, params=params, timeout=30)
-    resp.raise_for_status()
+    for attempt in range(3):
+        try:
+            resp = requests.get(CTHRU_URL, params=params, timeout=90)
+            resp.raise_for_status()
+            break
+        except requests.exceptions.Timeout:
+            if attempt == 2:
+                raise
+            print(f'  Timeout on attempt {attempt + 1}, retrying...')
+            time.sleep(10)
     df = pd.DataFrame(resp.json())
     if df.empty:
         print(f'Warning: No data returned for accounts {accounts}')
