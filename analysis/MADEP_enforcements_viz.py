@@ -201,6 +201,7 @@ def generate_charts(engine, prefix=''):
 	mychart.jekyll_write(f'../docs/_includes/charts/{prefix}MADEP_enforcement_vsbudget.html')
 
 	## Output correlation level
+	from scipy.stats import pearsonr
 	pr = pearsonr(s_data_g.values, (f_data['DEPAdministration_inf_float'].loc[years]/1e6).values)
 	with open(fact_file, 'a') as f:
 		f.write('cor_enforcement_funding: %0.0f'%(pr[0]*100)+'\n')
