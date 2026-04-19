@@ -2,8 +2,6 @@ import pandas as pd
 import numpy as np
 from sqlalchemy import create_engine
 import chartjs
-from scipy.stats import pearsonr
-
 import matplotlib as mpl
 color_cycle = [c['color'] for c in list(mpl.rcParams['axes.prop_cycle'])]
 

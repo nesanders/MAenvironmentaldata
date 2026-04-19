@@ -79,7 +79,7 @@ jobs:
             --body "Automated weekly data refresh. Merging this will trigger the chart-update workflow." \
             --base main \
             --head "$BRANCH"
-          gh pr merge "$BRANCH" --auto --squash
+          gh pr merge "$BRANCH" --squash
 
       - name: Open issue on failure
         if: failure()
