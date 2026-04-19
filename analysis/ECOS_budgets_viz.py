@@ -1,10 +1,7 @@
-from __future__ import absolute_import
 import pandas as pd
 import numpy as np
 from sqlalchemy import create_engine
 import chartjs
-from scipy.stats import pearsonr
-
 import matplotlib as mpl
 color_cycle = [c['color'] for c in list(mpl.rcParams['axes.prop_cycle'])]
 
@@ -53,7 +50,7 @@ def generate_charts(engine, prefix=''):
 	inf_target = '2024'
 	## Restrict to relevant years and calculate correction factors (2024 dollars)
 	inf_data_sel = inf_data.reindex(ECOS_years)
-	inf_data_sel['correct'] = inf_data_sel['AWI'].loc[inf_target] / inf_data_sel['AWI']
+	inf_data_sel['correct'] = inf_data.loc[inf_target, 'AWI'] / inf_data_sel['AWI']
 
 	## Establish file to export facts
 	fact_file = '../docs/data/facts_ECOSbudgets.yml'
@@ -78,10 +75,10 @@ def generate_charts(engine, prefix=''):
 			vals_list,
 			state,
 			backgroundColor="'"+(color_cycle*10)[i]+"'",
-			stack="'annual'", yAxisID= "'y-axis-0'", fill = "false",
+			stack="'annual'", yAxisID="'y'", fill = "false",
 			hidden = 'false' if state in ['Massachusetts','New Hampshire','Vermont','Maine','Rhode Island'] else 'true')
-	mychart.set_params(JSinline = 0, ylabel = 'Reported Environmental Agency Budget (ECOS, $M)', xlabel='Year',
-		scaleBeginAtZero=1)
+	mychart.set_params(js_inline= 0, ylabel = 'Reported Environmental Agency Budget (ECOS, $M)', xlabel='Year',
+		scale_begin_at_zero=1)
 
 	mychart.jekyll_write(f'../docs/_includes/charts/{prefix}ECOS_budget_peryear_bystate.html')
 
@@ -104,10 +101,10 @@ def generate_charts(engine, prefix=''):
 			vals_list,
 			state,
 			backgroundColor="'"+(color_cycle*10)[i]+"'",
-			stack="'annual'", yAxisID= "'y-axis-0'", fill = "false",
+			stack="'annual'", yAxisID="'y'", fill = "false",
 			hidden = 'false' if state in ['Massachusetts','New Hampshire','Vermont','Maine','Rhode Island'] else 'true')
-	mychart.set_params(JSinline = 0, ylabel = 'Reported Environmental Agency Budget (ECOS, $k per capita)', xlabel='Year',
-		scaleBeginAtZero=1)
+	mychart.set_params(js_inline= 0, ylabel = 'Reported Environmental Agency Budget (ECOS, $k per capita)', xlabel='Year',
+		scale_begin_at_zero=1)
 
 	mychart.jekyll_write(f'../docs/_includes/charts/{prefix}ECOS_budget_percap_peryear_bystate.html')
 
@@ -132,10 +129,10 @@ def generate_charts(engine, prefix=''):
 			vals_list,
 			state,
 			backgroundColor="'"+(color_cycle*10)[i]+"'",
-			stack="'annual'", yAxisID= "'y-axis-0'", fill = "false",
+			stack="'annual'", yAxisID="'y'", fill = "false",
 			hidden = 'false' if state in ['Massachusetts','New Hampshire','Vermont','Maine','Rhode Island'] else 'true')
-	mychart.set_params(JSinline = 0, ylabel = 'Environmental Agency Budget % from Federal Government (ECOS)', xlabel='Year',
-		scaleBeginAtZero=1)
+	mychart.set_params(js_inline= 0, ylabel = 'Environmental Agency Budget % from Federal Government (ECOS)', xlabel='Year',
+		scale_begin_at_zero=1)
 
 	mychart.jekyll_write(f'../docs/_includes/charts/{prefix}ECOS_fedcont_peryear_bystate.html')
 

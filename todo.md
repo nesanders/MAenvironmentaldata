@@ -47,8 +47,6 @@ question in the Ask AMEND AI interface, the SQL being generated, and an interact
 table appearing as the result. Embed on the About page or README to help new visitors understand
 what the feature does before trying it themselves.
 
-### Evaluate if python chartjs is still the right plotting library to use and migrate if need be
-
 ### Add unit tests
 
 ### Develop tests for AI Analysis semantic context (`get_data/generate_semantic_context.py`)

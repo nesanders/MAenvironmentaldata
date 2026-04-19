@@ -2,77 +2,71 @@
 <html>
     <head>
         <title>Overall DEP Staffing vs Funding</title>
-        <script src='https://cdn.jsdelivr.net/npm/chart.js@2.8.0/dist/Chart.bundle.min.js'></script>
+        <script src='https://cdn.jsdelivr.net/npm/chart.js@4.4.4/dist/chart.umd.min.js'></script>
     </head>
     <body>
         <div style="width: 640px; height: 480px; max-width: 99%" class="chartjs">
 
             <canvas id="Overall DEP Staffing vs Funding" height="480" width="640"></canvas>
             <script>
-                Chart.defaults.global.defaultFontSize = 12;
+                Chart.defaults.font.size = 12;
                 var chart_data = {
-                
+
                     data: {
-                        labels: ['2004.0', '2005.0', '2006.0', '2007.0', '2008.0', '2009.0', '2010.0', '2011.0', '2012.0', '2013.0', '2014.0', '2015.0', '2016.0', '2017.0', '2018.0', '2019.0', '2020.0', '2021.0', '2022.0', '2023.0', '2024.0'],
-                        datasets: [{'data': [967, 946, 966, 1010, 1014, 1032, 1026, 901, 909, 927, 946, 942, 888, 849, 747, 864, 802, 843, 932, 1008, 942], 'label': 'Total DEP employment', 'backgroundColor': 'rgba(50,50,50,0.5)', 'type': 'line', 'fill': false, 'borderWidth': 2, 'stack': 'annual', 'yAxisID': 'y-axis-0'},{'data': [47.81678716088732, 46.51194461930363, 47.26631772839283, 51.0180866053805, 50.98509815466856, 53.97012499325573, 43.07945643803581, 36.24145881788992, 33.73366466417782, 35.04061255549124, 36.951498777876246, 36.52701041135038, 36.7626353469861, 30.13886201205062, 28.73160493546709, 32.61649011580224, 34.93498374275373, 40.115, 33.434358, 45.4, 52.038191], 'label': 'DEP administrative budget', 'borderColor': '#ff7f0e', 'fill': false, 'borderWidth': 2, 'stack': 'annual', 'type': 'line', 'yAxisID': 'y-axis-1'}]
+                        labels: ["2004.0", "2005.0", "2006.0", "2007.0", "2008.0", "2009.0", "2010.0", "2011.0", "2012.0", "2013.0", "2014.0", "2015.0", "2016.0", "2017.0", "2018.0", "2019.0", "2020.0", "2021.0", "2022.0", "2023.0", "2024.0"],
+                        datasets: [{'data': [967, 946, 966, 1010, 1014, 1032, 1026, 901, 909, 927, 946, 942, 888, 849, 747, 864, 802, 843, 932, 1008, 942], 'label': 'Total DEP employment', 'backgroundColor': 'rgba(50,50,50,0.5)', 'type': 'line', 'fill': false, 'borderWidth': 2, 'stack': 'annual', 'yAxisID': 'y'},{'data': [55.13552970897133, 53.630970557496916, 54.50080651757284, 58.826813693302746, 58.78877609579202, 62.23068521836106, 49.673112547145536, 41.78850458160208, 38.896872431563395, 40.40385917341901, 42.60722184875473, 42.11776213526644, 42.389451355941304, 34.751856419563936, 33.12920736760928, 37.60870536390118, 40.28206302422945, 46.254922289813294, 36.60585418435639, 47.59754731934593, 52.038191], 'label': 'DEP administrative budget', 'borderColor': '#ff7f0e', 'fill': false, 'borderWidth': 2, 'stack': 'annual', 'type': 'line', 'yAxisID': 'y1'}]
                     },
                     type: 'bar',
                     options: {
                         scales: {
-                            yAxes: [{
+                            y: {
                                 display: true,
-                                scaleLabel: {
+                                title: {
                                     display: true,
-                                    labelString: 'Total employment'
+                                    text: 'Total employment'
                                 },
-                                ticks: {
-                                    
-                                },
-                                "id": "y-axis-0",
-                                "position": "left",
+                                position: 'left',
                                 stacked: false
-                            }, {
+                            },
+                            y1: {
                                 display: true,
-                                scaleLabel: {
+                                title: {
                                     display: true,
-                                    labelString: 'Funding level ($M, 2024 dollars)'
+                                    text: 'Funding level ($M, 2024 dollars)'
                                 },
-                                ticks: {
-                                    
-                                },
-                                "id": "y-axis-1",
-                                "position": "right"
-                            }],
-                            xAxes: [{
-                                scaleLabel: {
+                                position: 'right'
+                            },
+                            x: {
+                                title: {
                                     display: true,
-                                    labelString: 'Year'
+                                    text: 'Year'
                                 },
                                 stacked: false,
                                 ticks: {
                                     autoSkip: true
                                 }
-                            }]
-                        },
-                        legend: {
-                            display: true
-                            },
-                        tooltips: {
-                            display: true
                             }
-                    },
+                        },
+                        plugins: {
+                            legend: {
+                                display: true
+                            },
+                            tooltip: {
+                                enabled: true
+                            }
+                        }
+                    }
                 }
-                
                 
                 
             </script>
             <script>
-                {{
+                {
+
                     var ctx = document.getElementById("Overall DEP Staffing vs Funding").getContext("2d");
                     var mychart = new Chart(ctx, chart_data);
-                }}
+                }
             </script>
-
         </div>
     </body>
 </html>

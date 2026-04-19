@@ -61,12 +61,12 @@ def generate_charts(engine, prefix=''):
 	mychart.add_dataset(fte_stack.tolist(),
 		"Full time DEP employees",
 		backgroundColor="'rgba(50,50,200,0.8)'",
-		stack="'annual'", yAxisID= "'y-axis-0'",)
+		stack="'annual'", yAxisID="'y'",)
 	mychart.add_dataset((s_data_g.loc[years].values).tolist(), "Total DEP employment",
 		backgroundColor="'rgba(50,50,50,0.5)'",
-		stack="'annual'", yAxisID= "'y-axis-0'")
-	mychart.set_params(JSinline = 0, ylabel = 'Total employment', xlabel='Year',
-		scaleBeginAtZero=1)
+		stack="'annual'", yAxisID="'y'")
+	mychart.set_params(js_inline= 0, ylabel = 'Total employment', xlabel='Year',
+		scale_begin_at_zero=1)
 
 	mychart.jekyll_write(f'../docs/_includes/charts/{prefix}MADEP_staffing_overall.html')
 
@@ -83,21 +83,21 @@ def generate_charts(engine, prefix=''):
 		backgroundColor="'rgba(50,50,50,0.5)'",
 		type="'line'", fill = "false",
 		borderWidth = 2,
-		stack="'annual'", yAxisID= "'y-axis-0'")
-	mychart.add_dataset((f_data['DEPAdministration_inf_float'].loc[years]/1e6).values.tolist(), "DEP administrative budget",
+		stack="'annual'", yAxisID="'y'")
+	mychart.add_dataset((f_data['DEPAdministration_inf'].loc[years]/1e6).values.tolist(), "DEP administrative budget",
 		borderColor = "'"+color_cycle[1]+"'", fill = "false",
 		borderWidth = 2,
-		stack="'annual'", type="'line'", yAxisID= "'y-axis-1'")
-	mychart.set_params(JSinline = 0, ylabel = 'Total employment', xlabel='Year',
+		stack="'annual'", type="'line'", yAxisID="'y1'")
+	mychart.set_params(js_inline= 0, ylabel = 'Total employment', xlabel='Year',
 		y2nd = 1, y2nd_title = 'Funding level ($M, 2024 dollars)',
-		scaleBeginAtZero=0)
+		scale_begin_at_zero=0)
 
 	mychart.jekyll_write(f'../docs/_includes/charts/{prefix}MADEP_staffing_overall_funding.html')
 
 
 
 	from scipy.stats import pearsonr
-	pr = pearsonr(s_data_g.loc[years].values, (f_data['DEPAdministration_inf_float'].loc[years]/1e6).values)
+	pr = pearsonr(s_data_g.loc[years].values, (f_data['DEPAdministration_inf'].loc[years]/1e6).values)
 	with open('../docs/data/facts_DEPstaff.yml', 'w') as f:
 		f.write('cor_staff_funding: %0.0f'%(pr[0]*100)+'\n')
 		f.write('cor_staff_funding_p: %0.2f'%(pr[1]*100)+'\n')
@@ -117,16 +117,16 @@ def generate_charts(engine, prefix=''):
 		backgroundColor="'rgba(50,50,50,0.5)'",
 		type="'line'", fill = "false",
 		borderWidth = 2,
-		stack="'annual'", yAxisID= "'y-axis-0'")
+		stack="'annual'", yAxisID="'y'")
 	mychart.add_dataset(
 		(s_data_j.groupby(['year']).BoughtOut.sum().loc[years]).values,
 		"Staff Bought Out",
 		borderColor = "'"+color_cycle[1]+"'", fill = "false",
-		borderWidth = 2, steppedLine = 'true',
-		stack="'annual'", type="'line'", yAxisID= "'y-axis-1'")
-	mychart.set_params(JSinline = 0, ylabel = 'Cost($M)', xlabel='Year',
+		borderWidth = 2, stepped = 'true',
+		stack="'annual'", type="'line'", yAxisID="'y1'")
+	mychart.set_params(js_inline= 0, ylabel = 'Cost($M)', xlabel='Year',
 		y2nd = 1, y2nd_title = 'Number of personnel',
-		scaleBeginAtZero=1)
+		scale_begin_at_zero=1)
 
 	mychart.jekyll_write(f'../docs/_includes/charts/{prefix}MADEP_staffing_buyout.html')
 
@@ -151,7 +151,7 @@ def generate_charts(engine, prefix=''):
 	## Establish chart
 	mychart = chartjs.chart("DEP wages over time", "Line", 640, 480)
 	mychart.set_labels(years.tolist())
-	mychart.set_params(JSinline = 0, ylabel = 'Average earnings per year ($k)', xlabel='Year')
+	mychart.set_params(js_inline= 0, ylabel = 'Average earnings per year ($k)', xlabel='Year')
 
 
 	## Run non-inflation loop separately so they are adjacent in legend
@@ -176,7 +176,7 @@ def generate_charts(engine, prefix=''):
 
 
 	## Write out
-	mychart.jekyll_write(f'../docs/_includes/charts/{prefix}MADEP_staffing_wagehistory.html', full=0)
+	mychart.jekyll_write(f'../docs/_includes/charts/{prefix}MADEP_staffing_wagehistory.html', full=False)
 
 
 
@@ -201,7 +201,7 @@ def generate_charts(engine, prefix=''):
 	## Establish chart
 	mychart = chartjs.chart("DEP seniority over time", "Line", 640, 480)
 	mychart.set_labels(years.tolist())
-	mychart.set_params(JSinline = 0, ylabel = 'Average seniority gain (yrs with DEP since 2004)', xlabel='Year')
+	mychart.set_params(js_inline= 0, ylabel = 'Average seniority gain (yrs with DEP since 2004)', xlabel='Year')
 
 	for i,jt in enumerate(sel_titles):
 		# Convert to list and subtract year offset, explicitly converting to Python floats
@@ -214,7 +214,7 @@ def generate_charts(engine, prefix=''):
 			)
 
 	## Write out
-	mychart.jekyll_write(f'../docs/_includes/charts/{prefix}MADEP_staffing_seniority.html', full=0)
+	mychart.jekyll_write(f'../docs/_includes/charts/{prefix}MADEP_staffing_seniority.html', full=False)
 
 
 
@@ -231,7 +231,7 @@ def generate_charts(engine, prefix=''):
 
 	mychart = chartjs.chart("DEP role volume over time", "Line", 640, 480)
 	mychart.set_labels(years.tolist())
-	mychart.set_params(JSinline = 0,
+	mychart.set_params(js_inline= 0,
 		ylabel = 'Total staff change since 2004 (%)', xlabel='Year')
 
 
@@ -246,7 +246,7 @@ def generate_charts(engine, prefix=''):
 
 
 	## Write out
-	mychart.jekyll_write(f'../docs/_includes/charts/{prefix}MADEP_staffing_rolevolume.html', full=0)
+	mychart.jekyll_write(f'../docs/_includes/charts/{prefix}MADEP_staffing_rolevolume.html', full=False)
 
 
 if __name__ == '__main__':

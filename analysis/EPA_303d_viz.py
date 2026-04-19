@@ -24,7 +24,6 @@ Data files written:
 See docs/_posts/2026-04-11-ma-impaired-waters-303d.md for the analysis post.
 """
 
-from __future__ import absolute_import
 import sys
 import os
 sys.path.insert(0, os.path.dirname(__file__))
@@ -64,7 +63,7 @@ CAUSE_COLORS = [
 ]
 
 
-_CHARTJS_CDN = "<script src='https://cdn.jsdelivr.net/npm/chart.js@2.8.0/dist/Chart.bundle.min.js'></script>"
+_CHARTJS_CDN = "<script src='https://cdn.jsdelivr.net/npm/chart.js@4.4.4/dist/chart.umd.min.js'></script>"
 
 
 def _write_cso_cdf_html(outpath, cso_points, noncso_fracs):
@@ -113,7 +112,7 @@ def _write_cso_cdf_html(outpath, cso_points, noncso_fracs):
 <div style="width:700px;height:480px;max-width:99%" class="chartjs">
 <canvas id="{canvas_id}" height="480" width="700"></canvas>
 <script>
-Chart.defaults.global.defaultFontSize = 12;
+Chart.defaults.font.size = 12;
 var chart_data = {{
     type: 'scatter',
     data: {{
@@ -126,7 +125,7 @@ var chart_data = {{
                 showLine: true,
                 pointRadius: 0,
                 borderWidth: 2.5,
-                lineTension: 0
+                tension: 0
             }},
             {{
                 label: 'CSO-receiving waterways (n={n_cso})',
@@ -138,40 +137,45 @@ var chart_data = {{
                 pointRadius: 5,
                 pointHoverRadius: 7,
                 borderWidth: 2,
-                lineTension: 0
+                tension: 0
             }}
         ]
     }},
     options: {{
         scales: {{
-            xAxes: [{{
+            x: {{
                 type: 'linear',
-                ticks: {{ min: 0, max: 1, callback: function(v) {{ return (v*100)+'%'; }} }},
-                scaleLabel: {{
+                min: 0,
+                max: 1,
+                title: {{
                     display: true,
-                    labelString: 'Waterways ranked by bacterial impairment fraction (percentile)'
-                }}
-            }}],
-            yAxes: [{{
-                ticks: {{ min: 0, max: 1, callback: function(v) {{ return (v*100)+'%'; }} }},
-                scaleLabel: {{
+                    text: 'Waterways ranked by bacterial impairment fraction (percentile)'
+                }},
+                ticks: {{ callback: function(v) {{ return (v*100)+'%'; }} }}
+            }},
+            y: {{
+                min: 0,
+                max: 1,
+                title: {{
                     display: true,
-                    labelString: 'Fraction of assessed AUs with bacterial impairment'
-                }}
-            }}]
+                    text: 'Fraction of assessed AUs with bacterial impairment'
+                }},
+                ticks: {{ callback: function(v) {{ return (v*100)+'%'; }} }}
+            }}
         }},
-        legend: {{ display: true }},
-        tooltips: {{
-            bodyFontSize: 11,
-            callbacks: {{
-                label: function(item, data) {{
-                    var ds = data.datasets[item.datasetIndex];
-                    var pt = ds.data[item.index];
-                    if (pt.wbname !== undefined) {{
-                        return pt.wbname + ' \u2014 ' + pt.nbact + '/' + pt.nassessed
-                               + ' assessed AUs (' + (pt.x*100).toFixed(0) + '% bacterial)';
+        plugins: {{
+            legend: {{ display: true }},
+            tooltip: {{
+                bodyFont: {{ size: 11 }},
+                callbacks: {{
+                    label: function(context) {{
+                        var pt = context.raw;
+                        if (pt.wbname !== undefined) {{
+                            return pt.wbname + ' \u2014 ' + pt.nbact + '/' + pt.nassessed
+                                   + ' assessed AUs (' + (pt.x*100).toFixed(0) + '% bacterial)';
+                        }}
+                        return (pt.x*100).toFixed(0) + '% bacterial impairment';
                     }}
-                    return (pt.x*100).toFixed(0) + '% bacterial impairment';
                 }}
             }}
         }}
@@ -190,36 +194,6 @@ var chart_data = {{
     with open(outpath, 'w') as f:
         f.write(html)
 
-
-def _add_tick_wrap(path, max_chars=28):
-    """Patch a Chart.js HorizontalBar HTML file to word-wrap long y-axis labels.
-
-    Injects a ticks.callback into yAxes[0] that splits labels into arrays
-    of lines no longer than max_chars. Chart.js 2.8 renders array labels
-    as multi-line ticks automatically.
-    """
-    wrap_js = (
-        f"callback: function(label) {{"
-        f" var words = label.split(' '); var lines = []; var line = '';"
-        f" words.forEach(function(w) {{"
-        f"   if ((line + ' ' + w).trim().length > {max_chars} && line) {{"
-        f"     lines.push(line); line = w;"
-        f"   }} else {{ line = (line ? line + ' ' : '') + w; }}"
-        f" }});"
-        f" if (line) lines.push(line);"
-        f" return lines; }},"
-    )
-    with open(path) as f:
-        html = f.read()
-    # The wrapper emits:  ticks: {\n                                    \n                                },
-    # for yAxes[0]. Insert the callback into the first ticks block.
-    # Replace the first ticks block in yAxes[0] to inject the wrap callback
-    target = "ticks: {\n                                    beginAtZero: true, min: 0\n                                },"
-    replacement = f"ticks: {{\n                                    beginAtZero: true, min: 0,\n                                    {wrap_js}\n                                }},"
-    if target in html:
-        html = html.replace(target, replacement, 1)
-        with open(path, 'w') as f:
-            f.write(html)
 
 
 def _to_float_list(series):
@@ -287,10 +261,10 @@ def generate_charts(engine, prefix=''):
             stack="'type'",
         )
     mychart.set_params(
-        JSinline=0,
+        js_inline=0,
         ylabel='Impaired assessment units (distinct)',
         xlabel='Reporting cycle',
-        scaleBeginAtZero=1,
+        scale_begin_at_zero=1,
         stacked=1,
     )
     mychart.jekyll_write(f'../docs/_includes/charts/{prefix}EPA303d_impaired_trend.html')
@@ -314,10 +288,10 @@ def generate_charts(engine, prefix=''):
         backgroundColor=f"'{BLUE}'",
     )
     mychart.set_params(
-        JSinline=0,
+        js_inline=0,
         ylabel='Impairment cause',
         xlabel='Impaired assessment units (distinct)',
-        scaleBeginAtZero=1,
+        scale_begin_at_zero=1,
     )
     mychart.jekyll_write(f'../docs/_includes/charts/{prefix}EPA303d_causes_breakdown.html')
 
@@ -368,10 +342,10 @@ def generate_charts(engine, prefix=''):
             stack="'status'",
         )
     mychart.set_params(
-        JSinline=0,
+        js_inline=0,
         ylabel='Discharge volume (billion gallons)',
         xlabel='Year',
-        scaleBeginAtZero=1,
+        scale_begin_at_zero=1,
         stacked=1,
     )
     mychart.jekyll_write(f'../docs/_includes/charts/{prefix}EPA303d_cso_impaired.html')
@@ -399,10 +373,10 @@ def generate_charts(engine, prefix=''):
             stack="'tmdl'",
         )
     mychart.set_params(
-        JSinline=0,
+        js_inline=0,
         ylabel='Impaired assessment units',
         xlabel='Reporting cycle',
-        scaleBeginAtZero=1,
+        scale_begin_at_zero=1,
         stacked=1,
     )
     mychart.jekyll_write(f'../docs/_includes/charts/{prefix}EPA303d_tmdl_trend.html')
@@ -433,10 +407,10 @@ def generate_charts(engine, prefix=''):
         stack="'cohort'",
     )
     mychart.set_params(
-        JSinline=0,
+        js_inline=0,
         ylabel='Impaired assessment units',
         xlabel='Reporting cycle',
-        scaleBeginAtZero=1,
+        scale_begin_at_zero=1,
         stacked=1,
     )
     mychart.jekyll_write(f'../docs/_includes/charts/{prefix}EPA303d_persistence.html')
@@ -472,10 +446,10 @@ def generate_charts(engine, prefix=''):
             pointRadius='4',
         )
     mychart.set_params(
-        JSinline=0,
+        js_inline=0,
         ylabel='Impaired assessment units (distinct)',
         xlabel='Reporting cycle',
-        scaleBeginAtZero=1,
+        scale_begin_at_zero=1,
     )
     mychart.jekyll_write(f'../docs/_includes/charts/{prefix}EPA303d_causes_trend.html')
 
@@ -770,10 +744,10 @@ def generate_post_charts(engine):
             stack="'type'",
         )
     mychart.set_params(
-        JSinline=0,
+        js_inline=0,
         ylabel='Watershed',
         xlabel='Impaired assessment units',
-        scaleBeginAtZero=1,
+        scale_begin_at_zero=1,
         stacked=1,
     )
     mychart.jekyll_write('../docs/_includes/charts/EPA303d_watershed_impairment.html')
@@ -801,13 +775,13 @@ def generate_post_charts(engine):
         backgroundColor=f"'{RED}'",
     )
     mychart.set_params(
-        JSinline=0,
+        js_inline=0,
         ylabel='',
         xlabel='Impaired assessment units',
-        scaleBeginAtZero=1,
+        scale_begin_at_zero=1,
     )
+    mychart.set_tick_wrap(23, axis='y')
     mychart.jekyll_write('../docs/_includes/charts/EPA303d_bacterial_sources.html')
-    _add_tick_wrap('../docs/_includes/charts/EPA303d_bacterial_sources.html', 23)
 
     # ── CDF: bacterial impairment fraction, CSO vs. non-CSO waterways ─────────
     print('Post chart: CSO bacterial impairment CDF...')
@@ -1000,10 +974,10 @@ def generate_post_charts(engine):
         backgroundColor=colors_js,
     )
     mychart.set_params(
-        JSinline=0,
+        js_inline=0,
         ylabel='% of AUs with bacterial impairment',
         xlabel='Pollution source category',
-        scaleBeginAtZero=1,
+        scale_begin_at_zero=1,
         legend=0,
     )
     mychart.jekyll_write('../docs/_includes/charts/EPA303d_bacterial_source_groups.html')
@@ -1043,10 +1017,10 @@ def generate_post_charts(engine):
         pointRadius='5',
     )
     mychart.set_params(
-        JSinline=0,
+        js_inline=0,
         ylabel='% still without TMDL',
         xlabel='Reporting cycle',
-        scaleBeginAtZero=1,
+        scale_begin_at_zero=1,
     )
     mychart.jekyll_write('../docs/_includes/charts/EPA303d_tmdl_survival.html')
     print(f'Survival chart done: {pct_still_waiting[-1]}% still waiting by {cycles[-1]}')

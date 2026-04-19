@@ -525,9 +525,9 @@ class CSOAnalysis():
             mychart.add_dataset(df_watershed_level[col].iloc[sel].values.tolist(),
                 col_label,
                 backgroundColor="'rgba({},0.8)'".format(", ".join([str(x) for x in hex2rgb(COLOR_CYCLE[i])])),
-                yAxisID= "'y-axis-0'")
-        mychart.set_params(JSinline = 0, ylabel = 'Fraction of households', xlabel='Watershed',
-            scaleBeginAtZero=1, x_autoskip=False)
+                yAxisID="'y'")
+        mychart.set_params(js_inline= 0, ylabel = 'Fraction of households', xlabel='Watershed',
+            scale_begin_at_zero=1, x_autoskip=False)
 
         mychart.jekyll_write(outpath)
 
@@ -549,9 +549,9 @@ class CSOAnalysis():
             mychart.add_dataset(df_town_level[col].iloc[sel].values.tolist(),
                 col_label,
                 backgroundColor="'rgba({},0.8)'".format(", ".join([str(x) for x in hex2rgb(COLOR_CYCLE[i])])),
-                yAxisID= "'y-axis-0'")
-        mychart.set_params(JSinline = 0, ylabel = 'Fraction of households', xlabel=self.municipality_col,
-            scaleBeginAtZero=1, x_autoskip=True)
+                yAxisID="'y'")
+        mychart.set_params(js_inline= 0, ylabel = 'Fraction of households', xlabel=self.municipality_col,
+            scale_begin_at_zero=1, x_autoskip=True)
 
         mychart.jekyll_write(outpath)
     
@@ -591,7 +591,7 @@ class CSOAnalysis():
                 dataset_label=f"Individual {level_name}s",
                 backgroundColor="'rgba(50,50,50,0.125)'",
                 showLine = "false",
-                yAxisID= "'y-axis-0'",
+                yAxisID="'y'",
                 fill="false",
                 hidden="'true'"
                 )
@@ -603,60 +603,49 @@ class CSOAnalysis():
                 showLine = "true",
                 borderColor="'rgba(50,50,200,1)'",
                 borderWidth=3,
-                yAxisID= "'y-axis-0'",
+                yAxisID="'y'",
                 fill="false",
                 pointRadius=6,
                 )
             ## Add uncertainty contour
             mychart.add_dataset(np.array([x_bin_cent, y_bin[0] - 1.65 * y_bin[1]]).T, 
                 "Average lower bound (5% limit)",
-                backgroundColor="'rgba(50,50,200,0.3)'", showLine = "true", yAxisID= "'y-axis-0'", borderWidth = 1, 
+                backgroundColor="'rgba(50,50,200,0.3)'", showLine = "true", yAxisID="'y'", borderWidth = 1, 
                 fill = 'false', pointBackgroundColor="'rgba(50,50,200,0.3)'", pointBorderColor="'rgba(50,50,200,0.3)'")
             mychart.add_dataset(np.array([x_bin_cent, y_bin[0] + 1.65 * y_bin[1]]).T, 
                 "Average upper bound (95% limit)",
-                backgroundColor="'rgba(50,50,200,0.3)'", showLine = "true", yAxisID= "'y-axis-0'", borderWidth = 1, fill = "'-1'", pointBackgroundColor="'rgba(50,50,200,0.3)'", pointBorderColor="'rgba(50,50,200,0.3)'")
+                backgroundColor="'rgba(50,50,200,0.3)'", showLine = "true", yAxisID="'y'", borderWidth = 1, fill = "'-1'", pointBackgroundColor="'rgba(50,50,200,0.3)'", pointBorderColor="'rgba(50,50,200,0.3)'")
 
             ## Set overall chart parameters
             mychart.set_params(
-                JSinline = 0, 
-                ylabel = f'Total volume of discharge ({self.cso_data_year}; Millions of gallons)', 
+                js_inline= 0,
+                ylabel = f'Total volume of discharge ({self.cso_data_year}; Millions of gallons)',
                 xlabel=col_label,
-                yaxis_type='linear',    
+                yaxis_type='linear',
                 y2nd = 0,
-                scaleBeginAtZero=1,
+                scale_begin_at_zero=1,
                 custom_tooltips = f"""
-                            mode: 'single',
+                            mode: 'nearest',
                             callbacks: {{
-                                label: function(tooltipItems, data) {{ 
+                                label: function(context) {{
                                     var title = '';
-                                    
-                                    if (tooltipItems.datasetIndex == 0) {{
-                                        title = point_label[tooltipItems.index];
+
+                                    if (context.datasetIndex == 0) {{
+                                        title = point_label[context.dataIndex];
                                     }} else {{
-                                        title = data.datasets[tooltipItems.datasetIndex].label;
+                                        title = context.dataset.label;
                                     }}
-                                    return [title, 
-                                            'Total volume of discharge: ' + Number(tooltipItems.yLabel).toFixed(2) + ' Millions of gallons', 
-                                            '{col_label}: ' + Number(tooltipItems.xLabel).toFixed(2), 
-                                            'Population: ' + pop_data[tooltipItems.index]
+                                    return [title,
+                                            'Total volume of discharge: ' + Number(context.parsed.y).toFixed(2) + ' Millions of gallons',
+                                            '{col_label}: ' + Number(context.parsed.x).toFixed(2),
+                                            'Population: ' + pop_data[context.dataIndex]
                                            ];
                                 }}
                             }}
             """
-                ) 
-            ## Update logarithm tick format as in https://github.com/chartjs/Chart.js/issues/3121
-            mychart.add_extra_code(
-            """
-            Chart.scaleService.updateScaleDefaults('linear', {
-            ticks: {
-                autoSkip: true,
-                autoSkipPadding: 100,
-                callback: function(tick, index, ticks) {
-                return tick.toLocaleString()
-                }
-            }
-            });
-            """)
+                )
+            ## Locale-formatted y-axis tick labels
+            mychart.set_locale_ticks('y')
             ## Add watershed dataset
             mychart.add_extra_code(
                 'var point_label = ["' + '","'.join(l) + '"];')

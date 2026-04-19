@@ -8,14 +8,14 @@ All Python scripts run in the `amend_python` conda environment:
 conda activate amend_python
 ```
 
-Scripts that are part of the CI pipeline use `requirements-ci.txt` (no PySTAN, geopandas, scipy, or joblib).  The full conda env is needed to run the analysis/visualization scripts locally.
+Scripts that are part of the CI pipeline use `requirements-ci.txt` (no PySTAN, geopandas, or joblib; scipy is imported inline only where needed and is not listed).  The full conda env is needed to run the analysis/visualization scripts locally.
 
 ## Repository layout
 
 ```
 get_data/        Data-fetch and database-assembly scripts (run these first)
 docs/data/       CSV output files and Jekyll data-source pages
-docs/_includes/  Generated chart HTML (Plotly/Bokeh, produced by analysis scripts)
+docs/_includes/  Generated chart HTML (Chart.js for charts, Plotly/Folium for maps)
 docs/assets/     Maps, figures, PDFs
 analysis/        Visualization and statistical analysis scripts
 ```
@@ -56,7 +56,7 @@ bash set_cors_gsutil.sh
 
 `.github/workflows/update-data.yml` — runs every Monday at 06:00 UTC, or on manual dispatch.  Steps: fetch → validate → assemble DB → commit CSVs → push.  Opens a GitHub issue labeled `data-update-failure` if any step fails.
 
-`.github/workflows/update-charts.yml` — triggers after a successful data update run.  Runs `analysis/dashboard_charts.py`, which generates 12 dashboard charts with `dash_` prefix. Uses `end_date=date.today()` for rolling CSO data window. See **Live Dashboard** section below for details.
+`.github/workflows/update-charts.yml` — triggers after a successful data update run.  Runs `analysis/dashboard_charts.py`, which generates all dashboard charts with `dash_` prefix. Uses `end_date=date.today()` for rolling CSO data window. See **Live Dashboard** section below for details.
 
 ## Known issues and workarounds
 
@@ -115,7 +115,7 @@ The live dashboard at `/dashboard.html` auto-updates weekly via `update-charts.y
 
 ### How it works
 
-**`analysis/dashboard_charts.py`** — Master script that generates all 12 dashboard charts:
+**`analysis/dashboard_charts.py`** — Master script that generates all dashboard charts:
 - Wraps calls to `MADEP_staff.generate_charts()`, `MADEP_enforcements_viz.generate_charts()`, and `ECOS_budgets_viz.generate_charts()` with `prefix='dash_'`
 - Instantiates `CSOAnalysisEEADP` with `end_date=date.today()` for rolling CSO data window, `make_regression=False` (Stan excluded from CI), `make_maps=False` (too heavy for weekly CI)
 - Calls dashboard-specific plot methods: `plot_monthly_volume_and_rainfall()`, `plot_monthly_modeled_vs_metered_fraction()`, `plot_monthly_volume_by_watershed()`, `plot_annual_volume_by_operator()`
@@ -126,16 +126,18 @@ The live dashboard at `/dashboard.html` auto-updates weekly via `update-charts.y
 - `ECOS_budgets_viz.py` — Generates 3 budget comparison charts
 - `EPA_303d_viz.py` — Generates 4 dashboard charts (impaired trend, causes, CSO-to-impaired, TMDL progress) + writes `docs/data/facts_EPA303d.yml`; `generate_post_charts()` also generates 2 analysis-post charts (watershed bar chart, folium TMDL map) — requires folium, excluded from CI
 
-**`docs/dashboard.md`** — Jekyll post at `/dashboard.html` that includes the 12 `dash_*.html` chart files. See file for data sources and methodology notes.
+**`docs/dashboard.md`** — Jekyll post at `/dashboard.html` that includes the `dash_*.html` chart files. See file for data sources and methodology notes.
 
 ### Key implementation details
 
-**Numpy serialization:** When passing pandas Series or numpy arrays to `chartjs.chart.add_dataset()`, always convert to a list of Python floats (not numpy types). Use:
-```python
-vals_list = [float(v) if pd.notna(v) else np.nan for v in vals.values]
-mychart.add_dataset(vals_list, label, ...)
-```
-Numpy types like `np.float64(0.123)` serialize to strings in JSON, causing "np is not defined" browser errors.
+**Numpy serialization:** `chartjs.py` automatically converts numpy scalars and NaN to JSON-safe values via `_NumpyEncoder`. You do not need to manually convert arrays before passing to `add_dataset()`.
+
+**Chart.js version:** The current version is defined in `analysis/chartjs.py` as `JS_URL` (currently `chart.js@4.4.4`). To upgrade:
+1. Update the version string in `JS_URL` in `chartjs.py`
+2. Check the [Chart.js migration guide](https://www.chartjs.org/docs/latest/migration/) for breaking API changes
+3. Update `make_chart_canvas()` in `chartjs.py` if the scale/plugin config API changed
+4. Search for any hardcoded CDN URLs in `analysis/` scripts (e.g. `_CHARTJS_CDN` in `EPA_303d_viz.py`) and update those too
+5. Re-run `dashboard_charts.py` and visually verify charts render correctly
 
 **Date handling:** Use `pd.to_datetime()` when comparing Python `date` objects with pandas datetime64 values. Avoids `TypeError: ufunc 'isnan' not supported` errors.
 
