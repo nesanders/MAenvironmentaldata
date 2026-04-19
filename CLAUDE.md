@@ -15,7 +15,7 @@ Scripts that are part of the CI pipeline use `requirements-ci.txt` (no PySTAN, g
 ```
 get_data/        Data-fetch and database-assembly scripts (run these first)
 docs/data/       CSV output files and Jekyll data-source pages
-docs/_includes/  Generated chart HTML (Chart.js, produced by analysis scripts)
+docs/_includes/  Generated chart HTML (Chart.js for charts, Plotly/Folium for maps)
 docs/assets/     Maps, figures, PDFs
 analysis/        Visualization and statistical analysis scripts
 ```
