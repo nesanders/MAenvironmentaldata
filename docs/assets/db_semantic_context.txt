@@ -1,5 +1,5 @@
 # AMEND Database Semantic Context
-Generated: 2026-04-16
+Generated: 2026-04-19
 
 ## Global Data Notes
 
@@ -157,7 +157,7 @@ population_acs52014	per_capita_income_acs52014	Subdivision
 ---
 
 ### Census_statepop (57 rows)
-Massachusetts state population by year (2000–2016). Wide format: each column is a year.
+US state population estimates by year (2000–2024). Wide format: each column is a year. Sources: Census intercensal 2000–2009, vintage-2019 2010–2019, vintage-2024 2020–2024.
 
 ```sql
 CREATE TABLE "Census_statepop" (
@@ -179,17 +179,25 @@ CREATE TABLE "Census_statepop" (
 	"2014" FLOAT, 
 	"2015" FLOAT, 
 	"2016" FLOAT, 
+	"2017" FLOAT, 
+	"2018" FLOAT, 
+	"2019" FLOAT, 
+	"2020" FLOAT, 
+	"2021" FLOAT, 
+	"2022" FLOAT, 
+	"2023" FLOAT, 
+	"2024" FLOAT, 
 	"State" TEXT
 )
 ```
 
 /* 5 rows from Census_statepop:
-2000	2001	2002	2003	2004	2005	2006	2007	2008	2009	2010	2011	2012	2013	2014	2015	2016	State
-282162411.0	284968955.0	287625193.0	290107933.0	292805298.0	295516599.0	298379912.0	301231207.0	304093966.0	306771529.0	309348193.0	311663358.0	313998379.0	316204908.0	318563456.0	320896618.0	323127513.0	United States
-53666295.0	53915522.0	54143915.0	54334453.0	54423533.0	54451230.0	54522659.0	54653362.0	54875926.0	55133101.0	55388056.0	55632766.0	55829059.0	55988771.0	56116791.0	56184737.0	56209510.0	Northeast
-64491431.0	64776531.0	65018293.0	65276954.0	65532305.0	65751872.0	66028555.0	66293689.0	66523935.0	66748437.0	66978602.0	67153331.0	67332320.0	67543948.0	67726368.0	67838387.0	67941429.0	Midwest
-100565549.0	101849575.0	103150787.0	104380188.0	105883977.0	107479771.0	109076933.0	110688742.0	112184930.0	113548615.0	114863114.0	116061801.0	117299171.0	118424320.0	119696311.0	121039206.0	122319574.0	South
-63439136.0	64427327.0	65312198.0	66116338.0	66965483.0	67833726.0	68751765.0	69595414.0	70509175.0	71341376.0	72118421.0	72815460.0	73537829.0	74247869.0	75023986.0	75834288.0	76657000.0	West
+2000	2001	2002	2003	2004	2005	2006	2007	2008	2009	2010	2011	2012	2013	2014	2015	2016	2017	2018	2019
+282162411.0	284968955.0	287625193.0	290107933.0	292805298.0	295516599.0	298379912.0	301231207.0	304093966.0	306771529.0	309321666.0	311556874.0	313830990.0	315993715.0	318301008.0	320635163.0	322941311.0	324985539.0	326687501.0	328239523.0
+53666295.0	53915522.0	54143915.0	54334453.0	54423533.0	54451230.0	54522659.0	54653362.0	54875926.0	55133101.0	55380134.0	55604223.0	55775216.0	55901806.0	56006011.0	56034684.0	56042330.0	56059240.0	56046620.0	55982803.0
+64491431.0	64776531.0	65018293.0	65276954.0	65532305.0	65751872.0	66028555.0	66293689.0	66523935.0	66748437.0	66974416.0	67157800.0	67336743.0	67560379.0	67745167.0	67860583.0	67987540.0	68126781.0	68236628.0	68329004.0
+100565549.0	101849575.0	103150787.0	104380188.0	105883977.0	107479771.0	109076933.0	110688742.0	112184930.0	113548615.0	114866680.0	116006522.0	117241208.0	118364400.0	119624037.0	120997341.0	122351760.0	123542189.0	124569433.0	125580448.0
+63439136.0	64427327.0	65312198.0	66116338.0	66965483.0	67833726.0	68751765.0	69595414.0	70509175.0	71341376.0	72100436.0	72788329.0	73477823.0	74167130.0	74925793.0	75742555.0	76559681.0	77257329.0	77834820.0	78347268.0
 */
 
 **Column notes:**
@@ -197,8 +205,8 @@ CREATE TABLE "Census_statepop" (
 
 ---
 
-### ECOS_budgets (3,210 rows)
-ECOS (Environmental Council of the States) budget survey comparing state environmental agency budgets nationally. Key fields: State, BudgetDetail, value, Year.
+### ECOS_budgets (4,694 rows)
+ECOS (Environmental Council of the States) budget survey comparing state environmental agency budgets nationally. Data covers FY2009–FY2023 from four published Green Reports. Key fields: State, BudgetDetail, value, Year.
 
 ```sql
 CREATE TABLE "ECOS_budgets" (
@@ -212,21 +220,21 @@ CREATE TABLE "ECOS_budgets" (
 
 /* 5 rows from ECOS_budgets:
 State	BudgetDetail	value	Year
-Alabama	Amount from Federal Government	NULL	2012
+Alabama	Amount from Federal Government	16134988	2013_old
 Alabama	Amount from Federal Government	16961056	2014
 Alabama	Amount from Federal Government	18374332	2015
-Alabama	Amount from Federal Government	NULL	2011_old
-Alabama	Amount from Federal Government	NULL	2013
+Alabama	Amount from Federal Government	18112231	2016
+Alabama	Amount from Federal Government	18112231	2016_old
 */
 
 **Column notes:**
-- `State`: Washington, Rhode Island, Ohio, Wyoming, Utah, South Dakota, Kentucky, Wisconsin, Massachusetts, Maine, Indiana, Colorado, Oregon, Oklahoma, Illinois, Idaho, Virginia, Texas, Tennessee, Nevada, Maryland, Montana, Mississippi, South Carolina, New York, ... (51 total)
-- `BudgetDetail`: Status of Budget, Percent from General Fund, Percent from Fees / Other, Amount from General Fund, Amount from Fees / Other, Percent from Federal Government, Amount from Federal Government, Environmental Agency Budget, Amount of Budget from SRF, Environmental Agency Budget (SRF Added), Environmental Agency Budget (No SRF), Environmental Agency Budget Excludes SRF, Percent from General Fund - Operating, Percent from General Fund - Capital, Percent from Fees / Other - Operating, Percent from Fees / Other - Capital, Percent from Federal Government - Operating, Percent from Federal Government - Capital, Percent from Bonds, Environmental Agency Budget - Operating, Environmental Agency Budget - Capital, Capital spending included in the Environmental Agency Budget, Amount from General Fund - Operating, Amount from General Fund - Capital, Amount from Fees / Other - Operating, ... (29 total)
-- `Year`: 2013, 2012, 2011_old, 2015, 2014, 2013_old, 2011, 2010, 2009, 2016
+- `State`: Washington, Illinois, Virginia, Maryland, South Dakota, Maine, Idaho, Wisconsin, Oklahoma, Wyoming, Utah, Vermont, Montana, West Virginia, New Hampshire, Alabama, Texas, Pennsylvania, Colorado, Massachusetts, North Carolina, Michigan, Minnesota, Georgia, Nebraska, ... (53 total)
+- `BudgetDetail`: Status of Budget, Environmental Agency Budget, Percent from General Fund, Percent from Federal Government, Amount from General Fund, Percent from Fees / Other, Amount from Federal Government, Amount from Fees / Other, Amount of Budget from SRF, Environmental Agency Budget (SRF Added), Environmental Agency Budget Excludes SRF, Percent from General Fund - Operating, Percent from General Fund - Capital, Percent from Fees / Other - Operating, Percent from Fees / Other - Capital, Percent from Federal Government - Operating, Percent from Federal Government - Capital, Percent from Bonds, Environmental Agency Budget - Operating, Environmental Agency Budget - Capital, Capital spending included in the Environmental Agency Budget
+- `Year`: 2017, 2016, 2019, 2018, 2016_old, 2023, 2022, 2020, 2012, 2011_old, 2021, 2013, 2015, 2014, 2013_old, 2011, 2010, 2009
 
 ---
 
-### EPARegion1_permits (4,444 rows)
+### EPARegion1_permits (4,456 rows)
 EPA Region 1 NPDES (water discharge) permit listings for MA facilities. Key fields: Facility_Name, Permit_Number, Date_of_Issuance, Watershed, State, Stage.
 
 ```sql
@@ -855,7 +863,7 @@ MOSES - Engineers/Scientists	MOSES - Engineers/Scientists (09)	DEPARTMENT OF ENV
 
 ---
 
-### MAEEADP_CSO (17,575 rows)
+### MAEEADP_CSO (17,729 rows)
 EEA Data Portal: Combined Sewer Overflow (CSO) and Sanitary Sewer Overflow (SSO) discharge incidents reported to MassDEP. Each row is one discharge event at a specific outfall. Key fields: waterBody, municipality, volumnOfEvent (gallons), latitude/longitude, incidentDate, Year. IMPORTANT: Data spans June 2022 to present — years available: 2022, 2023, 2024, 2025, 2026. Do NOT assume data ends in an earlier year; always query the full range and check MAX(Year) if unsure.
 
 ```sql
@@ -920,7 +928,7 @@ Unnamed: 0	incidentId	incidentNumber	incidentDate	incidentTime	amPm	reporterClas
 
 ---
 
-### MAEEADP_DrinkingWater (168,948 rows)
+### MAEEADP_DrinkingWater (169,287 rows)
 EEA Data Portal: Annual drinking water quality monitoring results by water system. Key fields: Year, PWSName (public water system name), ContaminantGroup, Result.
 
 ```sql
@@ -949,7 +957,7 @@ Year	PWSName	ContaminantGroup	RaworFinished	Result
 
 ---
 
-### MAEEADP_Enforcement (55,116 rows)
+### MAEEADP_Enforcement (55,142 rows)
 EEA Data Portal: MassDEP enforcement actions against regulated entities, 1996–present. Each row is one action. Key fields: Town, Program, EnforcementType, PenaltyAssessed, FacilityId, FacilityName, EnforcementDate. Use with MAEEADP_Facility via FacilityId.
 
 ```sql
@@ -985,7 +993,7 @@ Id	Town	Program	EnforcementType	PenaltyAssessed	FacilityId	FacilityName	Enforcem
 
 ---
 
-### MAEEADP_Facility (53,474 rows)
+### MAEEADP_Facility (53,482 rows)
 EEA Data Portal: Regulated facilities tracked by MassDEP/EEA. Key fields: Id (joins to FacilityId in other tables), Town, FacilityType, FacilityName, Program, Active.
 
 ```sql
@@ -1020,7 +1028,7 @@ Id	StreetName	Town	FacilityType	FacilityName	Program	ProgramSpecificId	Active
 
 ---
 
-### MAEEADP_Inspection (84,188 rows)
+### MAEEADP_Inspection (84,244 rows)
 EEA Data Portal: MassDEP inspection records for regulated facilities. Key fields: Town, Program, FacilityId, FacilityName, InspectionType, InspectionDate.
 
 ```sql
@@ -1054,7 +1062,7 @@ Id	Town	Program	FacilityId	FacilityName	InspectionType	InspectionDate
 
 ---
 
-### MAEEADP_Permit (101,053 rows)
+### MAEEADP_Permit (101,144 rows)
 EEA Data Portal: Environmental permits issued by MassDEP. Key fields: Town, PermitType, Subtype, Program, Status, FacilityId, FacilityName, FinalDecisionDate.
 
 ```sql

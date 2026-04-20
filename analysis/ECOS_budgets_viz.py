@@ -8,6 +8,74 @@ color_cycle = [c['color'] for c in list(mpl.rcParams['axes.prop_cycle'])]
 import locale
 locale.setlocale(locale.LC_ALL, 'en_US.UTF-8')
 
+# ---------------------------------------------------------------------------
+# EPA Region groupings for legend clustering
+# ---------------------------------------------------------------------------
+EPA_REGIONS = [
+    ('Region 1 – New England',      ['Connecticut', 'Maine', 'Massachusetts', 'New Hampshire', 'Rhode Island', 'Vermont']),
+    ('Region 2 – NY/NJ/PR',         ['New Jersey', 'New York', 'Puerto Rico']),
+    ('Region 3 – Mid-Atlantic',     ['Delaware', 'District of Columbia', 'Maryland', 'Pennsylvania', 'Virginia', 'West Virginia']),
+    ('Region 4 – Southeast',        ['Alabama', 'Florida', 'Georgia', 'Kentucky', 'Mississippi', 'North Carolina', 'South Carolina', 'Tennessee']),
+    ('Region 5 – Great Lakes',      ['Illinois', 'Indiana', 'Michigan', 'Minnesota', 'Ohio', 'Wisconsin']),
+    ('Region 6 – South Central',    ['Arkansas', 'Louisiana', 'New Mexico', 'Oklahoma', 'Texas']),
+    ('Region 7 – Central',          ['Iowa', 'Kansas', 'Missouri', 'Nebraska']),
+    ('Region 8 – Mountain',         ['Colorado', 'Montana', 'North Dakota', 'South Dakota', 'Utah', 'Wyoming']),
+    ('Region 9 – Pacific/Southwest',['Arizona', 'California', 'Hawaii', 'Nevada']),
+    ('Region 10 – Northwest',       ['Alaska', 'Idaho', 'Oregon', 'Washington']),
+    ('Territories',                 ['Northern Mariana Islands']),
+]
+
+# Reverse mapping: state → region label
+_STATE_TO_REGION = {
+    state: region
+    for region, states in EPA_REGIONS
+    for state in states
+}
+
+# States shown by default (visible on load)
+_DEFAULT_VISIBLE = {'Massachusetts', 'New Hampshire', 'Vermont', 'Maine', 'Rhode Island'}
+
+
+# JS snippet injected into every chart: makes region-header legend entries
+# non-clickable and visually distinct (no colored box, italic text).
+_REGION_LEGEND_JS = """\
+;(function() {
+    try {
+        var origGenLabels = (Chart.defaults.plugins.legend.labels || {}).generateLabels;
+        if (!origGenLabels) return;
+        chart_data.options.plugins.legend.labels = {
+            generateLabels: function(chart) {
+                var items = origGenLabels(chart);
+                items.forEach(function(item) {
+                    var ds = chart.data.datasets[item.datasetIndex];
+                    if (ds && ds._isRegionHeader) {
+                        item.fillStyle   = 'transparent';
+                        item.strokeStyle = 'transparent';
+                        item.lineWidth   = 0;
+                        item.hidden      = false;
+                        item.fontStyle   = 'italic';
+                    }
+                });
+                return items;
+            }
+        };
+        chart_data.options.plugins.legend.onClick = function(e, legendItem, legend) {
+            var ds = legend.chart.data.datasets[legendItem.datasetIndex];
+            if (ds && ds._isRegionHeader) return;
+            Chart.defaults.plugins.legend.onClick.call(this, e, legendItem, legend);
+        };
+        chart_data.options.plugins.legend.onHover = function(e, legendItem, legend) {
+            var ds = legend.chart.data.datasets[legendItem.datasetIndex];
+            e.native.target.style.cursor = (ds && ds._isRegionHeader) ? 'default' : 'pointer';
+        };
+        chart_data.options.plugins.legend.onLeave = function(e, legendItem, legend) {
+            e.native.target.style.cursor = 'default';
+        };
+    } catch(err) { /* legend customisation failed, fall back to default */ }
+})();
+"""
+
+
 def safe_cast(x, to_type=int):
 	y = []
 	for xx in x:
@@ -16,6 +84,58 @@ def safe_cast(x, to_type=int):
 		except:
 			pass
 	return np.array(y)
+
+
+def _add_datasets_by_region(mychart, states_in_data, get_vals_fn, ECOS_years):
+	"""Add datasets sorted by EPA region with region-header spacers between groups."""
+	null_data = [None] * len(ECOS_years)
+	states_set = set(states_in_data)
+
+	all_sorted_states = [
+		s for _, region_states in EPA_REGIONS for s in region_states if s in states_set
+	]
+	unregioned = sorted(s for s in states_set if s not in _STATE_TO_REGION)
+	all_sorted_states += unregioned
+
+	color_idx = {state: i for i, state in enumerate(all_sorted_states)}
+
+	for region_label, region_states in EPA_REGIONS:
+		states_here = [s for s in region_states if s in states_set]
+		if not states_here:
+			continue
+		mychart.add_dataset(
+			null_data,
+			region_label,
+			backgroundColor="'transparent'",
+			borderColor="'transparent'",
+			borderWidth=0,
+			pointRadius=0,
+			hidden='false',
+			_isRegionHeader='true',
+		)
+		for state in states_here:
+			ci = color_idx[state]
+			vals_list, color_str = get_vals_fn(state, ci)
+			mychart.add_dataset(
+				vals_list,
+				state,
+				backgroundColor=f"'{color_str}'",
+				borderColor=f"'{color_str}'",
+				stack="'annual'", yAxisID="'y'", fill="false",
+				hidden='false' if state in _DEFAULT_VISIBLE else 'true',
+			)
+
+	for state in unregioned:
+		ci = color_idx[state]
+		vals_list, color_str = get_vals_fn(state, ci)
+		mychart.add_dataset(
+			vals_list,
+			state,
+			backgroundColor=f"'{color_str}'",
+			borderColor=f"'{color_str}'",
+			stack="'annual'", yAxisID="'y'", fill="false",
+			hidden='true',
+		)
 
 
 def generate_charts(engine, prefix=''):
@@ -63,77 +183,70 @@ def generate_charts(engine, prefix=''):
 
 	sel = (s_data['BudgetDetail']=="Environmental Agency Budget") & s_data.Year.isin(ECOS_years.astype(str))
 	s_data_g = s_data[sel].groupby('State')
+	states_budget = list(s_data_g.groups.keys())
 
-	## Establish chart
-	mychart = chartjs.chart("ECOS Budgets by State Per Year", "Line", 640, 600)
-	mychart.set_labels(ECOS_years)
-	for i,state in enumerate(s_data_g.groups.keys()):
-		vals = s_data_g.get_group(state).set_index('Year').reindex(ECOS_years).value.astype(float) * inf_data_sel['correct'] / 1e6
-		# Convert numpy array to list of Python floats for JSON serialization
+	def get_budget_vals(state, ci):
+		vals = pd.to_numeric(s_data_g.get_group(state).set_index('Year').reindex(ECOS_years).value, errors='coerce') * inf_data_sel['correct'] / 1e6
 		vals_list = [float(v) if pd.notna(v) else np.nan for v in vals.values]
-		mychart.add_dataset(
-			vals_list,
-			state,
-			backgroundColor="'"+(color_cycle*10)[i]+"'",
-			stack="'annual'", yAxisID="'y'", fill = "false",
-			hidden = 'false' if state in ['Massachusetts','New Hampshire','Vermont','Maine','Rhode Island'] else 'true')
-	mychart.set_params(js_inline= 0, ylabel = 'Reported Environmental Agency Budget (ECOS, $M)', xlabel='Year',
+		return vals_list, (color_cycle * 10)[ci]
+
+	mychart = chartjs.chart("ECOS Budgets by State Per Year", "Line", 640, 650)
+	mychart.set_labels(ECOS_years)
+	_add_datasets_by_region(mychart, states_budget, get_budget_vals, ECOS_years)
+	mychart.add_extra_code(_REGION_LEGEND_JS)
+	mychart.set_params(js_inline=0, ylabel='Reported Environmental Agency Budget (ECOS, $M)', xlabel='Year',
 		scale_begin_at_zero=1)
-
 	mychart.jekyll_write(f'../docs/_includes/charts/{prefix}ECOS_budget_peryear_bystate.html')
-
-
 
 
 	#############################
 	## Show per capita budget per year by state
 	#############################
 
-	## Establish chart
-	mychart = chartjs.chart("ECOS Budget per capita by State Per Year", "Line", 640, 600)
+	def get_percap_vals(state, ci):
+		budget = pd.to_numeric(
+			s_data_g.get_group(state).set_index('Year').reindex(ECOS_years).value,
+			errors='coerce',
+		)
+		pop_rows = statepop_data[statepop_data['State'] == state]
+		if pop_rows.empty:
+			vals_list = [np.nan] * len(ECOS_years)
+		else:
+			# statepop columns are year strings; build a Series indexed by year
+			pop_cols = [c for c in pop_rows.columns if c in set(ECOS_years)]
+			pop_series = pop_rows[pop_cols].iloc[0].reindex(ECOS_years).astype(float)
+			vals = budget * inf_data_sel['correct'] / pop_series / 1e3
+			vals_list = [float(v) if pd.notna(v) else np.nan for v in vals.values]
+		return vals_list, (color_cycle * 10)[ci]
+
+	mychart = chartjs.chart("ECOS Budget per capita by State Per Year", "Line", 640, 650)
 	mychart.set_labels(ECOS_years)
-	for i,state in enumerate(s_data_g.groups.keys()):
-		statepop_data_sel = statepop_data[statepop_data['State']==state].T.reindex(ECOS_years)
-		vals = s_data_g.get_group(state).set_index('Year').reindex(ECOS_years).value.astype(float) * (inf_data_sel['correct'] / statepop_data_sel.T) / 1e3
-		# Convert numpy array to list of Python floats for JSON serialization
-		vals_list = [float(v) if pd.notna(v) else np.nan for v in vals.astype(float).values[0]]
-		mychart.add_dataset(
-			vals_list,
-			state,
-			backgroundColor="'"+(color_cycle*10)[i]+"'",
-			stack="'annual'", yAxisID="'y'", fill = "false",
-			hidden = 'false' if state in ['Massachusetts','New Hampshire','Vermont','Maine','Rhode Island'] else 'true')
-	mychart.set_params(js_inline= 0, ylabel = 'Reported Environmental Agency Budget (ECOS, $k per capita)', xlabel='Year',
+	_add_datasets_by_region(mychart, states_budget, get_percap_vals, ECOS_years)
+	mychart.add_extra_code(_REGION_LEGEND_JS)
+	mychart.set_params(js_inline=0, ylabel='Reported Environmental Agency Budget (ECOS, $k per capita)', xlabel='Year',
 		scale_begin_at_zero=1)
-
 	mychart.jekyll_write(f'../docs/_includes/charts/{prefix}ECOS_budget_percap_peryear_bystate.html')
-
 
 
 	#############################
 	## Show federal contribution per year by state
 	#############################
 
-
 	sel = (s_data['BudgetDetail']=="Percent from Federal Government") & s_data.Year.isin(ECOS_years.astype(str))
 	s_data_g_fed = s_data[sel].groupby('State')
+	states_fed = list(s_data_g_fed.groups.keys())
 
-	## Establish chart
-	mychart = chartjs.chart("ECOS Federal Contribution by State Per Year", "Line", 640, 600)
-	mychart.set_labels(ECOS_years)
-	for i,state in enumerate(s_data_g_fed.groups.keys()):
-		vals = s_data_g_fed.get_group(state).set_index('Year').reindex(ECOS_years).value.astype(float)
-		# Convert pandas Series to list of Python floats for JSON serialization
+	def get_fed_vals(state, ci):
+		vals = pd.to_numeric(s_data_g_fed.get_group(state).set_index('Year').reindex(ECOS_years).value, errors='coerce')
 		vals_list = [float(v) if pd.notna(v) else np.nan for v in vals.values]
-		mychart.add_dataset(
-			vals_list,
-			state,
-			backgroundColor="'"+(color_cycle*10)[i]+"'",
-			stack="'annual'", yAxisID="'y'", fill = "false",
-			hidden = 'false' if state in ['Massachusetts','New Hampshire','Vermont','Maine','Rhode Island'] else 'true')
-	mychart.set_params(js_inline= 0, ylabel = 'Environmental Agency Budget % from Federal Government (ECOS)', xlabel='Year',
-		scale_begin_at_zero=1)
+		return vals_list, (color_cycle * 10)[ci]
 
+	mychart = chartjs.chart("ECOS Federal Contribution by State Per Year", "Line", 640, 650)
+	mychart.set_labels(ECOS_years)
+	_add_datasets_by_region(mychart, states_fed, get_fed_vals, ECOS_years)
+	mychart.add_extra_code(_REGION_LEGEND_JS)
+	mychart.set_params(js_inline=0, ylabel='Environmental Agency Budget % from Federal Government (ECOS)', xlabel='Year',
+		scale_begin_at_zero=1)
 	mychart.jekyll_write(f'../docs/_includes/charts/{prefix}ECOS_fedcont_peryear_bystate.html')
 
 

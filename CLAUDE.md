@@ -155,7 +155,7 @@ The live dashboard at `/dashboard.html` auto-updates weekly via `update-charts.y
 | Enforcement overall | EEA Data Portal | Yes | 1996–2026 (substantive actions only, routine notices filtered) |
 | Enforcement vs funding | EEA DP + CTHRU Socrata | Yes | Both update Monday |
 | Enforcement by type | EEA Data Portal MAEEADP_Enforcement | Yes | Shows substantive enforcement action types through 2026; filtered from 54k+ routine notices |
-| ECOS per-capita spending | ECOS budget survey | Static | Fetched manually; update frequency depends on ECOS data release schedule |
+| ECOS per-capita spending | ECOS budget survey | Static | Fetched manually; data covers FY2009–2023 (last updated from FY2016–2019 and FY2020–2023 reports, April 2026). Next report expected ~2028. Run `get_ECOS_data.py` when new report is published. |
 | CSO annual volume + rainfall | EEA DP CSO + NOAA ACIS | Yes | Uses `end_date=date.today()` for rolling window |
 | CSO monthly counts + rainfall | EEA DP CSO + NOAA ACIS | Yes | Same as above; rainfall overlaid as line |
 | CSO by operator (annual trends) | EEA DP CSO | Yes | Top 10 operators shown; updated Monday |
@@ -172,7 +172,7 @@ Dashboard includes italicized notes where data is static (budget, ECOS, seniorit
 
 **When data sources change:**
 - If SSA website unblocks automated access, uncomment the `get_SSAWages.py` call in CI and it will auto-fetch real AWI data (currently using cached 2023-02-03 version)
-- If ECOS releases new data, manually fetch and run `ECOS_budgets_viz.generate_charts()` to update dashboard
+- If ECOS releases new data: download the PDF to `get_data/ECOS/`, run `get_ECOS_data.py` (from `get_data/`), then `assemble_db.py`, then `dashboard_charts.py`. ECOS publishes roughly every 3–5 years; current data covers FY2009–2023.
 - If EEA DP schema changes, test locally first, then update CI script
 - CTHRU budget data (DEP, DCR, EEA, Fish&Game) auto-updates Monday; FY2001–2004 from cached MassBudget do not update
 

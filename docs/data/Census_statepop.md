@@ -21,8 +21,8 @@ In addition to including it in the integrated {{ site.data.site_config.site_abbr
 
 <!-- Note: need to have the for loop markup on the same line as the table rows as described here: http://stackoverflow.com/questions/35642820/jekyll-how-to-use-for-loop-to-generate-table-row-within-the-same-table-inside-m -->
 
-| State | 2000 | 2001 |2002 | 2003 | 2004 | 2005 | 2006 | 2007 | 2008 | 2009 | 2010 | 2011 | 2012 | 2013 | 2014 | 2015 | 2016 |
+| State | 2000 | 2001 | 2002 | 2003 | 2004 | 2005 | 2006 | 2007 | 2008 | 2009 | 2010 | 2011 | 2012 | 2013 | 2014 | 2015 | 2016 | 2017 | 2018 | 2019 | 2020 | 2021 | 2022 | 2023 | 2024 |
 | --- | --- | --- |{% for row in site.data.Census_statepop %}
-| {{ row.State }} | {{ row["2000"] }} | {{ row["2001"] }} | {{ row["2002"] }} | {{ row["2003"] }} | {{ row["2004"] }} | {{ row["2005"] }} | {{ row["2006"] }} | {{ row["2007"] }} | {{ row["2008"] }} | {{ row["2009"] }} | {{ row["2010"] }} | {{ row["2011"] }} | {{ row["2012"] }} | {{ row["2013"] }} | {{ row["2014"] }} | {{ row["2015"] }} | {{ row["2016"] }} |{% endfor %}
+| {{ row.State }} | {{ row["2000"] }} | {{ row["2001"] }} | {{ row["2002"] }} | {{ row["2003"] }} | {{ row["2004"] }} | {{ row["2005"] }} | {{ row["2006"] }} | {{ row["2007"] }} | {{ row["2008"] }} | {{ row["2009"] }} | {{ row["2010"] }} | {{ row["2011"] }} | {{ row["2012"] }} | {{ row["2013"] }} | {{ row["2014"] }} | {{ row["2015"] }} | {{ row["2016"] }} | {{ row["2017"] }} | {{ row["2018"] }} | {{ row["2019"] }} | {{ row["2020"] }} | {{ row["2021"] }} | {{ row["2022"] }} | {{ row["2023"] }} | {{ row["2024"] }} |{% endfor %}
 {: .sortable}
 
