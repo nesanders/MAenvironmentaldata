@@ -148,4 +148,4 @@ All major providers (Groq, OpenAI, Google Gemini) allow creating limited-scope A
 * [Plotly](https://plotly.com/javascript/) — interactive choropleth maps (all analysis maps)
 * [MapShaper](http://mapshaper.org/) — convert MassGIS shapefiles to GeoJSON
 * [sql.js](https://github.com/kripken/sql.js/blob/master/README.md) — browser-based SQLite querying
-* [Tabula](http://tabula.technology/) — extract tables from PDFs
+* [pdfplumber](https://github.com/jsvine/pdfplumber) — programmatic PDF table extraction (used for ECOS reports 2016–2023 via `get_ECOS_data.py`)

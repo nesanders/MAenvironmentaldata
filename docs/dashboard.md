@@ -136,7 +136,7 @@ comparisons. Budget figures are adjusted for inflation using the SSA Average Wag
 
 ### Per-capita environmental spending by state
 
-*Note: ECOS budget data is fetched manually and does not update automatically each week. Last updated [check commit history](https://github.com/nesanders/MAenvironmentaldata).*
+*Note: ECOS budget data is fetched manually and does not update automatically each week. Current data covers FY2009–FY2023, last updated from the [ECOS FY2020–2023 Green Report](https://www.ecos.org/documents/ecos-green-report-status-of-state-environmental-agency-budgets-fiscal-years-2020-to-2023/) (published August 2025).*
 
 {% include charts/dash_ECOS_budget_percap_peryear_bystate.html %}
 

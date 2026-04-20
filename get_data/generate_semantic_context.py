@@ -82,7 +82,8 @@ TABLE_DESCRIPTIONS = {
     ),
     'ECOS_budgets': (
         'ECOS (Environmental Council of the States) budget survey comparing state environmental '
-        'agency budgets nationally. Key fields: State, BudgetDetail, value, Year.'
+        'agency budgets nationally. Data covers FY2009–FY2023 from four published Green Reports. '
+        'Key fields: State, BudgetDetail, value, Year.'
     ),
     'MA_precipitation_daily': (
         'Daily precipitation averages across Massachusetts weather stations (NOAA ACIS). '
@@ -98,8 +99,9 @@ TABLE_DESCRIPTIONS = {
         'Key fields: Subdivision, population_acs52014, per_capita_income_acs52014.'
     ),
     'Census_statepop': (
-        'Massachusetts state population by year (2000–2016). Wide format: each column '
-        'is a year.'
+        'US state population estimates by year (2000–2024). Wide format: each column '
+        'is a year. Sources: Census intercensal 2000–2009, vintage-2019 2010–2019, '
+        'vintage-2024 2020–2024.'
     ),
     'SSAWages': (
         'Social Security Administration Average Wage Index by year (used to adjust '

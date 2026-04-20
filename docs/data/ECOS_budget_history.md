@@ -12,6 +12,8 @@ ancillary: 1
 * [2009-2011 ECOS report (published August 2010)](../assets/ECOS_reports/ECOS_state env budget, green report, 2009-2011.pdf)
 * [2011-2013 ECOS report (published September 2012)](../assets/ECOS_reports/September-2012-Green-Report.pdf)
 * [2015-2017 ECOS report (published March 2017)](../assets/ECOS_reports/Budget-Report-FINAL-3_15_17-Final-4.pdf)
+* [2016-2019 ECOS report (published June 2020)](https://www.ecos.org/wp-content/uploads/2020/06/ECOS-Green-Report-Status-of-State-Environmental-Agency-Budgets-Fiscal-Years-2016-to-2019.pdf)
+* [2020-2023 ECOS report (published August 2025)](https://www.ecos.org/wp-content/uploads/2025/08/Final-ECOS-2020-2023-Budget-Report.pdf)
 
 The years 2011 and 2013 are included in two of the above reports.  In some cases, different figures are reported for the same state in these years between the two overlapping reports, presumably reflecting changes between the enacted budget and actual expenditures.  In our analyses, we use the data from the later report, and also provide the earlier data in our archive labeled as "2011_old" and "2013_old".
 
@@ -23,7 +25,7 @@ Note also that the values in this table are not adjusted for monetary inflation.
 
 The data from these reports have been archived on this site, last updated on **{{ site.data.ts_update_ECOS_budget_history.updated | date: "%-d %B %Y %I:%M %P" }}**.
 
-See [https://ballotpedia.org/Environmental_spending_in_the_50_states](Ballotpedia) for an alternate accounting of state environmental budget figures.
+See [Ballotpedia](https://ballotpedia.org/Environmental_spending_in_the_50_states) for an alternate accounting of state environmental budget figures.
 
 ## Download archive
 
@@ -33,7 +35,7 @@ In addition to including it in the integrated {{ site.data.site_config.site_abbr
 
 *Right click and save image to export the figure.*
 
-The fiscal data in these visualizations has been corrected for inflation to 2016 dollars using the [SSA wage data](SSA_wages.html).
+The fiscal data in these visualizations has been corrected for inflation to 2024 dollars using the [SSA wage data](SSA_wages.html).
 
 ### State agency budgets comparison by year:
 
@@ -50,14 +52,14 @@ The fiscal data in these visualizations has been corrected for inflation to 2016
 
 ## Data table
 
-*Click on the table headers to re-sort by that field.*
+*Showing the first 50 rows as a sample. Download the full archive as [CSV](ECOS_budget_history.csv).*
 
 
 <!-- Note: need to have the for loop markup on the same line as the table rows as described here: http://stackoverflow.com/questions/35642820/jekyll-how-to-use-for-loop-to-generate-table-row-within-the-same-table-inside-m -->
 
 
 | State | Year | Budget Detail | Value | 
-| --- | --- | --- | --- |{% for row in site.data.ECOS_budget_history %}
+| --- | --- | --- | --- |{% for row in site.data.ECOS_budget_history limit:50 %}
 | {{ row.State }} | {{ row.Year }} | {{ row.BudgetDetail }} | {{ row.value }} |{% endfor %}
 {: .sortable}
 
