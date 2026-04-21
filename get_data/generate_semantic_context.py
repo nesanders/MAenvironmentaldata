@@ -18,7 +18,7 @@ TABLE_DESCRIPTIONS = {
     'MAEEADP_CSO': (
         'EEA Data Portal: Combined Sewer Overflow (CSO) and Sanitary Sewer Overflow (SSO) '
         'discharge incidents reported to MassDEP. Each row is one discharge event at a '
-        'specific outfall. Key fields: waterBody, municipality, volumnOfEvent (gallons), '
+        'specific outfall. Key fields: waterBody, municipality, volumeOfEvent / volumnOfEvent (gallons), '
         'latitude/longitude, incidentDate, Year. '
         'IMPORTANT: Data spans June 2022 to present — years available: {cso_year_range}. '
         'Do NOT assume data ends in an earlier year; always query the full range and check MAX(Year) if unsure.'
@@ -170,8 +170,9 @@ COLUMN_NOTES = {
     'MAEEADP_CSO': {
         'waterBody': 'ALL CAPS (e.g. MYSTIC RIVER, CHARLES RIVER). Use UPPER() for filtering.',
         'municipality': 'ALL CAPS town name (e.g. BOSTON, CAMBRIDGE). Use UPPER() for filtering.',
-        'volumnOfEvent': 'Discharge volume in gallons. WARNING: column name is misspelled "volumn" (not "volume").',
-        'Year': 'Stored as FLOAT (e.g. 2020.0). Use CAST(Year AS INTEGER) if needed.',
+        'volumnOfEvent': 'Discharge volume in gallons. Source data uses this misspelled name; volumeOfEvent is an alias with identical values — prefer volumeOfEvent in new queries.',
+        'volumeOfEvent': 'Discharge volume in gallons. Correctly-spelled alias for volumnOfEvent.',
+        'Year': 'Calendar year as INTEGER (e.g. 2023).',
         'incidentDate': 'Format: YYYY-MM-DD HH:MM:SS datetime string (e.g. "2022-07-02 00:00:00"). NOT a plain date — use substr(incidentDate, 1, 10) to get the YYYY-MM-DD portion for date comparisons.',
         'eventType': 'Values include: "CSO – UnTreated", "CSO – Treated", "Partially Treated – Blended", "SSO – System Surcharging Under High Flow Conditions", etc. WARNING: there is NO simple "CSO" value — to filter for CSO events use: eventType LIKE \'CSO%\'',
         'latitude': '~97% of records have coordinates (filled from state outfall registry). Do NOT filter on latitude IS NOT NULL.',

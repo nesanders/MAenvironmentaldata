@@ -21,7 +21,7 @@ GET_DATA_DIR = os.path.join(REPO_ROOT, "get_data")
 DATA_DIR = os.path.join(REPO_ROOT, "docs", "data")
 
 EXPECTED_TABLES = {
-    "MAEEADP_CSO": ["incidentDate", "volumnOfEvent", "waterBody", "municipality", "eventType"],
+    "MAEEADP_CSO": ["incidentDate", "volumnOfEvent", "volumeOfEvent", "waterBody", "municipality", "eventType"],
     "MAEEADP_Enforcement": ["EnforcementDate", "Town", "FacilityId", "EnforcementType"],
     "MADEP_staff_Comptroller": ["year", "name_first", "name_last"],
     "MassBudget_summary": ["Year", "DEPAdministration_noinf"],
