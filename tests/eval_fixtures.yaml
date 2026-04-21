@@ -166,12 +166,16 @@
       JOIN EPA_303d_Impairments ON waterbody303d = waterbody
     The reportingCycle filter (e.g. WHERE reportingCycle = MAX) must be applied to
     EPA_303d_Impairments, NOT to CSO_303d_Mapping (which has no reportingCycle column).
+    IMPORTANT: SQL often uses short aliases (e.g. "e" for EPA_303d_Impairments, "m" for
+    CSO_303d_Mapping). Before judging, identify which alias maps to which table. If the
+    reportingCycle filter uses the EPA_303d_Impairments alias (e.g. "WHERE e.reportingCycle"),
+    that is CORRECT — do NOT mark fatal.
     Score 5: both joins correct, reportingCycle filter on EPA_303d_Impairments.
     Score 4: both joins correct, no reportingCycle filter (returns all cycles, slightly wrong).
     Score 3: one join correct, one missing or wrong.
     Score 2: only one table used or joins are wrong.
     Score 1: broken.
-    fatal=true if: reportingCycle filter applied to CSO_303d_Mapping, or required joins missing.
+    fatal=true ONLY if: reportingCycle filter uses the CSO_303d_Mapping alias (e.g. "WHERE m.reportingCycle"), or required joins are missing entirely.
 
 - id: all_caps_boston
   question: "Show CSO discharge events in Boston."
