@@ -193,7 +193,7 @@
 - id: ecos_per_capita
   question: "How does Massachusetts per-capita environmental spending compare to other states?"
   tags: [ecos, budget]
-  relevant_tables: [ECOS_budgets]
+  relevant_tables: [ECOS_budgets, Census_statepop]
   assert_sql_runs: true
   assert_nonempty: true
   assert_sql_not_contains:
