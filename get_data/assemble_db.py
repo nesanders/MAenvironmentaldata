@@ -67,6 +67,9 @@ if __name__ == '__main__':
 	data_csv['MAEEADP_CSO'].loc[missing_coords, 'longitude'] = coords['Long'].values
 	n_filled = (~data_csv['MAEEADP_CSO']['latitude'].isnull()).sum()
 	print(f'MAEEADP_CSO: {n_filled}/{len(data_csv["MAEEADP_CSO"])} rows now have coordinates')
+	## Add correctly-spelled alias alongside the source typo; cast Year to INTEGER
+	data_csv['MAEEADP_CSO']['volumeOfEvent'] = data_csv['MAEEADP_CSO']['volumnOfEvent']
+	data_csv['MAEEADP_CSO']['Year'] = data_csv['MAEEADP_CSO']['Year'].astype('Int64')
 	data_csv['MA_precipitation_daily'] = pd.read_csv('../docs/data/MA_precipitation_daily.csv')
 
 	## Load SSAWages (auto-updated via get_SSAWages.py when available).
