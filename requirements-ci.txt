@@ -37,5 +37,5 @@ joblib==1.2.0
 six==1.17.0
 
 # Testing
-pytest==8.3.5
+pytest==9.0.3
 pyyaml==6.0.2
