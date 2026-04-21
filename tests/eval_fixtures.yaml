@@ -1,0 +1,215 @@
+# Semantic context eval fixtures for AMEND AI Analysis.
+#
+# Each entry is a natural-language question plus assertions. The eval runner:
+#   1. Sends the question + targeted context (preamble + relevant table schemas)
+#      to gpt-4o-mini for SQL generation
+#   2. Executes the generated SQL against AMEND.db
+#   3. Sends SQL + rubric to a second gpt-4o-mini call for quality scoring
+#
+# Fields:
+#   id                       unique identifier
+#   question                 natural-language question, as a user would ask it
+#   tags                     used for grouping in the summary report
+#   relevant_tables          table names to include from the semantic context;
+#                            preamble (Global Data Notes + Key Join Relationships)
+#                            is always included
+#   assert_sql_runs          (bool) SQL must execute without error
+#   assert_nonempty          (bool) result must have at least one row
+#   assert_sql_not_contains  list of regex patterns the SQL must NOT contain
+#   judge_rubric             rubric for the LLM judge (score 1-5, fatal true/false)
+
+- id: cso_top_operator
+  question: "Which CSO operator discharged the most total volume in 2022?"
+  tags: [cso, aggregation]
+  relevant_tables: [MAEEADP_CSO]
+  assert_sql_runs: true
+  assert_nonempty: true
+  assert_sql_not_contains:
+    - "CSO_303d_Mapping"
+    - "EPA_303d"
+  judge_rubric: |
+    The query should aggregate total CSO discharge volume by operator for 2022.
+    It should use MAEEADP_CSO, filter eventType LIKE 'CSO%', restrict to year 2022
+    (using strftime or substr on incidentDate, or casting the Year column),
+    GROUP BY the permiteeName column, and ORDER BY volume descending.
+    Score 5: all of the above correct.
+    Score 4: correct result but minor style issue (e.g. no LIMIT, slightly wrong year extraction).
+    Score 3: correct table and grouping but year filter missing or wrong.
+    Score 2: wrong table used or result would be empty.
+    Score 1: query is syntactically broken or returns nonsense.
+    fatal=true if: wrong table used, year filter missing entirely, or result is empty/misleading.
+
+- id: cso_monthly_rainfall
+  question: "Show total monthly CSO discharge volume versus total monthly rainfall from 2018 to 2024."
+  tags: [cso, precipitation, join]
+  relevant_tables: [MAEEADP_CSO, MA_precipitation_daily]
+  assert_sql_runs: true
+  assert_nonempty: true
+  assert_sql_not_contains:
+    - "incidentDate = date"
+    - "incidentDate = precip"
+    - "ON.*incidentDate.*=.*date"
+  judge_rubric: |
+    The query must join MAEEADP_CSO and MA_precipitation_daily aggregated to month using
+    strftime('%Y-%m', ...) on both sides — never joining raw dates directly.
+    It should use a CTE or subquery to aggregate each table to month first, then join on month.
+    It should include both CSO volume and precipitation totals.
+    Score 5: correct month-aggregation join pattern, returns both series.
+    Score 4: correct join pattern but date range filter missing or slightly off.
+    Score 3: correct tables but joins raw dates directly (will produce wrong/empty results).
+    Score 2: wrong tables or no join between CSO and precipitation.
+    Score 1: syntactically broken.
+    fatal=true if: joins raw dates directly without aggregating to month first, OR uses wrong tables.
+    Do NOT mark fatal for date range issues — only for wrong join patterns or wrong tables.
+
+- id: cso_by_watershed
+  question: "What is the total CSO discharge volume by major watershed?"
+  tags: [cso, watershed, join]
+  relevant_tables: [MAEEADP_CSO, CSO_WatershedMapping]
+  assert_sql_runs: true
+  assert_nonempty: true
+  assert_sql_not_contains:
+    - "EPA_303d"
+  judge_rubric: |
+    The query should join MAEEADP_CSO to CSO_WatershedMapping on waterBody, then GROUP BY watershed.
+    It should filter eventType LIKE 'CSO%' and SUM(volumnOfEvent).
+    Score 5: correct join, correct grouping, correct filter.
+    Score 4: correct join and grouping, minor issue (e.g. no eventType filter).
+    Score 3: correct tables but join is wrong or missing.
+    Score 2: wrong lookup table or no join at all.
+    Score 1: broken.
+    fatal=true if: CSO_WatershedMapping is not used (results won't be by watershed), or join is wrong.
+
+- id: enforcement_vs_budget
+  question: "Compare DEP enforcement actions per year to DEP's annual budget from 2010 to present."
+  tags: [enforcement, budget, cross-table-join]
+  relevant_tables: [MAEEADP_Enforcement, MassBudget_summary]
+  assert_sql_runs: true
+  assert_nonempty: true
+  judge_rubric: |
+    The query should join MAEEADP_Enforcement (count of actions by year) with
+    MassBudget_summary (DEPAdministration_noinf or _inf column) on Year.
+    It should extract year from EnforcementDate using strftime or substr, GROUP BY year,
+    and filter to 2010+.
+    Score 5: correct join on year, correct tables, correct year extraction.
+    Score 4: correct tables and join but date extraction or filter slightly off.
+    Score 3: correct tables but join is missing or wrong (e.g. joining on a non-year column).
+    Score 2: wrong tables used.
+    Score 1: broken.
+    fatal=true if: wrong tables used, or join is fundamentally incorrect (cross product, etc.).
+
+- id: staffing_trend
+  question: "Show the number of DEP employees by year from 2005 to present."
+  tags: [staffing]
+  relevant_tables: [MADEP_staff_Comptroller]
+  assert_sql_runs: true
+  assert_nonempty: true
+  assert_sql_not_contains:
+    - "FROM MADEP_staff[ ,\\n]"
+  judge_rubric: |
+    The query should use MADEP_staff_Comptroller (NOT the old MADEP_staff table),
+    GROUP BY year, COUNT employees, and cover 2005 to present.
+    Score 5: correct table, correct grouping by year, correct count.
+    Score 4: correct table and grouping but year filter slightly off.
+    Score 3: uses old MADEP_staff table instead of MADEP_staff_Comptroller.
+    Score 2: wrong table or no grouping.
+    Score 1: broken.
+    fatal=true if: uses MADEP_staff instead of MADEP_staff_Comptroller (old/incomplete data).
+
+- id: 303d_impaired_trend
+  question: "How has the total number of impaired water body listings changed across 303(d) reporting cycles?"
+  tags: [303d, trend]
+  relevant_tables: [EPA_303d_Impairments]
+  assert_sql_runs: true
+  assert_nonempty: true
+  assert_sql_not_contains:
+    - "CSO_303d_Mapping"
+  judge_rubric: |
+    The query should COUNT listings from EPA_303d_Impairments grouped by reportingCycle,
+    ordered by reportingCycle ascending. It should NOT use CSO_303d_Mapping.
+    Score 5: correct table, groups by reportingCycle, ordered correctly.
+    Score 4: correct table and grouping, minor issue.
+    Score 3: correct table but groups by wrong column.
+    Score 2: uses CSO_303d_Mapping (wrong table for this query).
+    Score 1: broken.
+    fatal=true if: CSO_303d_Mapping is used (it has no reportingCycle and only 39 rows).
+
+- id: 303d_named_waterbody
+  question: "Is the Mystic River listed as impaired under the most recent 303(d) cycle?"
+  tags: [303d, lookup]
+  relevant_tables: [EPA_303d_Impairments, CSO_303d_Mapping]
+  assert_sql_runs: true
+  assert_nonempty: true
+  assert_sql_not_contains:
+    - "CSO_303d_Mapping.*reportingCycle"
+    - "reportingCycle.*CSO_303d_Mapping"
+  judge_rubric: |
+    The query should look up 'Mystic River' (or LIKE '%Mystic%') in EPA_303d_Impairments,
+    filter to the maximum reportingCycle using a subquery, and return attainment/hasTmdl/category.
+    The reportingCycle filter must be applied to EPA_303d_Impairments, NOT to CSO_303d_Mapping.
+    Score 5: correct table, correct max-cycle filter, LIKE pattern for waterbody.
+    Score 4: correct table and filter, but exact match instead of LIKE (may miss some rows).
+    Score 3: correct table but no reportingCycle filter (returns all cycles).
+    Score 2: applies reportingCycle filter to CSO_303d_Mapping (which has no such column).
+    Score 1: broken or wrong table entirely.
+    fatal=true if: reportingCycle filter is applied to CSO_303d_Mapping, or wrong table used.
+
+- id: cso_to_impaired
+  question: "Which CSO discharge events flow into 303(d) impaired waters?"
+  tags: [cso, 303d, two-step-join]
+  relevant_tables: [MAEEADP_CSO, CSO_303d_Mapping, EPA_303d_Impairments]
+  assert_sql_runs: true
+  assert_nonempty: true
+  judge_rubric: |
+    The query requires a two-step join:
+      MAEEADP_CSO JOIN CSO_303d_Mapping ON waterBody = csoWaterBody
+      JOIN EPA_303d_Impairments ON waterbody303d = waterbody
+    The reportingCycle filter (e.g. WHERE reportingCycle = MAX) must be applied to
+    EPA_303d_Impairments, NOT to CSO_303d_Mapping (which has no reportingCycle column).
+    IMPORTANT: SQL often uses short aliases (e.g. "e" for EPA_303d_Impairments, "m" for
+    CSO_303d_Mapping). Before judging, identify which alias maps to which table. If the
+    reportingCycle filter uses the EPA_303d_Impairments alias (e.g. "WHERE e.reportingCycle"),
+    that is CORRECT — do NOT mark fatal.
+    Score 5: both joins correct, reportingCycle filter on EPA_303d_Impairments.
+    Score 4: both joins correct, no reportingCycle filter (returns all cycles, slightly wrong).
+    Score 3: one join correct, one missing or wrong.
+    Score 2: only one table used or joins are wrong.
+    Score 1: broken.
+    fatal=true ONLY if: reportingCycle filter uses the CSO_303d_Mapping alias (e.g. "WHERE m.reportingCycle"), or required joins are missing entirely.
+
+- id: all_caps_boston
+  question: "Show CSO discharge events in Boston."
+  tags: [cso, all-caps]
+  relevant_tables: [MAEEADP_CSO]
+  assert_sql_runs: true
+  assert_nonempty: true
+  judge_rubric: |
+    The query should filter MAEEADP_CSO by municipality = 'BOSTON' (ALL CAPS) or use
+    UPPER(municipality) = UPPER('Boston') / UPPER('BOSTON').
+    It must NOT use lower-case 'Boston' in a direct equality comparison, which would return 0 rows.
+    Score 5: uses ALL CAPS or UPPER() correctly.
+    Score 4: uses LIKE '%BOSTON%' (slightly over-broad but functionally correct).
+    Score 3: uses lower-case 'Boston' in direct equality (returns 0 rows — wrong).
+    Score 2: wrong table.
+    Score 1: broken.
+    fatal=true if: uses lower-case 'Boston' in direct equality (WHERE municipality = 'Boston').
+
+- id: ecos_per_capita
+  question: "How does Massachusetts per-capita environmental spending compare to other states?"
+  tags: [ecos, budget]
+  relevant_tables: [ECOS_budgets, Census_statepop]
+  assert_sql_runs: true
+  assert_nonempty: true
+  assert_sql_not_contains:
+    - "MassBudget"
+    - "MAEEADP"
+  judge_rubric: |
+    The query should use ECOS_budgets table (State, Year, value columns), filter or group by State,
+    and look for a per-capita or spending comparison across states.
+    It should NOT use MassBudget or MAEEADP tables (wrong data source for ECOS).
+    Score 5: correct table, shows multiple states, reasonable aggregation.
+    Score 4: correct table but aggregation slightly off (e.g. no per-capita, just total).
+    Score 3: correct table but only returns Massachusetts (misses the comparison).
+    Score 2: wrong table used.
+    Score 1: broken.
+    fatal=true if: MassBudget or MAEEADP tables used instead of ECOS_budgets.

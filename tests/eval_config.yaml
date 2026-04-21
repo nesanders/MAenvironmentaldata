@@ -1,0 +1,12 @@
+# CI pass/fail thresholds for semantic evals.
+# Adjust these as the fixture suite matures.
+
+# Fraction of evals that must pass hard assertions (SQL runs, non-empty, no anti-patterns).
+# Any fatal judge failure also fails CI regardless of this threshold.
+fail_on_hard_pass_below: 0.80
+
+# Number of fatal judge failures allowed before CI fails.
+fail_on_fatal_above: 0
+
+# Mean judge score below this value triggers a warning annotation (does not fail CI).
+warn_on_mean_judge_score_below: 3.0

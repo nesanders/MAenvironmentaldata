@@ -83,7 +83,10 @@ TABLE_DESCRIPTIONS = {
     'ECOS_budgets': (
         'ECOS (Environmental Council of the States) budget survey comparing state environmental '
         'agency budgets nationally. Data covers FY2009–FY2023 from four published Green Reports. '
-        'Key fields: State, BudgetDetail, value, Year.'
+        'Key fields: State (full name, e.g. "Massachusetts"), BudgetDetail (spending category, '
+        'e.g. "Environmental Agency Budget", "Amount from Federal Government"), value (dollars), Year. '
+        'Values are total dollar amounts, not per-capita. To compute per-capita spending, '
+        'join to Census_statepop on State name and divide by the population for that year.'
     ),
     'MA_precipitation_daily': (
         'Daily precipitation averages across Massachusetts weather stations (NOAA ACIS). '
@@ -99,9 +102,12 @@ TABLE_DESCRIPTIONS = {
         'Key fields: Subdivision, population_acs52014, per_capita_income_acs52014.'
     ),
     'Census_statepop': (
-        'US state population estimates by year (2000–2024). Wide format: each column '
-        'is a year. Sources: Census intercensal 2000–2009, vintage-2019 2010–2019, '
-        'vintage-2024 2020–2024.'
+        'US state population estimates by year (2000–2024). Wide format: one row per state, '
+        'year columns named as integers (e.g. "2014", "2020"). State column contains full names '
+        'matching ECOS_budgets.State (e.g. "Massachusetts"). To join with ECOS_budgets for a '
+        'specific year, reference the year column directly: '
+        'JOIN Census_statepop p ON p.State = e.State ... e.value / p."2020" AS per_capita. '
+        'Sources: Census intercensal 2000–2009, vintage-2019 2010–2019, vintage-2024 2020–2024.'
     ),
     'SSAWages': (
         'Social Security Administration Average Wage Index by year (used to adjust '
@@ -300,6 +306,8 @@ JOIN_RELATIONSHIPS = """
   JOIN EPA_303d_Impairments ON CSO_303d_Mapping.waterbody303d = EPA_303d_Impairments.waterbody
   WHERE EPA_303d_Impairments.reportingCycle = (SELECT MAX(reportingCycle) FROM EPA_303d_Impairments)
   → shows which CSO discharge events occur in waters listed as "Not Supporting"
+  Column ownership: CSO_303d_Mapping has only (csoWaterBody, waterbody303d) — it is a mapping table with no other columns.
+  reportingCycle, hasTmdl, attainment, category all belong to EPA_303d_Impairments.
   NOTE: 39 of 56 CSO waterways are mapped; unmatched waterways won't appear in results.
 """
 

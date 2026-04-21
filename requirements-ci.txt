@@ -35,3 +35,7 @@ joblib==1.2.0
 
 # Misc
 six==1.17.0
+
+# Testing
+pytest==8.3.5
+pyyaml==6.0.2
