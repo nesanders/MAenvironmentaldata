@@ -5,7 +5,15 @@ supports accurate SQL generation for common user questions.
 
 Two-pass evaluation per case:
   1. Hard assertions: SQL runs, returns rows, avoids known anti-patterns
-  2. LLM-as-judge: rubric scoring (1-5) via a second gpt-4o-mini call
+  2. LLM-as-judge: rubric scoring (1-5) via a second LLM call
+
+Context sent to the model: only the "Global Data Notes" and "Key Join Relationships"
+sections of db_semantic_context.txt (everything before the "Table Schemas" divider).
+GitHub Models free tier has a hard 8000-token limit across all models; the full context
+is ~20k tokens. The global notes + join relationships section (~1000 tokens) is what
+actually governs SQL correctness for our eval cases — it contains the ALL CAPS warnings,
+preferred table guidance, date format notes, and join pattern examples. If someone changes
+these sections in generate_semantic_context.py, the evals will catch it.
 
 Requires:
   - GITHUB_TOKEN env var with models:read scope (or OPENAI_API_KEY as fallback)
@@ -175,13 +183,29 @@ def _run_sql(db_path, sql):
 # Session-scoped fixtures
 # ---------------------------------------------------------------------------
 
+def _extract_eval_context(full_context):
+    """Extract the Global Data Notes + Key Join Relationships sections.
+
+    GitHub Models free tier has a hard 8000-token limit. The full semantic context
+    is ~20k tokens. We send only the sections before "Table Schemas and Sample Data"
+    (~1000 tokens), which contain all the join patterns and global notes the evals test.
+    """
+    marker = "\n## Table Schemas and Sample Data"
+    idx = full_context.find(marker)
+    if idx != -1:
+        return full_context[:idx].strip()
+    # Fallback: first 4000 chars if marker not found
+    return full_context[:4000]
+
+
 @pytest.fixture(scope="session")
 def semantic_context():
     assert os.path.exists(SEMANTIC_CONTEXT_PATH), (
         f"Semantic context not found: {SEMANTIC_CONTEXT_PATH}"
     )
     with open(SEMANTIC_CONTEXT_PATH) as f:
-        return f.read()
+        full = f.read()
+    return _extract_eval_context(full)
 
 
 @pytest.fixture(scope="session")
@@ -246,7 +270,7 @@ def test_eval_case(case, semantic_context, db_path, llm_client, all_results):
 
     # --- LLM judge ---
     rubric = case.get("judge_rubric", "Score 1-5 based on correctness.")
-    schema_excerpt = semantic_context[:4000]  # first 4k chars has the key join patterns
+    schema_excerpt = semantic_context  # already trimmed to global notes + join relationships
     judge_result = _judge_sql(client, model, question, sql, rubric, schema_excerpt)
 
     duration_ms = int((time.monotonic() - t0) * 1000)

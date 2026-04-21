@@ -3,6 +3,14 @@ name: Tests
 on:
   push:
   pull_request:
+    paths:
+      - 'docs/assets/db_semantic_context.txt'
+      - 'tests/eval_fixtures.yaml'
+      - 'get_data/generate_semantic_context.py'
+      - 'tests/test_semantic_evals.py'
+
+permissions:
+  contents: read
 
 env:
   FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: 'true'
@@ -49,9 +57,12 @@ jobs:
 
   evals:
     name: Semantic evals
+    # path filter on the trigger (above) ensures this only runs on pull_request events
+    # touching files that affect SQL generation — avoids burning free-tier quota on every push.
+    if: github.event_name == 'pull_request'
     needs: fast
     runs-on: ubuntu-latest
-    continue-on-error: true  # remove once fixtures are tuned
+    continue-on-error: true  # remove once baseline pass rate is established
     permissions:
       models: read
       pull-requests: write
@@ -79,7 +90,7 @@ jobs:
         run: pytest tests/test_semantic_evals.py -v --tb=short
 
       - name: Post eval summary as PR comment
-        if: github.event_name == 'pull_request'
+        if: always()
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           GITHUB_REPOSITORY: ${{ github.repository }}

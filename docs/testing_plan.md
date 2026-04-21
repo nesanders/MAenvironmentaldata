@@ -81,9 +81,11 @@ We use the **GitHub Models API** for CI evals:
 
 - Uses `GITHUB_TOKEN`, which is automatically injected in every GHA run — no secret management, works on fork PRs
 - OpenAI-compatible endpoint, so the client code is trivial
-- Model: `gpt-4o-mini` for both generation and judging — free tier rate limits for this model are in the "low" tier (higher limits than `gpt-4o`). The GitHub Models docs don't publish exact per-model limits, so we stay conservative: 10 evals × 2 calls = 20 total requests per run
+- Model: `gpt-4o-mini` for both generation and judging — 10 evals × 2 calls = 20 total requests per run
 
-Using the same model for generation and judging is a known limitation — a stronger judge would catch more subtle errors. But `gpt-4o`'s rate limits on the free tier are unclear and potentially very low. Start with `gpt-4o-mini` for both; upgrade the judge if rate limits allow.
+**Context window caveat:** GitHub Models free tier has a hard 8000-token limit across all models (confirmed across `gpt-4o-mini`, `gpt-4o`, `Meta-Llama-3.1-8B-Instruct`, `Meta-Llama-3.1-405B-Instruct`). The full semantic context is ~20k tokens. The evals therefore send only the **"Global Data Notes" and "Key Join Relationships" sections** (~1200 tokens) — the portion of the context that governs SQL correctness for our eval cases (join patterns, preferred tables, ALL CAPS warnings, date format notes). The table schemas and 5-row sample data blocks are excluded. This is a principled extraction, not arbitrary truncation: if someone changes the join examples or global notes in `generate_semantic_context.py`, the evals will catch it.
+
+Using the same model for generation and judging is a known limitation — a stronger judge would catch more subtle errors. This is acceptable given the free-tier constraint.
 
 ```python
 from openai import OpenAI
@@ -206,12 +208,23 @@ warn_on_mean_judge_score_below: 3.0  # mean judge score < 3 posts a warning anno
 
 A "fatal" failure (wrong table, missing required filter, empty result for a non-empty question) always fails CI. A low judge score only warns, because style/verbosity differences shouldn't break the build.
 
+### Trigger strategy
+
+Evals run only on `pull_request` events, and only when one of these files changed:
+- `docs/assets/db_semantic_context.txt`
+- `tests/eval_fixtures.yaml`
+- `get_data/generate_semantic_context.py`
+- `tests/test_semantic_evals.py`
+
+This prevents quota burn on every push. Pushes to a branch without a PR, or PRs that touch only non-semantic files, don't trigger evals.
+
 ### GitHub Actions job
 
 ```yaml
 # in .github/workflows/tests.yml
 evals:
   name: Semantic evals
+  if: github.event_name == 'pull_request'
   runs-on: ubuntu-latest
   permissions:
     models: read           # required for GitHub Models
