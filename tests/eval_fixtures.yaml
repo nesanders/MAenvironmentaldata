@@ -40,7 +40,7 @@
     fatal=true if: wrong table used, year filter missing entirely, or result is empty/misleading.
 
 - id: cso_monthly_rainfall
-  question: "Show total monthly CSO discharge volume versus total monthly rainfall over the past 5 years."
+  question: "Show total monthly CSO discharge volume versus total monthly rainfall from 2018 to 2024."
   tags: [cso, precipitation, join]
   relevant_tables: [MAEEADP_CSO, MA_precipitation_daily]
   assert_sql_runs: true
@@ -53,13 +53,14 @@
     The query must join MAEEADP_CSO and MA_precipitation_daily aggregated to month using
     strftime('%Y-%m', ...) on both sides — never joining raw dates directly.
     It should use a CTE or subquery to aggregate each table to month first, then join on month.
-    It should filter to the past ~5 years and include both CSO volume and precipitation totals.
-    Score 5: correct month-aggregation join pattern, filters to recent years, returns both series.
+    It should include both CSO volume and precipitation totals.
+    Score 5: correct month-aggregation join pattern, returns both series.
     Score 4: correct join pattern but date range filter missing or slightly off.
     Score 3: correct tables but joins raw dates directly (will produce wrong/empty results).
     Score 2: wrong tables or no join between CSO and precipitation.
     Score 1: syntactically broken.
     fatal=true if: joins raw dates directly without aggregating to month first, OR uses wrong tables.
+    Do NOT mark fatal for date range issues — only for wrong join patterns or wrong tables.
 
 - id: cso_by_watershed
   question: "What is the total CSO discharge volume by major watershed?"

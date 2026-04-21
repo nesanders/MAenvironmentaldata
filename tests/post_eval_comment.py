@@ -25,6 +25,12 @@ def format_comment(summary_data):
     lines = [
         f"## {status_icon} Semantic Eval Results",
         "",
+        "Each eval sends a natural-language question plus the relevant table schemas from "
+        "`db_semantic_context.txt` to `gpt-4o-mini`, executes the generated SQL against "
+        "`AMEND.db`, then scores it with a second LLM call using a per-case rubric. "
+        "Hard pass = SQL ran and returned rows without hitting any known anti-patterns. "
+        "Fatal = judge determined the query would return wrong or misleading results.",
+        "",
         f"| Metric | Value |",
         f"|--------|-------|",
         f"| Hard pass rate | {s['hard_pass']}/{s['total']} ({hard_rate:.0%}) |",
@@ -36,17 +42,15 @@ def format_comment(summary_data):
         "",
         "<details><summary>Per-case results</summary>",
         "",
-        "| ID | Hard pass | Judge score | Fatal | Reason |",
-        "|----|-----------|-------------|-------|--------|",
+        "| ID | Hard pass | Score | Fatal | Reason |",
+        "|----|-----------|-------|-------|--------|",
     ]
 
     for r in summary_data.get("results", []):
         hard = "✅" if r["passed_hard"] else "❌"
         fatal = "⚠️ YES" if r["judge_fatal"] else "no"
-        reason = (r["judge_reason"] or "")[:100]
-        lines.append(
-            f"| `{r['id']}` | {hard} | {r['judge_score']}/5 | {fatal} | {reason} |"
-        )
+        reason = (r["judge_reason"] or "").replace("|", "\\|")
+        lines.append(f"| `{r['id']}` | {hard} | {r['judge_score']}/5 | {fatal} | {reason} |")
 
     lines += ["", "</details>"]
     return "\n".join(lines)
