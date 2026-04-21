@@ -16,6 +16,7 @@ Outputs:
   ../docs/assets/db_semantic_context.txt — LLM schema context for the AI Analysis page
 """
 
+import argparse
 import pandas as pd
 import datetime
 from sqlalchemy import create_engine
@@ -23,6 +24,11 @@ import os
 from generate_semantic_context import generate_semantic_context
 
 if __name__ == '__main__':
+	parser = argparse.ArgumentParser()
+	parser.add_argument('--no-upload', action='store_true',
+	                    help='Skip GCS upload steps (for local testing)')
+	args = parser.parse_args()
+
 	## Establish database
 	os.system('mv AMEND.db backup_AMEND.db')
 	disk_engine = create_engine('sqlite:///AMEND.db')
@@ -213,23 +219,24 @@ if __name__ == '__main__':
 		print(f'Writing database table {key}')
 		data_csv[key].to_sql(name=key, con=disk_engine, if_exists='append')
 
-	# Upload uncompressed DB (for CI scripts and assemble_db.py compatibility)
-	os.system('gsutil cp AMEND.db gs://openamend-data/amend.db')
+	if not args.no_upload:
+		# Upload uncompressed DB (for CI scripts and assemble_db.py compatibility)
+		os.system('gsutil cp AMEND.db gs://openamend-data/amend.db')
 
-	# Upload gzip-compressed DB for browser delivery (~26 MB vs ~85 MB = ~70% egress savings).
-	# Cache-Control: no-transform prevents GCS decompressive transcoding so browsers
-	# receive the compressed bytes (and auto-decompress via Content-Encoding: gzip).
-	print('Compressing AMEND.db for browser delivery...')
-	os.system('gzip -c AMEND.db > amend.db.gz')
-	os.system(
-		'gsutil '
-		'-h "Content-Encoding:gzip" '
-		'-h "Content-Type:application/octet-stream" '
-		'-h "Cache-Control:no-transform,public,max-age=86400" '
-		'cp amend.db.gz gs://openamend-data/amend.db.gz'
-	)
-	os.system('rm amend.db.gz')
-	print('Compressed DB uploaded to gs://openamend-data/amend.db.gz')
+		# Upload gzip-compressed DB for browser delivery (~26 MB vs ~85 MB = ~70% egress savings).
+		# Cache-Control: no-transform prevents GCS decompressive transcoding so browsers
+		# receive the compressed bytes (and auto-decompress via Content-Encoding: gzip).
+		print('Compressing AMEND.db for browser delivery...')
+		os.system('gzip -c AMEND.db > amend.db.gz')
+		os.system(
+			'gsutil '
+			'-h "Content-Encoding:gzip" '
+			'-h "Content-Type:application/octet-stream" '
+			'-h "Cache-Control:no-transform,public,max-age=86400" '
+			'cp amend.db.gz gs://openamend-data/amend.db.gz'
+		)
+		os.system('rm amend.db.gz')
+		print('Compressed DB uploaded to gs://openamend-data/amend.db.gz')
 
 	## Generate semantic context for AI Analysis page
 	print('Generating semantic context for AI Analysis...')
