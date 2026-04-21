@@ -1,22 +1,27 @@
 # Semantic context eval fixtures for AMEND AI Analysis.
 #
 # Each entry is a natural-language question plus assertions. The eval runner:
-#   1. Sends the question + full semantic context to gpt-4o-mini
-#   2. Extracts the generated SQL and runs it against AMEND.db
-#   3. Sends the SQL + rubric to a second gpt-4o-mini call for quality scoring
+#   1. Sends the question + targeted context (preamble + relevant table schemas)
+#      to gpt-4o-mini for SQL generation
+#   2. Executes the generated SQL against AMEND.db
+#   3. Sends SQL + rubric to a second gpt-4o-mini call for quality scoring
 #
 # Fields:
-#   id                    unique identifier
-#   question              natural-language question, as a user would ask it
-#   tags                  used for grouping in the summary report
-#   assert_sql_runs       (bool) SQL must execute without error
-#   assert_nonempty       (bool) result must have at least one row
+#   id                       unique identifier
+#   question                 natural-language question, as a user would ask it
+#   tags                     used for grouping in the summary report
+#   relevant_tables          table names to include from the semantic context;
+#                            preamble (Global Data Notes + Key Join Relationships)
+#                            is always included
+#   assert_sql_runs          (bool) SQL must execute without error
+#   assert_nonempty          (bool) result must have at least one row
 #   assert_sql_not_contains  list of regex patterns the SQL must NOT contain
-#   judge_rubric          rubric for the LLM judge (score 1-5, fatal true/false)
+#   judge_rubric             rubric for the LLM judge (score 1-5, fatal true/false)
 
 - id: cso_top_operator
   question: "Which CSO operator discharged the most total volume in 2022?"
   tags: [cso, aggregation]
+  relevant_tables: [MAEEADP_CSO]
   assert_sql_runs: true
   assert_nonempty: true
   assert_sql_not_contains:
@@ -26,7 +31,7 @@
     The query should aggregate total CSO discharge volume by operator for 2022.
     It should use MAEEADP_CSO, filter eventType LIKE 'CSO%', restrict to year 2022
     (using strftime or substr on incidentDate, or casting the Year column),
-    GROUP BY the operator/permiteeName column, and ORDER BY volume descending.
+    GROUP BY the permiteeName column, and ORDER BY volume descending.
     Score 5: all of the above correct.
     Score 4: correct result but minor style issue (e.g. no LIMIT, slightly wrong year extraction).
     Score 3: correct table and grouping but year filter missing or wrong.
@@ -37,6 +42,7 @@
 - id: cso_monthly_rainfall
   question: "Show total monthly CSO discharge volume versus total monthly rainfall over the past 5 years."
   tags: [cso, precipitation, join]
+  relevant_tables: [MAEEADP_CSO, MA_precipitation_daily]
   assert_sql_runs: true
   assert_nonempty: true
   assert_sql_not_contains:
@@ -58,6 +64,7 @@
 - id: cso_by_watershed
   question: "What is the total CSO discharge volume by major watershed?"
   tags: [cso, watershed, join]
+  relevant_tables: [MAEEADP_CSO, CSO_WatershedMapping]
   assert_sql_runs: true
   assert_nonempty: true
   assert_sql_not_contains:
@@ -75,6 +82,7 @@
 - id: enforcement_vs_budget
   question: "Compare DEP enforcement actions per year to DEP's annual budget from 2010 to present."
   tags: [enforcement, budget, cross-table-join]
+  relevant_tables: [MAEEADP_Enforcement, MassBudget_summary]
   assert_sql_runs: true
   assert_nonempty: true
   judge_rubric: |
@@ -92,10 +100,11 @@
 - id: staffing_trend
   question: "Show the number of DEP employees by year from 2005 to present."
   tags: [staffing]
+  relevant_tables: [MADEP_staff_Comptroller]
   assert_sql_runs: true
   assert_nonempty: true
   assert_sql_not_contains:
-    - "MADEP_staff\b"   # old table; should use MADEP_staff_Comptroller
+    - "FROM MADEP_staff[ ,\\n]"
   judge_rubric: |
     The query should use MADEP_staff_Comptroller (NOT the old MADEP_staff table),
     GROUP BY year, COUNT employees, and cover 2005 to present.
@@ -109,6 +118,7 @@
 - id: 303d_impaired_trend
   question: "How has the total number of impaired water body listings changed across 303(d) reporting cycles?"
   tags: [303d, trend]
+  relevant_tables: [EPA_303d_Impairments]
   assert_sql_runs: true
   assert_nonempty: true
   assert_sql_not_contains:
@@ -126,6 +136,7 @@
 - id: 303d_named_waterbody
   question: "Is the Mystic River listed as impaired under the most recent 303(d) cycle?"
   tags: [303d, lookup]
+  relevant_tables: [EPA_303d_Impairments, CSO_303d_Mapping]
   assert_sql_runs: true
   assert_nonempty: true
   assert_sql_not_contains:
@@ -145,6 +156,7 @@
 - id: cso_to_impaired
   question: "Which CSO discharge events flow into 303(d) impaired waters?"
   tags: [cso, 303d, two-step-join]
+  relevant_tables: [MAEEADP_CSO, CSO_303d_Mapping, EPA_303d_Impairments]
   assert_sql_runs: true
   assert_nonempty: true
   judge_rubric: |
@@ -163,6 +175,7 @@
 - id: all_caps_boston
   question: "Show CSO discharge events in Boston."
   tags: [cso, all-caps]
+  relevant_tables: [MAEEADP_CSO]
   assert_sql_runs: true
   assert_nonempty: true
   judge_rubric: |
@@ -179,6 +192,7 @@
 - id: ecos_per_capita
   question: "How does Massachusetts per-capita environmental spending compare to other states?"
   tags: [ecos, budget]
+  relevant_tables: [ECOS_budgets]
   assert_sql_runs: true
   assert_nonempty: true
   assert_sql_not_contains:

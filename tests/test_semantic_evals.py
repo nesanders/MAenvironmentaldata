@@ -183,19 +183,37 @@ def _run_sql(db_path, sql):
 # Session-scoped fixtures
 # ---------------------------------------------------------------------------
 
-def _extract_eval_context(full_context):
-    """Extract the Global Data Notes + Key Join Relationships sections.
-
-    GitHub Models free tier has a hard 8000-token limit. The full semantic context
-    is ~20k tokens. We send only the sections before "Table Schemas and Sample Data"
-    (~1000 tokens), which contain all the join patterns and global notes the evals test.
-    """
+def _extract_preamble(full_context):
+    """Return the Global Data Notes + Key Join Relationships sections."""
     marker = "\n## Table Schemas and Sample Data"
     idx = full_context.find(marker)
-    if idx != -1:
-        return full_context[:idx].strip()
-    # Fallback: first 4000 chars if marker not found
-    return full_context[:4000]
+    return full_context[:idx].strip() if idx != -1 else full_context[:4000]
+
+
+def _extract_table_section(full_context, table_name):
+    """Return the full schema section for a single table, or empty string if not found."""
+    # Sections are delimited by ### TableName and the next ---
+    pattern = rf"(### {re.escape(table_name)} \(.*?\n.*?)\n---"
+    m = re.search(pattern, full_context, re.DOTALL)
+    return m.group(1).strip() if m else ""
+
+
+def build_eval_context(full_context, relevant_tables):
+    """Build a per-case context: preamble + only the requested table schemas.
+
+    GitHub Models free tier has a hard 8000-token limit. Sending the full ~20k-token
+    context fails. Instead each eval case declares which tables it needs; we include
+    only those schemas (~1000 tokens each) plus the preamble (~1200 tokens), keeping
+    total well under the limit even as the context grows.
+    """
+    parts = [_extract_preamble(full_context)]
+    if relevant_tables:
+        parts.append("\n## Relevant Table Schemas\n")
+        for table in relevant_tables:
+            section = _extract_table_section(full_context, table)
+            if section:
+                parts.append(section)
+    return "\n\n".join(parts)
 
 
 @pytest.fixture(scope="session")
@@ -204,8 +222,7 @@ def semantic_context():
         f"Semantic context not found: {SEMANTIC_CONTEXT_PATH}"
     )
     with open(SEMANTIC_CONTEXT_PATH) as f:
-        full = f.read()
-    return _extract_eval_context(full)
+        return f.read()
 
 
 @pytest.fixture(scope="session")
@@ -244,12 +261,15 @@ def test_eval_case(case, semantic_context, db_path, llm_client, all_results):
     question = case["question"]
     t0 = time.monotonic()
 
+    # Build per-case context: preamble + only the tables this case needs
+    case_context = build_eval_context(semantic_context, case.get("relevant_tables", []))
+
     # --- Generate SQL ---
-    raw_response = _generate_sql(client, model, semantic_context, question)
+    raw_response = _generate_sql(client, model, case_context, question)
     sql = _extract_sql(raw_response)
 
     # --- Hard assertions ---
-    rows, cols, error = _run_sql(db_path, sql)
+    rows, _, error = _run_sql(db_path, sql)
 
     hard_pass = True
     hard_failure_reason = None
@@ -270,8 +290,7 @@ def test_eval_case(case, semantic_context, db_path, llm_client, all_results):
 
     # --- LLM judge ---
     rubric = case.get("judge_rubric", "Score 1-5 based on correctness.")
-    schema_excerpt = semantic_context  # already trimmed to global notes + join relationships
-    judge_result = _judge_sql(client, model, question, sql, rubric, schema_excerpt)
+    judge_result = _judge_sql(client, model, question, sql, rubric, case_context)
 
     duration_ms = int((time.monotonic() - t0) * 1000)
 
