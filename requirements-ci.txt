@@ -5,7 +5,7 @@
 # HTTP / scraping
 requests==2.33.1
 beautifulsoup4==4.14.3
-lxml==6.0.2
+lxml==6.1.0
 unidecode==1.4.0
 
 # Data
