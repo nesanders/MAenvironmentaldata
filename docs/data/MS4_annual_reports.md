@@ -67,7 +67,7 @@ Click **Source PDF** to view the original EPA PDF; click **GCS Archive** for the
 
 *Click on the table headers to re-sort by that field.*
 
-| Municipality | Year | Permit # | MCM1 Activities | MCM3 Outfalls | MCM3 Illicit Found | MCM4 Sites | MCM6 Facilities | Confidence | Source PDF | GCS Archive |
-| --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |{% assign ms4_sample = site.data.MS4_extracted | sort: "report_year" | reverse %}{% for row in ms4_sample limit:10 %}
-| {{ row.municipality }} | {{ row.report_year }} | {{ row.permit_number }} | {{ row.mcm1_activities_count }} | {{ row.mcm3_outfalls_total }} | {{ row.mcm3_illicit_found }} | {{ row.mcm4_sites_inspected }} | {{ row.mcm6_facilities_inspected }} | {{ row.extraction_confidence }} | [PDF]({{ row.source_url }}){:target="_blank"} | [GCS]({{ row.gcs_url }}){:target="_blank"} |{% endfor %}
+| Municipality | Year | Permit # | MCM1 Activities | MCM2 Activities | MCM3 Outfalls | MCM3 Illicit Found | MCM4 Sites | MCM5 Sites | MCM6 Facilities | Confidence | Source PDF | GCS Archive |
+| --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |{% assign ms4_sample = site.data.MS4_extracted | sort: "report_year" | reverse %}{% for row in ms4_sample limit:10 %}
+| {{ row.municipality }} | {{ row.report_year }} | {{ row.permit_number }} | {{ row.mcm1_activities_count }} | {{ row.mcm2_activities_count }} | {{ row.mcm3_outfalls_total }} | {{ row.mcm3_illicit_found }} | {{ row.mcm4_sites_inspected }} | {{ row.mcm5_sites_inspected }} | {{ row.mcm6_facilities_inspected }} | {{ row.extraction_confidence }} | [PDF]({{ row.source_url }}){:target="_blank"} | [GCS]({{ row.gcs_url }}){:target="_blank"} |{% endfor %}
 {: .sortable}
