@@ -33,7 +33,7 @@ Before any API call, `pdfplumber` opens each PDF to count pages and detect forma
 - **XFA dynamic forms** — detected by a "Please wait..." placeholder on a single-page PDF. Routed to the XFA extraction path (see below).
 - **Oversized PDFs** — reports over 80 pages are skipped and logged for manual review, as they likely contain bundled appendices.
 
-The estimated cost for the remaining queue is printed before any API calls are made. In non-test mode with total cost above $20, the user is prompted to confirm.
+Before any API calls are made, the script builds an extraction queue — the list of PDFs that passed the page-count and format checks, with per-file cost estimates summed to a total. This total is printed for review. In non-test mode, if it exceeds $20, the user is prompted to confirm before extraction begins.
 
 ## PDF format: two distinct extraction paths
 
