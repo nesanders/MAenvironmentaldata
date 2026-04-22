@@ -27,6 +27,12 @@ bash update_all.sh
 
 This script will not update ECOS budget records or the SSA wage table, which require manual data entry.
 
+## Data pipeline documentation
+
+Some data sources have extended documentation covering design decisions, format quirks, and cost considerations:
+
+- [MS4 Annual Report Pipeline](get_data/README_MS4.md) — PDF extraction design, XFA form handling, Gemini function calling, and cost breakdown
+
 ## Infrastructure
 
 Large files (SQLite database, full drinking water CSV, permit PDFs) are stored on Google Cloud Storage.
