@@ -87,4 +87,7 @@ dependencies:
     - webargs==8.2.0
     - yarl==1.9.2
     - pdfplumber==0.11.9
+    - pymupdf==1.27.2.2
+    - pytest==9.0.3
+    - google-genai==1.73.1
 prefix: /home/nes/miniconda3/envs/amend_python

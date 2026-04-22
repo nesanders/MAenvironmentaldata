@@ -99,6 +99,7 @@ get_data/EPA_Region1_NPDES_permits
 .~lock*
 *.bak
 analysis/necir_cso_data_cache/
+get_data/MS4_annual_reports/
 
 # Large files
 *EEADP_drinkingWater.csv

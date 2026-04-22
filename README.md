@@ -52,17 +52,20 @@ bundle exec jekyll serve --host localhost --port 4000 --baseurl "" --incremental
 
 ## Python dependencies
 
-### CI (lightweight)
+Three dependency files serve different purposes:
 
-For running data fetches and most chart scripts (no PySTAN/geopandas):
+| File | Purpose |
+|---|---|
+| `requirements-ci.txt` | Pinned deps for GitHub Actions CI. Install with `pip install -r requirements-ci.txt`. Excludes PySTAN. Used by `update-data.yml` and `update-charts.yml`. |
+| `amend_python_env.yml` | Full conda environment for local development. Includes PySTAN, geopandas, and all optional deps. Recreate with `conda env create -f amend_python_env.yml`. |
+
+### CI environment
 
 ```bash
 pip install -r requirements-ci.txt
 ```
 
 ### Full local environment
-
-For all scripts including PySTAN CSO regression analysis:
 
 ```bash
 conda env create -f amend_python_env.yml
