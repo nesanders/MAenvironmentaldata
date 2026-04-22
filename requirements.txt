@@ -1,7 +1,7 @@
 BeautifulSoup4 >= 4.7.1
 census >= 0.8.13
 folium >= 0.8.3
-lxml >= 4.3.2
+lxml >= 6.1.0
 matplotlib >= 3.0.2
 numpy >= 1.16.2
 pandas >= 0.24.2
