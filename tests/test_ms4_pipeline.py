@@ -310,3 +310,77 @@ def test_flatten_permit_year_none_stays_none():
     r["permit_year"] = None
     flat = _flatten(r)
     assert flat["permit_year"] is None
+
+
+# ---------------------------------------------------------------------------
+# Truncation: prepare_upload_pdf
+# ---------------------------------------------------------------------------
+
+def _make_pdf(path, n_pages):
+    """Write a synthetic n-page PDF to path."""
+    import fitz
+    doc = fitz.open()
+    for i in range(n_pages):
+        doc.new_page().insert_text((72, 72), f"Page {i + 1}")
+    doc.save(str(path))
+    doc.close()
+
+
+def test_prepare_upload_pdf_no_truncation_needed(tmp_path):
+    src = tmp_path / "short.pdf"
+    _make_pdf(src, 5)
+    upload_path, tmp_path_out = ms4.prepare_upload_pdf(str(src), max_pages=10)
+    assert upload_path == str(src)
+    assert tmp_path_out is None
+
+
+def test_prepare_upload_pdf_truncates(tmp_path):
+    import fitz
+    src = tmp_path / "long.pdf"
+    _make_pdf(src, 10)
+    upload_path, tmp_path_out = ms4.prepare_upload_pdf(str(src), max_pages=4)
+    try:
+        assert upload_path != str(src)
+        assert tmp_path_out == upload_path
+        doc = fitz.open(upload_path)
+        assert len(doc) == 4
+        doc.close()
+    finally:
+        if tmp_path_out:
+            os.unlink(tmp_path_out)
+
+
+def test_prepare_upload_pdf_exact_limit_not_truncated(tmp_path):
+    src = tmp_path / "exact.pdf"
+    _make_pdf(src, ms4.MAX_PAGE_GUARD)
+    upload_path, tmp_path_out = ms4.prepare_upload_pdf(str(src), max_pages=ms4.MAX_PAGE_GUARD)
+    assert upload_path == str(src)
+    assert tmp_path_out is None
+
+
+# ---------------------------------------------------------------------------
+# Sample: apply_sample
+# ---------------------------------------------------------------------------
+
+def test_apply_sample_reduces_queue():
+    queue = list(range(100))
+    sampled = ms4.apply_sample(queue, 0.1)
+    assert len(sampled) == 10
+
+
+def test_apply_sample_full_fraction():
+    queue = list(range(50))
+    sampled = ms4.apply_sample(queue, 1.0)
+    assert len(sampled) == 50
+
+
+def test_apply_sample_tiny_queue_returns_at_least_one():
+    queue = [("a", "b", 1, 0.001, False)]
+    sampled = ms4.apply_sample(queue, 0.01)
+    assert len(sampled) == 1
+
+
+def test_apply_sample_returns_subset_of_original():
+    queue = list(range(200))
+    sampled = ms4.apply_sample(queue, 0.05)
+    assert all(item in queue for item in sampled)

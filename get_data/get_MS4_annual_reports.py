@@ -15,6 +15,7 @@ Usage:
   python get_MS4_annual_reports.py --test       # 3 test PDFs only
   python get_MS4_annual_reports.py --dry-run    # estimate costs, no API calls
   python get_MS4_annual_reports.py --skip-download  # skip download phase, extract only
+  python get_MS4_annual_reports.py --sample 0.05    # extract random 5% sample
 
 Outputs (relative to get_data/ working directory):
   ../docs/data/MS4_report_index.csv    index of all discovered reports
@@ -349,10 +350,46 @@ def extract_xfa_xml(pdf_path):
         doc.close()
 
 
-def extract_one(client, pdf_path, source_url):
-    """Upload PDF to Gemini and extract structured data. Returns dict."""
+def prepare_upload_pdf(pdf_path, max_pages):
+    """Return (upload_path, tmp_path) where tmp_path is a temp file to delete after use.
+
+    If the PDF has more than max_pages pages, writes a trimmed copy to a temp file
+    and returns its path. Otherwise returns the original path with tmp_path=None.
+    """
+    import tempfile
+    doc = fitz.open(pdf_path)
+    n = len(doc)
+    doc.close()
+    if n <= max_pages:
+        return pdf_path, None
+    doc = fitz.open(pdf_path)
+    doc.select(list(range(max_pages)))
+    tmp = tempfile.NamedTemporaryFile(suffix=".pdf", delete=False)
+    doc.save(tmp.name)
+    tmp.close()
+    doc.close()
+    return tmp.name, tmp.name
+
+
+def apply_sample(queue, fraction):
+    """Return a random subset of queue of size fraction * len(queue), at least 1."""
+    import random
+    n = max(1, round(len(queue) * fraction))
+    return random.sample(queue, min(n, len(queue)))
+
+
+def extract_one(client, pdf_path, source_url, max_pages=None):
+    """Upload PDF to Gemini and extract structured data. Returns dict.
+
+    If max_pages is set and the PDF has more pages, a trimmed copy is uploaded.
+    """
+    upload_path = pdf_path
+    tmp_path = None
+    if max_pages is not None:
+        upload_path, tmp_path = prepare_upload_pdf(pdf_path, max_pages)
+
     print(f"  Uploading {os.path.basename(pdf_path)} to Gemini ...")
-    with open(pdf_path, "rb") as f:
+    with open(upload_path, "rb") as f:
         uploaded = client.files.upload(
             file=f,
             config=types.UploadFileConfig(mime_type="application/pdf"),
@@ -386,6 +423,8 @@ def extract_one(client, pdf_path, source_url):
         )
     finally:
         client.files.delete(name=uploaded.name)
+        if tmp_path is not None:
+            os.unlink(tmp_path)
 
     # Parse function call response
     for part in response.candidates[0].content.parts:
@@ -438,7 +477,7 @@ def extract_one_xfa(client, xml_text, source_url):
     raise ValueError("Gemini response contained no function call.")
 
 
-def extract_all(local_paths, index_df, dry_run=False, test_mode=False, yes=False):
+def extract_all(local_paths, index_df, dry_run=False, test_mode=False, yes=False, sample=None):
     """Run extraction on all PDFs not yet in the output CSV."""
     api_key = os.environ.get("GOOGLE_API_KEY")
     if not api_key:
@@ -490,11 +529,16 @@ def extract_all(local_paths, index_df, dry_run=False, test_mode=False, yes=False
             print(f"  Skipping {filename}: unreadable by pdfplumber.")
             continue
         if pages > MAX_PAGE_GUARD:
-            print(f"  Skipping {filename}: {pages} pages exceeds guard ({MAX_PAGE_GUARD}). Review manually.")
-            continue
+            print(f"  {filename}: {pages} pages — truncating to first {MAX_PAGE_GUARD} for extraction.")
+            pages = MAX_PAGE_GUARD
         cost = estimate_cost(pages)
         total_cost += cost
         pdf_queue.append((lp, source_url, pages, cost, False))
+
+    if sample is not None:
+        pdf_queue = apply_sample(pdf_queue, sample)
+        total_cost = sum(c for _, _, _, c, _ in pdf_queue)
+        print(f"  Sample: {len(pdf_queue)} PDFs ({sample:.0%} of queue).")
 
     print(f"\nExtraction queue: {len(pdf_queue)} PDFs, estimated total cost: ${total_cost:.4f}")
 
@@ -528,7 +572,9 @@ def extract_all(local_paths, index_df, dry_run=False, test_mode=False, yes=False
                 result = extract_one_xfa(client, xml_text, source_url)
                 result["pdf_pages"] = None
             else:
-                result = extract_one(client, lp, source_url)
+                actual_pages = get_page_count(lp)[0]
+                max_pages = MAX_PAGE_GUARD if (actual_pages and actual_pages > MAX_PAGE_GUARD) else None
+                result = extract_one(client, lp, source_url, max_pages=max_pages)
                 result["pdf_pages"] = pages
             result["estimated_cost_usd"] = round(cost, 5)
             results.append(result)
@@ -628,6 +674,8 @@ if __name__ == "__main__":
     parser.add_argument("--dry-run", action="store_true", help="Estimate costs without API calls")
     parser.add_argument("--skip-download", action="store_true", help="Skip download phase")
     parser.add_argument("--yes", action="store_true", help="Skip cost confirmation prompt")
+    parser.add_argument("--sample", type=float, default=None,
+                        metavar="FRAC", help="Extract a random fraction of the queue (e.g. 0.05 for 5%%)")
     args = parser.parse_args()
 
     # Phase 1: Scrape index
@@ -652,7 +700,7 @@ if __name__ == "__main__":
             ]
 
     # Phase 3: Extract
-    extract_all(local_paths, index_df, dry_run=args.dry_run, test_mode=args.test, yes=args.yes)
+    extract_all(local_paths, index_df, dry_run=args.dry_run, test_mode=args.test, yes=args.yes, sample=args.sample)
 
     # Timestamp
     if not args.dry_run:
