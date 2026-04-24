@@ -60,6 +60,18 @@ AMEND checks weekly and will automatically incorporate new reports when EPA post
 * [MS4 report index](MS4_report_index.csv) — one row per discovered PDF, with EPA URL, GCS archive URL, municipality, and year
 * [MS4 extracted data](MS4_extracted.csv) — one row per extracted report, with all MCM fields, TMDL waterbodies (JSON), and traceability fields
 
+## Extraction failures
+
+{% if site.data.MS4_failures.count and site.data.MS4_failures.count > 0 %}
+{{ site.data.MS4_failures.count }} report{% if site.data.MS4_failures.count != 1 %}s{% endif %} could not be extracted successfully and are excluded from the dataset. These are logged automatically each time the pipeline runs.
+
+| File | Municipality | Year | Reason |
+|---|---|---|---|{% for f in site.data.MS4_failures.failures %}
+| [{{ f.filename }}]({{ site.data.MS4_report_index | where: "filename", f.filename | map: "url" | first }}){:target="_blank"} | {{ f.municipality }} | {{ f.report_year }} | {{ f.notes }} |{% endfor %}
+{% else %}
+No extraction failures in the current dataset.
+{% endif %}
+
 ## Sample extracted data
 
 The table below shows extracted records from the dataset.
