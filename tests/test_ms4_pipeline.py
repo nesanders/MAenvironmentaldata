@@ -201,50 +201,7 @@ def _make_mock_result():
 
 
 def _flatten(r):
-    """Replicate the flat dict builder from extract_all for testing."""
-    src_url = r.get("source_url", "")
-    filename = src_url.split("/")[-1] if src_url else ""
-    gcs_url = f"{ms4.GCS_PUBLIC_BASE}/{filename}" if filename else None
-
-    raw_py = r.get("permit_year")
-    permit_year = int(raw_py) if raw_py is not None else None
-
-    idde = r.get("mcm3_idde") or {}
-    return {
-        "source_url": src_url,
-        "gcs_url": gcs_url,
-        "municipality": r.get("municipality"),
-        "permit_number": r.get("permit_number"),
-        "report_year": r.get("report_year"),
-        "permit_year": permit_year,
-        "report_period_start": r.get("report_period_start"),
-        "report_period_end": r.get("report_period_end"),
-        "source_page_refs": json.dumps(r.get("source_page_refs", {})),
-        "mcm1_activities_count": (r.get("mcm1_public_education") or {}).get("activities_count"),
-        "mcm1_notes": (r.get("mcm1_public_education") or {}).get("notes"),
-        "mcm2_activities_count": (r.get("mcm2_public_participation") or {}).get("activities_count"),
-        "mcm3_outfalls_total": idde.get("outfalls_total"),
-        "mcm3_outfalls_screened": idde.get("outfalls_screened"),
-        "mcm3_outfalls_not_accessed": idde.get("outfalls_not_accessed"),
-        "mcm3_illicit_found": idde.get("illicit_discharges_found"),
-        "mcm3_illicit_eliminated": idde.get("illicit_discharges_eliminated"),
-        "mcm3_count_type": idde.get("count_type"),
-        "mcm3_sampling_conducted": idde.get("sampling_conducted"),
-        "mcm4_sites_inspected": (r.get("mcm4_construction") or {}).get("sites_inspected"),
-        "mcm4_violations_found": (r.get("mcm4_construction") or {}).get("violations_found"),
-        "mcm5_sites_inspected": (r.get("mcm5_post_construction") or {}).get("sites_inspected"),
-        "mcm5_bmps_inspected": (r.get("mcm5_post_construction") or {}).get("bmps_inspected"),
-        "mcm6_facilities_inspected": (r.get("mcm6_pollution_prevention") or {}).get("facilities_inspected"),
-        "mcm6_notes": (r.get("mcm6_pollution_prevention") or {}).get("notes"),
-        "system_mapping_pct_complete": r.get("system_mapping_pct_complete"),
-        "tmdl_municipality_specific": r.get("tmdl_municipality_specific"),
-        "tmdl_waterbodies_json": json.dumps(r.get("tmdl_waterbodies") or []),
-        "compliance_issues": r.get("compliance_issues"),
-        "extraction_confidence": r.get("extraction_confidence"),
-        "extraction_notes": r.get("extraction_notes"),
-        "pdf_pages": r.get("pdf_pages"),
-        "estimated_cost_usd": r.get("estimated_cost_usd"),
-    }
+    return ms4._flatten_result(r)
 
 
 def test_flatten_basic_fields():

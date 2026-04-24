@@ -34,6 +34,7 @@ Run from get_data/ directory:
 import argparse
 import datetime
 import json
+import logging
 import os
 import re
 import shlex
@@ -58,6 +59,24 @@ GCS_PUBLIC_BASE = "https://storage.googleapis.com/openamend-data/MS4_annual_repo
 INDEX_CSV = "../docs/data/MS4_report_index.csv"
 EXTRACTED_CSV = "../docs/data/MS4_extracted.csv"
 TIMESTAMP_YML = "../docs/data/ts_update_MS4.yml"
+LOG_FILE = "../docs/data/ms4_extraction.log"
+
+def _setup_logging():
+    handlers = [logging.StreamHandler()]
+    if os.path.isdir(os.path.dirname(os.path.abspath(LOG_FILE))):
+        try:
+            handlers.append(logging.FileHandler(LOG_FILE))
+        except OSError:
+            pass
+    logging.basicConfig(
+        level=logging.INFO,
+        format="%(asctime)s %(message)s",
+        datefmt="%H:%M:%S",
+        handlers=handlers,
+    )
+
+_setup_logging()
+log = logging.getLogger(__name__)
 
 GEMINI_MODEL = "gemini-2.5-flash"
 GEMINI_INPUT_PRICE_PER_M = 0.15   # USD per million input tokens (gemini-2.5-flash)
@@ -224,7 +243,7 @@ Extract all available data according to the function schema. Key guidance:
 
 def scrape_report_index():
     """Parse the EPA MS4 MA community page and return a DataFrame of report URLs."""
-    print(f"Scraping {MS4_INDEX_URL} ...")
+    log.info(f"Scraping {MS4_INDEX_URL} ...")
     resp = requests.get(MS4_INDEX_URL, timeout=30)
     resp.raise_for_status()
     soup = BeautifulSoup(resp.text, "lxml")
@@ -253,7 +272,7 @@ def scrape_report_index():
         raise ValueError("No MS4 PDF links found on EPA page — page structure may have changed.")
 
     df = pd.DataFrame(rows).drop_duplicates(subset=["url"])
-    print(f"Found {len(df)} report PDFs across {df['municipality'].nunique()} municipalities.")
+    log.info(f"Found {len(df)} report PDFs across {df['municipality'].nunique()} municipalities.")
     return df
 
 
@@ -271,10 +290,10 @@ def download_pdfs(index_df, test_mode=False):
         rows = index_df[["url", "filename"]].to_dict("records")
 
     # Get existing GCS files in one listing call.
-    print("Listing existing PDFs in GCS ...")
+    log.info("Listing existing PDFs in GCS ...")
     gs_ls = os.popen(f'gsutil ls "{GS_BUCKET}/**" 2>/dev/null').read()
     existing_in_gcs = set(os.path.basename(p) for p in gs_ls.splitlines() if p.strip())
-    print(f"  {len(existing_in_gcs)} files already in GCS.")
+    log.info(f"  {len(existing_in_gcs)} files already in GCS.")
 
     local_paths = []
     new_count = 0
@@ -283,7 +302,7 @@ def download_pdfs(index_df, test_mode=False):
         local_path = os.path.join(MS4_DIR, filename)
         local_paths.append(local_path)
         if filename not in existing_in_gcs and not os.path.exists(local_path):
-            print(f"  Downloading {filename} ...")
+            log.info(f"  Downloading {filename} ...")
             os.system(
                 "wget " + shlex.quote(row["url"])
                 + f" --no-clobber --timeout=30 --tries=3 -O "
@@ -296,9 +315,9 @@ def download_pdfs(index_df, test_mode=False):
             # In GCS but not local — download from GCS
             os.system(f"gsutil cp {GS_BUCKET}/{filename} {shlex.quote(local_path)}")
         else:
-            print(f"  Already have {filename}.")
+            log.info(f"  Already have {filename}.")
 
-    print(f"Downloaded {new_count} new PDFs.")
+    log.info(f"Downloaded {new_count} new PDFs.")
     return local_paths
 
 
@@ -325,7 +344,7 @@ def get_page_count(pdf_path):
                     return pages, "xfa"
         return pages, None
     except Exception as e:
-        print(f"  Warning: pdfplumber could not read {pdf_path}: {e}")
+        log.info(f"  Warning: pdfplumber could not read {pdf_path}: {e}")
         return None, "unreadable"
 
 
@@ -388,7 +407,7 @@ def extract_one(client, pdf_path, source_url, max_pages=None):
     if max_pages is not None:
         upload_path, tmp_path = prepare_upload_pdf(pdf_path, max_pages)
 
-    print(f"  Uploading {os.path.basename(pdf_path)} to Gemini ...")
+    log.info(f"  Uploading {os.path.basename(pdf_path)} to Gemini ...")
     with open(upload_path, "rb") as f:
         uploaded = client.files.upload(
             file=f,
@@ -427,7 +446,12 @@ def extract_one(client, pdf_path, source_url, max_pages=None):
             os.unlink(tmp_path)
 
     # Parse function call response
-    for part in response.candidates[0].content.parts:
+    candidate = response.candidates[0]
+    if candidate.content is None:
+        reason = getattr(candidate, "finish_reason", "unknown")
+        raise ValueError(f"Gemini returned empty content (finish_reason={reason}). "
+                         "Possible safety block or recitation filter.")
+    for part in candidate.content.parts:
         if part.function_call:
             result = dict(part.function_call.args)
             result["source_url"] = source_url
@@ -468,13 +492,63 @@ def extract_one_xfa(client, xml_text, source_url):
             automatic_function_calling=types.AutomaticFunctionCallingConfig(disable=True),
         ),
     )
-    for part in response.candidates[0].content.parts:
+    candidate = response.candidates[0]
+    if candidate.content is None:
+        reason = getattr(candidate, "finish_reason", "unknown")
+        raise ValueError(f"Gemini returned empty content (finish_reason={reason}). "
+                         "Possible safety block or recitation filter.")
+    for part in candidate.content.parts:
         if part.function_call:
             result = dict(part.function_call.args)
             result["source_url"] = source_url
             result["source_page_refs"] = {}
             return result
     raise ValueError("Gemini response contained no function call.")
+
+
+def _flatten_result(r):
+    """Flatten a Gemini extraction result dict into a CSV-ready flat dict."""
+    src_url = r.get("source_url", "")
+    filename = src_url.split("/")[-1] if src_url else ""
+    gcs_url = f"{GCS_PUBLIC_BASE}/{filename}" if filename else None
+    raw_py = r.get("permit_year")
+    permit_year = int(raw_py) if raw_py is not None else None
+    idde = r.get("mcm3_idde") or {}
+    return {
+        "source_url": src_url,
+        "gcs_url": gcs_url,
+        "municipality": r.get("municipality"),
+        "permit_number": r.get("permit_number"),
+        "report_year": r.get("report_year"),
+        "permit_year": permit_year,
+        "report_period_start": r.get("report_period_start"),
+        "report_period_end": r.get("report_period_end"),
+        "source_page_refs": json.dumps(r.get("source_page_refs", {})),
+        "mcm1_activities_count": (r.get("mcm1_public_education") or {}).get("activities_count"),
+        "mcm1_notes": (r.get("mcm1_public_education") or {}).get("notes"),
+        "mcm2_activities_count": (r.get("mcm2_public_participation") or {}).get("activities_count"),
+        "mcm3_outfalls_total": idde.get("outfalls_total"),
+        "mcm3_outfalls_screened": idde.get("outfalls_screened"),
+        "mcm3_outfalls_not_accessed": idde.get("outfalls_not_accessed"),
+        "mcm3_illicit_found": idde.get("illicit_discharges_found"),
+        "mcm3_illicit_eliminated": idde.get("illicit_discharges_eliminated"),
+        "mcm3_count_type": idde.get("count_type"),
+        "mcm3_sampling_conducted": idde.get("sampling_conducted"),
+        "mcm4_sites_inspected": (r.get("mcm4_construction") or {}).get("sites_inspected"),
+        "mcm4_violations_found": (r.get("mcm4_construction") or {}).get("violations_found"),
+        "mcm5_sites_inspected": (r.get("mcm5_post_construction") or {}).get("sites_inspected"),
+        "mcm5_bmps_inspected": (r.get("mcm5_post_construction") or {}).get("bmps_inspected"),
+        "mcm6_facilities_inspected": (r.get("mcm6_pollution_prevention") or {}).get("facilities_inspected"),
+        "mcm6_notes": (r.get("mcm6_pollution_prevention") or {}).get("notes"),
+        "system_mapping_pct_complete": r.get("system_mapping_pct_complete"),
+        "tmdl_municipality_specific": r.get("tmdl_municipality_specific"),
+        "tmdl_waterbodies_json": json.dumps(r.get("tmdl_waterbodies") or []),
+        "compliance_issues": r.get("compliance_issues"),
+        "extraction_confidence": r.get("extraction_confidence"),
+        "extraction_notes": r.get("extraction_notes"),
+        "pdf_pages": r.get("pdf_pages"),
+        "estimated_cost_usd": r.get("estimated_cost_usd"),
+    }
 
 
 def extract_all(local_paths, index_df, dry_run=False, test_mode=False, yes=False, sample=None):
@@ -495,7 +569,7 @@ def extract_all(local_paths, index_df, dry_run=False, test_mode=False, yes=False
     if os.path.exists(EXTRACTED_CSV):
         existing = pd.read_csv(EXTRACTED_CSV)
         already_done = set(existing["source_url"].dropna())
-        print(f"  {len(already_done)} reports already extracted; skipping.")
+        log.info(f"  {len(already_done)} reports already extracted; skipping.")
 
     # Build URL lookup from index
     url_by_filename = {}
@@ -517,19 +591,19 @@ def extract_all(local_paths, index_df, dry_run=False, test_mode=False, yes=False
         if source_url in already_done:
             continue
         if not os.path.exists(lp):
-            print(f"  Skipping {filename}: file not found locally.")
+            log.info(f"  Skipping {filename}: file not found locally.")
             continue
         pages, fmt_issue = get_page_count(lp)
         if fmt_issue == "xfa":
-            print(f"  {filename}: XFA form — will extract from XML datasets stream.")
+            log.info(f"  {filename}: XFA form — will extract from XML datasets stream.")
             total_cost += XFA_COST
             pdf_queue.append((lp, source_url, 1, XFA_COST, True))
             continue
         if fmt_issue == "unreadable" or pages is None:
-            print(f"  Skipping {filename}: unreadable by pdfplumber.")
+            log.info(f"  Skipping {filename}: unreadable by pdfplumber.")
             continue
         if pages > MAX_PAGE_GUARD:
-            print(f"  {filename}: {pages} pages — truncating to first {MAX_PAGE_GUARD} for extraction.")
+            log.info(f"  {filename}: {pages} pages — truncating to first {MAX_PAGE_GUARD} for extraction.")
             pages = MAX_PAGE_GUARD
         cost = estimate_cost(pages)
         total_cost += cost
@@ -538,32 +612,32 @@ def extract_all(local_paths, index_df, dry_run=False, test_mode=False, yes=False
     if sample is not None:
         pdf_queue = apply_sample(pdf_queue, sample)
         total_cost = sum(c for _, _, _, c, _ in pdf_queue)
-        print(f"  Sample: {len(pdf_queue)} PDFs ({sample:.0%} of queue).")
+        log.info(f"  Sample: {len(pdf_queue)} PDFs ({sample:.0%} of queue).")
 
-    print(f"\nExtraction queue: {len(pdf_queue)} PDFs, estimated total cost: ${total_cost:.4f}")
+    log.info(f"\nExtraction queue: {len(pdf_queue)} PDFs, estimated total cost: ${total_cost:.4f}")
 
     threshold = COST_THRESHOLD_TEST if test_mode else COST_THRESHOLD_FULL
     if total_cost > threshold and not dry_run and not yes and not test_mode:
         answer = input(f"Estimated cost ${total_cost:.4f} exceeds threshold ${threshold:.2f}. Proceed? [y/N] ")
         if answer.strip().lower() != "y":
-            print("Aborted.")
+            log.info("Aborted.")
             return
     elif total_cost > threshold and not dry_run:
-        print(f"Estimated cost ${total_cost:.4f} (auto-confirmed).")
+        log.info(f"Estimated cost ${total_cost:.4f} (auto-confirmed).")
 
     if dry_run:
-        print("Dry run — no API calls made.")
+        log.info("Dry run — no API calls made.")
         for lp, _, pages, cost, is_xfa in pdf_queue:
             kind = "XFA" if is_xfa else f"{pages} pages"
-            print(f"  {os.path.basename(lp)}: {kind}, ~${cost:.4f}")
+            log.info(f"  {os.path.basename(lp)}: {kind}, ~${cost:.4f}")
         return
 
     client = genai.Client(api_key=api_key)
-    results = []
+    written = 0
 
     for lp, source_url, pages, cost, is_xfa in pdf_queue:
         kind = "XFA" if is_xfa else f"{pages} pages"
-        print(f"\nExtracting {os.path.basename(lp)} ({kind}, ~${cost:.4f}) ...")
+        log.info(f"\nExtracting {os.path.basename(lp)} ({kind}, ~${cost:.4f}) ...")
         try:
             if is_xfa:
                 xml_text = extract_xfa_xml(lp)
@@ -577,91 +651,25 @@ def extract_all(local_paths, index_df, dry_run=False, test_mode=False, yes=False
                 result = extract_one(client, lp, source_url, max_pages=max_pages)
                 result["pdf_pages"] = pages
             result["estimated_cost_usd"] = round(cost, 5)
-            results.append(result)
-            print(f"  Done. Confidence: {result.get('extraction_confidence', '?')}")
+            log.info(f"  Done. Confidence: {result.get('extraction_confidence', '?')}")
         except Exception as e:
-            print(f"  ERROR: {e}")
-            results.append({
+            log.info(f"  ERROR: {e}")
+            result = {
                 "source_url": source_url,
                 "extraction_confidence": "low",
                 "extraction_notes": f"Extraction failed: {e}",
                 "pdf_pages": pages if not is_xfa else None,
                 "estimated_cost_usd": round(cost, 5),
-            })
+            }
 
-    if not results:
-        return
+        flat = _flatten_result(result)
+        write_header = not os.path.exists(EXTRACTED_CSV)
+        pd.DataFrame([flat]).to_csv(EXTRACTED_CSV, mode="a", header=write_header, index=False)
+        written += 1
+        if written % 50 == 0:
+            log.info(f"  Progress: {written}/{len(pdf_queue)} extracted.")
 
-    # Flatten and append to CSV
-    flat_rows = []
-    for r in results:
-        src_url = r.get("source_url", "")
-        filename = src_url.split("/")[-1] if src_url else ""
-        gcs_url = f"{GCS_PUBLIC_BASE}/{filename}" if filename else None
-
-        # permit_year: cast float→int; fall back to None (post-process from filename elsewhere)
-        raw_py = r.get("permit_year")
-        permit_year = int(raw_py) if raw_py is not None else None
-
-        idde = r.get("mcm3_idde") or {}
-        flat = {
-            "source_url": src_url,
-            "gcs_url": gcs_url,
-            "municipality": r.get("municipality"),
-            "permit_number": r.get("permit_number"),
-            "report_year": r.get("report_year"),
-            "permit_year": permit_year,
-            "report_period_start": r.get("report_period_start"),
-            "report_period_end": r.get("report_period_end"),
-            "source_page_refs": json.dumps(r.get("source_page_refs", {})),
-            "mcm1_activities_count": (r.get("mcm1_public_education") or {}).get("activities_count"),
-            "mcm1_notes": (r.get("mcm1_public_education") or {}).get("notes"),
-            "mcm2_activities_count": (r.get("mcm2_public_participation") or {}).get("activities_count"),
-            "mcm3_outfalls_total": idde.get("outfalls_total"),
-            "mcm3_outfalls_screened": idde.get("outfalls_screened"),
-            "mcm3_outfalls_not_accessed": idde.get("outfalls_not_accessed"),
-            "mcm3_illicit_found": idde.get("illicit_discharges_found"),
-            "mcm3_illicit_eliminated": idde.get("illicit_discharges_eliminated"),
-            "mcm3_count_type": idde.get("count_type"),
-            "mcm3_sampling_conducted": idde.get("sampling_conducted"),
-            "mcm4_sites_inspected": (r.get("mcm4_construction") or {}).get("sites_inspected"),
-            "mcm4_violations_found": (r.get("mcm4_construction") or {}).get("violations_found"),
-            "mcm5_sites_inspected": (r.get("mcm5_post_construction") or {}).get("sites_inspected"),
-            "mcm5_bmps_inspected": (r.get("mcm5_post_construction") or {}).get("bmps_inspected"),
-            "mcm6_facilities_inspected": (r.get("mcm6_pollution_prevention") or {}).get("facilities_inspected"),
-            "mcm6_notes": (r.get("mcm6_pollution_prevention") or {}).get("notes"),
-            "system_mapping_pct_complete": r.get("system_mapping_pct_complete"),
-            "tmdl_municipality_specific": r.get("tmdl_municipality_specific"),
-            "tmdl_waterbodies_json": json.dumps(r.get("tmdl_waterbodies") or []),
-            "compliance_issues": r.get("compliance_issues"),
-            "extraction_confidence": r.get("extraction_confidence"),
-            "extraction_notes": r.get("extraction_notes"),
-            "pdf_pages": r.get("pdf_pages"),
-            "estimated_cost_usd": r.get("estimated_cost_usd"),
-        }
-        flat_rows.append(flat)
-
-    new_df = pd.DataFrame(flat_rows)
-
-    # Print results for manual review
-    print("\n" + "=" * 60)
-    print("EXTRACTION RESULTS")
-    print("=" * 60)
-    for _, row in new_df.iterrows():
-        print(f"\n--- {row.get('municipality', '?')} ---")
-        for col in new_df.columns:
-            val = row.get(col)
-            if val is not None and str(val) not in ("nan", "None", ""):
-                print(f"  {col}: {val}")
-
-    if os.path.exists(EXTRACTED_CSV):
-        existing = pd.read_csv(EXTRACTED_CSV)
-        combined = pd.concat([existing, new_df], ignore_index=True)
-    else:
-        combined = new_df
-
-    combined.to_csv(EXTRACTED_CSV, index=False)
-    print(f"\nWrote {len(new_df)} new records to {EXTRACTED_CSV} ({len(combined)} total).")
+    log.info(f"\nDone. Wrote {written} new records to {EXTRACTED_CSV}.")
 
 
 # ---------------------------------------------------------------------------
@@ -684,7 +692,7 @@ if __name__ == "__main__":
     else:
         index_df = scrape_report_index()
         index_df.to_csv(INDEX_CSV, index=False)
-        print(f"Index written to {INDEX_CSV}.")
+        log.info(f"Index written to {INDEX_CSV}.")
 
     # Phase 2: Download
     if not args.skip_download:
