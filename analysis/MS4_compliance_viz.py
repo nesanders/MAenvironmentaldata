@@ -169,11 +169,11 @@ def generate_charts(engine, prefix=''):
     df_map['pct'] = df_map['system_mapping_pct_complete'].clip(upper=100)
 
     brackets = [
-        ('0–25%',   0,   25,  'rgba(200,60,60,0.8)'),
-        ('25–50%',  25,  50,  'rgba(230,140,40,0.8)'),
-        ('50–75%',  50,  75,  'rgba(255,210,60,0.8)'),
-        ('75–99%',  75,  100, 'rgba(120,190,90,0.8)'),
-        ('100%',    100, 101, 'rgba(40,150,60,0.85)'),
+        ('0–25% mapped',          0,   25,  'rgba(200,60,60,0.8)'),
+        ('25–50% mapped',         25,  50,  'rgba(230,140,40,0.8)'),
+        ('50–75% mapped',         50,  75,  'rgba(255,210,60,0.8)'),
+        ('75–99% mapped',         75,  100, 'rgba(120,190,90,0.8)'),
+        ('Fully mapped (100%)',   100, 101, 'rgba(40,150,60,0.85)'),
     ]
 
     mychart = chartjs.chart(
@@ -251,7 +251,6 @@ def generate_post_charts(engine):
         ]
         mychart.add_dataset(vals, pollutant, backgroundColor=f"'{color}'")
 
-    n_munis = tmdl_q['municipality'].nunique()
     mychart.set_params(
         js_inline=0,
         xlabel='Report Year (FY)',
@@ -303,12 +302,12 @@ def generate_post_charts(engine):
 
     # ── 6. EJ: IDDE screening rate vs. EJ percentile ─────────────────────────
     print('Chart 6: EJ scatter...')
-    _generate_ej_charts(engine, df)
+    _generate_ej_charts()
 
     print('Post charts done.')
 
 
-def _generate_ej_charts(engine, df):
+def _generate_ej_charts():
     """EJ scatter plots placeholder — deferred until municipal-level EJ lookup is available.
 
     EJSCREEN data is at census block group level with CNTY_NAME (county), not municipality.
