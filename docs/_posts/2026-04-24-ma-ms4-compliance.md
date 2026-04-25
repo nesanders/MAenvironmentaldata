@@ -18,14 +18,14 @@ These reports — submitted as PDFs with no structured data API — contain seve
 
 Under [Section 402 of the Clean Water Act](https://www.epa.gov/cwa-404/clean-water-act-section-402-national-pollutant-discharge-elimination-system), operators of small MS4s must obtain NPDES stormwater permits and implement programs across six **Minimum Control Measures (MCMs)**:
 
-| # | MCM | What municipalities must do |
-|---|---|---|
-| 1 | Public Education & Outreach | Distribute educational materials on stormwater impacts |
-| 2 | Public Participation | Involve the public in program development |
-| 3 | Illicit Discharge Detection & Elimination (IDDE) | Map outfalls, screen for non-stormwater flows, eliminate illicit connections |
-| 4 | Construction Site Runoff Control | Inspect active sites, enforce erosion controls |
-| 5 | Post-Construction Stormwater Management | Require and inspect BMPs for new development |
-| 6 | Pollution Prevention / Good Housekeeping | Inspect and maintain municipal facilities and infrastructure |
+| # | MCM | What municipalities must do | Metrics extracted |
+|---|---|---|---|
+| 1 | Public Education & Outreach | Distribute educational materials on stormwater impacts | Activities/events count |
+| 2 | Public Participation | Involve the public in program development | Activities/meetings count |
+| 3 | Illicit Discharge Detection & Elimination (IDDE) | Map outfalls, screen for non-stormwater flows, eliminate illicit connections | Outfalls total; outfalls screened; outfalls not accessed; illicit discharges found; illicit discharges eliminated; whether sampling was conducted; cumulative vs. current-period count type |
+| 4 | Construction Site Runoff Control | Inspect active sites, enforce erosion controls | Sites inspected; violations found |
+| 5 | Post-Construction Stormwater Management | Require and inspect best management practices (BMPs) for new development | Sites inspected; BMPs inspected |
+| 6 | Pollution Prevention / Good Housekeeping | Inspect and maintain municipal facilities and infrastructure | Facilities inspected (catch basins or facilities per notes) |
 
 The current permit covers a seven-year cycle (FY2019–FY2025). Municipalities additionally report progress toward waterbody-specific **Total Maximum Daily Load (TMDL)** pollution reduction targets where applicable.
 
@@ -89,7 +89,7 @@ Municipalities with active combined sewer overflow (CSO) systems have more compl
 
 {% include charts/MS4_idde_vs_cso.html %}
 
-CSO municipalities (identified from the [EEA Data Portal CSO discharge records]({{ site.baseurl }}/data/EEAdataportal.html)) consistently show higher median illicit discharge detection rates than non-CSO municipalities. This likely reflects a combination of genuine infrastructure differences and more mature IDDE programs in communities that have been managing combined sewer issues for decades.
+CSO municipalities (identified from the [EEA Data Portal CSO discharge records]({{ site.baseurl }}/data/EEADP_all.html)) consistently show higher median illicit discharge detection rates than non-CSO municipalities. This likely reflects a combination of genuine infrastructure differences and more mature IDDE programs in communities that have been managing combined sewer issues for decades.
 
 ---
 

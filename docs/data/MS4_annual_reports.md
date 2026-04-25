@@ -72,6 +72,20 @@ AMEND checks weekly and will automatically incorporate new reports when EPA post
 No extraction failures in the current dataset.
 {% endif %}
 
+## Municipality count breakdown
+
+The 316 municipalities in the report index differ from the 276 used in the analysis. Each filter stage is documented below.
+
+| Stage | Reports | Municipalities | Notes |
+|---|---|---|---|
+| Report index (scraped) | 1,787 | 316 | Raw scraped EPA listing; un-normalized municipality names; all permittee types |
+| Extracted CSV | 1,787 | 440 | Unique raw municipality strings from AI extraction; higher count due to name variants ("Town of X", abbreviations) |
+| DB after normalization | 1,787 | 309 | After stripping "Town of"/"City of" prefix and uppercasing in `assemble_db.py` |
+| After MAR042 filter | 1,634 | 270 | Removes 39 institutional permittees: UMass campuses, military installations (Hanscom AFB, Camp Edwards, Fort Devens, USCG Cape Cod), DCAMM, and community colleges |
+| After low-confidence filter | 1,624 | 276 | Removes 11 reports (3 municipalities) with extraction confidence = `low`; these are listed in the Extraction failures section above |
+
+The 276-municipality figure is what the analysis uses. The 40 excluded institutional permittees (permit prefix `MAR042`) are included in the raw download files but excluded from all municipal comparisons and dashboard charts.
+
 ## Sample extracted data
 
 The table below shows extracted records from the dataset.
