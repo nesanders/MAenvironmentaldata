@@ -1,0 +1,338 @@
+"""Generate charts for the MS4 annual report compliance analysis.
+
+Dashboard charts (called with prefix='dash_' by dashboard_charts.py):
+  {prefix}MS4_compliance_trajectory  — MCM inspection counts by report year
+  {prefix}MS4_idde_activity          — Illicit discharges found/eliminated by report year
+  {prefix}MS4_mapping_progress       — System mapping completion distribution
+
+Analysis-post charts (no prefix, generate_post_charts):
+  MS4_tmdl_progress                  — TMDL reduction achieved vs. allocation
+  MS4_mcm_effort_scatter             — MCM1 activity counts vs. municipality population
+  MS4_idde_vs_cso                    — IDDE activity in CSO vs. non-CSO municipalities
+  MS4_ej_idde_scatter                — IDDE screening rate vs. EJ percentile
+  MS4_ej_mcm4_scatter                — MCM4 inspections per capita vs. EJ percentile
+
+Data files written:
+  docs/data/facts_MS4.yml            — Key facts for Jekyll post templates
+"""
+
+import sys
+import os
+sys.path.insert(0, os.path.dirname(__file__))
+
+import json
+import pandas as pd
+import numpy as np
+from sqlalchemy import create_engine
+import chartjs
+
+# ─── colours ──────────────────────────────────────────────────────────────────
+BLUE   = 'rgba(54, 110, 179, 0.85)'
+RED    = 'rgba(200, 60, 60, 0.85)'
+ORANGE = 'rgba(230, 140, 40, 0.85)'
+GREEN  = 'rgba(60, 170, 80, 0.85)'
+GREY   = 'rgba(150, 150, 150, 0.6)'
+PURPLE = 'rgba(130, 80, 200, 0.85)'
+TEAL   = 'rgba(30, 160, 160, 0.85)'
+
+CHART_DIR = '../docs/_includes/charts'
+FACTS_YML = '../docs/data/facts_MS4.yml'
+
+
+def _load_ms4(engine):
+    df = pd.read_sql_query(
+        "SELECT * FROM MS4_AnnualReports WHERE extraction_confidence != 'low'",
+        engine,
+    )
+    # Exclude non-traditional MS4s (MAR042 prefix — institutional permittees)
+    df = df[~df['permit_number'].fillna('').str.startswith('MAR042')]
+    df['report_year'] = pd.to_numeric(df['report_year'], errors='coerce')
+    return df
+
+
+def _write_facts(df, tmdl):
+    n_reports = len(df)
+    n_munis = df['municipality_normalized'].nunique()
+    total_illicit = int(df['mcm3_illicit_found'].sum(skipna=True))
+    total_eliminated = int(df['mcm3_illicit_eliminated'].sum(skipna=True))
+    n_tmdl_quantitative = int(
+        tmdl[tmdl['reduction_achieved_lbs_per_year'].notna()]['municipality'].nunique()
+    )
+    with open(FACTS_YML, 'w') as f:
+        f.write(f'n_reports: {n_reports}\n')
+        f.write(f'n_municipalities: {n_munis}\n')
+        f.write(f'total_illicit_found: {total_illicit}\n')
+        f.write(f'total_illicit_eliminated: {total_eliminated}\n')
+        f.write(f'n_municipalities_tmdl_quantitative: {n_tmdl_quantitative}\n')
+    print(f'Facts written to {FACTS_YML}')
+
+
+# ─── Dashboard charts ─────────────────────────────────────────────────────────
+
+def generate_charts(engine, prefix=''):
+    """Generate MS4 dashboard charts.
+
+    Parameters
+    ----------
+    engine : sqlalchemy.engine.Engine
+    prefix : str
+        Filename prefix (e.g. 'dash_' for dashboard charts)
+    """
+    print('Loading MS4 data...')
+    df = _load_ms4(engine)
+    tmdl = pd.read_sql_query('SELECT * FROM MS4_TMDL', engine)
+
+    _write_facts(df, tmdl)
+
+    years = sorted(df['report_year'].dropna().astype(int).unique())
+    year_labels = [str(y) for y in years]
+
+    # ── 1. Compliance trajectory: median MCM inspection counts by year ─────────
+    print('Chart 1: Compliance trajectory...')
+
+    metrics = {
+        'MCM4 Construction Sites': 'mcm4_sites_inspected',
+        'MCM6 Facilities':         'mcm6_facilities_inspected',
+        'MCM3 Outfalls Screened':  'mcm3_outfalls_screened',
+    }
+    colors = [BLUE, GREEN, ORANGE]
+
+    # For MCM3 screened: restrict to current_period reporters only
+    df_period = df[df['mcm3_count_type'] == 'current_period']
+
+    mychart = chartjs.chart(
+        'MS4 Compliance Activity by Report Year (Median per Municipality)',
+        'Line', 700, 380,
+    )
+    mychart.set_labels(year_labels)
+
+    for (label, col), color in zip(metrics.items(), colors):
+        src = df_period if col == 'mcm3_outfalls_screened' else df
+        vals = [
+            src[src['report_year'] == y][col].median()
+            for y in years
+        ]
+        mychart.add_dataset(
+            vals, label,
+            borderColor=f"'{color}'",
+            backgroundColor=f"'{color}'",
+            fill="false",
+            tension=0.3,
+        )
+
+    mychart.set_params(
+        xlabel='Report Year (FY)',
+        ylabel='Median Count',
+        legend=True,
+    )
+    note = 'MCM3 restricted to current-period reporters. Median across municipalities reporting each year.'
+    mychart.jekyll_write(f'{CHART_DIR}/{prefix}MS4_compliance_trajectory.html')
+
+    # ── 2. IDDE activity: illicit discharges found and eliminated ─────────────
+    print('Chart 2: IDDE activity...')
+
+    df_cp = df[df['mcm3_count_type'] == 'current_period']
+    found_by_year = [
+        int(df_cp[df_cp['report_year'] == y]['mcm3_illicit_found'].sum(skipna=True))
+        for y in years
+    ]
+    elim_by_year = [
+        int(df_cp[df_cp['report_year'] == y]['mcm3_illicit_eliminated'].sum(skipna=True))
+        for y in years
+    ]
+    n_reporters = [
+        int(df_cp[df_cp['report_year'] == y]['mcm3_illicit_found'].notna().sum())
+        for y in years
+    ]
+
+    mychart = chartjs.chart(
+        'MS4 Illicit Discharge Detection & Elimination by Report Year',
+        'Bar', 700, 380,
+    )
+    mychart.set_labels(year_labels)
+    mychart.add_dataset(found_by_year, 'Illicit Discharges Found', backgroundColor=f"'{RED}'")
+    mychart.add_dataset(elim_by_year, 'Illicit Discharges Eliminated', backgroundColor=f"'{ORANGE}'")
+    mychart.set_params(
+        xlabel='Report Year (FY)',
+        ylabel='Total Count (all municipalities)',
+        legend=True,
+    )
+    note = (
+        'Current-period reporters only (cumulative reporters excluded). '
+        'n reporters per year: ' + ', '.join(f'{y}: {n}' for y, n in zip(years, n_reporters))
+    )
+    mychart.jekyll_write(f'{CHART_DIR}/{prefix}MS4_idde_activity.html')
+
+    # ── 3. System mapping progress distribution ────────────────────────────────
+    print('Chart 3: Mapping progress...')
+
+    df_map = df[df['system_mapping_pct_complete'].notna()].copy()
+    df_map['report_year'] = df_map['report_year'].astype(int)
+
+    pct_labels = ['p10', 'p25', 'Median', 'p75', 'p90']
+    percentiles = [10, 25, 50, 75, 90]
+    pct_colors = [
+        'rgba(200,60,60,0.3)', 'rgba(230,140,40,0.5)',
+        BLUE,
+        'rgba(230,140,40,0.5)', 'rgba(200,60,60,0.3)',
+    ]
+
+    mychart = chartjs.chart(
+        'MS4 Stormwater System Mapping Completion by Report Year',
+        'Line', 700, 380,
+    )
+    mychart.set_labels(year_labels)
+
+    for pct, label, color in zip(percentiles, pct_labels, pct_colors):
+        vals = [
+            df_map[df_map['report_year'] == y]['system_mapping_pct_complete'].quantile(pct / 100)
+            for y in years
+        ]
+        mychart.add_dataset(
+            vals, label,
+            borderColor=f"'{color}'",
+            backgroundColor=f"'{color}'",
+            fill="false",
+            tension=0.3,
+        )
+
+    n_per_year = [int(df_map[df_map['report_year'] == y].shape[0]) for y in years]
+    mychart.set_params(
+        xlabel='Report Year (FY)',
+        ylabel='Mapping Completion (%)',
+        legend=True,
+    )
+    note = (
+        'Percentile bands across municipalities reporting mapping completion. '
+        'n per year: ' + ', '.join(f'{y}: {n}' for y, n in zip(years, n_per_year))
+    )
+    mychart.jekyll_write(f'{CHART_DIR}/{prefix}MS4_mapping_progress.html')
+
+    print('Dashboard charts done.')
+
+
+# ─── Analysis-post charts ─────────────────────────────────────────────────────
+
+def generate_post_charts(engine):
+    """Generate analysis-post-only MS4 charts (TMDL, EJ, CSO cross-dataset)."""
+    print('Loading MS4 data for post charts...')
+    df = _load_ms4(engine)
+    tmdl = pd.read_sql_query(
+        "SELECT t.source_url, t.municipality, t.municipality_normalized, t.report_year, "
+        "t.waterbody, t.pollutant, t.reduction_achieved_lbs_per_year, "
+        "t.wasteload_allocation_lbs_per_year "
+        "FROM MS4_TMDL t "
+        "JOIN MS4_AnnualReports r ON t.source_url = r.source_url "
+        "WHERE r.tmdl_municipality_specific = 1",
+        engine,
+    )
+    years = sorted(df['report_year'].dropna().astype(int).unique())
+    year_labels = [str(y) for y in years]
+
+    # ── 4. TMDL reduction progress ─────────────────────────────────────────────
+    print('Chart 4: TMDL progress...')
+
+    tmdl_q = tmdl[
+        tmdl['reduction_achieved_lbs_per_year'].notna() &
+        tmdl['wasteload_allocation_lbs_per_year'].notna()
+    ].copy()
+    tmdl_q['report_year'] = pd.to_numeric(tmdl_q['report_year'], errors='coerce')
+
+    # Group by pollutant; top 5 by total reduction achieved
+    top_pollutants = (
+        tmdl_q.groupby('pollutant')['reduction_achieved_lbs_per_year']
+        .sum().nlargest(5).index.tolist()
+    )
+    poll_colors = [BLUE, RED, GREEN, ORANGE, PURPLE]
+
+    mychart = chartjs.chart(
+        'MS4 TMDL Reduction Achieved by Pollutant and Report Year (lbs/yr)',
+        'Bar', 700, 420,
+    )
+    mychart.set_labels(year_labels)
+
+    for pollutant, color in zip(top_pollutants, poll_colors):
+        vals = [
+            tmdl_q[(tmdl_q['report_year'] == y) & (tmdl_q['pollutant'] == pollutant)][
+                'reduction_achieved_lbs_per_year'
+            ].sum()
+            for y in years
+        ]
+        mychart.add_dataset(vals, pollutant, backgroundColor=f"'{color}'")
+
+    n_munis = tmdl_q['municipality'].nunique()
+    mychart.set_params(
+        xlabel='Report Year (FY)',
+        ylabel='Total Reduction Achieved (lbs/yr)',
+        legend=True,
+        stacked=True,
+    )
+    note = (
+        f'Municipality-specific TMDL obligations only. '
+        f'{n_munis} municipalities with quantitative reduction data shown. '
+        'Top 5 pollutants by total reduction.'
+    )
+    mychart.jekyll_write(f'{CHART_DIR}/MS4_tmdl_progress.html')
+
+    # ── 5. MCM effort vs. CSO municipalities ──────────────────────────────────
+    print('Chart 5: IDDE vs CSO municipalities...')
+
+    cso_munis = set(pd.read_sql_query(
+        "SELECT DISTINCT municipality FROM MAEEADP_CSO WHERE eventType LIKE 'CSO%'",
+        engine,
+    )['municipality'].str.upper())
+
+    df_cp = df[df['mcm3_count_type'] == 'current_period'].copy()
+    df_cp['is_cso'] = df_cp['municipality_normalized'].isin(cso_munis)
+
+    # Median illicit found per year, CSO vs non-CSO
+    cso_vals = [
+        df_cp[(df_cp['report_year'] == y) & df_cp['is_cso']]['mcm3_illicit_found'].median()
+        for y in years
+    ]
+    noncso_vals = [
+        df_cp[(df_cp['report_year'] == y) & ~df_cp['is_cso']]['mcm3_illicit_found'].median()
+        for y in years
+    ]
+
+    mychart = chartjs.chart(
+        'Illicit Discharges Found: CSO vs. Non-CSO Municipalities (Median)',
+        'Line', 700, 380,
+    )
+    mychart.set_labels(year_labels)
+    mychart.add_dataset(cso_vals, 'CSO Municipalities',
+                        borderColor=f"'{RED}'", backgroundColor=f"'{RED}'",
+                        fill="false", tension=0.3)
+    mychart.add_dataset(noncso_vals, 'Non-CSO Municipalities',
+                        borderColor=f"'{BLUE}'", backgroundColor=f"'{BLUE}'",
+                        fill="false", tension=0.3)
+    mychart.set_params(
+        xlabel='Report Year (FY)',
+        ylabel='Median Illicit Discharges Found',
+        legend=True,
+    )
+    note = 'Current-period reporters only. CSO municipalities identified from EEA Data Portal discharge records.'
+    mychart.jekyll_write(f'{CHART_DIR}/MS4_idde_vs_cso.html')
+
+    # ── 6. EJ: IDDE screening rate vs. EJ percentile ─────────────────────────
+    print('Chart 6: EJ scatter...')
+    _generate_ej_charts(engine, df)
+
+    print('Post charts done.')
+
+
+def _generate_ej_charts(engine, df):
+    """EJ scatter plots placeholder — deferred until municipal-level EJ lookup is available.
+
+    EJSCREEN data is at census block group level with CNTY_NAME (county), not municipality.
+    A direct MS4 municipality → EJSCREEN join would require a pre-computed spatial lookup
+    table (town polygon → block group aggregation). Flagged as future work.
+    """
+    print('  EJ charts: deferred — no direct municipality→EJSCREEN join available. '
+          'Requires spatial aggregation of block-group data to town boundaries.')
+
+
+if __name__ == '__main__':
+    engine = create_engine('sqlite:///../get_data/AMEND.db')
+    generate_charts(engine, prefix='')
+    generate_post_charts(engine)

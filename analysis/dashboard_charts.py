@@ -11,6 +11,7 @@ import MADEP_staff
 import MADEP_enforcements_viz
 import ECOS_budgets_viz
 import EPA_303d_viz
+import MS4_compliance_viz
 from EEA_DP_CSO_map import CSOAnalysisEEADP
 
 PREFIX = 'dash_'
@@ -52,3 +53,6 @@ csoa.plot_annual_volume_by_operator(outpath='../docs/_includes/charts/dash_MAEEA
 
 # --- 303(d) impaired waters charts (4 charts) ---
 EPA_303d_viz.generate_charts(engine, prefix=PREFIX)
+
+# --- MS4 stormwater compliance charts (3 charts) ---
+MS4_compliance_viz.generate_charts(engine, prefix=PREFIX)

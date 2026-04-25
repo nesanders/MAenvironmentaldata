@@ -1,0 +1,73 @@
+{% raw  %}
+<html>
+    <head>
+        <title>MS4 Illicit Discharge Detection & Elimination by Report Year</title>
+        
+    </head>
+    <body>
+        <div style="width: 700px; height: 380px; max-width: 99%" class="chartjs">
+
+            <canvas id="MS4 Illicit Discharge Detection & Elimination by Report Year" height="380" width="700"></canvas>
+            <script>
+                Chart.defaults.font.size = 12;
+                var chart_data = {
+
+                    data: {
+                        labels: ["2019", "2020", "2021", "2022", "2023", "2024", "2025", "2026"],
+                        datasets: [{'data': [86, 33, 104, 74, 66, 93, 51, 0], 'label': 'Illicit Discharges Found', 'backgroundColor': 'rgba(200, 60, 60, 0.85)'},{'data': [81, 36, 63, 57, 53, 70, 42, 0], 'label': 'Illicit Discharges Eliminated', 'backgroundColor': 'rgba(230, 140, 40, 0.85)'}]
+                    },
+                    type: 'bar',
+                    options: {
+                        scales: {
+                            y: {
+                                display: true,
+                                title: {
+                                    display: true,
+                                    text: 'Total Count (all municipalities)'
+                                },
+                                position: 'left',
+                                stacked: false
+                            },
+                            y1: {
+                                display: false,
+                                title: {
+                                    display: true,
+                                    text: ''
+                                },
+                                position: 'right'
+                            },
+                            x: {
+                                title: {
+                                    display: true,
+                                    text: 'Report Year (FY)'
+                                },
+                                stacked: false,
+                                ticks: {
+                                    autoSkip: true
+                                }
+                            }
+                        },
+                        plugins: {
+                            legend: {
+                                display: true
+                            },
+                            tooltip: {
+                                enabled: true
+                            }
+                        }
+                    }
+                }
+                
+                
+            </script>
+            <script>
+                {
+
+                    var ctx = document.getElementById("MS4 Illicit Discharge Detection & Elimination by Report Year").getContext("2d");
+                    var mychart = new Chart(ctx, chart_data);
+                }
+            </script>
+        </div>
+    </body>
+</html>
+{% endraw  %}

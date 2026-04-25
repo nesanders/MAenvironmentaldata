@@ -1,0 +1,73 @@
+{% raw  %}
+<html>
+    <head>
+        <title>Illicit Discharges Found: CSO vs. Non-CSO Municipalities (Median)</title>
+        
+    </head>
+    <body>
+        <div style="width: 700px; height: 380px; max-width: 99%" class="chartjs">
+
+            <canvas id="Illicit Discharges Found: CSO vs. Non-CSO Municipalities (Median)" height="380" width="700"></canvas>
+            <script>
+                Chart.defaults.font.size = 12;
+                var chart_data = {
+
+                    data: {
+                        labels: ["2019", "2020", "2021", "2022", "2023", "2024", "2025", "2026"],
+                        datasets: [{'data': [1.0, 1.5, 2.0, 3.0, 3.0, 1.0, 2.0, null], 'label': 'CSO Municipalities', 'borderColor': 'rgba(200, 60, 60, 0.85)', 'backgroundColor': 'rgba(200, 60, 60, 0.85)', 'fill': false, 'tension': 0.3},{'data': [0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0], 'label': 'Non-CSO Municipalities', 'borderColor': 'rgba(54, 110, 179, 0.85)', 'backgroundColor': 'rgba(54, 110, 179, 0.85)', 'fill': false, 'tension': 0.3}]
+                    },
+                    type: 'line',
+                    options: {
+                        scales: {
+                            y: {
+                                display: true,
+                                title: {
+                                    display: true,
+                                    text: 'Median Illicit Discharges Found'
+                                },
+                                position: 'left',
+                                stacked: false
+                            },
+                            y1: {
+                                display: false,
+                                title: {
+                                    display: true,
+                                    text: ''
+                                },
+                                position: 'right'
+                            },
+                            x: {
+                                title: {
+                                    display: true,
+                                    text: 'Report Year (FY)'
+                                },
+                                stacked: false,
+                                ticks: {
+                                    autoSkip: true
+                                }
+                            }
+                        },
+                        plugins: {
+                            legend: {
+                                display: true
+                            },
+                            tooltip: {
+                                enabled: true
+                            }
+                        }
+                    }
+                }
+                
+                
+            </script>
+            <script>
+                {
+
+                    var ctx = document.getElementById("Illicit Discharges Found: CSO vs. Non-CSO Municipalities (Median)").getContext("2d");
+                    var mychart = new Chart(ctx, chart_data);
+                }
+            </script>
+        </div>
+    </body>
+</html>
+{% endraw  %}
