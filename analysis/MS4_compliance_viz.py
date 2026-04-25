@@ -37,6 +37,14 @@ CHART_DIR = '../docs/_includes/charts'
 FACTS_YML = '../docs/data/facts_MS4.yml'
 
 
+def _year_labels(years):
+    """Return string labels for each year; marks the most recent year as partial if >= 2026."""
+    labels = [str(y) for y in years]
+    if years and years[-1] >= 2026:
+        labels[-1] += ' (partial)'
+    return labels
+
+
 def _load_ms4(engine):
     df = pd.read_sql_query(
         "SELECT * FROM MS4_AnnualReports WHERE extraction_confidence != 'low'",
@@ -83,7 +91,7 @@ def generate_charts(engine, prefix=''):
     _write_facts(df, tmdl)
 
     years = sorted(df['report_year'].dropna().astype(int).unique())
-    year_labels = [str(y) for y in years]
+    year_labels = _year_labels(years)
 
     # ── 1. Compliance trajectory: median MCM inspection counts by year ─────────
     print('Chart 1: Compliance trajectory...')
@@ -213,7 +221,7 @@ def generate_post_charts(engine):
         engine,
     )
     years = sorted(df['report_year'].dropna().astype(int).unique())
-    year_labels = [str(y) for y in years]
+    year_labels = _year_labels(years)
 
     # ── 4. TMDL reduction progress ─────────────────────────────────────────────
     print('Chart 4: TMDL progress...')
