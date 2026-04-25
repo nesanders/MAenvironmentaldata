@@ -1,0 +1,73 @@
+{% raw  %}
+<html>
+    <head>
+        <title>MS4 Stormwater System Mapping Completion by Report Year</title>
+        <script src='https://cdn.jsdelivr.net/npm/chart.js@4.4.4/dist/chart.umd.min.js'></script>
+    </head>
+    <body>
+        <div style="width: 700px; height: 400px; max-width: 99%" class="chartjs">
+
+            <canvas id="MS4 Stormwater System Mapping Completion by Report Year" height="400" width="700"></canvas>
+            <script>
+                Chart.defaults.font.size = 12;
+                var chart_data = {
+
+                    data: {
+                        labels: ["2019", "2020", "2021", "2022", "2023", "2024", "2025", "2026 (partial)"],
+                        datasets: [{'data': [17, 49, 14, 16, 13, 37, 18, 1], 'label': '0–25%', 'backgroundColor': 'rgba(200,60,60,0.8)'},{'data': [2, 3, 4, 5, 7, 10, 13, 0], 'label': '25–50%', 'backgroundColor': 'rgba(230,140,40,0.8)'},{'data': [6, 21, 14, 3, 10, 38, 32, 0], 'label': '50–75%', 'backgroundColor': 'rgba(255,210,60,0.8)'},{'data': [12, 12, 29, 21, 25, 81, 101, 0], 'label': '75–99%', 'backgroundColor': 'rgba(120,190,90,0.8)'},{'data': [27, 73, 62, 43, 54, 38, 44, 0], 'label': '100%', 'backgroundColor': 'rgba(40,150,60,0.85)'}]
+                    },
+                    type: 'bar',
+                    options: {
+                        scales: {
+                            y: {
+                                display: true,
+                                title: {
+                                    display: true,
+                                    text: 'Number of Municipalities'
+                                },
+                                position: 'left',
+                                stacked: true
+                            },
+                            y1: {
+                                display: false,
+                                title: {
+                                    display: true,
+                                    text: ''
+                                },
+                                position: 'right'
+                            },
+                            x: {
+                                title: {
+                                    display: true,
+                                    text: 'Report Year (FY)'
+                                },
+                                stacked: true,
+                                ticks: {
+                                    autoSkip: true
+                                }
+                            }
+                        },
+                        plugins: {
+                            legend: {
+                                display: true
+                            },
+                            tooltip: {
+                                enabled: true
+                            }
+                        }
+                    }
+                }
+                
+                
+            </script>
+            <script>
+                {
+
+                    var ctx = document.getElementById("MS4 Stormwater System Mapping Completion by Report Year").getContext("2d");
+                    var mychart = new Chart(ctx, chart_data);
+                }
+            </script>
+        </div>
+    </body>
+</html>
+{% endraw  %}
