@@ -163,10 +163,49 @@ TABLE_DESCRIPTIONS = {
         'Note: one waterbody name may correspond to multiple assessment units (AUs) in EPA_303d_Impairments '
         'since large rivers are divided into segments.'
     ),
+    'MS4_AnnualReports': (
+        'AI-extracted structured data from Massachusetts MS4 (Municipal Separate Storm Sewer System) annual compliance reports '
+        'submitted to EPA Region 1. One row per report (~1787 rows covering FY2019–FY2026, 316 municipalities). '
+        'Fields cover all six Minimum Control Measures (MCMs): MCM1 public education, MCM2 public participation, '
+        'MCM3 IDDE (illicit discharge detection), MCM4 construction site inspections, MCM5 post-construction BMP inspections, '
+        'MCM6 pollution prevention. '
+        'IMPORTANT: permit_year is null for ~35% of reports where report_year is also null (Gemini could not extract it). '
+        'permit_year_imputed=1 where permit_year was imputed from report_year. '
+        'For trend analysis use report_year (2019–2026) rather than permit_year. '
+        'mcm3_count_type distinguishes current_period vs cumulative_since_permit_start counts — '
+        'filter to current_period for trend analysis. '
+        'extraction_confidence (high/medium/low) reflects AI extraction quality; exclude low for analysis. '
+        'municipality_normalized is uppercased with "Town of"/"City of" prefix stripped for joins to MAEEADP_CSO.municipality. '
+        'TMDL data is in the separate MS4_TMDL table (joined on source_url).'
+    ),
+    'MS4_TMDL': (
+        'Exploded TMDL (Total Maximum Daily Load) waterbody entries from MS4 annual reports. '
+        'One row per (municipality, report_year, waterbody, pollutant) combination. '
+        'Joined to MS4_AnnualReports on source_url. '
+        'IMPORTANT: only rows where tmdl_municipality_specific=1 in MS4_AnnualReports reflect municipality-specific obligations '
+        '(many municipalities list the general permit TMDL table, not their own applicable TMDLs). '
+        'Only rows where BOTH reduction_achieved_lbs_per_year AND wasteload_allocation_lbs_per_year are non-null '
+        'have quantitative progress data suitable for analysis. '
+        'Charles River phosphorus dominates the quantitative data; other watersheds have fewer records.'
+    ),
 }
 
 # ─── Column-level notes for key tables ────────────────────────────────────────
 COLUMN_NOTES = {
+    'MS4_AnnualReports': {
+        'mcm3_count_type': 'Filter to current_period for trend analysis; cumulative_since_permit_start reporters inflate year-over-year counts.',
+        'tmdl_municipality_specific': 'Only True/1 rows reflect municipality-specific TMDL obligations. Many municipalities copy the general permit TMDL list (False/0), which is not analytically meaningful.',
+        'municipality': 'Mixed case with "Town of"/"City of" prefix (e.g. "Town of Palmer"). Use municipality_normalized for joins.',
+        'municipality_normalized': 'Uppercased, prefix-stripped municipality name for joining to MAEEADP_CSO.municipality.',
+        'report_year': 'Null for ~35% of records where Gemini could not extract it from the PDF. Use for trend analysis.',
+        'permit_year': 'Null where report_year is also null. permit_year_imputed=1 where derived from report_year.',
+        'extraction_confidence': 'high/medium/low. Exclude low records from analysis.',
+    },
+    'MS4_TMDL': {
+        'reduction_achieved_lbs_per_year': 'Null for most rows — only municipalities with quantitative TMDL targets report this.',
+        'wasteload_allocation_lbs_per_year': 'Null for most rows. Rows where both this and reduction_achieved_lbs_per_year are non-null are the analytically useful subset.',
+        'waterbody': 'Free-text waterbody name as reported by municipality; spelling varies.',
+    },
     'MAEEADP_CSO': {
         'waterBody': 'ALL CAPS (e.g. MYSTIC RIVER, CHARLES RIVER). Use UPPER() for filtering.',
         'municipality': 'ALL CAPS town name (e.g. BOSTON, CAMBRIDGE). Use UPPER() for filtering.',
@@ -301,6 +340,17 @@ JOIN_RELATIONSHIPS = """
   GROUP BY e.CNTY_NAME
   NOTE: EPA_EJSCREEN_2023 has no municipality field — only CNTY_NAME (county). There is NO direct join
   between EJSCREEN and MAEEADP_CSO.municipality. Always warn the user that results are county-level approximations.
+
+- **MS4 stormwater reports + TMDL entries** (one-to-many):
+  MS4_AnnualReports JOIN MS4_TMDL ON MS4_AnnualReports.source_url = MS4_TMDL.source_url
+  → use WHERE MS4_AnnualReports.tmdl_municipality_specific = 1 to filter to municipality-specific obligations
+  → use WHERE MS4_TMDL.reduction_achieved_lbs_per_year IS NOT NULL for quantitative TMDL analysis
+
+- **MS4 + CSO cross-dataset** (municipality join):
+  MS4_AnnualReports.municipality_normalized = MAEEADP_CSO.municipality
+  Example: SELECT m.municipality_normalized, AVG(m.mcm3_illicit_found) as avg_illicit, SUM(c.volumnOfEvent) as total_cso
+  FROM MS4_AnnualReports m JOIN MAEEADP_CSO c ON m.municipality_normalized = c.municipality
+  WHERE m.extraction_confidence != 'low' AND c.eventType LIKE 'CSO%' GROUP BY 1
 
 - **CSO discharges to 303(d) impaired waters** (two-step join):
   MAEEADP_CSO JOIN CSO_303d_Mapping ON MAEEADP_CSO.waterBody = CSO_303d_Mapping.csoWaterBody
