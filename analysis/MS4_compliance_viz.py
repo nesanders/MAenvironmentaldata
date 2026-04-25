@@ -166,39 +166,36 @@ def generate_charts(engine, prefix=''):
 
     df_map = df[df['system_mapping_pct_complete'].notna()].copy()
     df_map['report_year'] = df_map['report_year'].astype(int)
+    df_map['pct'] = df_map['system_mapping_pct_complete'].clip(upper=100)
 
-    pct_labels = ['p10', 'p25', 'Median', 'p75', 'p90']
-    percentiles = [10, 25, 50, 75, 90]
-    pct_colors = [
-        'rgba(200,60,60,0.3)', 'rgba(230,140,40,0.5)',
-        BLUE,
-        'rgba(230,140,40,0.5)', 'rgba(200,60,60,0.3)',
+    brackets = [
+        ('0–25%',   0,   25,  'rgba(200,60,60,0.8)'),
+        ('25–50%',  25,  50,  'rgba(230,140,40,0.8)'),
+        ('50–75%',  50,  75,  'rgba(255,210,60,0.8)'),
+        ('75–99%',  75,  100, 'rgba(120,190,90,0.8)'),
+        ('100%',    100, 101, 'rgba(40,150,60,0.85)'),
     ]
 
     mychart = chartjs.chart(
         'MS4 Stormwater System Mapping Completion by Report Year',
-        'Line', 700, 380,
+        'Bar', 700, 400,
     )
     mychart.set_labels(year_labels)
 
-    for pct, label, color in zip(percentiles, pct_labels, pct_colors):
+    for label, lo, hi, color in brackets:
+        mask = (df_map['pct'] >= lo) & (df_map['pct'] < hi)
         vals = [
-            df_map[df_map['report_year'] == y]['system_mapping_pct_complete'].quantile(pct / 100)
+            int((mask & (df_map['report_year'] == y)).sum())
             for y in years
         ]
-        mychart.add_dataset(
-            vals, label,
-            borderColor=f"'{color}'",
-            backgroundColor=f"'{color}'",
-            fill="false",
-            tension=0.3,
-        )
+        mychart.add_dataset(vals, label, backgroundColor=f"'{color}'")
 
     mychart.set_params(
         js_inline=0,
         xlabel='Report Year (FY)',
-        ylabel='Mapping Completion (%)',
+        ylabel='Number of Municipalities',
         legend=True,
+        stacked=True,
     )
     mychart.jekyll_write(f'{CHART_DIR}/{prefix}MS4_mapping_progress.html')
 

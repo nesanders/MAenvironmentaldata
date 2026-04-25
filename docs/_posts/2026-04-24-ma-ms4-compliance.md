@@ -65,13 +65,11 @@ Across the full dataset, municipalities have collectively identified **{{ site.d
 
 ## Stormwater system mapping progress
 
-Before outfalls can be screened for illicit discharges, they must be located and mapped. The permit requires municipalities to complete stormwater system mapping — a foundational compliance task that many communities were still working through in the early permit years. The chart below shows the distribution of reported mapping completion percentages by report year.
+Before outfalls can be screened for illicit discharges, they must be located and mapped. The permit requires municipalities to complete stormwater system mapping — a foundational compliance task that many communities were still working through in the early permit years. The chart below shows how municipalities are distributed across five completion brackets by report year.
 
 {% include charts/MS4_mapping_progress.html %}
 
-Median mapping completion has increased across the permit cycle, with the interquartile range narrowing in later years as more municipalities reach full completion. The wide spread in early years reflects municipalities that had already completed mapping before the permit cycle began alongside those starting from scratch.
-
-**Note:** `system_mapping_pct_complete` is missing for approximately 58% of all reports; the n values annotated on this chart reflect only municipalities that explicitly reported this field.
+The stacked bars show the count of municipalities in each completion range. The large 100%-complete group visible from 2019 onward reflects municipalities that had already finished mapping before the permit cycle started. The total bar height varies by year because `system_mapping_pct_complete` is missing from approximately 58% of all reports — only municipalities that explicitly reported this field are shown.
 
 ---
 
