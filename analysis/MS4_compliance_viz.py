@@ -20,9 +20,7 @@ import sys
 import os
 sys.path.insert(0, os.path.dirname(__file__))
 
-import json
 import pandas as pd
-import numpy as np
 from sqlalchemy import create_engine
 import chartjs
 
@@ -121,11 +119,11 @@ def generate_charts(engine, prefix=''):
         )
 
     mychart.set_params(
+        js_inline=0,
         xlabel='Report Year (FY)',
         ylabel='Median Count',
         legend=True,
     )
-    note = 'MCM3 restricted to current-period reporters. Median across municipalities reporting each year.'
     mychart.jekyll_write(f'{CHART_DIR}/{prefix}MS4_compliance_trajectory.html')
 
     # ── 2. IDDE activity: illicit discharges found and eliminated ─────────────
@@ -140,11 +138,6 @@ def generate_charts(engine, prefix=''):
         int(df_cp[df_cp['report_year'] == y]['mcm3_illicit_eliminated'].sum(skipna=True))
         for y in years
     ]
-    n_reporters = [
-        int(df_cp[df_cp['report_year'] == y]['mcm3_illicit_found'].notna().sum())
-        for y in years
-    ]
-
     mychart = chartjs.chart(
         'MS4 Illicit Discharge Detection & Elimination by Report Year',
         'Bar', 700, 380,
@@ -153,13 +146,10 @@ def generate_charts(engine, prefix=''):
     mychart.add_dataset(found_by_year, 'Illicit Discharges Found', backgroundColor=f"'{RED}'")
     mychart.add_dataset(elim_by_year, 'Illicit Discharges Eliminated', backgroundColor=f"'{ORANGE}'")
     mychart.set_params(
+        js_inline=0,
         xlabel='Report Year (FY)',
         ylabel='Total Count (all municipalities)',
         legend=True,
-    )
-    note = (
-        'Current-period reporters only (cumulative reporters excluded). '
-        'n reporters per year: ' + ', '.join(f'{y}: {n}' for y, n in zip(years, n_reporters))
     )
     mychart.jekyll_write(f'{CHART_DIR}/{prefix}MS4_idde_activity.html')
 
@@ -196,15 +186,11 @@ def generate_charts(engine, prefix=''):
             tension=0.3,
         )
 
-    n_per_year = [int(df_map[df_map['report_year'] == y].shape[0]) for y in years]
     mychart.set_params(
+        js_inline=0,
         xlabel='Report Year (FY)',
         ylabel='Mapping Completion (%)',
         legend=True,
-    )
-    note = (
-        'Percentile bands across municipalities reporting mapping completion. '
-        'n per year: ' + ', '.join(f'{y}: {n}' for y, n in zip(years, n_per_year))
     )
     mychart.jekyll_write(f'{CHART_DIR}/{prefix}MS4_mapping_progress.html')
 
@@ -262,15 +248,11 @@ def generate_post_charts(engine):
 
     n_munis = tmdl_q['municipality'].nunique()
     mychart.set_params(
+        js_inline=0,
         xlabel='Report Year (FY)',
         ylabel='Total Reduction Achieved (lbs/yr)',
         legend=True,
         stacked=True,
-    )
-    note = (
-        f'Municipality-specific TMDL obligations only. '
-        f'{n_munis} municipalities with quantitative reduction data shown. '
-        'Top 5 pollutants by total reduction.'
     )
     mychart.jekyll_write(f'{CHART_DIR}/MS4_tmdl_progress.html')
 
@@ -307,11 +289,11 @@ def generate_post_charts(engine):
                         borderColor=f"'{BLUE}'", backgroundColor=f"'{BLUE}'",
                         fill="false", tension=0.3)
     mychart.set_params(
+        js_inline=0,
         xlabel='Report Year (FY)',
         ylabel='Median Illicit Discharges Found',
         legend=True,
     )
-    note = 'Current-period reporters only. CSO municipalities identified from EEA Data Portal discharge records.'
     mychart.jekyll_write(f'{CHART_DIR}/MS4_idde_vs_cso.html')
 
     # ── 6. EJ: IDDE screening rate vs. EJ percentile ─────────────────────────
