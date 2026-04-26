@@ -223,7 +223,8 @@ def generate_post_charts(engine):
     # ── 4. MCM3 outfall screening rate: bracket stacked bar ──────────────────────
     print('Chart 4: MCM3 screening rate...')
 
-    n_munis_per_year = {
+    n_total = df['municipality_normalized'].nunique()  # 276 regulated municipalities
+    n_any_report = {
         y: df[df['report_year'] == y]['municipality_normalized'].nunique()
         for y in years
     }
@@ -248,7 +249,7 @@ def generate_post_charts(engine):
 
     mychart = chartjs.chart(
         'MS4 Outfall Screening Rate Distribution by Report Year',
-        'Bar', 700, 400,
+        'Bar', 700, 420,
     )
     mychart.set_labels(year_labels)
 
@@ -260,14 +261,21 @@ def generate_post_charts(engine):
         ]
         mychart.add_dataset(vals, label, backgroundColor=f"'{color}'")
 
-    # Unreported: municipalities with a report that year but no quantitative screening data
-    unreported_vals = [
-        n_munis_per_year[y] - int((df_scr['report_year'] == y).sum())
+    # Filed a report but omitted quantitative outfall screening data
+    filed_no_data_vals = [
+        n_any_report[y] - int((df_scr['report_year'] == y).sum())
         for y in years
     ]
     mychart.add_dataset(
-        unreported_vals, 'Screening rate not reported',
-        backgroundColor="'rgba(180,180,180,0.5)'",
+        filed_no_data_vals, 'Report filed — screening data missing',
+        backgroundColor="'rgba(190,190,190,0.55)'",
+    )
+
+    # Did not file an annual report at all
+    no_report_vals = [n_total - n_any_report[y] for y in years]
+    mychart.add_dataset(
+        no_report_vals, 'No annual report filed',
+        backgroundColor="'rgba(120,120,120,0.4)'",
     )
 
     mychart.set_params(

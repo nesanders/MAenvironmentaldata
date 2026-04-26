@@ -5,16 +5,16 @@
         <script src='https://cdn.jsdelivr.net/npm/chart.js@4.4.4/dist/chart.umd.min.js'></script>
     </head>
     <body>
-        <div style="width: 700px; height: 400px; max-width: 99%" class="chartjs">
+        <div style="width: 700px; height: 420px; max-width: 99%" class="chartjs">
 
-            <canvas id="MS4 Outfall Screening Rate Distribution by Report Year" height="400" width="700"></canvas>
+            <canvas id="MS4 Outfall Screening Rate Distribution by Report Year" height="420" width="700"></canvas>
             <script>
                 Chart.defaults.font.size = 12;
                 var chart_data = {
 
                     data: {
                         labels: ["2019", "2020", "2021", "2022", "2023", "2024", "2025", "2026 (partial)"],
-                        datasets: [{'data': [8, 30, 21, 19, 28, 33, 28, 0], 'label': '0–25% screened', 'backgroundColor': 'rgba(200,60,60,0.8)'},{'data': [7, 1, 13, 2, 1, 3, 1, 0], 'label': '25–50% screened', 'backgroundColor': 'rgba(230,140,40,0.8)'},{'data': [4, 3, 11, 2, 3, 0, 2, 0], 'label': '50–75% screened', 'backgroundColor': 'rgba(255,210,60,0.8)'},{'data': [4, 5, 10, 6, 4, 2, 2, 0], 'label': '75–99% screened', 'backgroundColor': 'rgba(120,190,90,0.8)'},{'data': [10, 2, 19, 17, 13, 5, 9, 0], 'label': 'Fully screened (100%)', 'backgroundColor': 'rgba(40,150,60,0.85)'},{'data': [196, 198, 169, 190, 176, 172, 177, 1], 'label': 'Screening rate not reported', 'backgroundColor': 'rgba(180,180,180,0.5)'}]
+                        datasets: [{'data': [8, 30, 21, 19, 28, 33, 28, 0], 'label': '0–25% screened', 'backgroundColor': 'rgba(200,60,60,0.8)'},{'data': [7, 1, 13, 2, 1, 3, 1, 0], 'label': '25–50% screened', 'backgroundColor': 'rgba(230,140,40,0.8)'},{'data': [4, 3, 11, 2, 3, 0, 2, 0], 'label': '50–75% screened', 'backgroundColor': 'rgba(255,210,60,0.8)'},{'data': [4, 5, 10, 6, 4, 2, 2, 0], 'label': '75–99% screened', 'backgroundColor': 'rgba(120,190,90,0.8)'},{'data': [10, 2, 19, 17, 13, 5, 9, 0], 'label': 'Fully screened (100%)', 'backgroundColor': 'rgba(40,150,60,0.85)'},{'data': [196, 198, 169, 190, 176, 172, 177, 1], 'label': 'Report filed — screening data missing', 'backgroundColor': 'rgba(190,190,190,0.55)'},{'data': [47, 37, 33, 40, 51, 61, 57, 275], 'label': 'No annual report filed', 'backgroundColor': 'rgba(120,120,120,0.4)'}]
                     },
                     type: 'bar',
                     options: {
