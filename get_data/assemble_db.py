@@ -212,6 +212,109 @@ if __name__ == '__main__':
 		list(_CSO_303d_MAP.items()), columns=['csoWaterBody', 'waterbody303d']
 	)
 
+	## MS4 Annual Reports — flat table + exploded TMDL table
+	import json, re as _re
+
+	_ms4_raw = pd.read_csv('../docs/data/MS4_extracted.csv')
+
+	# report_year: fill nulls from filename suffix (e.g. palmer-ma-ar20.pdf → 2020)
+	_YEAR_RE = _re.compile(r'ar(\d{2})\.pdf$', _re.IGNORECASE)
+	def _year_from_url(url, existing):
+		if pd.notna(existing):
+			return existing
+		m = _YEAR_RE.search(str(url))
+		if m:
+			suffix = int(m.group(1))
+			return 2000 + suffix if suffix >= 19 else 2100 + suffix
+		return existing
+	_ms4_raw['report_year'] = _ms4_raw.apply(
+		lambda r: _year_from_url(r['source_url'], r['report_year']), axis=1
+	)
+
+	# permit_year imputation: report_year → permit year
+	# FY2019–2025 = permit years 1–7 of the original MA MS4 General Permit (first cycle).
+	# FY2026 = permit year 1 of the renewed permit (second cycle, effective 2023).
+	_REPORT_TO_PERMIT_YEAR = {2019: 1, 2020: 2, 2021: 3, 2022: 4, 2023: 5, 2024: 6, 2025: 7, 2026: 1}
+	_ms4_raw['permit_year_imputed'] = _ms4_raw['permit_year'].isna()
+	_ms4_raw['permit_year'] = _ms4_raw.apply(
+		lambda r: _REPORT_TO_PERMIT_YEAR.get(int(r['report_year']), r['permit_year'])
+		          if pd.isna(r['permit_year']) and pd.notna(r['report_year']) else r['permit_year'],
+		axis=1
+	)
+
+	# Municipality normalization: strip "Town of"/"City of" prefix, uppercase
+	def _normalize_muni(name):
+		if not isinstance(name, str):
+			return None
+		name = _re.sub(r'^(Town|City|President and Fellows) of\s+', '', name, flags=_re.IGNORECASE)
+		return name.strip().upper()
+
+	_ms4_raw['municipality_normalized'] = _ms4_raw['municipality'].apply(_normalize_muni)
+
+	# Forward-impute mapping completion: cap at historical maximum per municipality.
+	# Raw values are non-monotonic because methodology changes (e.g. switching from
+	# % pipe-miles to % outfalls) cause spurious drops, not actual unmapping.
+	_ms4_raw = _ms4_raw.sort_values(['municipality_normalized', 'report_year'])
+	def _running_max_ffill(s):
+		# For each row: use running max of all non-null values seen so far.
+		# Forward-fills across years where the municipality did not report,
+		# so a municipality that reached 100% in 2020 stays at 100% in 2021
+		# even if they left the field blank that year.
+		result = s.copy()
+		running_max = None
+		for idx in s.index:
+			val = s[idx]
+			if pd.notna(val):
+				running_max = val if running_max is None else max(running_max, val)
+			if running_max is not None:
+				result[idx] = running_max
+		return result
+	_ms4_raw['system_mapping_pct_display'] = (
+		_ms4_raw.groupby('municipality_normalized')['system_mapping_pct_complete']
+		.transform(_running_max_ffill)
+	)
+
+	# Drop the JSON column before loading flat table
+	_tmdl_json = _ms4_raw['tmdl_waterbodies_json'].copy()
+	data_csv['MS4_AnnualReports'] = _ms4_raw.drop(columns=['tmdl_waterbodies_json'])
+
+	# Explode TMDL waterbodies into one row per (municipality, report_year, waterbody, pollutant)
+	_tmdl_rows = []
+	for (src_url, muni, muni_norm, yr), tmdl_str in zip(
+		_ms4_raw[['source_url', 'municipality', 'municipality_normalized', 'report_year']].itertuples(index=False),
+		_tmdl_json
+	):
+		try:
+			entries = json.loads(tmdl_str) if isinstance(tmdl_str, str) else []
+		except (json.JSONDecodeError, TypeError):
+			entries = []
+		for entry in entries:
+			_tmdl_rows.append({
+				'source_url': src_url,
+				'municipality': muni,
+				'municipality_normalized': muni_norm,
+				'report_year': yr,
+				'waterbody': entry.get('waterbody'),
+				'pollutant': entry.get('pollutant'),
+				'reduction_achieved_lbs_per_year': entry.get('reduction_achieved_lbs_per_year'),
+				'wasteload_allocation_lbs_per_year': entry.get('wasteload_allocation_lbs_per_year'),
+				'reduction_achieved_pct': entry.get('reduction_achieved_pct'),
+				'wasteload_allocation_pct': entry.get('wasteload_allocation_pct'),
+				'source_page': entry.get('source_page'),
+			})
+	_ms4_tmdl = pd.DataFrame(_tmdl_rows)
+	# Normalize pollutant names: title-case, strip leading "Total ", fix misspelling
+	def _norm_pollutant(p):
+		if not isinstance(p, str):
+			return p
+		p = p.strip().title()
+		p = _re.sub(r'^Total\s+', '', p, flags=_re.IGNORECASE)
+		p = p.replace('Phosphorous', 'Phosphorus')
+		return p
+	_ms4_tmdl['pollutant'] = _ms4_tmdl['pollutant'].apply(_norm_pollutant)
+	data_csv['MS4_TMDL'] = _ms4_tmdl
+	print(f'MS4: {len(data_csv["MS4_AnnualReports"])} reports, {len(data_csv["MS4_TMDL"])} TMDL entries')
+
 	data_csv['AMEND_metadata'] = pd.Series({
 		'Website':'https://nesanders.github.io/MAenvironmentaldata/index.html',
 		'GitHub':'https://github.com/nesanders/MAenvironmentaldata',

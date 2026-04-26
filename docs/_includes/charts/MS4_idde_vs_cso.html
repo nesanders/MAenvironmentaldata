@@ -1,0 +1,73 @@
+{% raw  %}
+<html>
+    <head>
+        <title>Illicit Discharges Found in CSO Municipalities by Year</title>
+        <script src='https://cdn.jsdelivr.net/npm/chart.js@4.4.4/dist/chart.umd.min.js'></script>
+    </head>
+    <body>
+        <div style="width: 700px; height: 400px; max-width: 99%" class="chartjs">
+
+            <canvas id="Illicit Discharges Found in CSO Municipalities by Year" height="400" width="700"></canvas>
+            <script>
+                Chart.defaults.font.size = 12;
+                var chart_data = {
+
+                    data: {
+                        labels: ["2019", "2020", "2021", "2022", "2023", "2024", "2025", "2026 (partial)"],
+                        datasets: [{'data': [0, 11, 11, 5, 0, 13, 3, 0], 'label': 'New Bedford', 'backgroundColor': 'rgba(200, 60, 60, 0.85)'},{'data': [6, 0, 0, 14, 0, 0, 1, 0], 'label': 'Gloucester', 'backgroundColor': 'rgba(230, 140, 40, 0.85)'},{'data': [5, 0, 0, 2, 5, 1, 5, 0], 'label': 'Lawrence', 'backgroundColor': 'rgba(54, 110, 179, 0.85)'},{'data': [0, 0, 0, 4, 5, 0, 1, 0], 'label': 'Chicopee', 'backgroundColor': 'rgba(60, 170, 80, 0.85)'},{'data': [1, 0, 0, 2, 4, 0, 0, 0], 'label': 'Holyoke', 'backgroundColor': 'rgba(130, 80, 200, 0.85)'},{'data': [0, 3, 2, 0, 1, 0, 1, 0], 'label': 'Fitchburg', 'backgroundColor': 'rgba(30, 160, 160, 0.85)'},{'data': [0, 0, 2, 0, 0, 0, 5, 0], 'label': 'Cambridge', 'backgroundColor': 'rgba(180,100,40,0.85)'},{'data': [0, 0, 0, 0, 0, 0, 5, 0], 'label': 'Somerville', 'backgroundColor': 'rgba(220,80,180,0.85)'},{'data': [0, 0, 0, 0, 3, 0, 0, 0], 'label': 'Lynn', 'backgroundColor': 'rgba(80,180,220,0.85)'},{'data': [1, 0, 0, 0, 0, 0, 0, 0], 'label': 'Chelsea', 'backgroundColor': 'rgba(100,200,100,0.85)'},{'data': [1, 0, 0, 0, 0, 0, 0, 0], 'label': 'Fall River', 'backgroundColor': 'rgba(200,160,40,0.85)'},{'data': [0, 0, 0, 0, 0, 0, 0, 0], 'label': 'Haverhill', 'backgroundColor': 'rgba(140,60,140,0.85)'}]
+                    },
+                    type: 'bar',
+                    options: {
+                        scales: {
+                            y: {
+                                display: true,
+                                title: {
+                                    display: true,
+                                    text: 'Illicit Discharges Found (total)'
+                                },
+                                position: 'left',
+                                stacked: true
+                            },
+                            y1: {
+                                display: false,
+                                title: {
+                                    display: true,
+                                    text: ''
+                                },
+                                position: 'right'
+                            },
+                            x: {
+                                title: {
+                                    display: true,
+                                    text: 'Report Year (FY)'
+                                },
+                                stacked: true,
+                                ticks: {
+                                    autoSkip: true
+                                }
+                            }
+                        },
+                        plugins: {
+                            legend: {
+                                display: true
+                            },
+                            tooltip: {
+                                enabled: true
+                            }
+                        }
+                    }
+                }
+                
+                
+            </script>
+            <script>
+                {
+
+                    var ctx = document.getElementById("Illicit Discharges Found in CSO Municipalities by Year").getContext("2d");
+                    var mychart = new Chart(ctx, chart_data);
+                }
+            </script>
+        </div>
+    </body>
+</html>
+{% endraw  %}

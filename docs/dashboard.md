@@ -19,6 +19,7 @@ For full analysis and narrative context, follow the links in each section.
 [State Agency Budgets](#budgets) &middot;
 [CSO Discharge Trends](#cso) &middot;
 [303(d) Impaired Waters](#303d) &middot;
+[MS4 Stormwater Compliance](#ms4) &middot;
 [CSO Data Quality Indicator](#data-quality) &middot;
 [Discharge by Watershed](#watershed)
 
@@ -240,6 +241,34 @@ Unmatched waterways are shown as "Not matched."
 ### TMDL cleanup plan progress
 
 {% include charts/dash_EPA303d_tmdl_trend.html %}
+
+---
+
+<a name="ms4"></a>
+
+## MS4 Stormwater Compliance
+
+Data: [MA MS4 Municipal Stormwater Annual Reports]({{ site.url }}{{ site.baseurl }}/data/MS4_annual_reports.html).
+Full analysis: [Seven years of Massachusetts stormwater compliance]({{ site.url }}{{ site.baseurl }}/2026/04/24/ma-ms4-compliance.html).
+
+<details>
+<summary>About this data and methodology</summary>
+
+MS4 annual reports are submitted as PDFs by ~276 Massachusetts municipalities regulated under EPA Region 1's Small MS4 General Permit (FY2019–FY2025). AMEND uses Google Gemini 2.5 Flash to extract structured compliance data — inspection counts, illicit discharge detections, system mapping progress — from each report. Non-traditional MS4 permittees (universities, military installations — permit prefix MAR042) and low-confidence extractions are excluded. Counts shown are medians across all reporting municipalities; totals are sums across municipalities reporting current-period (not cumulative) counts.
+
+</details>
+
+### MCM participation rate by year (% of municipalities with non-zero activity)
+
+{% include charts/dash_MS4_participation_rate.html %}
+
+### Illicit discharge detection and elimination by year
+
+{% include charts/dash_MS4_idde_activity.html %}
+
+### Stormwater system mapping progress
+
+{% include charts/dash_MS4_mapping_progress.html %}
 
 ---
 

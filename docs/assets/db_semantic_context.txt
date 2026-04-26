@@ -1,5 +1,5 @@
 # AMEND Database Semantic Context
-Generated: 2026-04-21
+Generated: 2026-04-25
 
 ## Global Data Notes
 
@@ -69,6 +69,17 @@ Generated: 2026-04-21
   GROUP BY e.CNTY_NAME
   NOTE: EPA_EJSCREEN_2023 has no municipality field — only CNTY_NAME (county). There is NO direct join
   between EJSCREEN and MAEEADP_CSO.municipality. Always warn the user that results are county-level approximations.
+
+- **MS4 stormwater reports + TMDL entries** (one-to-many):
+  MS4_AnnualReports JOIN MS4_TMDL ON MS4_AnnualReports.source_url = MS4_TMDL.source_url
+  → use WHERE MS4_AnnualReports.tmdl_municipality_specific = 1 to filter to municipality-specific obligations
+  → use WHERE MS4_TMDL.reduction_achieved_lbs_per_year IS NOT NULL for quantitative TMDL analysis
+
+- **MS4 + CSO cross-dataset** (municipality join):
+  MS4_AnnualReports.municipality_normalized = MAEEADP_CSO.municipality
+  Example: SELECT m.municipality_normalized, AVG(m.mcm3_illicit_found) as avg_illicit, SUM(c.volumnOfEvent) as total_cso
+  FROM MS4_AnnualReports m JOIN MAEEADP_CSO c ON m.municipality_normalized = c.municipality
+  WHERE m.extraction_confidence != 'low' AND c.eventType LIKE 'CSO%' GROUP BY 1
 
 - **CSO discharges to 303(d) impaired waters** (two-step join):
   MAEEADP_CSO JOIN CSO_303d_Mapping ON MAEEADP_CSO.waterBody = CSO_303d_Mapping.csoWaterBody
@@ -865,7 +876,7 @@ MOSES - Engineers/Scientists	MOSES - Engineers/Scientists (09)	DEPARTMENT OF ENV
 
 ---
 
-### MAEEADP_CSO (17,729 rows)
+### MAEEADP_CSO (17,732 rows)
 EEA Data Portal: Combined Sewer Overflow (CSO) and Sanitary Sewer Overflow (SSO) discharge incidents reported to MassDEP. Each row is one discharge event at a specific outfall. Key fields: waterBody, municipality, volumeOfEvent / volumnOfEvent (gallons), latitude/longitude, incidentDate, Year. IMPORTANT: Data spans June 2022 to present — years available: 2022, 2023, 2024, 2025, 2026. Do NOT assume data ends in an earlier year; always query the full range and check MAX(Year) if unsure.
 
 ```sql
@@ -898,7 +909,8 @@ CREATE TABLE "MAEEADP_CSO" (
 	"additionalInformation" TEXT, 
 	"submittedDate" TEXT, 
 	"parentIncidentId" FLOAT, 
-	"Year" FLOAT
+	"Year" BIGINT, 
+	"volumeOfEvent" FLOAT
 )
 ```
 
@@ -1124,6 +1136,111 @@ date	precip_in_avg	n_stations
 2000-01-04	0.3363218390804597	87
 2000-01-05	0.5697560975609756	82
 */
+
+---
+
+### MS4_AnnualReports (1,787 rows)
+AI-extracted structured data from Massachusetts MS4 (Municipal Separate Storm Sewer System) annual compliance reports submitted to EPA Region 1. One row per report (~1787 rows covering FY2019–FY2026, 316 municipalities). Fields cover all six Minimum Control Measures (MCMs): MCM1 public education, MCM2 public participation, MCM3 IDDE (illicit discharge detection), MCM4 construction site inspections, MCM5 post-construction BMP inspections, MCM6 pollution prevention. IMPORTANT: permit_year is null for ~35% of reports where report_year is also null (Gemini could not extract it). permit_year_imputed=1 where permit_year was imputed from report_year. For trend analysis use report_year (2019–2026) rather than permit_year. mcm3_count_type distinguishes current_period vs cumulative_since_permit_start counts — filter to current_period for trend analysis. extraction_confidence (high/medium/low) reflects AI extraction quality; exclude low for analysis. municipality_normalized is uppercased with "Town of"/"City of" prefix stripped for joins to MAEEADP_CSO.municipality. TMDL data is in the separate MS4_TMDL table (joined on source_url).
+
+```sql
+CREATE TABLE "MS4_AnnualReports" (
+	"index" BIGINT, 
+	source_url TEXT, 
+	gcs_url TEXT, 
+	municipality TEXT, 
+	permit_number TEXT, 
+	report_year FLOAT, 
+	permit_year FLOAT, 
+	report_period_start TEXT, 
+	report_period_end TEXT, 
+	source_page_refs TEXT, 
+	mcm1_activities_count FLOAT, 
+	mcm1_notes TEXT, 
+	mcm2_activities_count FLOAT, 
+	mcm3_outfalls_total FLOAT, 
+	mcm3_outfalls_screened FLOAT, 
+	mcm3_outfalls_not_accessed FLOAT, 
+	mcm3_illicit_found FLOAT, 
+	mcm3_illicit_eliminated FLOAT, 
+	mcm3_count_type TEXT, 
+	mcm3_sampling_conducted BOOLEAN, 
+	mcm4_sites_inspected FLOAT, 
+	mcm4_violations_found FLOAT, 
+	mcm5_sites_inspected FLOAT, 
+	mcm5_bmps_inspected FLOAT, 
+	mcm6_facilities_inspected FLOAT, 
+	mcm6_notes TEXT, 
+	system_mapping_pct_complete FLOAT, 
+	tmdl_municipality_specific BOOLEAN, 
+	compliance_issues TEXT, 
+	extraction_confidence TEXT, 
+	extraction_notes TEXT, 
+	pdf_pages FLOAT, 
+	estimated_cost_usd FLOAT, 
+	permit_year_imputed BOOLEAN, 
+	municipality_normalized TEXT, 
+	system_mapping_pct_display FLOAT
+)
+```
+
+/* 5 rows from MS4_AnnualReports:
+source_url	gcs_url	municipality	permit_number	report_year	permit_year	report_period_start	report_period_end	source_page_refs	mcm1_activities_count	mcm1_notes	mcm2_activities_count	mcm3_outfalls_total	mcm3_outfalls_screened	mcm3_outfalls_not_accessed	mcm3_illicit_found	mcm3_illicit_eliminated	mcm3_count_type	mcm3_sampling_conducted	mcm4_sites_inspected
+https://www.epa.gov/system/files/documents/2026-04/abington-ma-ar19.pdf	https://storage.googleapis.com/openamend-data/MS4_annual_reports/abington-ma-ar19.pdf	Town of Abington	MAR041026	2019.0	1.0	2018-05-01	2019-06-30	{"tmdl": [2], "mcm2": [3, 8, 9], "mcm6_pollution_prevention": [2, 3, 4, 5, 12, 13, 14, 15], "mcm5_post_construction": [2, 5, 11, 15], "mcm3_idde": [2, 9, 10, 11, 15], "mcm1": [3, 4, 7, 8], "mcm4_construction": [2, 11]}	3.0	Public Education program not fully developed, seasonal messages for bacteria, phosphorus, and nitrogen TMDL and water quality limited waterbody requirements not yet implemented, planned for Year 2 (Page 4).	1.0	NULL	0.0	NULL	0.0	0.0	current_period	0	0.0
+https://www.epa.gov/system/files/documents/2026-04/abington-ma-ar20.pdf	https://storage.googleapis.com/openamend-data/MS4_annual_reports/abington-ma-ar20.pdf	Town of Abington	MAR041026	2020.0	2.0	2019-07-01	2020-06-30	{"mcm6_pollution_prevention": [14, 15], "mcm3_idde": [6, 10, 11, 12], "tmdl": [2, 7], "mcm1": [8, 9, 10], "mcm5_post_construction": [13, 14], "mcm2": [10], "mcm4_construction": [13]}	4.0	Four educational messages were completed via social media, stormwater webpage, 'Stormwater 101' brochure, and public access channel. A leaf litter message was not distributed during Year 2, and additional public education messaging was not completed due to COVID-19.	1.0	171.0	109.0	62.0	0.0	0.0	current_period	1	0.0
+https://www.epa.gov/system/files/documents/2026-04/abington_ma_ar21.pdf	https://storage.googleapis.com/openamend-data/MS4_annual_reports/abington_ma_ar21.pdf	Town of Abington	MAR041026	2021.0	3.0	2020-07-01	2021-06-30	{"mcm3_idde": [2, 11, 12], "mcm1": [8], "tmdl": [2, 7], "mcm5_post_construction": [13], "mcm2": [10], "mcm6_pollution_prevention": [14, 15], "mcm4_construction": [13]}	4.0	NULL	1.0	262.0	71.0	82.0	0.0	0.0	cumulative_since_permit_start	1	0.0
+https://www.epa.gov/system/files/documents/2026-04/abington_ma_ar22.pdf	https://storage.googleapis.com/openamend-data/MS4_annual_reports/abington_ma_ar22.pdf	Town of Abington	MAR041026	2022.0	4.0	2021-07-01	2022-06-30	{"mcm5_post_construction": [13, 14], "mcm1": [8, 9], "mcm6_pollution_prevention": [14, 15], "mcm2": [10], "mcm4_construction": [13], "mcm3_idde": [10, 11, 12], "tmdl": [7]}	4.0	NULL	1.0	NULL	50.0	NULL	0.0	0.0	cumulative_since_permit_start	0	0.0
+https://www.epa.gov/system/files/documents/2026-04/abington_ma_ar23.pdf	https://storage.googleapis.com/openamend-data/MS4_annual_reports/abington_ma_ar23.pdf	Town of Abington	MAR041026	2023.0	5.0	2022-07-01	2023-06-30	{"tmdl": [4, 5, 7], "mcm6_pollution_prevention": [15, 16], "mcm3_idde": [10, 11, 12], "mcm2": [10], "mcm1": [3, 4, 5, 8, 9], "mcm4_construction": [13], "mcm5_post_construction": [13, 14]}	4.0	Seasonal messages distributed via website, cable access channel, brochures, and social media.	NULL	NULL	10.0	1.0	0.0	0.0	cumulative_since_permit_start	NULL	0.0
+*/
+
+**Column notes:**
+- `mcm3_count_type`: Filter to current_period for trend analysis; cumulative_since_permit_start reporters inflate year-over-year counts.
+- `tmdl_municipality_specific`: Only True/1 rows reflect municipality-specific TMDL obligations. Many municipalities copy the general permit TMDL list (False/0), which is not analytically meaningful.
+- `municipality`: Mixed case with "Town of"/"City of" prefix (e.g. "Town of Palmer"). Use municipality_normalized for joins.
+- `municipality_normalized`: Uppercased, prefix-stripped municipality name for joining to MAEEADP_CSO.municipality.
+- `report_year`: Null for ~35% of records where Gemini could not extract it from the PDF. Use for trend analysis.
+- `permit_year`: Null where report_year is also null. permit_year_imputed=1 where derived from report_year.
+- `extraction_confidence`: high/medium/low. Exclude low records from analysis.
+- `system_mapping_pct_complete`: Raw reported mapping completion %. ~58% null. Non-monotonic: municipalities sometimes report lower values in later years due to methodology changes (e.g. switching from % pipe miles to % outfalls), not actual unmapping.
+- `system_mapping_pct_display`: Forward-imputed version of system_mapping_pct_complete — running historical maximum per municipality, propagated forward across years where the municipality did not report the field. Non-null for all years after a municipality first reports. Use for trend analysis; use raw column only when investigating individual reports.
+- `report_period_start`: 2019-07-01, 2020-07-01, 2023-07-01, 2024-07-01, 2022-07-01, 2021-07-01, 2018-05-01, 2018-07-01, 2018-10-01
+- `report_period_end`: 2020-06-30, 2021-06-30, 2023-06-30, 2024-06-30, 2022-06-30, 2025-06-30, 2019-06-30, 2019-09-30, 2022-09-28, 2019-09-27, 2025-09-29, 2024-09-30, 2023-09-28, 2023-09-26, 2022-09-27, 2019-09-26, 2025-09-23, 2023-09-29, 2019-09-25, 2026-01-06, 2025-09-30, 2025-09-26, 2025-09-24, 2024-09-27, 2024-09-23, ... (36 total)
+
+---
+
+### MS4_TMDL (3,265 rows)
+Exploded TMDL (Total Maximum Daily Load) waterbody entries from MS4 annual reports. One row per (municipality, report_year, waterbody, pollutant) combination. Joined to MS4_AnnualReports on source_url. IMPORTANT: only rows where tmdl_municipality_specific=1 in MS4_AnnualReports reflect municipality-specific obligations (many municipalities list the general permit TMDL table, not their own applicable TMDLs). Only rows where BOTH reduction_achieved_lbs_per_year AND wasteload_allocation_lbs_per_year are non-null have quantitative progress data suitable for analysis. Charles River phosphorus dominates the quantitative data; other watersheds have fewer records.
+
+```sql
+CREATE TABLE "MS4_TMDL" (
+	"index" BIGINT, 
+	source_url TEXT, 
+	municipality TEXT, 
+	municipality_normalized TEXT, 
+	report_year FLOAT, 
+	waterbody TEXT, 
+	pollutant TEXT, 
+	reduction_achieved_lbs_per_year FLOAT, 
+	wasteload_allocation_lbs_per_year FLOAT, 
+	reduction_achieved_pct FLOAT, 
+	wasteload_allocation_pct FLOAT, 
+	source_page FLOAT
+)
+```
+
+/* 5 rows from MS4_TMDL:
+source_url	municipality	municipality_normalized	report_year	waterbody	pollutant	reduction_achieved_lbs_per_year	wasteload_allocation_lbs_per_year	reduction_achieved_pct	wasteload_allocation_pct	source_page
+https://www.epa.gov/system/files/documents/2026-04/abington-ma-ar20.pdf	Town of Abington	ABINGTON	2020.0	French Stream	E. Coli Bacteria	NULL	NULL	NULL	NULL	7.0
+https://www.epa.gov/system/files/documents/2026-04/abington_ma_ar21.pdf	Town of Abington	ABINGTON	2021.0	French Stream	Bacteria (E.Coli)	NULL	NULL	NULL	NULL	7.0
+https://www.epa.gov/system/files/documents/2026-04/abington_ma_ar22.pdf	Town of Abington	ABINGTON	2022.0	French Stream	E.Coli, Bacteria	NULL	NULL	NULL	NULL	7.0
+https://www.epa.gov/system/files/documents/2026-04/abington_ma_ar23.pdf	Town of Abington	ABINGTON	2023.0	French Stream (e.coli)	Bacteria	NULL	NULL	NULL	NULL	7.0
+https://www.epa.gov/system/files/documents/2026-04/abington_ma_ar24.pdf	Abington	ABINGTON	2024.0	French Stream	Phosphorus	37.0	NULL	NULL	NULL	5.0
+*/
+
+**Column notes:**
+- `reduction_achieved_lbs_per_year`: Null for most rows — only municipalities with quantitative TMDL targets report this. Phosphorus is the dominant pollutant with quantitative data (Charles River watershed).
+- `wasteload_allocation_lbs_per_year`: Null for most rows. Rows where both this and reduction_achieved_lbs_per_year are non-null are the analytically useful subset.
+- `pollutant`: Title-cased and normalized: "Total Phosphorus" and "Phosphorous" are merged into "Phosphorus". Phosphorus accounts for >98% of reported lbs/yr reduction.
+- `waterbody`: Free-text waterbody name as reported by municipality; spelling varies.
 
 ---
 

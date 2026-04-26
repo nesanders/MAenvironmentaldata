@@ -27,6 +27,12 @@ bash update_all.sh
 
 This script will not update ECOS budget records or the SSA wage table, which require manual data entry.
 
+## Data pipeline documentation
+
+Some data sources have extended documentation covering design decisions, format quirks, and cost considerations:
+
+- [MS4 Annual Report Pipeline](get_data/README_MS4.md) — PDF extraction design, XFA form handling, Gemini function calling, and cost breakdown
+
 ## Infrastructure
 
 Large files (SQLite database, full drinking water CSV, permit PDFs) are stored on Google Cloud Storage.
@@ -52,17 +58,20 @@ bundle exec jekyll serve --host localhost --port 4000 --baseurl "" --incremental
 
 ## Python dependencies
 
-### CI (lightweight)
+Three dependency files serve different purposes:
 
-For running data fetches and most chart scripts (no PySTAN/geopandas):
+| File | Purpose |
+|---|---|
+| `requirements-ci.txt` | Pinned deps for GitHub Actions CI. Install with `pip install -r requirements-ci.txt`. Excludes PySTAN. Used by `update-data.yml` and `update-charts.yml`. |
+| `amend_python_env.yml` | Full conda environment for local development. Includes PySTAN, geopandas, and all optional deps. Recreate with `conda env create -f amend_python_env.yml`. |
+
+### CI environment
 
 ```bash
 pip install -r requirements-ci.txt
 ```
 
 ### Full local environment
-
-For all scripts including PySTAN CSO regression analysis:
 
 ```bash
 conda env create -f amend_python_env.yml

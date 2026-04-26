@@ -1,0 +1,73 @@
+{% raw  %}
+<html>
+    <head>
+        <title>MS4 Compliance Activity by Report Year (Median per Municipality)</title>
+        <script src='https://cdn.jsdelivr.net/npm/chart.js@4.4.4/dist/chart.umd.min.js'></script>
+    </head>
+    <body>
+        <div style="width: 700px; height: 380px; max-width: 99%" class="chartjs">
+
+            <canvas id="MS4 Compliance Activity by Report Year (Median per Municipality)" height="380" width="700"></canvas>
+            <script>
+                Chart.defaults.font.size = 12;
+                var chart_data = {
+
+                    data: {
+                        labels: ["2019", "2020", "2021", "2022", "2023", "2024", "2025", "2026 (partial)"],
+                        datasets: [{'data': [12.0, 11.0, 12.0, 12.0, 12.0, 16.5, 14.0, 0.0], 'label': 'MCM4 Construction Sites', 'borderColor': 'rgba(54, 110, 179, 0.85)', 'backgroundColor': 'rgba(54, 110, 179, 0.85)', 'fill': false, 'tension': 0.3},{'data': [627.5, 581.0, 618.0, 568.0, 539.5, 548.0, 581.0, 112.0], 'label': 'MCM6 Facilities', 'borderColor': 'rgba(60, 170, 80, 0.85)', 'backgroundColor': 'rgba(60, 170, 80, 0.85)', 'fill': false, 'tension': 0.3},{'data': [0.0, 0.0, 41.0, 9.0, 0.0, 0.0, 3.5, 0.0], 'label': 'MCM3 Outfalls Screened', 'borderColor': 'rgba(230, 140, 40, 0.85)', 'backgroundColor': 'rgba(230, 140, 40, 0.85)', 'fill': false, 'tension': 0.3}]
+                    },
+                    type: 'line',
+                    options: {
+                        scales: {
+                            y: {
+                                display: true,
+                                title: {
+                                    display: true,
+                                    text: 'Median Count'
+                                },
+                                position: 'left',
+                                stacked: false
+                            },
+                            y1: {
+                                display: false,
+                                title: {
+                                    display: true,
+                                    text: ''
+                                },
+                                position: 'right'
+                            },
+                            x: {
+                                title: {
+                                    display: true,
+                                    text: 'Report Year (FY)'
+                                },
+                                stacked: false,
+                                ticks: {
+                                    autoSkip: true
+                                }
+                            }
+                        },
+                        plugins: {
+                            legend: {
+                                display: true
+                            },
+                            tooltip: {
+                                enabled: true
+                            }
+                        }
+                    }
+                }
+                
+                
+            </script>
+            <script>
+                {
+
+                    var ctx = document.getElementById("MS4 Compliance Activity by Report Year (Median per Municipality)").getContext("2d");
+                    var mychart = new Chart(ctx, chart_data);
+                }
+            </script>
+        </div>
+    </body>
+</html>
+{% endraw  %}

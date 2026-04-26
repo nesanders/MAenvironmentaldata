@@ -40,6 +40,9 @@ jobs:
           printf '%s\n%s\n' "${{ secrets.SODA_APP_TOKEN }}" "${{ secrets.SODA_SECRET_TOKEN }}" \
             > get_data/SECRET_SODA_token
 
+      - name: Write Google API key
+        run: echo "${{ secrets.GOOGLE_API_KEY }}" > get_data/SECRET_GOOGLE_API_KEY
+
       - name: Fetch data
         working-directory: get_data
         run: |
@@ -50,6 +53,7 @@ jobs:
           python get_eea_dp_cso.py
           python get_MA_precipitation.py
           python get_ATTAINS_303d.py
+          python get_MS4_annual_reports.py --yes --skip-download
 
       - name: Validate data
         working-directory: get_data
