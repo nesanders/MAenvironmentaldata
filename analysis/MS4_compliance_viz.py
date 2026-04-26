@@ -220,47 +220,64 @@ def generate_post_charts(engine):
     years = sorted(df['report_year'].dropna().astype(int).unique())
     year_labels = _year_labels(years)
 
-    # ── 4. TMDL reduction progress ─────────────────────────────────────────────
+    # ── 4. TMDL phosphorus reduction, stacked by municipality ─────────────────
     print('Chart 4: TMDL progress...')
 
     tmdl_q = tmdl[
         tmdl['reduction_achieved_lbs_per_year'].notna() &
-        tmdl['wasteload_allocation_lbs_per_year'].notna()
+        (tmdl['pollutant'] == 'Phosphorus')
     ].copy()
     tmdl_q['report_year'] = pd.to_numeric(tmdl_q['report_year'], errors='coerce')
 
-    # Group by pollutant; top 5 by total reduction achieved
-    top_pollutants = (
-        tmdl_q.groupby('pollutant')['reduction_achieved_lbs_per_year']
-        .sum().nlargest(5).index.tolist()
+    # Top 14 municipalities by total phosphorus reduction; rest → 'Other'
+    top_munis = (
+        tmdl_q.groupby('municipality_normalized')['reduction_achieved_lbs_per_year']
+        .sum().nlargest(14).index.tolist()
     )
-    poll_colors = [BLUE, RED, GREEN, ORANGE, PURPLE]
+    muni_colors = [
+        BLUE, RED, GREEN, ORANGE, PURPLE, TEAL,
+        'rgba(180,100,40,0.85)', 'rgba(220,80,180,0.85)',
+        'rgba(80,180,220,0.85)', 'rgba(100,200,100,0.85)',
+        'rgba(200,160,40,0.85)', 'rgba(140,60,140,0.85)',
+        'rgba(60,140,200,0.85)', 'rgba(200,100,80,0.85)',
+    ]
 
     mychart = chartjs.chart(
-        'MS4 TMDL Reduction Achieved by Pollutant and Report Year (lbs/yr)',
-        'Bar', 700, 420,
+        'MS4 Phosphorus TMDL Reduction Achieved by Municipality (lbs/yr)',
+        'Bar', 700, 440,
     )
     mychart.set_labels(year_labels)
 
-    for pollutant, color in zip(top_pollutants, poll_colors):
+    for muni, color in zip(top_munis, muni_colors):
         vals = [
-            tmdl_q[(tmdl_q['report_year'] == y) & (tmdl_q['pollutant'] == pollutant)][
+            tmdl_q[(tmdl_q['report_year'] == y) & (tmdl_q['municipality_normalized'] == muni)][
                 'reduction_achieved_lbs_per_year'
             ].sum()
             for y in years
         ]
-        mychart.add_dataset(vals, pollutant, backgroundColor=f"'{color}'")
+        label = muni.title()
+        mychart.add_dataset(vals, label, backgroundColor=f"'{color}'")
+
+    # 'Other' bar
+    other_vals = [
+        tmdl_q[
+            (tmdl_q['report_year'] == y) &
+            (~tmdl_q['municipality_normalized'].isin(top_munis))
+        ]['reduction_achieved_lbs_per_year'].sum()
+        for y in years
+    ]
+    mychart.add_dataset(other_vals, 'Other', backgroundColor=f"'{GREY}'")
 
     mychart.set_params(
         js_inline=0,
         xlabel='Report Year (FY)',
-        ylabel='Total Reduction Achieved (lbs/yr)',
+        ylabel='Phosphorus Reduction Achieved (lbs/yr)',
         legend=True,
         stacked=True,
     )
     mychart.jekyll_write(f'{CHART_DIR}/MS4_tmdl_progress.html')
 
-    # ── 5. MCM effort vs. CSO municipalities ──────────────────────────────────
+    # ── 5. IDDE in CSO municipalities: stacked bar by municipality ────────────
     print('Chart 5: IDDE vs CSO municipalities...')
 
     cso_munis = set(pd.read_sql_query(
@@ -269,34 +286,40 @@ def generate_post_charts(engine):
     )['municipality'].str.upper())
 
     df_cp = df[df['mcm3_count_type'] == 'current_period'].copy()
-    df_cp['is_cso'] = df_cp['municipality_normalized'].isin(cso_munis)
+    df_cp_cso = df_cp[df_cp['municipality_normalized'].isin(cso_munis)].copy()
 
-    # Median illicit found per year, CSO vs non-CSO
-    cso_vals = [
-        df_cp[(df_cp['report_year'] == y) & df_cp['is_cso']]['mcm3_illicit_found'].median()
-        for y in years
-    ]
-    noncso_vals = [
-        df_cp[(df_cp['report_year'] == y) & ~df_cp['is_cso']]['mcm3_illicit_found'].median()
-        for y in years
-    ]
+    # Order by total illicit found descending for consistent color assignment
+    cso_order = (
+        df_cp_cso.groupby('municipality_normalized')['mcm3_illicit_found']
+        .sum().sort_values(ascending=False).index.tolist()
+    )
+    cso_colors = [RED, ORANGE, BLUE, GREEN, PURPLE, TEAL,
+                  'rgba(180,100,40,0.85)', 'rgba(220,80,180,0.85)',
+                  'rgba(80,180,220,0.85)', 'rgba(100,200,100,0.85)',
+                  'rgba(200,160,40,0.85)', 'rgba(140,60,140,0.85)']
 
     mychart = chartjs.chart(
-        'Illicit Discharges Found: CSO vs. Non-CSO Municipalities (Median)',
-        'Line', 700, 380,
+        'Illicit Discharges Found in CSO Municipalities by Year',
+        'Bar', 700, 400,
     )
     mychart.set_labels(year_labels)
-    mychart.add_dataset(cso_vals, 'CSO Municipalities',
-                        borderColor=f"'{RED}'", backgroundColor=f"'{RED}'",
-                        fill="false", tension=0.3)
-    mychart.add_dataset(noncso_vals, 'Non-CSO Municipalities',
-                        borderColor=f"'{BLUE}'", backgroundColor=f"'{BLUE}'",
-                        fill="false", tension=0.3)
+
+    for muni, color in zip(cso_order, cso_colors):
+        vals = [
+            int(df_cp_cso[
+                (df_cp_cso['report_year'] == y) &
+                (df_cp_cso['municipality_normalized'] == muni)
+            ]['mcm3_illicit_found'].sum(skipna=True))
+            for y in years
+        ]
+        mychart.add_dataset(vals, muni.title(), backgroundColor=f"'{color}'")
+
     mychart.set_params(
         js_inline=0,
         xlabel='Report Year (FY)',
-        ylabel='Median Illicit Discharges Found',
+        ylabel='Illicit Discharges Found (total)',
         legend=True,
+        stacked=True,
     )
     mychart.jekyll_write(f'{CHART_DIR}/MS4_idde_vs_cso.html')
 

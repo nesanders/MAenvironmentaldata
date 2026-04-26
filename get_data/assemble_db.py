@@ -279,7 +279,17 @@ if __name__ == '__main__':
 				'wasteload_allocation_pct': entry.get('wasteload_allocation_pct'),
 				'source_page': entry.get('source_page'),
 			})
-	data_csv['MS4_TMDL'] = pd.DataFrame(_tmdl_rows)
+	_ms4_tmdl = pd.DataFrame(_tmdl_rows)
+	# Normalize pollutant names: title-case, strip leading "Total ", fix misspelling
+	def _norm_pollutant(p):
+		if not isinstance(p, str):
+			return p
+		p = p.strip().title()
+		p = _re.sub(r'^Total\s+', '', p, flags=_re.IGNORECASE)
+		p = p.replace('Phosphorous', 'Phosphorus')
+		return p
+	_ms4_tmdl['pollutant'] = _ms4_tmdl['pollutant'].apply(_norm_pollutant)
+	data_csv['MS4_TMDL'] = _ms4_tmdl
 	print(f'MS4: {len(data_csv["MS4_AnnualReports"])} reports, {len(data_csv["MS4_TMDL"])} TMDL entries')
 
 	data_csv['AMEND_metadata'] = pd.Series({

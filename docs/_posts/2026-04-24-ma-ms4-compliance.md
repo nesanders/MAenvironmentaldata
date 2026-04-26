@@ -1,6 +1,6 @@
 ---
 layout: post
-title: "Seven years of Massachusetts stormwater compliance: what MS4 annual reports reveal (DRAFT)"
+title: "(DRAFT) Seven years of Massachusetts stormwater compliance: what MS4 annual reports reveal"
 ancillary: 0
 ---
 
@@ -55,11 +55,11 @@ MCM6 facility inspections are dominated by catch basin cleaning counts, which ma
 
 ## Illicit discharge detection and elimination
 
-Illicit discharges — non-stormwater flows such as sanitary sewage, industrial effluent, or wash water — entering the storm sewer system are among the most direct water quality threats MS4 programs are designed to address. The chart below shows the total number of illicit discharges found and eliminated across all municipalities by report year, restricted to municipalities that report current-period (not cumulative) counts.
+Illicit discharges — non-stormwater flows such as sanitary sewage, industrial effluent, or waste water — entering the separated storm sewer system are among the most direct water quality threats MS4 programs are designed to address. The chart below shows the total number of illicit discharges found and eliminated across all municipalities by report year, restricted to municipalities that report current-period (not cumulative) counts.
 
 {% include charts/MS4_idde_activity.html %}
 
-Across the full dataset, municipalities have collectively identified **{{ site.data.facts_MS4.total_illicit_found }}** illicit discharges and eliminated **{{ site.data.facts_MS4.total_illicit_eliminated }}**. The gap between found and eliminated reflects discharges still under investigation or remediation at the time of reporting, as well as some municipalities that track eliminated counts with a lag.
+Across the full dataset, municipalities have collectively identified **{{ site.data.facts_MS4.total_illicit_found }}** illicit discharges and eliminated **{{ site.data.facts_MS4.total_illicit_eliminated }}** between 2009 and 2025. The gap between found and eliminated reflects discharges still under investigation or remediation at the time of reporting, as well as some municipalities that track eliminated counts with a lag.
 
 ---
 
@@ -69,27 +69,27 @@ Before outfalls can be screened for illicit discharges, they must be located and
 
 {% include charts/MS4_mapping_progress.html %}
 
-The stacked bars show the count of municipalities in each completion range. The large 100%-complete group visible from 2019 onward reflects municipalities that had already finished mapping before the permit cycle started. The total bar height varies by year because `system_mapping_pct_complete` is missing from approximately 58% of all reports — only municipalities that explicitly reported this field are shown.
+The stacked bars show the count of municipalities in each completion range. The 100%-complete group visible from 2019 onward reflects municipalities that had already finished mapping before the permit cycle started. The total bar height varies by year because `system_mapping_pct_complete` is missing from approximately 58% of all reports — only municipalities that explicitly reported this field are shown.
 
 ---
 
 ## TMDL reduction progress
 
-Municipalities with impaired waterbodies subject to Total Maximum Daily Load requirements must report progress toward meeting their wasteload allocations. The chart below shows total reported reduction achieved (lbs/yr) summed across all municipalities with quantitative data, broken out by pollutant.
+Municipalities with impaired waterbodies subject to Total Maximum Daily Load requirements must report progress toward meeting their wasteload allocations. The chart below shows reported phosphorus reduction achieved (lbs/yr) for the 85 municipalities with quantitative data, stacked by municipality.
 
 {% include charts/MS4_tmdl_progress.html %}
 
-Charles River phosphorus dominates the quantitative record — the Charles River watershed has the most municipalities with explicit lbs/yr reduction targets established in the permit. Other pollutants and watersheds (nitrogen, bacteria, metals) appear in the data but with fewer municipalities reporting quantitative progress. **{{ site.data.facts_MS4.n_municipalities_tmdl_quantitative }}** municipalities contributed quantitative reduction data across the full dataset.
+Phosphorus dominates the quantitative TMDL record almost entirely. This reflects the structure of the permit itself: the Charles River phosphorus TMDL is the most developed and monitored in the state, with explicit per-municipality lbs/yr wasteload allocations written into the permit text. Other pollutants (nitrogen, bacteria, metals, chloride) appear in TMDL compliance sections but almost never with quantitative lbs/yr targets — municipalities typically report these as "in progress" or "not applicable." The few non-phosphorus records with numerical values contribute less than 15% of total reported reduction even in their best years. TMDL quantitative coverage is uneven overall: many municipalities list TMDL waterbodies without reporting numerical reduction achieved or wasteload allocation.
 
 ---
 
 ## Cross-dataset: illicit discharge detection in CSO municipalities
 
-Municipalities with active combined sewer overflow (CSO) systems have more complex sewer infrastructure — older combined pipes, more interconnected systems — creating more opportunities for illicit connections and greater incentive for active IDDE programs. The chart below compares median illicit discharge detection rates between CSO and non-CSO municipalities by report year.
+Twelve Massachusetts municipalities operate both an MS4 stormwater system and active combined sewer overflow (CSO) infrastructure — identified by joining the MS4 dataset to [EEA Data Portal CSO discharge records]({{ site.baseurl }}/data/EEADP_all.html) on municipality name. CSO municipalities have older, more interconnected sewer infrastructure with greater potential for cross-connections between storm and sanitary sewers. The chart below shows total illicit discharges found in CSO municipalities each year, broken out by municipality.
 
 {% include charts/MS4_idde_vs_cso.html %}
 
-CSO municipalities (identified from the [EEA Data Portal CSO discharge records]({{ site.baseurl }}/data/EEADP_all.html)) consistently show higher median illicit discharge detection rates than non-CSO municipalities. This likely reflects a combination of genuine infrastructure differences and more mature IDDE programs in communities that have been managing combined sewer issues for decades.
+New Bedford, Gloucester, and Lawrence account for the majority of detected illicit discharges among CSO municipalities. Non-CSO municipalities collectively found {{ site.data.facts_MS4.total_illicit_found | minus: 124 }} illicit discharges over the permit cycle across 241 municipalities — meaningful in aggregate but averaging under two per municipality over seven years, compared to roughly ten per municipality in CSO communities. The difference likely reflects both genuine infrastructure complexity in CSO systems and more mature IDDE programs in communities that have been actively managing combined sewer issues for decades.
 
 ---
 

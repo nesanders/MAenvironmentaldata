@@ -1,20 +1,20 @@
 {% raw  %}
 <html>
     <head>
-        <title>MS4 TMDL Reduction Achieved by Pollutant and Report Year (lbs/yr)</title>
+        <title>MS4 Phosphorus TMDL Reduction Achieved by Municipality (lbs/yr)</title>
         <script src='https://cdn.jsdelivr.net/npm/chart.js@4.4.4/dist/chart.umd.min.js'></script>
     </head>
     <body>
-        <div style="width: 700px; height: 420px; max-width: 99%" class="chartjs">
+        <div style="width: 700px; height: 440px; max-width: 99%" class="chartjs">
 
-            <canvas id="MS4 TMDL Reduction Achieved by Pollutant and Report Year (lbs/yr)" height="420" width="700"></canvas>
+            <canvas id="MS4 Phosphorus TMDL Reduction Achieved by Municipality (lbs/yr)" height="440" width="700"></canvas>
             <script>
                 Chart.defaults.font.size = 12;
                 var chart_data = {
 
                     data: {
                         labels: ["2019", "2020", "2021", "2022", "2023", "2024", "2025", "2026 (partial)"],
-                        datasets: [{'data': [0.0, 0.0, 0.0, 0.0, 720.7900000000001, 905.72, 2911.15, 0.0], 'label': 'Phosphorus', 'backgroundColor': 'rgba(54, 110, 179, 0.85)'},{'data': [0.0, 0.0, 0.0, 0.0, 533.47, 334.45, 263.26, 0.0], 'label': 'Total Phosphorus', 'backgroundColor': 'rgba(200, 60, 60, 0.85)'},{'data': [0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 35.4, 0.0], 'label': 'phosphorus', 'backgroundColor': 'rgba(60, 170, 80, 0.85)'},{'data': [0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 25.66, 0.0], 'label': 'Nitrogen', 'backgroundColor': 'rgba(230, 140, 40, 0.85)'},{'data': [0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 12.6, 0.0], 'label': 'non-native aquatic plants, other flow regime alterations, benthic macroinvertebrates, harmful algal blooms, temperature', 'backgroundColor': 'rgba(130, 80, 200, 0.85)'}]
+                        datasets: [{'data': [0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 2575.0, 0.0], 'label': 'Waltham', 'backgroundColor': 'rgba(54, 110, 179, 0.85)'},{'data': [0.0, 0.0, 0.0, 0.0, 109.5, 823.5, 829.3, 0.0], 'label': 'Cambridge', 'backgroundColor': 'rgba(200, 60, 60, 0.85)'},{'data': [0.0, 0.0, 0.0, 0.0, 430.0, 446.0, 450.0, 0.0], 'label': 'Brookline', 'backgroundColor': 'rgba(60, 170, 80, 0.85)'},{'data': [0.0, 0.0, 0.0, 0.0, 164.6, 183.24, 221.13, 0.0], 'label': 'Dedham', 'backgroundColor': 'rgba(230, 140, 40, 0.85)'},{'data': [0.0, 0.0, 0.0, 0.0, 40.0, 121.1, 403.7, 0.0], 'label': 'Franklin', 'backgroundColor': 'rgba(130, 80, 200, 0.85)'},{'data': [0.0, 0.0, 0.0, 0.0, 243.0, 0.0, 169.7, 0.0], 'label': 'Watertown', 'backgroundColor': 'rgba(30, 160, 160, 0.85)'},{'data': [0.0, 0.0, 0.0, 0.0, 0.0, 234.74, 163.9, 0.0], 'label': 'Newton', 'backgroundColor': 'rgba(180,100,40,0.85)'},{'data': [0.0, 1.4, 0.0, 0.0, 9.5, 299.0, 27.0, 0.0], 'label': 'Bellingham', 'backgroundColor': 'rgba(220,80,180,0.85)'},{'data': [0.0, 0.0, 0.0, 0.0, 0.0, 23.22, 262.95, 0.0], 'label': 'Medfield', 'backgroundColor': 'rgba(80,180,220,0.85)'},{'data': [0.0, 0.0, 0.0, 0.0, 0.0, 111.5, 155.1, 0.0], 'label': 'Holliston', 'backgroundColor': 'rgba(100,200,100,0.85)'},{'data': [0.0, 0.0, 0.0, 0.0, 43.7, 44.5, 109.7, 0.0], 'label': 'Wellesley', 'backgroundColor': 'rgba(200,160,40,0.85)'},{'data': [0.0, 0.0, 0.0, 0.0, 0.0, 128.0, 0.0, 0.0], 'label': 'Auburn', 'backgroundColor': 'rgba(140,60,140,0.85)'},{'data': [0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 120.7, 0.0], 'label': 'Lexington, Ma', 'backgroundColor': 'rgba(60,140,200,0.85)'},{'data': [0.0, 0.0, 0.0, 0.0, 19.2, 86.87, 8.56, 0.0], 'label': 'Boylston', 'backgroundColor': 'rgba(200,100,80,0.85)'},{'data': [0.0, 0.0, 0.0, 0.0, 570.2700000000001, 533.5500000000001, 673.318, 0.0], 'label': 'Other', 'backgroundColor': 'rgba(150, 150, 150, 0.6)'}]
                     },
                     type: 'bar',
                     options: {
@@ -23,7 +23,7 @@
                                 display: true,
                                 title: {
                                     display: true,
-                                    text: 'Total Reduction Achieved (lbs/yr)'
+                                    text: 'Phosphorus Reduction Achieved (lbs/yr)'
                                 },
                                 position: 'left',
                                 stacked: true
@@ -63,7 +63,7 @@
             <script>
                 {
 
-                    var ctx = document.getElementById("MS4 TMDL Reduction Achieved by Pollutant and Report Year (lbs/yr)").getContext("2d");
+                    var ctx = document.getElementById("MS4 Phosphorus TMDL Reduction Achieved by Municipality (lbs/yr)").getContext("2d");
                     var mychart = new Chart(ctx, chart_data);
                 }
             </script>
