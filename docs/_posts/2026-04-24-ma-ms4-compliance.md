@@ -51,11 +51,13 @@ How has participation in key MCM activities changed over the seven-year permit c
 
 MCM6 facility inspection participation is highest and most stable, reflecting that catch basin and municipal facility inspections are an established routine for most communities. MCM4 construction site inspection rates are lower — not all municipalities have active construction activity every year. MCM3 outfall screening participation has grown across the permit cycle as municipalities complete system mapping and begin active screening programs.
 
-Among the municipalities that reported both total outfall count and outfalls screened in a given year (~28% of all records), the chart below shows the distribution of screening completion rates over time.
+The chart below shows the distribution of outfall screening completion rates across all 276 regulated municipalities each year. Each bar totals to 276; two grey segments distinguish municipalities that did not file an annual report at all (dark grey) from those that filed a report but omitted the quantitative outfall counts needed to compute a screening rate (light grey).
 
 {% include charts/MS4_mcm3_screening_rate.html %}
 
-The median screening rate among this subset is high in most years, suggesting that municipalities with complete reporting data are generally making strong progress through their outfall inventories. The wide interquartile range in earlier years reflects communities at very different stages of program maturity.
+Both grey segments represent compliance concerns, but different ones. Municipalities that never filed an annual report are in straightforward non-compliance with the permit's reporting requirement. The larger concern is the light grey segment — municipalities that did file a report but did not include a total outfall count. Outfall mapping is itself a core MCM3 permit deliverable, substantially due by Permit Year 3 (FY2021); a missing outfall inventory suggests either that mapping is incomplete or that a completed inventory was not carried through into the annual report. In either case, EPA cannot assess whether a municipality is meeting its screening obligations without knowing how many outfalls exist. The AI extraction cannot distinguish between these two cases from report text alone.
+
+Among the municipalities that do report both counts, most achieve high screening rates — the green segments are a meaningful share of the reporting subset in most years, suggesting that municipalities that have completed their outfall inventories are generally making progress through active screening.
 
 ---
 
@@ -107,7 +109,7 @@ The following data limitations apply throughout this analysis:
 
 | Field | ~% null | Implication |
 |---|---|---|
-| `mcm3_outfalls_total` | ~72% | Cannot compute outfall screening rate for most municipalities; trajectory chart uses raw screened count |
+| `mcm3_outfalls_total` | ~72% | Cannot compute outfall screening rate for most municipalities; these appear as "not reported" in the screening rate chart. May indicate incomplete outfall inventory (a permit deliverable) or a reporting omission. |
 | `mcm5_sites_inspected` | ~75% | Post-construction inspection is the most poorly reported MCM; excluded from trend charts |
 | `system_mapping_pct_complete` | ~58% | Mapping chart has wide coverage gaps, especially in earlier years; n annotated on chart |
 | `mcm2_activities_count` | ~29% | Public participation counts inconsistently reported |
