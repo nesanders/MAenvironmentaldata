@@ -1,32 +1,32 @@
 {% raw  %}
 <html>
     <head>
-        <title>MCM3 Outfall Screening Rate by Year (Municipalities Reporting Both Total and Screened)</title>
+        <title>MS4 Outfall Screening Rate Distribution by Report Year</title>
         <script src='https://cdn.jsdelivr.net/npm/chart.js@4.4.4/dist/chart.umd.min.js'></script>
     </head>
     <body>
-        <div style="width: 700px; height: 380px; max-width: 99%" class="chartjs">
+        <div style="width: 700px; height: 400px; max-width: 99%" class="chartjs">
 
-            <canvas id="MCM3 Outfall Screening Rate by Year (Municipalities Reporting Both Total and Screened)" height="380" width="700"></canvas>
+            <canvas id="MS4 Outfall Screening Rate Distribution by Report Year" height="400" width="700"></canvas>
             <script>
                 Chart.defaults.font.size = 12;
                 var chart_data = {
 
                     data: {
                         labels: ["2019", "2020", "2021", "2022", "2023", "2024", "2025", "2026 (partial)"],
-                        datasets: [{'data': [25.0, 0.0, 14.6, 7.6, 0.0, 0.0, 0.1, null], 'label': 'p25', 'borderColor': 'rgba(150, 150, 150, 0.6)', 'backgroundColor': 'rgba(150, 150, 150, 0.6)', 'fill': false, 'tension': 0.3, 'pointRadius': 2},{'data': [63.0, 2.9, 55.2, 71.5, 13.1, 1.7, 7.4, null], 'label': 'Median', 'borderColor': 'rgba(54, 110, 179, 0.85)', 'backgroundColor': 'rgba(54, 110, 179, 0.85)', 'fill': false, 'tension': 0.3, 'pointRadius': 5, 'borderWidth': 3},{'data': [100.0, 43.5, 99.8, 100.0, 100.0, 17.9, 92.3, null], 'label': 'p75', 'borderColor': 'rgba(150, 150, 150, 0.6)', 'backgroundColor': 'rgba(150, 150, 150, 0.6)', 'fill': false, 'tension': 0.3, 'pointRadius': 2}]
+                        datasets: [{'data': [8, 30, 21, 19, 28, 33, 28, 0], 'label': '0–25% screened', 'backgroundColor': 'rgba(200,60,60,0.8)'},{'data': [7, 1, 13, 2, 1, 3, 1, 0], 'label': '25–50% screened', 'backgroundColor': 'rgba(230,140,40,0.8)'},{'data': [4, 3, 11, 2, 3, 0, 2, 0], 'label': '50–75% screened', 'backgroundColor': 'rgba(255,210,60,0.8)'},{'data': [4, 5, 10, 6, 4, 2, 2, 0], 'label': '75–99% screened', 'backgroundColor': 'rgba(120,190,90,0.8)'},{'data': [10, 2, 19, 17, 13, 5, 9, 0], 'label': 'Fully screened (100%)', 'backgroundColor': 'rgba(40,150,60,0.85)'}]
                     },
-                    type: 'line',
+                    type: 'bar',
                     options: {
                         scales: {
                             y: {
                                 display: true,
                                 title: {
                                     display: true,
-                                    text: 'Outfalls Screened / Total (%)'
+                                    text: 'Number of Municipalities'
                                 },
                                 position: 'left',
-                                stacked: false
+                                stacked: true
                             },
                             y1: {
                                 display: false,
@@ -41,7 +41,7 @@
                                     display: true,
                                     text: 'Report Year (FY)'
                                 },
-                                stacked: false,
+                                stacked: true,
                                 ticks: {
                                     autoSkip: true
                                 }
@@ -63,7 +63,7 @@
             <script>
                 {
 
-                    var ctx = document.getElementById("MCM3 Outfall Screening Rate by Year (Municipalities Reporting Both Total and Screened)").getContext("2d");
+                    var ctx = document.getElementById("MS4 Outfall Screening Rate Distribution by Report Year").getContext("2d");
                     var mychart = new Chart(ctx, chart_data);
                 }
             </script>

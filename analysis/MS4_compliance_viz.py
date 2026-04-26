@@ -220,7 +220,7 @@ def generate_post_charts(engine):
     years = sorted(df['report_year'].dropna().astype(int).unique())
     year_labels = _year_labels(years)
 
-    # ── 4. MCM3 outfall screening rate (municipalities with both total and screened) ──
+    # ── 4. MCM3 outfall screening rate: bracket stacked bar ──────────────────────
     print('Chart 4: MCM3 screening rate...')
 
     df_scr = df[
@@ -233,25 +233,34 @@ def generate_post_charts(engine):
         df_scr['mcm3_outfalls_screened'] / df_scr['mcm3_outfalls_total'] * 100
     ).clip(upper=100)
 
-    scr_median = [round(df_scr[df_scr['report_year'] == y]['screening_rate'].median(), 1) for y in years]
-    scr_p25    = [round(df_scr[df_scr['report_year'] == y]['screening_rate'].quantile(0.25), 1) for y in years]
-    scr_p75    = [round(df_scr[df_scr['report_year'] == y]['screening_rate'].quantile(0.75), 1) for y in years]
+    scr_brackets = [
+        ('0–25% screened',          0,   25,  'rgba(200,60,60,0.8)'),
+        ('25–50% screened',         25,  50,  'rgba(230,140,40,0.8)'),
+        ('50–75% screened',         50,  75,  'rgba(255,210,60,0.8)'),
+        ('75–99% screened',         75,  100, 'rgba(120,190,90,0.8)'),
+        ('Fully screened (100%)',   100, 101, 'rgba(40,150,60,0.85)'),
+    ]
+
     mychart = chartjs.chart(
-        'MCM3 Outfall Screening Rate by Year (Municipalities Reporting Both Total and Screened)',
-        'Line', 700, 380,
+        'MS4 Outfall Screening Rate Distribution by Report Year',
+        'Bar', 700, 400,
     )
     mychart.set_labels(year_labels)
-    mychart.add_dataset(scr_p25, 'p25', borderColor=f"'{GREY}'", backgroundColor=f"'{GREY}'",
-                        fill="false", tension=0.3, pointRadius=2)
-    mychart.add_dataset(scr_median, 'Median', borderColor=f"'{BLUE}'", backgroundColor=f"'{BLUE}'",
-                        fill="false", tension=0.3, pointRadius=5, borderWidth=3)
-    mychart.add_dataset(scr_p75, 'p75', borderColor=f"'{GREY}'", backgroundColor=f"'{GREY}'",
-                        fill="false", tension=0.3, pointRadius=2)
+
+    for label, lo, hi, color in scr_brackets:
+        mask = (df_scr['screening_rate'] >= lo) & (df_scr['screening_rate'] < hi)
+        vals = [
+            int((mask & (df_scr['report_year'] == y)).sum())
+            for y in years
+        ]
+        mychart.add_dataset(vals, label, backgroundColor=f"'{color}'")
+
     mychart.set_params(
         js_inline=0,
         xlabel='Report Year (FY)',
-        ylabel='Outfalls Screened / Total (%)',
+        ylabel='Number of Municipalities',
         legend=True,
+        stacked=True,
     )
     mychart.jekyll_write(f'{CHART_DIR}/MS4_mcm3_screening_rate.html')
 
