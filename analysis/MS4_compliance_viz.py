@@ -93,29 +93,29 @@ def generate_charts(engine, prefix=''):
     years = sorted(df['report_year'].dropna().astype(int).unique())
     year_labels = _year_labels(years)
 
-    # ── 1. Compliance trajectory: median MCM inspection counts by year ─────────
-    print('Chart 1: Compliance trajectory...')
+    # ── 1. Participation rate: fraction of municipalities active per MCM ────────
+    print('Chart 1: Participation rate...')
 
-    metrics = {
-        'MCM4 Construction Sites': 'mcm4_sites_inspected',
-        'MCM6 Facilities':         'mcm6_facilities_inspected',
-        'MCM3 Outfalls Screened':  'mcm3_outfalls_screened',
-    }
-    colors = [BLUE, GREEN, ORANGE]
-
-    # For MCM3 screened: restrict to current_period reporters only
+    n_munis_per_year = {y: df[df['report_year'] == y]['municipality_normalized'].nunique() for y in years}
     df_period = df[df['mcm3_count_type'] == 'current_period']
 
+    participation_metrics = [
+        ('MCM3 Outfall Screening',    df_period, 'mcm3_outfalls_screened'),
+        ('MCM4 Construction Inspections', df,     'mcm4_sites_inspected'),
+        ('MCM6 Facility Inspections', df,          'mcm6_facilities_inspected'),
+    ]
+    colors = [ORANGE, BLUE, GREEN]
+
     mychart = chartjs.chart(
-        'MS4 Compliance Activity by Report Year (Median per Municipality)',
+        'MS4 MCM Participation Rate by Report Year (% of Municipalities Reporting Activity)',
         'Line', 700, 380,
     )
     mychart.set_labels(year_labels)
 
-    for (label, col), color in zip(metrics.items(), colors):
-        src = df_period if col == 'mcm3_outfalls_screened' else df
+    for (label, src, col), color in zip(participation_metrics, colors):
         vals = [
-            src[src['report_year'] == y][col].median()
+            round(100 * (src[(src['report_year'] == y) & (src[col].fillna(0) > 0)]
+                         ['municipality_normalized'].nunique()) / max(n_munis_per_year[y], 1), 1)
             for y in years
         ]
         mychart.add_dataset(
@@ -129,10 +129,10 @@ def generate_charts(engine, prefix=''):
     mychart.set_params(
         js_inline=0,
         xlabel='Report Year (FY)',
-        ylabel='Median Count',
+        ylabel='% of Municipalities with Non-Zero Activity',
         legend=True,
     )
-    mychart.jekyll_write(f'{CHART_DIR}/{prefix}MS4_compliance_trajectory.html')
+    mychart.jekyll_write(f'{CHART_DIR}/{prefix}MS4_participation_rate.html')
 
     # ── 2. IDDE activity: illicit discharges found and eliminated ─────────────
     print('Chart 2: IDDE activity...')
@@ -164,9 +164,9 @@ def generate_charts(engine, prefix=''):
     # ── 3. System mapping progress distribution ────────────────────────────────
     print('Chart 3: Mapping progress...')
 
-    df_map = df[df['system_mapping_pct_complete'].notna()].copy()
+    df_map = df[df['system_mapping_pct_display'].notna()].copy()
     df_map['report_year'] = df_map['report_year'].astype(int)
-    df_map['pct'] = df_map['system_mapping_pct_complete'].clip(upper=100)
+    df_map['pct'] = df_map['system_mapping_pct_display'].clip(upper=100)
 
     brackets = [
         ('0–25% mapped',          0,   25,  'rgba(200,60,60,0.8)'),
@@ -220,8 +220,43 @@ def generate_post_charts(engine):
     years = sorted(df['report_year'].dropna().astype(int).unique())
     year_labels = _year_labels(years)
 
-    # ── 4. TMDL phosphorus reduction, stacked by municipality ─────────────────
-    print('Chart 4: TMDL progress...')
+    # ── 4. MCM3 outfall screening rate (municipalities with both total and screened) ──
+    print('Chart 4: MCM3 screening rate...')
+
+    df_scr = df[
+        df['mcm3_outfalls_total'].notna() &
+        df['mcm3_outfalls_screened'].notna() &
+        (df['mcm3_outfalls_total'] > 0) &
+        (df['mcm3_count_type'] == 'current_period')
+    ].copy()
+    df_scr['screening_rate'] = (
+        df_scr['mcm3_outfalls_screened'] / df_scr['mcm3_outfalls_total'] * 100
+    ).clip(upper=100)
+
+    scr_median = [round(df_scr[df_scr['report_year'] == y]['screening_rate'].median(), 1) for y in years]
+    scr_p25    = [round(df_scr[df_scr['report_year'] == y]['screening_rate'].quantile(0.25), 1) for y in years]
+    scr_p75    = [round(df_scr[df_scr['report_year'] == y]['screening_rate'].quantile(0.75), 1) for y in years]
+    mychart = chartjs.chart(
+        'MCM3 Outfall Screening Rate by Year (Municipalities Reporting Both Total and Screened)',
+        'Line', 700, 380,
+    )
+    mychart.set_labels(year_labels)
+    mychart.add_dataset(scr_p25, 'p25', borderColor=f"'{GREY}'", backgroundColor=f"'{GREY}'",
+                        fill="false", tension=0.3, pointRadius=2)
+    mychart.add_dataset(scr_median, 'Median', borderColor=f"'{BLUE}'", backgroundColor=f"'{BLUE}'",
+                        fill="false", tension=0.3, pointRadius=5, borderWidth=3)
+    mychart.add_dataset(scr_p75, 'p75', borderColor=f"'{GREY}'", backgroundColor=f"'{GREY}'",
+                        fill="false", tension=0.3, pointRadius=2)
+    mychart.set_params(
+        js_inline=0,
+        xlabel='Report Year (FY)',
+        ylabel='Outfalls Screened / Total (%)',
+        legend=True,
+    )
+    mychart.jekyll_write(f'{CHART_DIR}/MS4_mcm3_screening_rate.html')
+
+    # ── 5. TMDL phosphorus reduction, stacked by municipality ─────────────────
+    print('Chart 5: TMDL progress...')
 
     tmdl_q = tmdl[
         tmdl['reduction_achieved_lbs_per_year'].notna() &

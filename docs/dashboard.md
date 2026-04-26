@@ -258,9 +258,9 @@ MS4 annual reports are submitted as PDFs by ~276 Massachusetts municipalities re
 
 </details>
 
-### MCM compliance activity by year (median per municipality)
+### MCM participation rate by year (% of municipalities with non-zero activity)
 
-{% include charts/dash_MS4_compliance_trajectory.html %}
+{% include charts/dash_MS4_participation_rate.html %}
 
 ### Illicit discharge detection and elimination by year
 

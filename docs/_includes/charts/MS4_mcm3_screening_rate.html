@@ -1,32 +1,32 @@
 {% raw  %}
 <html>
     <head>
-        <title>MS4 Stormwater System Mapping Completion by Report Year</title>
+        <title>MCM3 Outfall Screening Rate by Year (Municipalities Reporting Both Total and Screened)</title>
         <script src='https://cdn.jsdelivr.net/npm/chart.js@4.4.4/dist/chart.umd.min.js'></script>
     </head>
     <body>
-        <div style="width: 700px; height: 400px; max-width: 99%" class="chartjs">
+        <div style="width: 700px; height: 380px; max-width: 99%" class="chartjs">
 
-            <canvas id="MS4 Stormwater System Mapping Completion by Report Year" height="400" width="700"></canvas>
+            <canvas id="MCM3 Outfall Screening Rate by Year (Municipalities Reporting Both Total and Screened)" height="380" width="700"></canvas>
             <script>
                 Chart.defaults.font.size = 12;
                 var chart_data = {
 
                     data: {
                         labels: ["2019", "2020", "2021", "2022", "2023", "2024", "2025", "2026 (partial)"],
-                        datasets: [{'data': [17, 43, 9, 5, 4, 9, 2, 1], 'label': '0–25% mapped', 'backgroundColor': 'rgba(200,60,60,0.8)'},{'data': [2, 4, 3, 2, 0, 4, 5, 0], 'label': '25–50% mapped', 'backgroundColor': 'rgba(230,140,40,0.8)'},{'data': [6, 18, 11, 2, 5, 16, 15, 0], 'label': '50–75% mapped', 'backgroundColor': 'rgba(255,210,60,0.8)'},{'data': [12, 14, 19, 12, 18, 45, 52, 0], 'label': '75–99% mapped', 'backgroundColor': 'rgba(120,190,90,0.8)'},{'data': [27, 79, 81, 67, 82, 130, 134, 0], 'label': 'Fully mapped (100%)', 'backgroundColor': 'rgba(40,150,60,0.85)'}]
+                        datasets: [{'data': [25.0, 0.0, 14.6, 7.6, 0.0, 0.0, 0.1, null], 'label': 'p25', 'borderColor': 'rgba(150, 150, 150, 0.6)', 'backgroundColor': 'rgba(150, 150, 150, 0.6)', 'fill': false, 'tension': 0.3, 'pointRadius': 2},{'data': [63.0, 2.9, 55.2, 71.5, 13.1, 1.7, 7.4, null], 'label': 'Median', 'borderColor': 'rgba(54, 110, 179, 0.85)', 'backgroundColor': 'rgba(54, 110, 179, 0.85)', 'fill': false, 'tension': 0.3, 'pointRadius': 5, 'borderWidth': 3},{'data': [100.0, 43.5, 99.8, 100.0, 100.0, 17.9, 92.3, null], 'label': 'p75', 'borderColor': 'rgba(150, 150, 150, 0.6)', 'backgroundColor': 'rgba(150, 150, 150, 0.6)', 'fill': false, 'tension': 0.3, 'pointRadius': 2}]
                     },
-                    type: 'bar',
+                    type: 'line',
                     options: {
                         scales: {
                             y: {
                                 display: true,
                                 title: {
                                     display: true,
-                                    text: 'Number of Municipalities'
+                                    text: 'Outfalls Screened / Total (%)'
                                 },
                                 position: 'left',
-                                stacked: true
+                                stacked: false
                             },
                             y1: {
                                 display: false,
@@ -41,7 +41,7 @@
                                     display: true,
                                     text: 'Report Year (FY)'
                                 },
-                                stacked: true,
+                                stacked: false,
                                 ticks: {
                                     autoSkip: true
                                 }
@@ -63,7 +63,7 @@
             <script>
                 {
 
-                    var ctx = document.getElementById("MS4 Stormwater System Mapping Completion by Report Year").getContext("2d");
+                    var ctx = document.getElementById("MCM3 Outfall Screening Rate by Year (Municipalities Reporting Both Total and Screened)").getContext("2d");
                     var mychart = new Chart(ctx, chart_data);
                 }
             </script>

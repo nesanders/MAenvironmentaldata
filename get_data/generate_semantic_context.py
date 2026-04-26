@@ -200,10 +200,13 @@ COLUMN_NOTES = {
         'report_year': 'Null for ~35% of records where Gemini could not extract it from the PDF. Use for trend analysis.',
         'permit_year': 'Null where report_year is also null. permit_year_imputed=1 where derived from report_year.',
         'extraction_confidence': 'high/medium/low. Exclude low records from analysis.',
+        'system_mapping_pct_complete': 'Raw reported mapping completion %. ~58% null. Non-monotonic: municipalities sometimes report lower values in later years due to methodology changes (e.g. switching from % pipe miles to % outfalls), not actual unmapping.',
+        'system_mapping_pct_display': 'Forward-imputed version of system_mapping_pct_complete — capped at historical maximum per municipality per year. Use this column for trend analysis; use raw column only when investigating individual reports.',
     },
     'MS4_TMDL': {
-        'reduction_achieved_lbs_per_year': 'Null for most rows — only municipalities with quantitative TMDL targets report this.',
+        'reduction_achieved_lbs_per_year': 'Null for most rows — only municipalities with quantitative TMDL targets report this. Phosphorus is the dominant pollutant with quantitative data (Charles River watershed).',
         'wasteload_allocation_lbs_per_year': 'Null for most rows. Rows where both this and reduction_achieved_lbs_per_year are non-null are the analytically useful subset.',
+        'pollutant': 'Title-cased and normalized: "Total Phosphorus" and "Phosphorous" are merged into "Phosphorus". Phosphorus accounts for >98% of reported lbs/yr reduction.',
         'waterbody': 'Free-text waterbody name as reported by municipality; spelling varies.',
     },
     'MAEEADP_CSO': {

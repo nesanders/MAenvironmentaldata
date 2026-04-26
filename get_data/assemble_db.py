@@ -251,6 +251,24 @@ if __name__ == '__main__':
 
 	_ms4_raw['municipality_normalized'] = _ms4_raw['municipality'].apply(_normalize_muni)
 
+	# Forward-impute mapping completion: cap at historical maximum per municipality.
+	# Raw values are non-monotonic because methodology changes (e.g. switching from
+	# % pipe-miles to % outfalls) cause spurious drops, not actual unmapping.
+	_ms4_raw = _ms4_raw.sort_values(['municipality_normalized', 'report_year'])
+	def _running_max_keep_nan(s):
+		result = s.copy()
+		running_max = None
+		for idx in s.index:
+			val = s[idx]
+			if pd.notna(val):
+				running_max = val if running_max is None else max(running_max, val)
+				result[idx] = running_max
+		return result
+	_ms4_raw['system_mapping_pct_display'] = (
+		_ms4_raw.groupby('municipality_normalized')['system_mapping_pct_complete']
+		.transform(_running_max_keep_nan)
+	)
+
 	# Drop the JSON column before loading flat table
 	_tmdl_json = _ms4_raw['tmdl_waterbodies_json'].copy()
 	data_csv['MS4_AnnualReports'] = _ms4_raw.drop(columns=['tmdl_waterbodies_json'])

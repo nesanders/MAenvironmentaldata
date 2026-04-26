@@ -1,5 +1,5 @@
 # AMEND Database Semantic Context
-Generated: 2026-04-24
+Generated: 2026-04-25
 
 ## Global Data Notes
 
@@ -1178,17 +1178,18 @@ CREATE TABLE "MS4_AnnualReports" (
 	pdf_pages FLOAT, 
 	estimated_cost_usd FLOAT, 
 	permit_year_imputed BOOLEAN, 
-	municipality_normalized TEXT
+	municipality_normalized TEXT, 
+	system_mapping_pct_display FLOAT
 )
 ```
 
 /* 5 rows from MS4_AnnualReports:
 source_url	gcs_url	municipality	permit_number	report_year	permit_year	report_period_start	report_period_end	source_page_refs	mcm1_activities_count	mcm1_notes	mcm2_activities_count	mcm3_outfalls_total	mcm3_outfalls_screened	mcm3_outfalls_not_accessed	mcm3_illicit_found	mcm3_illicit_eliminated	mcm3_count_type	mcm3_sampling_conducted	mcm4_sites_inspected
-https://www.epa.gov/system/files/documents/2026-04/palmer-ma-ar20.pdf	https://storage.googleapis.com/openamend-data/MS4_annual_reports/palmer-ma-ar20.pdf	Town of Palmer	MAR041017	2020.0	2.0	2019-07-01	2020-06-30	{"tmdl": [2], "mcm4_construction": [22], "mcm6_pollution_prevention": [24, 25], "mcm2": [19, 20], "mcm5_post_construction": [23], "mcm1": [7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18], "mcm3_idde": [20, 21, 22, 25, 26]}	19.0	Refers to various educational messages and campaigns detailed across pages 7-18, covering topics like stormwater pollutants, pet waste, septic maintenance, leaf litter, fertilizer use, and a stormwater survey.	15.0	NULL	0.0	0.0	3.0	3.0	cumulative_since_permit_start	1	38.0
-https://www.epa.gov/system/files/documents/2026-04/andover_ma_ar21.pdf	https://storage.googleapis.com/openamend-data/MS4_annual_reports/andover_ma_ar21.pdf	Town of Andover	MAR041178	2021.0	3.0	2020-07-01	2021-06-30	{"mcm1": [4, 5, 7, 8, 9, 10, 11, 12], "mcm4_construction": [16], "mcm6_pollution_prevention": [3, 17, 18], "mcm5_post_construction": [3, 16], "tmdl": [2, 4, 5, 6], "mcm3_idde": [2, 6, 13, 14, 15], "mcm2": [13]}	10.0	NULL	0.0	865.0	699.0	87.0	0.0	0.0	cumulative_since_permit_start	1	50.0
-https://s3.amazonaws.com/somervillema-live/s3fs-public/annual-report-year-5-ms4.pdf	https://storage.googleapis.com/openamend-data/MS4_annual_reports/annual-report-year-5-ms4.pdf	City of Somerville	MAR041082	2023.0	5.0	2022-07-01	2023-06-30	{"mcm2": [2, 14], "mcm1": [3, 4, 5, 10, 11, 12, 13, 14], "mcm5_post_construction": [3, 5, 17, 18], "mcm4_construction": [17], "mcm6_pollution_prevention": [2, 3, 5, 6, 19], "mcm3_idde": [2, 14, 15, 16], "tmdl": [2, 5, 6, 7, 8, 9]}	8.0	Refers to educational messages completed.	3.0	NULL	0.0	NULL	0.0	0.0	current_period	0	0.0
-https://www.epa.gov/system/files/documents/2026-04/attleboro-ma-ar19.pdf	https://storage.googleapis.com/openamend-data/MS4_annual_reports/attleboro-ma-ar19.pdf	City of Attleboro	MAR041087	2019.0	1.0	2018-05-01	2019-06-30	{"mcm1": [6], "mcm4_construction": [10], "mcm3_idde": [7, 8, 9], "mcm2": [7], "mcm5_post_construction": [10], "tmdl": [14], "mcm6_pollution_prevention": [11, 13]}	2.0	Two educational messages completed: a newspaper article on May 5, 2019, and an educational workshop on April 18, 2019.	2.0	NULL	0.0	NULL	1.0	1.0	current_period	0	26.0
-https://www.epa.gov/system/files/documents/2026-04/new_bedford_ma_ar25.pdf	https://storage.googleapis.com/openamend-data/MS4_annual_reports/new_bedford_ma_ar25.pdf	New Bedford	MAR041140	2025.0	7.0	2024-07-01	2025-06-30	{"mcm2": [17], "mcm6_pollution_prevention": [29, 30, 31, 32, 33, 34, 35, 36], "tmdl": [5, 7, 10, 11], "mcm5_post_construction": [22, 23, 24, 25, 26, 27, 28, 35, 36], "mcm4_construction": [21], "mcm1": [12, 13, 14, 15, 16, 17], "mcm3_idde": [17, 18, 19, 20, 37]}	9.0	NULL	1.0	359.0	357.0	2.0	3.0	2.0	current_period	1	151.0
+https://www.epa.gov/system/files/documents/2026-04/abington-ma-ar19.pdf	https://storage.googleapis.com/openamend-data/MS4_annual_reports/abington-ma-ar19.pdf	Town of Abington	MAR041026	2019.0	1.0	2018-05-01	2019-06-30	{"tmdl": [2], "mcm2": [3, 8, 9], "mcm6_pollution_prevention": [2, 3, 4, 5, 12, 13, 14, 15], "mcm5_post_construction": [2, 5, 11, 15], "mcm3_idde": [2, 9, 10, 11, 15], "mcm1": [3, 4, 7, 8], "mcm4_construction": [2, 11]}	3.0	Public Education program not fully developed, seasonal messages for bacteria, phosphorus, and nitrogen TMDL and water quality limited waterbody requirements not yet implemented, planned for Year 2 (Page 4).	1.0	NULL	0.0	NULL	0.0	0.0	current_period	0	0.0
+https://www.epa.gov/system/files/documents/2026-04/abington-ma-ar20.pdf	https://storage.googleapis.com/openamend-data/MS4_annual_reports/abington-ma-ar20.pdf	Town of Abington	MAR041026	2020.0	2.0	2019-07-01	2020-06-30	{"mcm6_pollution_prevention": [14, 15], "mcm3_idde": [6, 10, 11, 12], "tmdl": [2, 7], "mcm1": [8, 9, 10], "mcm5_post_construction": [13, 14], "mcm2": [10], "mcm4_construction": [13]}	4.0	Four educational messages were completed via social media, stormwater webpage, 'Stormwater 101' brochure, and public access channel. A leaf litter message was not distributed during Year 2, and additional public education messaging was not completed due to COVID-19.	1.0	171.0	109.0	62.0	0.0	0.0	current_period	1	0.0
+https://www.epa.gov/system/files/documents/2026-04/abington_ma_ar21.pdf	https://storage.googleapis.com/openamend-data/MS4_annual_reports/abington_ma_ar21.pdf	Town of Abington	MAR041026	2021.0	3.0	2020-07-01	2021-06-30	{"mcm3_idde": [2, 11, 12], "mcm1": [8], "tmdl": [2, 7], "mcm5_post_construction": [13], "mcm2": [10], "mcm6_pollution_prevention": [14, 15], "mcm4_construction": [13]}	4.0	NULL	1.0	262.0	71.0	82.0	0.0	0.0	cumulative_since_permit_start	1	0.0
+https://www.epa.gov/system/files/documents/2026-04/abington_ma_ar22.pdf	https://storage.googleapis.com/openamend-data/MS4_annual_reports/abington_ma_ar22.pdf	Town of Abington	MAR041026	2022.0	4.0	2021-07-01	2022-06-30	{"mcm5_post_construction": [13, 14], "mcm1": [8, 9], "mcm6_pollution_prevention": [14, 15], "mcm2": [10], "mcm4_construction": [13], "mcm3_idde": [10, 11, 12], "tmdl": [7]}	4.0	NULL	1.0	NULL	50.0	NULL	0.0	0.0	cumulative_since_permit_start	0	0.0
+https://www.epa.gov/system/files/documents/2026-04/abington_ma_ar23.pdf	https://storage.googleapis.com/openamend-data/MS4_annual_reports/abington_ma_ar23.pdf	Town of Abington	MAR041026	2023.0	5.0	2022-07-01	2023-06-30	{"tmdl": [4, 5, 7], "mcm6_pollution_prevention": [15, 16], "mcm3_idde": [10, 11, 12], "mcm2": [10], "mcm1": [3, 4, 5, 8, 9], "mcm4_construction": [13], "mcm5_post_construction": [13, 14]}	4.0	Seasonal messages distributed via website, cable access channel, brochures, and social media.	NULL	NULL	10.0	1.0	0.0	0.0	cumulative_since_permit_start	NULL	0.0
 */
 
 **Column notes:**
@@ -1199,6 +1200,8 @@ https://www.epa.gov/system/files/documents/2026-04/new_bedford_ma_ar25.pdf	https
 - `report_year`: Null for ~35% of records where Gemini could not extract it from the PDF. Use for trend analysis.
 - `permit_year`: Null where report_year is also null. permit_year_imputed=1 where derived from report_year.
 - `extraction_confidence`: high/medium/low. Exclude low records from analysis.
+- `system_mapping_pct_complete`: Raw reported mapping completion %. ~58% null. Non-monotonic: municipalities sometimes report lower values in later years due to methodology changes (e.g. switching from % pipe miles to % outfalls), not actual unmapping.
+- `system_mapping_pct_display`: Forward-imputed version of system_mapping_pct_complete — capped at historical maximum per municipality per year. Use this column for trend analysis; use raw column only when investigating individual reports.
 - `report_period_start`: 2019-07-01, 2020-07-01, 2023-07-01, 2024-07-01, 2022-07-01, 2021-07-01, 2018-05-01, 2018-07-01, 2018-10-01
 - `report_period_end`: 2020-06-30, 2021-06-30, 2023-06-30, 2024-06-30, 2022-06-30, 2025-06-30, 2019-06-30, 2019-09-30, 2022-09-28, 2019-09-27, 2025-09-29, 2024-09-30, 2023-09-28, 2023-09-26, 2022-09-27, 2019-09-26, 2025-09-23, 2023-09-29, 2019-09-25, 2026-01-06, 2025-09-30, 2025-09-26, 2025-09-24, 2024-09-27, 2024-09-23, ... (36 total)
 
@@ -1226,16 +1229,17 @@ CREATE TABLE "MS4_TMDL" (
 
 /* 5 rows from MS4_TMDL:
 source_url	municipality	municipality_normalized	report_year	waterbody	pollutant	reduction_achieved_lbs_per_year	wasteload_allocation_lbs_per_year	reduction_achieved_pct	wasteload_allocation_pct	source_page
-https://www.epa.gov/system/files/documents/2026-04/andover_ma_ar21.pdf	Town of Andover	ANDOVER	2021.0	Unnamed Tributary to Meadow Brook (Pinnacle Brook)	E.Coli	NULL	NULL	NULL	NULL	NULL
-https://s3.amazonaws.com/somervillema-live/s3fs-public/annual-report-year-5-ms4.pdf	City of Somerville	SOMERVILLE	2023.0	Charles River Watershed	Phosphorus	26.78	1421.0	NULL	NULL	7.0
-https://s3.amazonaws.com/somervillema-live/s3fs-public/annual-report-year-5-ms4.pdf	City of Somerville	SOMERVILLE	2023.0	Alewife Brook	Chloride	NULL	NULL	NULL	NULL	9.0
-https://www.epa.gov/system/files/documents/2026-04/attleboro-ma-ar19.pdf	City of Attleboro	ATTLEBORO	2019.0	Farmers Pond	Nitrogen	NULL	NULL	NULL	NULL	NULL
-https://www.epa.gov/system/files/documents/2026-04/attleboro-ma-ar19.pdf	City of Attleboro	ATTLEBORO	2019.0	Farmers Pond	Phosphorus	NULL	NULL	NULL	NULL	NULL
+https://www.epa.gov/system/files/documents/2026-04/abington-ma-ar20.pdf	Town of Abington	ABINGTON	2020.0	French Stream	E. Coli Bacteria	NULL	NULL	NULL	NULL	7.0
+https://www.epa.gov/system/files/documents/2026-04/abington_ma_ar21.pdf	Town of Abington	ABINGTON	2021.0	French Stream	Bacteria (E.Coli)	NULL	NULL	NULL	NULL	7.0
+https://www.epa.gov/system/files/documents/2026-04/abington_ma_ar22.pdf	Town of Abington	ABINGTON	2022.0	French Stream	E.Coli, Bacteria	NULL	NULL	NULL	NULL	7.0
+https://www.epa.gov/system/files/documents/2026-04/abington_ma_ar23.pdf	Town of Abington	ABINGTON	2023.0	French Stream (e.coli)	Bacteria	NULL	NULL	NULL	NULL	7.0
+https://www.epa.gov/system/files/documents/2026-04/abington_ma_ar24.pdf	Abington	ABINGTON	2024.0	French Stream	Phosphorus	37.0	NULL	NULL	NULL	5.0
 */
 
 **Column notes:**
-- `reduction_achieved_lbs_per_year`: Null for most rows — only municipalities with quantitative TMDL targets report this.
+- `reduction_achieved_lbs_per_year`: Null for most rows — only municipalities with quantitative TMDL targets report this. Phosphorus is the dominant pollutant with quantitative data (Charles River watershed).
 - `wasteload_allocation_lbs_per_year`: Null for most rows. Rows where both this and reduction_achieved_lbs_per_year are non-null are the analytically useful subset.
+- `pollutant`: Title-cased and normalized: "Total Phosphorus" and "Phosphorous" are merged into "Phosphorus". Phosphorus accounts for >98% of reported lbs/yr reduction.
 - `waterbody`: Free-text waterbody name as reported by municipality; spelling varies.
 
 ---

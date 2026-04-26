@@ -45,11 +45,17 @@ The current permit covers a seven-year cycle (FY2019–FY2025). Municipalities a
 
 ## Permit compliance trajectory
 
-How has activity across the key quantitative MCMs changed over the seven-year permit cycle? The chart below shows the median count per municipality for three metrics by report year: MCM4 construction site inspections, MCM6 facility inspections, and MCM3 outfall screening (restricted to municipalities that report current-period counts only — see data gaps section).
+How has participation in key MCM activities changed over the seven-year permit cycle? The chart below shows the fraction of municipalities reporting non-zero activity for three metrics each year: MCM3 outfall screening (current-period reporters only), MCM4 construction site inspections, and MCM6 facility inspections.
 
-{% include charts/MS4_compliance_trajectory.html %}
+{% include charts/MS4_participation_rate.html %}
 
-MCM6 facility inspections are dominated by catch basin cleaning counts, which many municipalities report in large numbers. MCM4 construction site inspections show more variation, reflecting differences in development activity across municipalities. MCM3 outfall screening counts have grown as municipalities make progress toward completing their system mapping and screening requirements.
+MCM6 facility inspection participation is highest and most stable, reflecting that catch basin and municipal facility inspections are an established routine for most communities. MCM4 construction site inspection rates are lower — not all municipalities have active construction activity every year. MCM3 outfall screening participation has grown across the permit cycle as municipalities complete system mapping and begin active screening programs.
+
+Among the municipalities that reported both total outfall count and outfalls screened in a given year (~28% of all records), the chart below shows the distribution of screening completion rates over time.
+
+{% include charts/MS4_mcm3_screening_rate.html %}
+
+The median screening rate among this subset is high in most years, suggesting that municipalities with complete reporting data are generally making strong progress through their outfall inventories. The wide interquartile range in earlier years reflects communities at very different stages of program maturity.
 
 ---
 
@@ -70,6 +76,8 @@ Before outfalls can be screened for illicit discharges, they must be located and
 {% include charts/MS4_mapping_progress.html %}
 
 The stacked bars show the count of municipalities in each completion range. The 100%-complete group visible from 2019 onward reflects municipalities that had already finished mapping before the permit cycle started. The total bar height varies by year because `system_mapping_pct_complete` is missing from approximately 58% of all reports — only municipalities that explicitly reported this field are shown.
+
+**Note on methodology:** Raw reported values are non-monotonic — 132 municipality-year instances show a value lower than a prior year, almost certainly due to methodology changes (e.g. switching from percent of pipe-miles mapped to percent of outfalls mapped) rather than actual loss of mapping. This chart uses a value capped at each municipality's historical maximum to avoid displaying these spurious regressions.
 
 ---
 
