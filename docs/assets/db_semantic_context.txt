@@ -1,5 +1,5 @@
 # AMEND Database Semantic Context
-Generated: 2026-04-25
+Generated: 2026-04-26
 
 ## Global Data Notes
 
@@ -1200,6 +1200,8 @@ https://www.epa.gov/system/files/documents/2026-04/abington_ma_ar23.pdf	https://
 - `report_year`: Null for ~35% of records where Gemini could not extract it from the PDF. Use for trend analysis.
 - `permit_year`: Null where report_year is also null. permit_year_imputed=1 where derived from report_year.
 - `extraction_confidence`: high/medium/low. Exclude low records from analysis.
+- `mcm3_outfalls_total`: ~72% null. Absence may indicate an incomplete outfall inventory (a core MCM3 permit deliverable due by Permit Year 3/FY2021) or a reporting omission. Cannot compute outfall screening rate without this field.
+- `mcm3_outfalls_screened`: ~72% null (mirrors mcm3_outfalls_total missingness). Only compute screening rate (mcm3_outfalls_screened / mcm3_outfalls_total) when both are non-null and mcm3_outfalls_total > 0.
 - `system_mapping_pct_complete`: Raw reported mapping completion %. ~58% null. Non-monotonic: municipalities sometimes report lower values in later years due to methodology changes (e.g. switching from % pipe miles to % outfalls), not actual unmapping.
 - `system_mapping_pct_display`: Forward-imputed version of system_mapping_pct_complete — running historical maximum per municipality, propagated forward across years where the municipality did not report the field. Non-null for all years after a municipality first reports. Use for trend analysis; use raw column only when investigating individual reports.
 - `report_period_start`: 2019-07-01, 2020-07-01, 2023-07-01, 2024-07-01, 2022-07-01, 2021-07-01, 2018-05-01, 2018-07-01, 2018-10-01

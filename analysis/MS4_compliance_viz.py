@@ -223,6 +223,11 @@ def generate_post_charts(engine):
     # ── 4. MCM3 outfall screening rate: bracket stacked bar ──────────────────────
     print('Chart 4: MCM3 screening rate...')
 
+    n_munis_per_year = {
+        y: df[df['report_year'] == y]['municipality_normalized'].nunique()
+        for y in years
+    }
+
     df_scr = df[
         df['mcm3_outfalls_total'].notna() &
         df['mcm3_outfalls_screened'].notna() &
@@ -254,6 +259,16 @@ def generate_post_charts(engine):
             for y in years
         ]
         mychart.add_dataset(vals, label, backgroundColor=f"'{color}'")
+
+    # Unreported: municipalities with a report that year but no quantitative screening data
+    unreported_vals = [
+        n_munis_per_year[y] - int((df_scr['report_year'] == y).sum())
+        for y in years
+    ]
+    mychart.add_dataset(
+        unreported_vals, 'Screening rate not reported',
+        backgroundColor="'rgba(180,180,180,0.5)'",
+    )
 
     mychart.set_params(
         js_inline=0,
