@@ -255,18 +255,23 @@ if __name__ == '__main__':
 	# Raw values are non-monotonic because methodology changes (e.g. switching from
 	# % pipe-miles to % outfalls) cause spurious drops, not actual unmapping.
 	_ms4_raw = _ms4_raw.sort_values(['municipality_normalized', 'report_year'])
-	def _running_max_keep_nan(s):
+	def _running_max_ffill(s):
+		# For each row: use running max of all non-null values seen so far.
+		# Forward-fills across years where the municipality did not report,
+		# so a municipality that reached 100% in 2020 stays at 100% in 2021
+		# even if they left the field blank that year.
 		result = s.copy()
 		running_max = None
 		for idx in s.index:
 			val = s[idx]
 			if pd.notna(val):
 				running_max = val if running_max is None else max(running_max, val)
+			if running_max is not None:
 				result[idx] = running_max
 		return result
 	_ms4_raw['system_mapping_pct_display'] = (
 		_ms4_raw.groupby('municipality_normalized')['system_mapping_pct_complete']
-		.transform(_running_max_keep_nan)
+		.transform(_running_max_ffill)
 	)
 
 	# Drop the JSON column before loading flat table

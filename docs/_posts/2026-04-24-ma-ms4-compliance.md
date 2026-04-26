@@ -77,7 +77,7 @@ Before outfalls can be screened for illicit discharges, they must be located and
 
 The stacked bars show the count of municipalities in each completion range. The 100%-complete group visible from 2019 onward reflects municipalities that had already finished mapping before the permit cycle started. The total bar height varies by year because `system_mapping_pct_complete` is missing from approximately 58% of all reports — only municipalities that explicitly reported this field are shown.
 
-**Note on methodology:** Raw reported values are non-monotonic — 132 municipality-year instances show a value lower than a prior year, almost certainly due to methodology changes (e.g. switching from percent of pipe-miles mapped to percent of outfalls mapped) rather than actual loss of mapping. This chart uses a value capped at each municipality's historical maximum to avoid displaying these spurious regressions.
+**Note on methodology:** Raw reported values are non-monotonic — 132 municipality-year instances show a value lower than a prior year, almost certainly due to methodology changes (e.g. switching from percent of pipe-miles mapped to percent of outfalls mapped) rather than actual loss of mapping. This chart uses a value that is the running historical maximum per municipality, propagated forward across years where the field was left blank. This eliminates spurious individual regressions but does not fully eliminate year-to-year variation in bar heights: municipalities that filed a report in year Y but omitted the mapping field are not counted in year Y even if they previously reported 100%. The overall upward trend is robust.
 
 ---
 

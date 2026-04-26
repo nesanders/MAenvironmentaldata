@@ -1201,7 +1201,7 @@ https://www.epa.gov/system/files/documents/2026-04/abington_ma_ar23.pdf	https://
 - `permit_year`: Null where report_year is also null. permit_year_imputed=1 where derived from report_year.
 - `extraction_confidence`: high/medium/low. Exclude low records from analysis.
 - `system_mapping_pct_complete`: Raw reported mapping completion %. ~58% null. Non-monotonic: municipalities sometimes report lower values in later years due to methodology changes (e.g. switching from % pipe miles to % outfalls), not actual unmapping.
-- `system_mapping_pct_display`: Forward-imputed version of system_mapping_pct_complete — capped at historical maximum per municipality per year. Use this column for trend analysis; use raw column only when investigating individual reports.
+- `system_mapping_pct_display`: Forward-imputed version of system_mapping_pct_complete — running historical maximum per municipality, propagated forward across years where the municipality did not report the field. Non-null for all years after a municipality first reports. Use for trend analysis; use raw column only when investigating individual reports.
 - `report_period_start`: 2019-07-01, 2020-07-01, 2023-07-01, 2024-07-01, 2022-07-01, 2021-07-01, 2018-05-01, 2018-07-01, 2018-10-01
 - `report_period_end`: 2020-06-30, 2021-06-30, 2023-06-30, 2024-06-30, 2022-06-30, 2025-06-30, 2019-06-30, 2019-09-30, 2022-09-28, 2019-09-27, 2025-09-29, 2024-09-30, 2023-09-28, 2023-09-26, 2022-09-27, 2019-09-26, 2025-09-23, 2023-09-29, 2019-09-25, 2026-01-06, 2025-09-30, 2025-09-26, 2025-09-24, 2024-09-27, 2024-09-23, ... (36 total)
 

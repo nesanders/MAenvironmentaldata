@@ -201,7 +201,7 @@ COLUMN_NOTES = {
         'permit_year': 'Null where report_year is also null. permit_year_imputed=1 where derived from report_year.',
         'extraction_confidence': 'high/medium/low. Exclude low records from analysis.',
         'system_mapping_pct_complete': 'Raw reported mapping completion %. ~58% null. Non-monotonic: municipalities sometimes report lower values in later years due to methodology changes (e.g. switching from % pipe miles to % outfalls), not actual unmapping.',
-        'system_mapping_pct_display': 'Forward-imputed version of system_mapping_pct_complete — capped at historical maximum per municipality per year. Use this column for trend analysis; use raw column only when investigating individual reports.',
+        'system_mapping_pct_display': 'Forward-imputed version of system_mapping_pct_complete — running historical maximum per municipality, propagated forward across years where the municipality did not report the field. Non-null for all years after a municipality first reports. Use for trend analysis; use raw column only when investigating individual reports.',
     },
     'MS4_TMDL': {
         'reduction_achieved_lbs_per_year': 'Null for most rows — only municipalities with quantitative TMDL targets report this. Phosphorus is the dominant pollutant with quantitative data (Charles River watershed).',
