@@ -182,6 +182,12 @@ def fetch_incremental(table_name: str, csv_path: str, filter_param: str,
 		print(f'  {table_name}: no new records; using cache as-is')
 		return pd.read_csv(csv_path), True
 
+	# Normalize the new data's date column to datetime so the concatenated column
+	# has a single dtype.  Otherwise existing (datetime64) + new (object/strings)
+	# gives an object column with mixed serializations on CSV write — pd.to_datetime
+	# infers format from the first row and silently NaTs the rest downstream.
+	new_data[date_col] = pd.to_datetime(new_data[date_col], format='ISO8601', errors='coerce')
+
 	combined = pd.concat([existing, new_data], ignore_index=True)
 	print(f'  {table_name}: appended {len(new_data):,} new rows (total {len(combined):,})')
 	return combined, True
