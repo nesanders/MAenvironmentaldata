@@ -18,6 +18,28 @@ Outputs (per table, e.g. 'permit'):
   gs://openamend-data/EEADP_drinkingWater.csv — full drinking water table (GCS only)
   ../docs/data/EEADP_drinkingWater_annual.csv — annualized summary
   ../docs/data/ts_update_EEADP.yml      — timestamp of last run
+
+Why drinkingWater is not incrementally fetched
+----------------------------------------------
+The drinking water portal dataset is large (~200MB) and we do a full refresh of this every
+run, instead of updating incrementally. Unfortunately, there is no good alternative because
+the API does not support date filtering.
+
+The API response includes a TotalCount field (visible on a single lightweight probe request
+`?_end=1&_start=0`), which could in principle serve as a skip sentinel: store the count,
+compare on next run, and skip the full download+upload if unchanged.
+
+Two reasons this is not worth implementing:
+
+1. The sentinel only helps when nothing changed.  If TotalCount increased the full ~200 MB
+   download and GCS upload still happens — there is no way to fetch only new rows because
+   the API is offset-based with no date-range filter parameter.
+
+2. Drinking water lab results are submitted by public water systems continuously throughout
+   the year (~3.8 M rows as of April 2026).  TotalCount increases virtually every week, so
+   the sentinel would almost never trigger a skip in practice.
+
+The 200 MB weekly upload is effectively unavoidable unless the API gains date-range filtering.
 """
 
 import os
