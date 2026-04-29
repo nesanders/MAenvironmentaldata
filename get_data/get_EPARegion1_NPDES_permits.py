@@ -245,7 +245,7 @@ if __name__ == '__main__':
                     permit_url = html.unescape(permit)
                     os.system('wget ' + shlex.quote(permit_url) + ' --no-clobber --timeout=30 --tries=3 -O ' + shlex.quote(local_file))
                     if os.path.exists(local_file):
-                        os.system('gsutil cp ' + local_file + ' gs://openamend-data/' + local_file)
+                        os.system('gsutil cp ' + shlex.quote(local_file) + ' ' + shlex.quote('gs://openamend-data/' + local_file))
                         new_pdf_count += 1
         else:
             out_files += [['']]
