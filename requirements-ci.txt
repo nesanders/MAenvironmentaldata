@@ -33,8 +33,9 @@ fiona==1.10b2
 scipy==1.17.1
 joblib==1.2.0
 
-# PDF extraction + AI (used by get_MS4_annual_reports.py; manual-run only, not in CI pipeline)
+# PDF extraction + AI (used by get_MS4_annual_reports.py in CI pipeline)
 pdfplumber==0.11.9
+pymupdf==1.27.2.2
 google-genai==1.73.1
 
 # Misc
