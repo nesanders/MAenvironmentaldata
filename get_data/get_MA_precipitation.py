@@ -76,10 +76,26 @@ def fetch_daily_precip_year(year: int) -> pd.DataFrame:
 
 def main():
     current_year = datetime.datetime.now().year
-    all_years = list(range(START_YEAR, current_year + 1))
+    out_path = '../docs/data/MA_precipitation_daily.csv'
+
+    # Load cached data to determine the earliest year that needs re-fetching.
+    # We always re-fetch the most recently cached year because it may be incomplete
+    # (partial calendar year at the time of the previous run).
+    try:
+        existing = pd.read_csv(out_path)
+        existing['date'] = pd.to_datetime(existing['date'])
+        max_cached_year = existing['date'].dt.year.max()
+        fetch_from_year = max_cached_year  # re-fetch last year in case it was partial
+        print(f'  Found cached data through {max_cached_year}; fetching {fetch_from_year}–{current_year}')
+    except FileNotFoundError:
+        existing = None
+        fetch_from_year = START_YEAR
+        print(f'  No cache found; fetching {START_YEAR}–{current_year}')
+
+    fetch_years = list(range(fetch_from_year, current_year + 1))
 
     rows = []
-    for year in all_years:
+    for year in fetch_years:
         print(f'  Fetching {year}...', end=' ', flush=True)
         try:
             df_year = fetch_daily_precip_year(year)
@@ -88,11 +104,18 @@ def main():
         except Exception as e:
             print(f'FAILED: {e}')
 
-    df = pd.concat(rows, ignore_index=True)
+    new_data = pd.concat(rows, ignore_index=True)
 
-    out_path = '../docs/data/MA_precipitation_daily.csv'
+    if existing is not None:
+        # Drop cached rows for years being re-fetched, then append fresh data.
+        retained = existing[existing['date'].dt.year < fetch_from_year].copy()
+        retained['date'] = retained['date'].dt.strftime('%Y-%m-%d')
+        df = pd.concat([retained, new_data], ignore_index=True)
+    else:
+        df = new_data
+
     df.to_csv(out_path, index=False)
-    print(f'\nWrote {len(df)} rows to {out_path}')
+    print(f'\nWrote {len(df)} rows to {out_path} ({len(new_data)} newly fetched)')
 
     with open('../docs/data/ts_update_MA_precipitation.yml', 'w') as f:
         f.write('updated: ' + str(datetime.datetime.now()).split('.')[0] + '\n')
