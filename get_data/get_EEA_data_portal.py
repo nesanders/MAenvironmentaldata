@@ -23,7 +23,7 @@ Why drinkingWater is not incrementally fetched
 ----------------------------------------------
 The drinking water portal dataset is large (~200MB) and we do a full refresh of this every
 run, instead of updating incrementally. Unfortunately, there is no good alternative because
-the API does not support date filtering.
+the API does not support date filtering and does not paginate in chronological order.
 
 The API response includes a TotalCount field (visible on a single lightweight probe request
 `?_end=1&_start=0`), which could in principle serve as a skip sentinel: store the count,
