@@ -1,5 +1,5 @@
 # AMEND Database Semantic Context
-Generated: 2026-04-26
+Generated: 2026-04-29
 
 ## Global Data Notes
 
@@ -247,7 +247,7 @@ Alabama	Amount from Federal Government	18112231	2016_old
 
 ---
 
-### EPARegion1_permits (4,456 rows)
+### EPARegion1_permits (4,460 rows)
 EPA Region 1 NPDES (water discharge) permit listings for MA facilities. Key fields: Facility_Name, Permit_Number, Date_of_Issuance, Watershed, State, Stage.
 
 ```sql
@@ -943,7 +943,7 @@ Unnamed: 0	incidentId	incidentNumber	incidentDate	incidentTime	amPm	reporterClas
 
 ---
 
-### MAEEADP_DrinkingWater (169,287 rows)
+### MAEEADP_DrinkingWater (169,623 rows)
 EEA Data Portal: Annual drinking water quality monitoring results by water system. Key fields: Year, PWSName (public water system name), ContaminantGroup, Result.
 
 ```sql
@@ -972,7 +972,7 @@ Year	PWSName	ContaminantGroup	RaworFinished	Result
 
 ---
 
-### MAEEADP_Enforcement (55,142 rows)
+### MAEEADP_Enforcement (55,182 rows)
 EEA Data Portal: MassDEP enforcement actions against regulated entities, 1996–present. Each row is one action. Key fields: Town, Program, EnforcementType, PenaltyAssessed, FacilityId, FacilityName, EnforcementDate. Use with MAEEADP_Facility via FacilityId.
 
 ```sql
@@ -991,11 +991,11 @@ CREATE TABLE "MAEEADP_Enforcement" (
 
 /* 5 rows from MAEEADP_Enforcement:
 Id	Town	Program	EnforcementType	PenaltyAssessed	FacilityId	FacilityName	EnforcementDate
-888115	TRURO	WATER SUPPLY/DRINKING WATER	Notice Of Non-Compliance	NULL	6770	PILGRIM SPRING MOTEL	1996-05-12T00:00:00
-920270	TEWKSBURY	REGULATED ACTIVITY(S)	Notice Of Non-Compliance	NULL	134212	MURO PHARMACEUTICAL INC	1996-01-03T00:00:00
-920751	HAVERHILL	REGULATED ACTIVITY(S)	Notice Of Non-Compliance	NULL	162840	HALE HOSPITAL	1996-01-09T00:00:00
-921162	LAWRENCE	REGULATED ACTIVITY(S)	Notice Of Non-Compliance	NULL	209498	FRUIT SALAD INC	1996-01-05T00:00:00
-931836	LYNN	REGULATED ACTIVITY(S)	Administrative Consent Order With Penalty	20000.0	260320	TURNER TRUCKING AND SALVAGE	1996-01-11T00:00:00
+888115	TRURO	WATER SUPPLY/DRINKING WATER	Notice Of Non-Compliance	NULL	6770	PILGRIM SPRING MOTEL	1996-05-12
+920270	TEWKSBURY	REGULATED ACTIVITY(S)	Notice Of Non-Compliance	NULL	134212	MURO PHARMACEUTICAL INC	1996-01-03
+920751	HAVERHILL	REGULATED ACTIVITY(S)	Notice Of Non-Compliance	NULL	162840	HALE HOSPITAL	1996-01-09
+921162	LAWRENCE	REGULATED ACTIVITY(S)	Notice Of Non-Compliance	NULL	209498	FRUIT SALAD INC	1996-01-05
+931836	LYNN	REGULATED ACTIVITY(S)	Administrative Consent Order With Penalty	20000.0	260320	TURNER TRUCKING AND SALVAGE	1996-01-11
 */
 
 **Column notes:**
@@ -1008,7 +1008,7 @@ Id	Town	Program	EnforcementType	PenaltyAssessed	FacilityId	FacilityName	Enforcem
 
 ---
 
-### MAEEADP_Facility (53,482 rows)
+### MAEEADP_Facility (53,490 rows)
 EEA Data Portal: Regulated facilities tracked by MassDEP/EEA. Key fields: Id (joins to FacilityId in other tables), Town, FacilityType, FacilityName, Program, Active.
 
 ```sql
@@ -1043,7 +1043,7 @@ Id	StreetName	Town	FacilityType	FacilityName	Program	ProgramSpecificId	Active
 
 ---
 
-### MAEEADP_Inspection (84,244 rows)
+### MAEEADP_Inspection (84,266 rows)
 EEA Data Portal: MassDEP inspection records for regulated facilities. Key fields: Town, Program, FacilityId, FacilityName, InspectionType, InspectionDate.
 
 ```sql
@@ -1061,11 +1061,11 @@ CREATE TABLE "MAEEADP_Inspection" (
 
 /* 5 rows from MAEEADP_Inspection:
 Id	Town	Program	FacilityId	FacilityName	InspectionType	InspectionDate
-795486	WATERTOWN	REGULATED ACTIVITY(S)	130767	MICROSEMI INCORPORATED	ReInspection	1996-02-12T00:00:00
-920425	AUBURN	REGULATED ACTIVITY(S)	269280	FLAGG PALMER PRECAST INC	Unannounced Multimedia Inspection	1996-01-04T00:00:00
-920794	PRINCETON	REGULATED ACTIVITY(S)	157601	PRINCETON TOWN OF MUNICIPAL LI	ReInspection	1996-01-05T00:00:00
-920796	WEST BOYLSTON	REGULATED ACTIVITY(S)	157585	WEST BOYLSTON TOWN OF MUNI LIG	ReInspection	1996-01-05T00:00:00
-931821	ACTON	WATER SUPPLY/DRINKING WATER	5941	SOMERSET HILLS CONDOMINIUMS	COMPREHENSIVE COMPLIANCE EVALUATION	1996-01-11T00:00:00
+795486	WATERTOWN	REGULATED ACTIVITY(S)	130767	MICROSEMI INCORPORATED	ReInspection	1996-02-12
+920425	AUBURN	REGULATED ACTIVITY(S)	269280	FLAGG PALMER PRECAST INC	Unannounced Multimedia Inspection	1996-01-04
+920794	PRINCETON	REGULATED ACTIVITY(S)	157601	PRINCETON TOWN OF MUNICIPAL LI	ReInspection	1996-01-05
+920796	WEST BOYLSTON	REGULATED ACTIVITY(S)	157585	WEST BOYLSTON TOWN OF MUNI LIG	ReInspection	1996-01-05
+931821	ACTON	WATER SUPPLY/DRINKING WATER	5941	SOMERSET HILLS CONDOMINIUMS	COMPREHENSIVE COMPLIANCE EVALUATION	1996-01-11
 */
 
 **Column notes:**
