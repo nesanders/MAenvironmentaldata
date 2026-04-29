@@ -54,6 +54,22 @@ def fetch_agency_budget(accounts: list) -> pd.DataFrame:
 
 
 if __name__ == '__main__':
+    # Skip if the cache already covers the current fiscal year.
+    # MA fiscal year runs July–June: FY2026 = Jul 2025–Jun 2026.
+    _now = datetime.datetime.now()
+    _current_fy = _now.year if _now.month < 7 else _now.year + 1
+    try:
+        _cached = pd.read_csv('../docs/data/MassBudget_environmental_summary.csv')
+        _max_cached_fy = int(_cached['Year'].max())
+        if _max_cached_fy >= _current_fy:
+            print(f'Budget data current through FY{_max_cached_fy}; skipping CTHRU fetch.')
+            with open('../docs/data/ts_update_MassBudget_environmental.yml', 'w') as _f:
+                _f.write('updated: ' + str(_now).split('.')[0] + '\n')
+            import sys; sys.exit(0)
+        print(f'Cache covers through FY{_max_cached_fy}; fetching FY{_max_cached_fy + 1}–FY{_current_fy}')
+    except FileNotFoundError:
+        print('No cache found; running full CTHRU fetch')
+
     # Load SSA AWI from CSV for inflation adjustment (2024 base year)
     # Read from CSV instead of DB since this runs before assemble_db.py creates tables
     awi = pd.read_csv('../docs/data/SSAWages.csv').set_index('Year')
