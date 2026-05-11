@@ -1,9 +1,9 @@
 EEADP_CSO.csv: 17795
-EEADP_enforcement.csv: 55205
-EEADP_facility.csv: 53491
-EEADP_inspection.csv: 84290
+EEADP_enforcement.csv: 55214
+EEADP_facility.csv: 53501
+EEADP_inspection.csv: 84313
 EEADP_permit.csv: 101144
-EPARegion1_NPDES_permit_data.csv: 4460
+EPARegion1_NPDES_permit_data.csv: 4464
 EPA_303d_impairments.csv: 106058
 MADEP_enforcement_actions.csv: 4348
 MADEP_staff.csv: 12048
