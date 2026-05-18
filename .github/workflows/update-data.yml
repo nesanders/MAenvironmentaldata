@@ -84,6 +84,7 @@ jobs:
             --base main \
             --head "$BRANCH"
           gh pr merge "$BRANCH" --squash
+          gh workflow run update-charts.yml --ref main
 
       - name: Open issue on failure
         if: failure()

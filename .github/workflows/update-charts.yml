@@ -1,14 +1,15 @@
 name: Update Charts
 
 on:
-  # Trigger when data files land on main (after the data-update PR auto-merges).
-  # This replaces the old workflow_run trigger so sequencing is correct:
-  # data PR merges → push event fires → charts regenerate with fresh data.
+  # Primary trigger: explicitly dispatched by update-data.yml after its PR merges.
+  # (GitHub does not fire push events from GITHUB_TOKEN bot merges, so on:push
+  # alone is not reliable for bot-initiated data updates.)
+  # Fallback: push to main touching docs/data/** covers human-initiated merges.
   push:
     branches: [main]
     paths:
       - 'docs/data/**'
-  workflow_dispatch:       # Allow manual trigger from GitHub UI
+  workflow_dispatch:       # Primary trigger from update-data.yml; also allows manual runs
 
 concurrency:
   group: update-charts
