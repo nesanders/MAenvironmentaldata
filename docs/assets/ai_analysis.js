@@ -372,6 +372,119 @@ function saveSettings() {
   setTimeout(function() {
     document.getElementById('ai-settings-saved').style.display = 'none';
   }, 2000);
+
+  if (apiKey) {
+    setModelListStatus('fetching');
+    fetchLiveModels(provider, apiKey).then(function(models) {
+      if (models && models.length) {
+        repopulateModelDropdown(provider, models);
+        setModelListStatus('updated', models.length);
+      } else {
+        setModelListStatus('');
+      }
+    }).catch(function() { setModelListStatus(''); });
+  }
+}
+
+function setModelListStatus(state, count) {
+  var el = document.getElementById('ai-model-list-status');
+  if (!el) return;
+  if (!state) { el.style.display = 'none'; return; }
+  el.style.display = 'inline';
+  if (state === 'fetching') {
+    el.style.color = '#888';
+    el.textContent = 'Fetching model list…';
+  } else if (state === 'updated') {
+    el.style.color = 'green';
+    el.textContent = '✓ ' + count + ' models loaded';
+    setTimeout(function() {
+      el.style.transition = 'opacity 1s';
+      el.style.opacity = '0';
+      setTimeout(function() {
+        el.style.display = 'none';
+        el.style.opacity = '';
+        el.style.transition = '';
+      }, 1000);
+    }, 2500);
+  }
+}
+
+// Fetch the live model list from the provider's discovery endpoint.
+// Returns a Promise resolving to [{value, label}] or rejects on error.
+function fetchLiveModels(provider, apiKey) {
+  if (provider === 'groq') {
+    return fetch('https://api.groq.com/openai/v1/models', {
+      headers: { 'Authorization': 'Bearer ' + apiKey }
+    }).then(function(r) { return r.json(); }).then(function(data) {
+      if (!data.data) return [];
+      // Exclude audio/speech/vision-only models
+      var excludeRe = /whisper|tts|transcri|vision(?!.*instruct)/i;
+      return data.data
+        .filter(function(m) { return m.object === 'model' && !excludeRe.test(m.id); })
+        .map(function(m) { return m.id; })
+        .sort()
+        .map(function(id) { return { value: id, label: id }; });
+    });
+  }
+  if (provider === 'openai') {
+    return fetch('https://api.openai.com/v1/models', {
+      headers: { 'Authorization': 'Bearer ' + apiKey }
+    }).then(function(r) { return r.json(); }).then(function(data) {
+      if (!data.data) return [];
+      // Chat-capable: gpt-* and o-series; exclude non-chat variants
+      var includeRe = /^(gpt-|o\d|o-)/;
+      var excludeRe = /realtime|audio|tts|transcri|search|instruct|vision(?!.*turbo)|babbage|davinci|ada|curie/i;
+      return data.data
+        .filter(function(m) { return includeRe.test(m.id) && !excludeRe.test(m.id); })
+        .map(function(m) { return m.id; })
+        .sort()
+        .map(function(id) { return { value: id, label: id }; });
+    });
+  }
+  if (provider === 'gemini') {
+    return fetch('https://generativelanguage.googleapis.com/v1beta/models?key=' + encodeURIComponent(apiKey))
+      .then(function(r) { return r.json(); }).then(function(data) {
+        if (!data.models) return [];
+        // Exclude embedding, AQA, and image-generation-only models
+        var excludeRe = /embedding|aqa|imagen/i;
+        return data.models
+          .filter(function(m) {
+            var id = m.name.replace(/^models\//, '');
+            return !excludeRe.test(id) &&
+              m.supportedGenerationMethods &&
+              m.supportedGenerationMethods.indexOf('generateContent') !== -1;
+          })
+          .map(function(m) { return m.name.replace(/^models\//, ''); })
+          .sort()
+          .map(function(id) { return { value: id, label: id }; });
+      });
+  }
+  return Promise.resolve([]);
+}
+
+// Replace a provider's model <select> with live models, preserving selection.
+function repopulateModelDropdown(provider, models) {
+  var sel = document.getElementById('ai-model-select-' + provider);
+  if (!sel) return;
+  var currentVal = sel.value;
+  var defaultVal = PROVIDER_CONFIG[provider].defaultModel;
+  sel.innerHTML = '';
+  models.forEach(function(m) {
+    var opt = document.createElement('option');
+    opt.value = m.value;
+    opt.textContent = m.value === defaultVal ? m.label + ' (default)' : m.label;
+    sel.appendChild(opt);
+  });
+  // Restore previous selection if still available, else use default
+  var found = false;
+  for (var i = 0; i < sel.options.length; i++) {
+    if (sel.options[i].value === currentVal) { sel.selectedIndex = i; found = true; break; }
+  }
+  if (!found) {
+    for (var j = 0; j < sel.options.length; j++) {
+      if (sel.options[j].value === defaultVal) { sel.selectedIndex = j; break; }
+    }
+  }
 }
 
 function populateSettingsUI() {
