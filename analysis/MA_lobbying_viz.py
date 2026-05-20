@@ -237,7 +237,99 @@ def generate_charts(engine, prefix=''):
         c.jekyll_write(f'{CHART_DIR}/{prefix}lobbying_vs_enforcement.html')
         print(f'Wrote {prefix}lobbying_vs_enforcement.html')
 
+    # ── Chart 5: Lobbying spend by topic cluster (stacked bar by year) ───────────
+    _chart_spend_by_cluster(employers, lobby_bills, prefix)
+
     _write_facts(employers, spend_trend, most_recent_year)
+
+
+def _chart_spend_by_cluster(employers: pd.DataFrame, lobby_bills: pd.DataFrame, prefix: str):
+    """Stacked bar: annual employer spend broken down by bill topic cluster.
+
+    Requires MA_lobbying_bills_scored.csv and MA_bill_cluster_labels.csv.
+    Gracefully skipped if clustering hasn't been run yet.
+    """
+    scored_path = '../docs/data/MA_lobbying_bills_scored.csv'
+    labels_path = '../docs/data/MA_bill_cluster_labels.csv'
+    try:
+        scored = pd.read_csv(scored_path, index_col=0)
+        cluster_labels = pd.read_csv(labels_path)
+    except FileNotFoundError:
+        print('  Cluster data not yet available — skipping cluster spend chart.')
+        return
+
+    if scored['cluster_id'].eq(-1).all():
+        print('  Cluster IDs not yet assigned — skipping cluster spend chart.')
+        return
+
+    # Join cluster_id onto lobby_bills via bill_number + general_court
+    scored['bill_number'] = pd.to_numeric(scored['bill_number'], errors='coerce')
+    scored['general_court'] = pd.to_numeric(scored['general_court'], errors='coerce')
+    lb = lobby_bills.merge(
+        scored[['bill_number', 'general_court', 'cluster_id']],
+        on=['bill_number', 'general_court'], how='left'
+    )
+    lb = lb.dropna(subset=['cluster_id'])
+    lb['cluster_id'] = lb['cluster_id'].astype(int)
+
+    # Join employer compensation: match entity_name + year
+    lb_emp = lb.merge(employers[['entity_name', 'year', 'compensation']],
+                      on=['entity_name', 'year'], how='left')
+
+    # Annual spend per cluster (divide compensation equally across clusters
+    # lobbied by each entity in that year to avoid double-counting)
+    clusters_per_entity_year = (
+        lb_emp.groupby(['entity_name', 'year'])['cluster_id']
+        .nunique()
+        .reset_index(name='n_clusters')
+    )
+    lb_emp = lb_emp.merge(clusters_per_entity_year, on=['entity_name', 'year'])
+    lb_emp['spend_share'] = lb_emp['compensation'] / lb_emp['n_clusters']
+
+    spend_by_cluster = (
+        lb_emp.groupby(['year', 'cluster_id'])['spend_share']
+        .sum()
+        .reset_index()
+    )
+
+    # Build cluster label map
+    label_map = dict(zip(cluster_labels['cluster_id'], cluster_labels['label']))
+    spend_by_cluster['label'] = spend_by_cluster['cluster_id'].map(label_map).fillna('Other')
+
+    years = sorted(spend_by_cluster['year'].dropna().astype(int).unique())
+    # Top clusters by total spend across all years
+    top_clusters = (
+        spend_by_cluster.groupby('cluster_id')['spend_share']
+        .sum()
+        .nlargest(10)
+        .index.tolist()
+    )
+
+    c = chartjs.Chart(
+        'MA Lobbying Spend by Topic Cluster',
+        'Bar', width=700, height=420,
+    )
+    c.set_labels([str(y) for y in years])
+
+    colors = SECTOR_COLORS
+    for i, cid in enumerate(top_clusters):
+        subset = spend_by_cluster[spend_by_cluster['cluster_id'] == cid]
+        year_spend = {int(r['year']): r['spend_share'] / 1e6
+                      for _, r in subset.iterrows()}
+        data = [year_spend.get(y, 0) for y in years]
+        label = label_map.get(cid, f'Cluster {cid}')
+        c.add_dataset(data, label,
+                      backgroundColor=f"'{colors[i % len(colors)]}'",
+                      stack="'topic'")
+
+    c.set_params(
+        js_inline=False,
+        ylabel='Lobbying spend ($M)',
+        xlabel='Year',
+        stacked=True,
+    )
+    c.jekyll_write(f'{CHART_DIR}/{prefix}lobbying_spend_by_cluster.html')
+    print(f'Wrote {prefix}lobbying_spend_by_cluster.html')
 
 
 def generate_post_charts(engine, prefix=''):

@@ -1,23 +1,28 @@
-"""Score lobbying bills for environmental relevance using Google Gemini embeddings.
+"""Score and embed MA lobbying bills for environmental relevance and topic clustering.
 
-Model: gemini-embedding-2 (current production model; 8192-token input, 768–3072-dim output).
-API key: read from get_data/SECRET_GOOGLE_API_KEY (same file used by other scripts).
+Model: gemini-embedding-2 (free tier: 1,500 req/min, 1M req/month).
+API key: read from get_data/SECRET_GOOGLE_API_KEY.
 
-For each bill in MA_legislature_bills.csv that lacks a score, embeds
-"<bill_number>: <title>" and computes cosine similarity against a set of seed phrases
-covering environmental regulation topics. The maximum similarity across seed phrases is
-stored as `env_relevance_score` (0–1 float). A convenience boolean `is_environmental`
-is derived at a threshold of 0.60 (tune against a hand-labeled validation set).
+Two outputs, both incremental (only new bills processed per run):
 
-Only new/unscored bills are embedded on each run — cost stays low (one API call per
-new bill). The embedding dimension used is 768 (smallest available, sufficient for
-cosine similarity classification).
+1. MA_lobbying_bills_scored.csv — one row per unique (bill_number, general_court):
+     bill_title, env_relevance_score (0–1), is_environmental (bool),
+     cluster_id (int, -1 until cluster_lobbying_bills.py is run)
 
-Run from the get_data/ directory after get_MA_legislature_bills.py:
-    conda run -n amend_python python score_lobbying_bills.py
+2. MA_bill_embeddings.npy  — (N, 768) float32 array; row order matches
+   MA_lobbying_bills_scored.csv sorted by (bill_number, general_court).
+   Used by cluster_lobbying_bills.py for k-means clustering.
 
-Outputs (updates in-place):
-  ../docs/data/MA_legislature_bills.csv   — adds env_relevance_score, is_environmental columns
+Environmental relevance: cosine similarity of each bill's title embedding
+against 20 seed phrases covering environmental regulation topics.
+Threshold: 0.60 (tune against a hand-labeled set as data grows).
+
+Run from the get_data/ directory after get_MA_lobbying.py:
+    /path/to/python -u score_lobbying_bills.py
+
+Outputs:
+  ../docs/data/MA_lobbying_bills_scored.csv
+  ../docs/data/MA_bill_embeddings.npy
 """
 
 import time
@@ -29,21 +34,10 @@ import pandas as pd
 DATA_DIR = Path('../docs/data')
 API_KEY_PATH = Path('SECRET_GOOGLE_API_KEY')
 
-# Threshold for is_environmental flag. A bill is considered environmentally relevant
-# if its max cosine similarity to any seed phrase exceeds this value.
-# Calibrate against a hand-labeled validation set before relying on this.
 ENV_THRESHOLD = 0.60
-
-# Output embedding dimension. gemini-embedding-2 supports 128–3072; 768 is sufficient
-# for cosine similarity and minimises API cost/latency.
 EMBEDDING_DIM = 768
+REQUEST_DELAY = 0.05  # well within 1,500 req/min free tier
 
-# Rate limiting: max requests per minute for the Gemini Embeddings API (free tier: 1500/min).
-# We sleep briefly between calls to avoid bursting.
-REQUEST_DELAY = 0.05  # seconds
-
-# Seed phrases representing the environmental-regulation domain.
-# Cosine similarity is computed between each bill and all seeds; max is the score.
 ENV_SEED_PHRASES = [
     'environmental regulation and protection',
     'water quality and clean water',
@@ -77,17 +71,14 @@ def _read_api_key() -> str:
     return API_KEY_PATH.read_text().strip()
 
 
-def _embed_texts(texts: list[str], api_key: str) -> np.ndarray:
-    """Embed a list of texts using the Gemini Embeddings API.
-
-    Returns an (N, EMBEDDING_DIM) float32 array.
-    Uses the `google-genai` SDK (google.genai package).
-    """
+def _make_client(api_key: str):
     import google.genai as genai
+    return genai.Client(api_key=api_key)
+
+
+def _embed_texts(client, texts: list[str]) -> np.ndarray:
+    """Embed a list of texts. Returns (N, EMBEDDING_DIM) float32 array."""
     from google.genai import types
-
-    client = genai.Client(api_key=api_key)
-
     vectors = []
     for text in texts:
         time.sleep(REQUEST_DELAY)
@@ -97,76 +88,107 @@ def _embed_texts(texts: list[str], api_key: str) -> np.ndarray:
             config=types.EmbedContentConfig(output_dimensionality=EMBEDDING_DIM),
         )
         vectors.append(result.embeddings[0].values)
-
     return np.array(vectors, dtype=np.float32)
 
 
-def _cosine_similarity(a: np.ndarray, b: np.ndarray) -> np.ndarray:
-    """Compute cosine similarity between each row of a and each row of b.
-
-    Returns an (len(a), len(b)) matrix.
-    """
+def _cosine_sim(a: np.ndarray, b: np.ndarray) -> np.ndarray:
+    """(N, M) cosine similarity between rows of a and rows of b."""
     a_norm = a / (np.linalg.norm(a, axis=1, keepdims=True) + 1e-10)
     b_norm = b / (np.linalg.norm(b, axis=1, keepdims=True) + 1e-10)
     return a_norm @ b_norm.T
 
 
-def score_bills(bills_df: pd.DataFrame, api_key: str) -> pd.DataFrame:
-    """Add env_relevance_score and is_environmental columns to bills_df.
+def main():
+    lobby_path = DATA_DIR / 'MA_lobbying_bills.csv'
+    if not lobby_path.exists():
+        print(f'ERROR: {lobby_path} not found. Run get_MA_lobbying.py first.')
+        return
 
-    Only scores rows that don't already have a score (incremental).
-    """
-    if 'env_relevance_score' not in bills_df.columns:
-        bills_df['env_relevance_score'] = float('nan')
-    if 'is_environmental' not in bills_df.columns:
-        bills_df['is_environmental'] = False
+    # Unique bills from lobbying data — bill_title comes from the SoS portal
+    lobby = pd.read_csv(lobby_path, index_col=0)
+    unique = (
+        lobby[['bill_number', 'general_court', 'bill_title']]
+        .dropna(subset=['bill_number', 'general_court'])
+        .drop_duplicates(subset=['bill_number', 'general_court'])
+        .sort_values(['general_court', 'bill_number'])
+        .reset_index(drop=True)
+    )
+    print(f'Unique bills in lobbying data: {len(unique)}')
 
-    unscored_mask = bills_df['env_relevance_score'].isna()
-    unscored = bills_df[unscored_mask].copy()
+    # Load existing scored CSV
+    scored_path = DATA_DIR / 'MA_lobbying_bills_scored.csv'
+    emb_path = DATA_DIR / 'MA_bill_embeddings.npy'
+
+    existing_scored: pd.DataFrame | None = None
+    existing_emb: np.ndarray | None = None
+    already_scored: set = set()
+
+    if scored_path.exists():
+        existing_scored = pd.read_csv(scored_path, index_col=0)
+        already_scored = set(
+            zip(existing_scored['bill_number'].astype(str),
+                existing_scored['general_court'].astype(str))
+        )
+        print(f'  {len(existing_scored)} bills already scored')
+
+    if emb_path.exists():
+        existing_emb = np.load(emb_path)
+
+    # Find unscored bills
+    unscored = unique[
+        ~unique.apply(
+            lambda r: (str(r['bill_number']), str(r['general_court'])) in already_scored,
+            axis=1
+        )
+    ]
+    print(f'Scoring {len(unscored)} new bills...')
+
     if unscored.empty:
-        print('All bills already scored — nothing to do.')
-        return bills_df
+        print('Nothing to do.')
+        return
 
-    print(f'Scoring {len(unscored)} unscored bills...')
+    api_key = _read_api_key()
+    client = _make_client(api_key)
 
     # Embed seed phrases once
     print('Embedding seed phrases...')
-    seed_embeddings = _embed_texts(ENV_SEED_PHRASES, api_key)
+    seed_emb = _embed_texts(client, ENV_SEED_PHRASES)
 
-    # Build text to embed for each bill: "BILL_NUMBER: title"
+    # Embed bill titles
     bill_texts = (
-        unscored['bill_number'].fillna('').astype(str)
-        + ': '
-        + unscored['title'].fillna('').astype(str)
+        unscored['bill_number'].astype(str) + ': ' +
+        unscored['bill_title'].fillna('').astype(str)
     ).tolist()
+    print(f'Embedding {len(bill_texts)} bill titles...')
+    bill_emb = _embed_texts(client, bill_texts)
 
-    print(f'Embedding {len(bill_texts)} bills (this may take a moment)...')
-    bill_embeddings = _embed_texts(bill_texts, api_key)
+    # Score
+    sims = _cosine_sim(bill_emb, seed_emb)
+    max_sims = sims.max(axis=1)
 
-    # Compute cosine similarity: (n_bills, n_seeds); take max across seeds
-    sims = _cosine_similarity(bill_embeddings, seed_embeddings)  # (n_bills, n_seeds)
-    max_sims = sims.max(axis=1)  # (n_bills,)
+    new_scored = unscored[['bill_number', 'general_court', 'bill_title']].copy()
+    new_scored['env_relevance_score'] = max_sims
+    new_scored['is_environmental'] = max_sims >= ENV_THRESHOLD
+    new_scored['cluster_id'] = -1  # populated by cluster_lobbying_bills.py
 
-    bills_df.loc[unscored_mask, 'env_relevance_score'] = max_sims
-    bills_df.loc[unscored_mask, 'is_environmental'] = max_sims >= ENV_THRESHOLD
+    n_env = int((max_sims >= ENV_THRESHOLD).sum())
+    print(f'  {n_env}/{len(unscored)} new bills flagged is_environmental')
 
-    n_env = bills_df['is_environmental'].sum()
-    print(f'Scored {len(unscored)} bills; {n_env}/{len(bills_df)} total marked is_environmental '
-          f'(threshold={ENV_THRESHOLD})')
-    return bills_df
+    # Merge with existing
+    if existing_scored is not None and not existing_scored.empty:
+        combined_scored = pd.concat([existing_scored, new_scored], ignore_index=True)
+        combined_emb = np.vstack([existing_emb, bill_emb])
+    else:
+        combined_scored = new_scored
+        combined_emb = bill_emb
 
+    combined_scored.to_csv(scored_path)
+    np.save(emb_path, combined_emb)
 
-def main():
-    bills_path = DATA_DIR / 'MA_legislature_bills.csv'
-    if not bills_path.exists():
-        print(f'ERROR: {bills_path} not found. Run get_MA_legislature_bills.py first.')
-        return
-
-    bills_df = pd.read_csv(bills_path, index_col=0)
-    api_key = _read_api_key()
-    bills_df = score_bills(bills_df, api_key)
-    bills_df.to_csv(bills_path)
-    print(f'Updated {bills_path}')
+    n_total_env = int(combined_scored['is_environmental'].sum())
+    print(f'Wrote {len(combined_scored)} scored bills '
+          f'({n_total_env} environmental) to {scored_path}')
+    print(f'Wrote embeddings ({combined_emb.shape}) to {emb_path}')
 
 
 if __name__ == '__main__':

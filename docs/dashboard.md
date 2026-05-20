@@ -340,6 +340,12 @@ Data last updated **{{ site.data.ts_update_MA_lobbying.updated | date: "%-d %B %
 
 {% include charts/dash_lobbying_vs_enforcement.html %}
 
+### Lobbying spend by topic cluster
+
+*Lobbying spend allocated across bill topic clusters (k-means on Gemini embeddings, labeled by Gemini Flash). Cluster labels are assigned once and updated manually when new years of data are added.*
+
+{% include charts/dash_lobbying_spend_by_cluster.html %}
+
 ---
 
 *Charts regenerated weekly from the latest available data. Last update visible in the [Actions log](https://github.com/nesanders/MAenvironmentaldata/actions/workflows/update-charts.yml).*

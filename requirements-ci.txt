@@ -44,3 +44,4 @@ six==1.17.0
 # Testing
 pytest==9.0.3
 pyyaml==6.0.2
+scikit-learn==1.8.0
