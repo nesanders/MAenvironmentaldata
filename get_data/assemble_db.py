@@ -328,17 +328,39 @@ if __name__ == '__main__':
 		data_csv['MA_Lobbying_Lobbyists'] = pd.read_csv(_lobbying_lobbyists_path, index_col=0)
 		print(f"MA_Lobbying_Lobbyists: {len(data_csv['MA_Lobbying_Lobbyists'])} rows")
 	if os.path.exists(_lobbying_bills_path):
-		data_csv['MA_Lobbying_Bills'] = pd.read_csv(_lobbying_bills_path, index_col=0)
+		_lb = pd.read_csv(_lobbying_bills_path, index_col=0)
+		_lb['bill_number'] = pd.to_numeric(_lb['bill_number'], errors='coerce').astype('Int64')
+		if 'general_court' in _lb.columns:
+			_lb['general_court'] = pd.to_numeric(_lb['general_court'], errors='coerce').astype('Int64')
+		data_csv['MA_Lobbying_Bills'] = _lb
 		print(f"MA_Lobbying_Bills: {len(data_csv['MA_Lobbying_Bills'])} rows")
 	if os.path.exists(_legislature_bills_path):
 		_leg_bills = pd.read_csv(_legislature_bills_path, index_col=0)
-		# Ensure boolean column is stored as int for SQLite compatibility
-		if 'is_environmental' in _leg_bills.columns:
-			_leg_bills['is_environmental'] = _leg_bills['is_environmental'].astype('Int64')
+		_leg_bills['bill_number'] = pd.to_numeric(_leg_bills['bill_number'], errors='coerce').astype('Int64')
+		if 'general_court' in _leg_bills.columns:
+			_leg_bills['general_court'] = pd.to_numeric(_leg_bills['general_court'], errors='coerce').astype('Int64')
 		if 'passed' in _leg_bills.columns:
 			_leg_bills['passed'] = _leg_bills['passed'].astype('Int64')
 		data_csv['MA_Legislature_Bills'] = _leg_bills
 		print(f"MA_Legislature_Bills: {len(data_csv['MA_Legislature_Bills'])} rows")
+
+	_scored_bills_path = '../docs/data/MA_lobbying_bills_scored.csv'
+	if os.path.exists(_scored_bills_path):
+		_scored = pd.read_csv(_scored_bills_path, index_col=0)
+		_scored['bill_number'] = pd.to_numeric(_scored['bill_number'], errors='coerce').astype('Int64')
+		if 'general_court' in _scored.columns:
+			_scored['general_court'] = pd.to_numeric(_scored['general_court'], errors='coerce').astype('Int64')
+		if 'is_environmental' in _scored.columns:
+			_scored['is_environmental'] = _scored['is_environmental'].astype('Int64')
+		if 'cluster_id' in _scored.columns:
+			_scored['cluster_id'] = pd.to_numeric(_scored['cluster_id'], errors='coerce').astype('Int64')
+		data_csv['MA_Lobbying_Bills_Scored'] = _scored
+		print(f"MA_Lobbying_Bills_Scored: {len(data_csv['MA_Lobbying_Bills_Scored'])} rows")
+
+	_cluster_labels_path = '../docs/data/MA_bill_cluster_labels.csv'
+	if os.path.exists(_cluster_labels_path):
+		data_csv['MA_Bill_Cluster_Labels'] = pd.read_csv(_cluster_labels_path)
+		print(f"MA_Bill_Cluster_Labels: {len(data_csv['MA_Bill_Cluster_Labels'])} rows")
 
 	data_csv['AMEND_metadata'] = pd.Series({
 		'Website':'https://nesanders.github.io/MAenvironmentaldata/index.html',

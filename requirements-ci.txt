@@ -45,3 +45,5 @@ six==1.17.0
 pytest==9.0.3
 pyyaml==6.0.2
 scikit-learn==1.8.0
+gcsfs==2026.5.0
+pyarrow==24.0.0

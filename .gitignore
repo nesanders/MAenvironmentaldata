@@ -103,6 +103,9 @@ get_data/MS4_annual_reports/
 
 # Large files
 *EEADP_drinkingWater.csv
+docs/data/MA_bill_embeddings.parquet
+docs/data/MA_bill_embeddings.npy
+get_data/MA_legislature_cache/
 
 get_data/backup_AMEND.db
 get_data/EEADP_drinkingWater.csv

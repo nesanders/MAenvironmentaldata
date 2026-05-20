@@ -1,20 +1,20 @@
 {% raw  %}
 <html>
     <head>
-        <title>Annual MA Lobbying Spend on Environmental Bills</title>
+        <title>Environmental Bills Lobbied per Year</title>
         <script src='https://cdn.jsdelivr.net/npm/chart.js@4.4.4/dist/chart.umd.min.js'></script>
     </head>
     <body>
         <div style="width: 700px; height: 380px; max-width: 99%" class="chartjs">
 
-            <canvas id="Annual MA Lobbying Spend on Environmental Bills" height="380" width="700"></canvas>
+            <canvas id="Environmental Bills Lobbied per Year" height="380" width="700"></canvas>
             <script>
                 Chart.defaults.font.size = 12;
                 var chart_data = {
 
                     data: {
                         labels: ["2024"],
-                        datasets: [{'data': [74.94200714], 'label': 'Total spend ($M)', 'backgroundColor': 'rgba(54, 110, 179, 0.85)'}]
+                        datasets: [{'data': [587], 'label': 'Unique bills lobbied', 'backgroundColor': 'rgba(30, 160, 160, 0.85)', 'yAxisID': 'y'},{'data': [4.436860068259386], 'label': 'Pass rate (%)', 'backgroundColor': 'rgba(60, 170, 80, 0.85)', 'type': 'line', 'yAxisID': 'y1'}]
                     },
                     type: 'bar',
                     options: {
@@ -23,16 +23,16 @@
                                 display: true,
                                 title: {
                                     display: true,
-                                    text: 'Lobbying spend ($M)'
+                                    text: 'Bills lobbied'
                                 },
                                 position: 'left',
                                 stacked: false
                             },
                             y1: {
-                                display: false,
+                                display: true,
                                 title: {
                                     display: true,
-                                    text: ''
+                                    text: 'Pass rate (%)'
                                 },
                                 position: 'right'
                             },
@@ -63,7 +63,7 @@
             <script>
                 {
 
-                    var ctx = document.getElementById("Annual MA Lobbying Spend on Environmental Bills").getContext("2d");
+                    var ctx = document.getElementById("Environmental Bills Lobbied per Year").getContext("2d");
                     var mychart = new Chart(ctx, chart_data);
                 }
             </script>

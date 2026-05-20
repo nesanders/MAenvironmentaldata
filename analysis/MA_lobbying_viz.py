@@ -38,8 +38,8 @@ CHART_DIR = '../docs/_includes/charts'
 FACTS_YML = '../docs/data/facts_lobbying.yml'
 
 
-def _load_data(engine) -> tuple[pd.DataFrame, pd.DataFrame, pd.DataFrame, pd.DataFrame]:
-    """Load all four lobbying/legislature tables. Returns empty DataFrames if not yet populated."""
+def _load_data(engine):
+    """Load lobbying/legislature tables from DB. Returns empty DataFrames if not yet populated."""
     def _safe_read(query):
         try:
             return pd.read_sql_query(query, engine)
@@ -49,16 +49,28 @@ def _load_data(engine) -> tuple[pd.DataFrame, pd.DataFrame, pd.DataFrame, pd.Dat
     employers = _safe_read('SELECT * FROM MA_Lobbying_Employers')
     lobbyists = _safe_read('SELECT * FROM MA_Lobbying_Lobbyists')
     lobby_bills = _safe_read('SELECT * FROM MA_Lobbying_Bills')
-    leg_bills = _safe_read('SELECT * FROM MA_Legislature_Bills')
+    # MA_Lobbying_Bills_Scored: is_environmental, env_relevance_score, cluster_id
+    # MA_Legislature_Bills: passed status
+    scored = _safe_read('SELECT * FROM MA_Lobbying_Bills_Scored')
+    leg_bills_raw = _safe_read(
+        'SELECT bill_number, general_court, passed FROM MA_Legislature_Bills'
+    )
+    if not scored.empty and not leg_bills_raw.empty:
+        leg_bills = scored.merge(leg_bills_raw, on=['bill_number', 'general_court'], how='left')
+    elif not scored.empty:
+        leg_bills = scored
+    else:
+        leg_bills = pd.DataFrame()
     return employers, lobbyists, lobby_bills, leg_bills
 
 
 def _env_bills(lobby_bills: pd.DataFrame, leg_bills: pd.DataFrame) -> pd.DataFrame:
-    """Return lobby_bills rows joined to environmentally relevant legislature bills."""
-    if leg_bills.empty or lobby_bills.empty:
+    """Return lobby_bills rows joined to environmentally relevant bills."""
+    if leg_bills.empty or lobby_bills.empty or 'is_environmental' not in leg_bills.columns:
         return pd.DataFrame()
-    env = leg_bills[leg_bills['is_environmental'] == 1][['bill_number', 'general_court',
-                                                          'title', 'passed']].copy()
+    env = leg_bills[leg_bills['is_environmental'] == 1][
+        ['bill_number', 'general_court', 'passed']
+    ].copy()
     return lobby_bills.merge(env, on=['bill_number', 'general_court'], how='inner')
 
 
@@ -99,8 +111,6 @@ def generate_charts(engine, prefix=''):
     employers['year'] = pd.to_numeric(employers['year'], errors='coerce').astype('Int64')
     if not lobby_bills.empty:
         lobby_bills['year'] = pd.to_numeric(lobby_bills['year'], errors='coerce').astype('Int64')
-        lobby_bills['general_court'] = pd.to_numeric(
-            lobby_bills['general_court'], errors='coerce').astype('Int64')
 
     # ── Chart 1: Annual spend trend ───────────────────────────────────────────
     spend_trend = _annual_env_spend(employers, lobby_bills, leg_bills)
@@ -238,33 +248,31 @@ def generate_charts(engine, prefix=''):
         print(f'Wrote {prefix}lobbying_vs_enforcement.html')
 
     # ── Chart 5: Lobbying spend by topic cluster (stacked bar by year) ───────────
-    _chart_spend_by_cluster(employers, lobby_bills, prefix)
+    _chart_spend_by_cluster(engine, employers, lobby_bills, prefix)
 
     _write_facts(employers, spend_trend, most_recent_year)
 
 
-def _chart_spend_by_cluster(employers: pd.DataFrame, lobby_bills: pd.DataFrame, prefix: str):
-    """Stacked bar: annual employer spend broken down by bill topic cluster.
-
-    Requires MA_lobbying_bills_scored.csv and MA_bill_cluster_labels.csv.
-    Gracefully skipped if clustering hasn't been run yet.
-    """
-    scored_path = '../docs/data/MA_lobbying_bills_scored.csv'
-    labels_path = '../docs/data/MA_bill_cluster_labels.csv'
+def _chart_spend_by_cluster(engine, employers: pd.DataFrame, lobby_bills: pd.DataFrame, prefix: str):
+    """Stacked bar: annual employer spend broken down by bill topic cluster."""
     try:
-        scored = pd.read_csv(scored_path, index_col=0)
-        cluster_labels = pd.read_csv(labels_path)
-    except FileNotFoundError:
-        print('  Cluster data not yet available — skipping cluster spend chart.')
+        scored = pd.read_sql_query(
+            'SELECT bill_number, general_court, cluster_id FROM MA_Lobbying_Bills_Scored '
+            'WHERE cluster_id IS NOT NULL AND cluster_id != -1',
+            engine,
+        )
+        cluster_labels = pd.read_sql_query(
+            'SELECT cluster_id, label FROM MA_Bill_Cluster_Labels', engine,
+        )
+    except Exception:
+        print('  Cluster data not yet in DB — skipping cluster spend chart.')
         return
 
-    if scored['cluster_id'].eq(-1).all():
+    if scored.empty:
         print('  Cluster IDs not yet assigned — skipping cluster spend chart.')
         return
 
     # Join cluster_id onto lobby_bills via bill_number + general_court
-    scored['bill_number'] = pd.to_numeric(scored['bill_number'], errors='coerce')
-    scored['general_court'] = pd.to_numeric(scored['general_court'], errors='coerce')
     lb = lobby_bills.merge(
         scored[['bill_number', 'general_court', 'cluster_id']],
         on=['bill_number', 'general_court'], how='left'

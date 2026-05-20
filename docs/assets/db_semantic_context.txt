@@ -1,5 +1,5 @@
 # AMEND Database Semantic Context
-Generated: 2026-04-29
+Generated: 2026-05-20
 
 ## Global Data Notes
 
@@ -80,6 +80,49 @@ Generated: 2026-04-29
   Example: SELECT m.municipality_normalized, AVG(m.mcm3_illicit_found) as avg_illicit, SUM(c.volumnOfEvent) as total_cso
   FROM MS4_AnnualReports m JOIN MAEEADP_CSO c ON m.municipality_normalized = c.municipality
   WHERE m.extraction_confidence != 'low' AND c.eventType LIKE 'CSO%' GROUP BY 1
+
+- **Lobbying spend on environmental bills by year**:
+  SELECT l.year, SUM(e.total_expenditure) AS total_spend
+  FROM MA_Lobbying_Employers e
+  JOIN MA_Lobbying_Bills l ON e.employer_name = l.employer_name AND e.year = l.year
+  JOIN MA_Legislature_Bills b ON l.bill_number = b.bill_number AND l.general_court = b.general_court
+  WHERE b.is_environmental = 1
+  GROUP BY l.year ORDER BY l.year
+  NOTE: total_expenditure is in MA_Lobbying_Employers; MA_Lobbying_Bills has NO spending column.
+
+- **Top employers on environmental bills** (most recent year):
+  SELECT e.employer_name, e.total_expenditure
+  FROM MA_Lobbying_Employers e
+  WHERE e.year = (SELECT MAX(year) FROM MA_Lobbying_Employers)
+  AND EXISTS (
+    SELECT 1 FROM MA_Lobbying_Bills l
+    JOIN MA_Legislature_Bills b ON l.bill_number = b.bill_number AND l.general_court = b.general_court
+    WHERE l.employer_name = e.employer_name AND l.year = e.year AND b.is_environmental = 1
+  )
+  ORDER BY e.total_expenditure DESC LIMIT 15
+
+- **Lobbying spend vs. enforcement count by year** (dual-axis):
+  WITH spend AS (
+    SELECT year, SUM(total_expenditure) AS lobbying_spend FROM MA_Lobbying_Employers GROUP BY year
+  ), enforcement AS (
+    SELECT strftime('%Y', EnforcementDate) AS year, COUNT(*) AS n_actions FROM MAEEADP_Enforcement GROUP BY 1
+  )
+  SELECT s.year, s.lobbying_spend, e.n_actions FROM spend s LEFT JOIN enforcement e ON s.year = e.year ORDER BY s.year
+
+- **Bill passage rate by lobbying spend tier**:
+  SELECT
+    CASE WHEN employer_count >= 10 THEN 'Heavily lobbied (10+ employers)'
+         WHEN employer_count >= 3  THEN 'Moderately lobbied (3–9 employers)'
+         ELSE 'Lightly lobbied (1–2 employers)' END AS lobby_tier,
+    AVG(CAST(b.passed AS FLOAT)) AS pass_rate,
+    COUNT(*) AS n_bills
+  FROM (
+    SELECT l.bill_number, l.general_court, COUNT(DISTINCT l.employer_name) AS employer_count
+    FROM MA_Lobbying_Bills l GROUP BY l.bill_number, l.general_court
+  ) counts
+  JOIN MA_Legislature_Bills b ON counts.bill_number = b.bill_number AND counts.general_court = b.general_court
+  WHERE b.is_environmental = 1
+  GROUP BY lobby_tier
 
 - **CSO discharges to 303(d) impaired waters** (two-step join):
   MAEEADP_CSO JOIN CSO_303d_Mapping ON MAEEADP_CSO.waterBody = CSO_303d_Mapping.csoWaterBody
@@ -1113,6 +1156,165 @@ EEA00PES00000000L8	KENNETH   FIALKOSKY	AL-0028553	AL	PESTICIDE CREDENTIAL	PESTIC
 - `FacilityId`: Joins to MAEEADP_Facility.Id.
 - `Status`: e.g. Active, Expired, Terminated.
 - `Program`: ALL CAPS. PESTICIDE, WATER POLLUTION CONTROL, WETLANDS & WATERWAYS, WATER SUPPLY/DRINKING WATER, SOLID WASTE MGMT, HAZARDOUS WASTE, WATERSHED MANAGEMENT, AIR QUALITY CONTROL, TOXIC USE REDUCTION, WASTE SITE CLEANUP, PLANT INDUSTRIES, INDUSTRIAL WASTEWATER, LAWRENCE/WALL EXPERIMENT STA, FEED PROGRAM
+
+---
+
+### MA_Bill_Cluster_Labels (15 rows)
+
+```sql
+CREATE TABLE "MA_Bill_Cluster_Labels" (
+	"index" BIGINT, 
+	cluster_id BIGINT, 
+	label TEXT, 
+	n_bills BIGINT, 
+	n_env_bills BIGINT, 
+	example_titles TEXT
+)
+```
+
+/* 5 rows from MA_Bill_Cluster_Labels:
+cluster_id	label	n_bills	n_env_bills	example_titles
+0	Public Welfare, Safety, and Governance	160	36	An Act commissioning a study of a public transportation benefit program for employees of the Commonwealth | An Act establishing driver privacy protections | An Act relative to the Massachusetts maternal mortality and morbidity review committee | An Act increasing the penalties for passing a stopped school bus | An Act relative to protecting public health and reducing health care costs
+1	Health and Economic Rights	203	14	An Act relative to reducing unnecessary delays in patient care | An Act relative to nurse licensure compact in Massachusetts | An Act establishing collective bargaining rights for TNC drivers | An Act protecting the homes of seniors and disabled people on MassHealth | An Act to improve health care cost accountability
+2	Access, Protection, and Equity	185	0	An Act improving student access to life saving treatments | An Act relative to pharmaceutical gag clauses | An Act relative to fairness in public contracting | An Act to provide consumer protections at dog day care businesses | An Act relative to paint recycling
+3	Public Welfare and Regulation	244	27	An Act relative to the fair treatment of employees | An Act to ensure MassHealth rate parity for behavioral health inpatient providers | An Act to expand equitable perinatal mental health services | An Act relative to hospital profit transparency and fairness | An Act regulating labor standards for transportation network drivers
+4	Public Health, Safety, and Welfare	151	29	An Act establishing the Martha's Vineyard housing bank | An Act relative to debt-free public higher education | An Act relative to municipal millennials | An Act relative to the licensure of behavior analysts | An Act concerning athletic activities of students with disabilities
+*/
+
+**Column notes:**
+- `label`: Public and Commercial Regulation, Public Welfare, Safety, and Governance, Public Welfare and Regulation, Public Welfare and Administration, Public Health, Safety, and Welfare, Legislative Modernization and Reform, Health, Climate, and Community, Health and Economic Rights, Government Finance and Public Services, General State Policy, Fiscal Policy and Public Benefits, Economic and Social Advancement, Economic Affairs and Governance, Addressing State Policy Issues, Access, Protection, and Equity
+- `example_titles`: An Act to prevent unwanted opioid prescriptions | An Act relative to the use of hoisting equipment in Chapter 74 vocational technical education | An Act to expand access to computer science coursework | An Act modify the safe drivers insurance plan relative to minor violation | An Act relative to protecting innocent sellers, An Act relative to vehicle recalls | An Act to improve and modernize planning and community development in the city of Boston | An Act relative to commercial driver's licenses | An Act to prevent abuse and exploitation | Supporting Local Services, An Act relative to tort actions for latent diseases | An Act establishing fairness for agricultural laborers | An Act relative to the conservation land tax credit | An Act to promote public procurement and inclusive entrepreneurship | Resolve authorizing a study of starting times and schedules, An Act relative to the retirement of state university and community college police officers | An Act honoring, empowering, and recognizing our servicemembers and veterans | An Act to modernize funding for community media programming | An Act relative to fines on certain commercial and revenue property | An Act to Strengthen Public Health to Address Alzheimer's and Dementia, An Act relative to the fair treatment of employees | An Act to ensure MassHealth rate parity for behavioral health inpatient providers | An Act to expand equitable perinatal mental health services | An Act relative to hospital profit transparency and fairness | An Act regulating labor standards for transportation network drivers, An Act relative to strengthening Massachusetts’ economic leadership | An Act relative to the Affordable Homes Act | An Act to modernize Massachusetts Credit Union Share Insurance Corporation (MSIC) investments | An Act relative to Medicaid managed care incentive initiative payment mechanisms to the non-state-owned public hospitals | An Act relative to the licensure of behavior analysts, An Act relative to reducing unnecessary delays in patient care | An Act relative to nurse licensure compact in Massachusetts | An Act establishing collective bargaining rights for TNC drivers | An Act protecting the homes of seniors and disabled people on MassHealth | An Act to improve health care cost accountability, An Act relative to farmer-distilleries | An Act to modernize participation in public meetings | An Act implementing elementary and secondary interdisciplinary climate literacy education across the Commonwealth | An Act relative to the Affordable Homes Act | An Act to promote high-quality early literacy instruction and improve student outcomes, An Act relative to acceptance of out-of-state identification in Massachusetts | An Act relative to natural gas shut-off valves, gate boxes and public safety | An Act relative to certainty of continuing education for chiropractors | An Act relative to Chapter 90B vehicle registration | An Act reducing administrative burden for government and industry, An Act improving student access to life saving treatments | An Act relative to pharmaceutical gag clauses | An Act relative to fairness in public contracting | An Act to provide consumer protections at dog day care businesses | An Act relative to paint recycling, An Act establishing the Martha's Vineyard housing bank | An Act relative to debt-free public higher education | An Act relative to municipal millennials | An Act relative to the licensure of behavior analysts | An Act concerning athletic activities of students with disabilities, An Act enhancing learning in the early school years through a ban on school exclusion in pre-kindergarten through 3rd grade | An Act to promote graduate medical education | An Act establishing a personal financial literacy curriculum in schools | An Act relative to retail liquor sales to caterers | An Act relative to better buildings, An Act commissioning a study of a public transportation benefit program for employees of the Commonwealth | An Act establishing driver privacy protections | An Act relative to the Massachusetts maternal mortality and morbidity review committee | An Act increasing the penalties for passing a stopped school bus | An Act relative to protecting public health and reducing health care costs, An Act banning the retail sale of dogs, cats and rabbits in new pet shops | An Act to consider the safety of artificial grass and turf surfaces | An Act ensuring safe drinking water in schools | An Act relative to disinformation in elections | An Act relative to fiduciary access to digital assets, An Act authorizing the town of Brookline to adopt green zoning by-laws and regulations | An Act relative to anesthesiologist assistants | An Act modernizing library access to electronic books and digital audiobooks | An Act empowering health care consumers | An Act enabling pharmacists to prescribe, dispense and, administer PrEP
+
+---
+
+### MA_Legislature_Bills (3,317 rows)
+MA Legislature OpenAPI: one row per (bill_number, general_court session). Key fields: bill_number (e.g. H.1234), general_court (session number), title (bill title), sponsor_name, sponsor_chamber (House/Senate), committee (committee referral), status (final status text), passed (1 if signed/enacted, 0 otherwise), env_relevance_score (0–1 float; cosine similarity to environmental seed phrases via gemini-embedding-2), is_environmental (1 if env_relevance_score >= 0.60). Foreign key: bill_number + general_court → MA_Lobbying_Bills. Use is_environmental=1 to filter to environmentally relevant bills for analysis.
+
+```sql
+CREATE TABLE "MA_Legislature_Bills" (
+	"index" BIGINT, 
+	bill_id TEXT, 
+	bill_number BIGINT, 
+	bill_prefix TEXT, 
+	general_court BIGINT, 
+	title TEXT, 
+	sponsor_name TEXT, 
+	status TEXT, 
+	passed BIGINT
+)
+```
+
+/* 5 rows from MA_Legislature_Bills:
+bill_id	bill_number	bill_prefix	general_court	title	sponsor_name	status	passed
+H4999	4999	H	192	An Act relative to the maximum age requirement for original appointment as a police officer in the town of Dedham	Joint Committee on Public Service	Signed by the Governor, Chapter 276 of the Acts of 2022	1
+H4773	4773	H	192	An Act amending the charter of the town of Swampscott	Lori A. Ehrlich	No further action taken	0
+S1405	1405	S	192	An Act relative to HIV routine screening and care	Julian Cyr	No further action taken	0
+S607	607	S	192	An Act relative to stronger emissions limits	Marc R. Pacheco	No further action taken	0
+H1069	1069	H	192	An Act empowering health care consumers	William J. Driscoll, Jr.	Accompanied a study order, see H5222	0
+*/
+
+**Column notes:**
+- `bill_number`: MA bill number (e.g. H.1234). Join key to MA_Lobbying_Bills.
+- `general_court`: Session number. 185=2007-08, 186=2009-10, ..., 193=2023-24, 194=2025-26.
+- `passed`: 1 if the bill was signed into law or enacted; 0 if it died or is still pending.
+- `env_relevance_score`: Cosine similarity (0–1) to environmental regulation seed phrases via gemini-embedding-2. Higher = more environmentally relevant. NULL for unscored bills.
+- `is_environmental`: 1 if env_relevance_score >= 0.60 (calibrated threshold). Use this for filtering to environmentally relevant bills.
+- `bill_prefix`: ALL CAPS. H, S, HD, SD
+
+---
+
+### MA_Lobbying_Bills (14,822 rows)
+MA SoS lobbying disclosures: fact table linking employers to bills they lobbied. One row per (bill_number, general_court, employer_name, year). Key fields: bill_number (e.g. H.1234, S.5678), general_court (MA legislative session number, e.g. 193 for the 2023–2024 session), employer_name, year. Join to MA_Legislature_Bills on (bill_number, general_court) for bill title, sponsor, passed status, and env_relevance_score. Join to MA_Lobbying_Employers on (employer_name, year) for employer total expenditure. IMPORTANT: this table has NO spending amount column — spending lives in MA_Lobbying_Employers.
+
+```sql
+CREATE TABLE "MA_Lobbying_Bills" (
+	"index" BIGINT, 
+	entity_name TEXT, 
+	client_name TEXT, 
+	year BIGINT, 
+	general_court BIGINT, 
+	chamber TEXT, 
+	bill_number BIGINT, 
+	bill_title TEXT, 
+	position TEXT, 
+	amount FLOAT
+)
+```
+
+/* 5 rows from MA_Lobbying_Bills:
+entity_name	client_name	year	general_court	chamber	bill_number	bill_title	position	amount
+Aaron Agulnek	BAY STATE BIRTH COALITION, INC.	2024	192	House Bill	4999	An Act promoting access to midwifery care and out-of-hospital birth options	Neutral	0.0
+Aaron Agulnek	BAY STATE BIRTH COALITION, INC.	2024	192	House Bill	4773	An Act promoting access to midwifery care and out-of-hospital birth options	Support	0.0
+Aaron Agulnek	Vanessa Colleran	2024	192	Senate Bill	1405	An Act relative to newborn screenings for congenital cytomegalovirus	Support	0.0
+Aaron Agulnek	Vanessa Colleran	2024	192	House Bill	4999	An Act promoting access to midwifery care and out-of-hospital birth options	Neutral	0.0
+Aaron Agulnek	Massachusetts Affiliate of ACNM, Inc	2024	192	House Bill	4999	An Act promoting access to midwifery care and out-of-hospital birth options	Neutral	0.0
+*/
+
+**Column notes:**
+- `bill_number`: MA bill number (e.g. H.1234, S.5678, HD.1234). Joins to MA_Legislature_Bills.bill_number.
+- `general_court`: MA legislative session number (e.g. 193 = 2023–2024). Joins to MA_Legislature_Bills.general_court.
+- `employer_name`: Lobbying employer. Joins to MA_Lobbying_Employers.employer_name.
+- `year`: Filing year. IMPORTANT: This table has NO spending amount — total expenditure is in MA_Lobbying_Employers.
+- `chamber`: House Bill, Senate Bill, Executive, House Docket, Senate Docket
+- `position`: Neutral, Support, Oppose
+
+---
+
+### MA_Lobbying_Bills_Scored (2,648 rows)
+
+```sql
+CREATE TABLE "MA_Lobbying_Bills_Scored" (
+	"index" BIGINT, 
+	bill_number BIGINT, 
+	general_court BIGINT, 
+	bill_title TEXT, 
+	bill_id TEXT, 
+	env_relevance_score FLOAT, 
+	is_environmental BIGINT, 
+	cluster_id BIGINT
+)
+```
+
+/* 5 rows from MA_Lobbying_Bills_Scored:
+bill_number	general_court	bill_title	bill_id	env_relevance_score	is_environmental	cluster_id
+0	192	Legislative meetings related to resiliency. No legislation was filed.	NULL	0.080746055	1	5
+1	192	An Act making appropriations for the Fiscal Year 2024 for the maintenance of the departments, boards, commissions, institutions, and certain activities of the Commonwealth, for interest, sinking fund, and serial bond requirements, and for certain permanent improvements	H1	0.02309376	0	5
+100	192	An Act establishing a special commission to study women and homelessness	S100	0.037359595	0	12
+1000	192	An Act providing living organ donor protections	H1000	0.07768136	1	13
+1002	192	An Act supporting survivors of trafficking and abuse and encouraging increased access to opportunities through expungement and/or sealing of records	S1002	0.05165434	1	12
+*/
+
+---
+
+### MA_Lobbying_Employers (1,650 rows)
+MA Secretary of State lobbying disclosures: one row per (employer, year). An "employer" is an organization that retains lobbyists to lobby the MA Legislature. Data covers 2007–present; updated annually as the SoS portal publishes prior-year filings. Key fields: employer_name, year, total_expenditure (dollars), subject_tags (filer-reported; unreliable for environmental filtering — use MA_Legislature_Bills.is_environmental instead). Join to MA_Lobbying_Bills on (employer_name, year) to see which bills an employer lobbied. Join to MA_Lobbying_Lobbyists on (employer_name, year) to see which lobbyists they retained.
+
+```sql
+CREATE TABLE "MA_Lobbying_Employers" (
+	"index" BIGINT, 
+	entity_name TEXT, 
+	client_name TEXT, 
+	year BIGINT, 
+	reg_type TEXT, 
+	compensation FLOAT
+)
+```
+
+/* 5 rows from MA_Lobbying_Employers:
+entity_name	client_name	year	reg_type	compensation
+21c, LLC	EDUCATION TRUST, INC. (THE)	2024	Lobbyist Entity	7500.0
+21c, LLC	Amplify Education, Inc.	2024	Lobbyist Entity	22500.0
+21c, LLC	The Massachusetts Alliance for Early College, Inc.	2024	Lobbyist Entity	15000.0
+21c, LLC	Benjamin Franklin Cummings Institute of Technology	2024	Lobbyist Entity	12500.0
+21c, LLC	Total salaries received	2024	Lobbyist Entity	57500.0
+*/
+
+**Column notes:**
+- `employer_name`: Organization name as filed with the SoS. Spelling varies across years; use LIKE for fuzzy matching.
+- `year`: Calendar year of the filing (e.g. 2022). Filings for year Y are typically published mid-year Y+1.
+- `total_expenditure`: Annual lobbying expenditure in dollars (NULL if not reported).
+- `subject_tags`: Filer-assigned subject area tags (e.g. "Energy & Environment"). UNRELIABLE for environmental filtering — use MA_Legislature_Bills.is_environmental instead.
+- `reg_type`: Lobbyist, Lobbyist Entity
 
 ---
 
