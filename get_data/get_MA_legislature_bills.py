@@ -2,20 +2,25 @@
 
 API docs: https://malegislature.gov/api/swagger
 
+The API uses /Documents/{billId} (not /Bills/). Bill IDs require a chamber prefix:
+  House Bill / House Docket  → H{number}  (e.g. H4999)
+  Senate Bill / Senate Docket → S{number} (e.g. S607)
+  Executive → skipped (no legislature bill ID)
+
+Status is fetched via a separate /DocumentHistoryActions call; the `Action` field
+of the last entry is used to derive the `passed` boolean.
+
 Fetches only bills that appear in MA_lobbying_bills.csv (scoped to keep the request
-volume bounded). For each unique (bill_number, general_court) pair, retrieves:
-  - Bill title / docket title
-  - Primary sponsor name and chamber
-  - Committee referral
+volume bounded). For each unique (bill_id, general_court) pair, retrieves:
+  - Bill title
+  - Primary sponsor name
   - Current status / final disposition
   - Derived `passed` boolean (True if bill was enacted/signed)
-
-Also fetches the list of General Court sessions to resolve session numbers to year ranges.
 
 Caches raw JSON responses under MA_legislature_cache/ for incremental re-runs.
 
 Run from the get_data/ directory after get_MA_lobbying.py:
-    conda run -n amend_python python get_MA_legislature_bills.py
+    /path/to/python -u get_MA_legislature_bills.py
 
 Outputs:
   ../docs/data/MA_legislature_bills.csv
@@ -46,14 +51,23 @@ REQ_HEADERS = {
     'Accept': 'application/json',
 }
 
-# Statuses that indicate a bill was enacted/signed into law.
-PASSED_STATUSES = {
+# Action text fragments that indicate a bill was enacted/signed into law.
+PASSED_ACTIONS = {
     'Signed by the Governor',
     'Enacted',
     'Approved by the Governor',
     'Chaptered',
     'Filed with the Secretary of State',
 }
+
+# Chamber values in lobbying data → API bill ID prefix
+CHAMBER_PREFIX = {
+    'House Bill': 'H',
+    'House Docket': 'HD',
+    'Senate Bill': 'S',
+    'Senate Docket': 'SD',
+}
+
 
 # ─── Caching helpers ───────────────────────────────────────────────────────────
 
@@ -84,135 +98,89 @@ def _make_session() -> requests.Session:
     return s
 
 
-def _get_json(session: requests.Session, path: str, cache_key: str | None = None
+def _get_json(session: requests.Session, url: str, cache_key: str | None = None
               ) -> dict | list | None:
-    """Fetch a JSON endpoint with caching. Returns None on non-2xx or parse error."""
+    """Fetch a JSON endpoint with optional caching. Returns None on error."""
     if cache_key:
         cached = _load_cache(cache_key)
         if cached is not None:
             return cached
     time.sleep(REQUEST_DELAY)
-    url = f'{API_BASE}/{path.lstrip("/")}'
     try:
         r = session.get(url, timeout=30)
     except requests.RequestException as e:
         print(f'  Request error for {url}: {e}')
         return None
     if not r.ok:
-        print(f'  HTTP {r.status_code} for {url}')
         return None
     try:
         data = r.json()
     except ValueError:
-        print(f'  JSON parse error for {url}')
         return None
     if cache_key:
         _save_cache(cache_key, data)
     return data
 
 
-# ─── General Court index ───────────────────────────────────────────────────────
+# ─── Bill ID construction ──────────────────────────────────────────────────────
 
-def fetch_general_courts(session: requests.Session) -> pd.DataFrame:
-    """Return a DataFrame of General Court sessions with their year ranges."""
-    data = _get_json(session, '/GeneralCourts', cache_key='general_courts')
-    if not data:
-        return pd.DataFrame()
-    rows = []
-    for gc in (data if isinstance(data, list) else data.get('GeneralCourts', [])):
-        gc_num = gc.get('GeneralCourtNumber') or gc.get('generalCourtNumber')
-        name = gc.get('Name') or gc.get('name', '')
-        # Extract year range from name like "193rd General Court (2023-2024)"
-        import re
-        year_match = re.search(r'\((\d{4})-(\d{4})\)', name)
-        start_year = int(year_match.group(1)) if year_match else None
-        end_year = int(year_match.group(2)) if year_match else None
-        rows.append({
-            'general_court': gc_num,
-            'session_name': name,
-            'start_year': start_year,
-            'end_year': end_year,
-        })
-    return pd.DataFrame(rows)
+def _bill_id(bill_number, chamber: str) -> str | None:
+    """Construct the API bill ID from a bare number and chamber string.
+
+    Returns None for chamber types with no legislature bill (e.g. Executive).
+    """
+    prefix = CHAMBER_PREFIX.get(chamber)
+    if prefix is None:
+        return None
+    return f'{prefix}{int(bill_number)}'
 
 
 # ─── Bill metadata fetch ────────────────────────────────────────────────────────
 
-def _parse_bill(data: dict, bill_number: str, general_court: int) -> dict:
-    """Extract structured fields from a bill API response object."""
-    # The API may return either camelCase or PascalCase fields depending on version
-    def _get(*keys):
-        for k in keys:
-            v = data.get(k)
-            if v is not None:
-                return v
+def fetch_bill(session: requests.Session, bill_id: str, general_court: int) -> dict | None:
+    """Fetch metadata for a single bill. Returns None if not found or on error."""
+    cache_key = f'bill_{general_court}_{bill_id}'
+    url = f'{API_BASE}/GeneralCourts/{general_court}/Documents/{bill_id}'
+    data = _get_json(session, url, cache_key=cache_key)
+    if not data or not isinstance(data, dict):
         return None
 
-    title = _get('Title', 'title', 'DocketTitle', 'docketTitle', 'BillDescription') or ''
+    title = data.get('Title') or ''
 
-    # Sponsor: may be a nested object or string
-    sponsor_raw = _get('Sponsor', 'sponsor', 'PrimarySponsor', 'primarySponsor')
+    sponsor_raw = data.get('PrimarySponsor')
     if isinstance(sponsor_raw, dict):
-        sponsor_name = (sponsor_raw.get('Name') or sponsor_raw.get('name') or
-                        sponsor_raw.get('FullName') or sponsor_raw.get('fullName') or '')
-        sponsor_chamber = sponsor_raw.get('Branch') or sponsor_raw.get('branch') or ''
-    elif isinstance(sponsor_raw, str):
-        sponsor_name = sponsor_raw
-        sponsor_chamber = ''
+        sponsor_name = sponsor_raw.get('Name') or ''
     else:
         sponsor_name = ''
-        sponsor_chamber = ''
 
-    # Committee
-    committee_raw = _get('Committee', 'committee', 'CommitteeReferral', 'committeeReferral')
-    if isinstance(committee_raw, dict):
-        committee = committee_raw.get('Name') or committee_raw.get('name') or ''
-    elif isinstance(committee_raw, str):
-        committee = committee_raw
-    else:
-        committee = ''
+    # BillHistory is a URL — fetch it separately for the latest action/status
+    history_url = data.get('BillHistory')
+    passed = False
+    status_text = ''
+    if history_url and isinstance(history_url, str) and history_url.startswith('http'):
+        history_cache_key = f'history_{general_court}_{bill_id}'
+        history = _get_json(session, history_url, cache_key=history_cache_key)
+        if isinstance(history, list) and history:
+            latest = history[-1]
+            status_text = latest.get('Action') or ''
+            passed = any(s in status_text for s in PASSED_ACTIONS)
 
-    # Status / disposition
-    status = _get('BillHistory', 'billHistory', 'CurrentStatus', 'currentStatus',
-                  'Status', 'status')
-    if isinstance(status, list) and status:
-        # BillHistory is a list; most recent entry is last
-        latest = status[-1]
-        status_text = (latest.get('StatusDescription') or latest.get('statusDescription') or
-                       latest.get('Status') or latest.get('status') or '')
-    elif isinstance(status, dict):
-        status_text = (status.get('Description') or status.get('description') or
-                       status.get('Status') or status.get('status') or '')
-    elif isinstance(status, str):
-        status_text = status
-    else:
-        status_text = ''
-
-    passed = any(s in status_text for s in PASSED_STATUSES)
+    # Extract bare bill number and prefix for joining back to lobbying data
+    import re
+    m = re.match(r'^([A-Z]+)(\d+)$', bill_id)
+    prefix = m.group(1) if m else ''
+    bare_number = int(m.group(2)) if m else None
 
     return {
-        'bill_number': bill_number,
+        'bill_id': bill_id,
+        'bill_number': bare_number,
+        'bill_prefix': prefix,
         'general_court': general_court,
         'title': title,
         'sponsor_name': sponsor_name,
-        'sponsor_chamber': sponsor_chamber,
-        'committee': committee,
         'status': status_text,
         'passed': passed,
     }
-
-
-def fetch_bill(session: requests.Session, bill_number: str, general_court: int) -> dict | None:
-    """Fetch metadata for a single bill. Returns None if not found or on error."""
-    # Normalize bill number for API: "H.1234" → "H1234", "S.5678" → "S5678"
-    import re
-    bill_id = re.sub(r'[.\s]', '', bill_number).upper()
-    cache_key = f'bill_{general_court}_{bill_id}'
-    data = _get_json(session, f'/GeneralCourts/{general_court}/Bills/{bill_id}',
-                     cache_key=cache_key)
-    if not data:
-        return None
-    return _parse_bill(data, bill_number, general_court)
 
 
 # ─── Main ───────────────────────────────────────────────────────────────────────
@@ -224,67 +192,69 @@ def main():
         return
 
     lobby_bills = pd.read_csv(bills_lobby_path, index_col=0)
+
+    # Build unique (bill_id, general_court) pairs, skipping non-legislature chambers
     unique_bills = (
-        lobby_bills[['bill_number', 'general_court']]
-        .dropna()
+        lobby_bills[['bill_number', 'chamber', 'general_court']]
+        .dropna(subset=['bill_number', 'general_court'])
         .drop_duplicates()
     )
-    print(f'Found {len(unique_bills)} unique (bill, session) pairs to look up')
+    unique_bills['bill_id'] = unique_bills.apply(
+        lambda r: _bill_id(r['bill_number'], r['chamber']), axis=1
+    )
+    unique_bills = unique_bills.dropna(subset=['bill_id'])
+    unique_bills = unique_bills[['bill_id', 'general_court']].drop_duplicates()
+    print(f'Found {len(unique_bills)} unique (bill_id, session) pairs to look up')
 
     # Load existing cache to skip already-fetched bills
     legislature_path = DATA_DIR / 'MA_legislature_bills.csv'
     existing: pd.DataFrame | None = None
+    already_fetched: set = set()
     try:
         existing = pd.read_csv(legislature_path, index_col=0)
         already_fetched = set(
-            zip(existing['bill_number'].astype(str), existing['general_court'].astype(int))
+            zip(existing['bill_id'].astype(str), existing['general_court'].astype(int))
         )
-        print(f'  {len(existing)} bills already in cache')
+        print(f'  {len(existing)} bills already fetched')
     except FileNotFoundError:
-        already_fetched = set()
+        pass
 
-    session = _make_session()
-
-    # Fetch General Court index
-    gc_df = fetch_general_courts(session)
-    if not gc_df.empty:
-        gc_path = DATA_DIR / 'MA_general_courts.csv'
-        gc_df.to_csv(gc_path)
-        print(f'Wrote General Court index ({len(gc_df)} sessions) to {gc_path}')
-
-    # Fetch bill metadata for new bills only
-    new_rows = []
     to_fetch = [
         row for _, row in unique_bills.iterrows()
-        if (str(row['bill_number']), int(row['general_court'])) not in already_fetched
+        if (str(row['bill_id']), int(row['general_court'])) not in already_fetched
     ]
     print(f'Fetching metadata for {len(to_fetch)} new bills...')
 
+    session = _make_session()
+    new_rows = []
+
     for i, row in enumerate(to_fetch):
-        bn = str(row['bill_number'])
+        bid = str(row['bill_id'])
         gc = int(row['general_court'])
-        if (i + 1) % 50 == 0:
+        if (i + 1) % 100 == 0:
             print(f'  {i + 1}/{len(to_fetch)}...')
-        result = fetch_bill(session, bn, gc)
+        result = fetch_bill(session, bid, gc)
         if result:
             new_rows.append(result)
         else:
             # Record a stub so we don't retry on every run
             new_rows.append({
-                'bill_number': bn,
+                'bill_id': bid,
                 'general_court': gc,
                 'title': '',
                 'sponsor_name': '',
-                'sponsor_chamber': '',
-                'committee': '',
                 'status': '',
                 'passed': False,
             })
 
+    if not new_rows:
+        print('No new bills to write.')
+        return
+
     new_df = pd.DataFrame(new_rows)
     if existing is not None and not existing.empty:
         combined = pd.concat([existing, new_df], ignore_index=True).drop_duplicates(
-            subset=['bill_number', 'general_court']
+            subset=['bill_id', 'general_court']
         )
     else:
         combined = new_df

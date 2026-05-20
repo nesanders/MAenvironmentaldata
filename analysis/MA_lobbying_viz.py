@@ -71,10 +71,10 @@ def _annual_env_spend(employers: pd.DataFrame, lobby_bills: pd.DataFrame,
     if env_lb.empty:
         # Fallback: use all bills if scoring hasn't run yet
         env_lb = lobby_bills.copy()
-    env_employers = env_lb[['employer_name', 'year']].drop_duplicates()
-    merged = employers.merge(env_employers, on=['employer_name', 'year'], how='inner')
+    env_employers = env_lb[['entity_name', 'year']].drop_duplicates()
+    merged = employers.merge(env_employers, on=['entity_name', 'year'], how='inner')
     return (
-        merged.groupby('year')['total_expenditure']
+        merged.groupby('year')['compensation']
         .sum()
         .reset_index()
         .sort_values('year')
@@ -107,7 +107,7 @@ def generate_charts(engine, prefix=''):
 
     if not spend_trend.empty:
         years = spend_trend['year'].dropna().astype(int).tolist()
-        spend_m = (spend_trend['total_expenditure'] / 1e6).tolist()
+        spend_m = (spend_trend['compensation'] / 1e6).tolist()
 
         c = chartjs.Chart(
             'Annual MA Lobbying Spend on Environmental Bills',
@@ -135,8 +135,8 @@ def generate_charts(engine, prefix=''):
 
     top_employers = (
         employers[employers['year'] == most_recent_year]
-        .nlargest(15, 'total_expenditure')[['employer_name', 'total_expenditure']]
-        .sort_values('total_expenditure')  # ascending for horizontal bar
+        .nlargest(15, 'compensation')[['entity_name', 'compensation']]
+        .sort_values('compensation')  # ascending for horizontal bar
     )
 
     if not top_employers.empty:
@@ -144,8 +144,8 @@ def generate_charts(engine, prefix=''):
             f'Top 15 MA Lobbying Employers — {most_recent_year}',
             'HorizontalBar', width=700, height=440,
         )
-        c.set_labels(top_employers['employer_name'].tolist())
-        spend_k = (top_employers['total_expenditure'] / 1e3).tolist()
+        c.set_labels(top_employers['entity_name'].tolist())
+        spend_k = (top_employers['compensation'] / 1e3).tolist()
         c.add_dataset(spend_k, 'Spend ($K)', backgroundColor=f"'{ORANGE}'")
         c.set_params(js_inline=False, xlabel='Lobbying spend ($K)')
         c.jekyll_write(f'{CHART_DIR}/{prefix}lobbying_top_employers.html')
@@ -181,14 +181,16 @@ def generate_charts(engine, prefix=''):
             'Bar', width=700, height=380,
         )
         c.set_labels([str(y) for y in years_bi])
-        c.add_dataset(n_bills, 'Unique bills lobbied', backgroundColor=f"'{TEAL}'")
+        c.add_dataset(n_bills, 'Unique bills lobbied', backgroundColor=f"'{TEAL}'",
+                      yAxisID="'y'")
         c.add_dataset(pass_pct, 'Pass rate (%)', backgroundColor=f"'{GREEN}'",
-                      type="'line'", yAxisID="'y2'")
+                      type="'line'", yAxisID="'y1'")
         c.set_params(
             js_inline=False,
             ylabel='Bills lobbied',
             xlabel='Year',
-            y2label='Pass rate (%)',
+            y2nd=1,
+            y2nd_title='Pass rate (%)',
         )
         c.jekyll_write(f'{CHART_DIR}/{prefix}lobbying_bill_intensity.html')
         print(f'Wrote {prefix}lobbying_bill_intensity.html')
@@ -213,7 +215,7 @@ def generate_charts(engine, prefix=''):
         merged = spend_trend.merge(enf, on='year', how='inner')
         merged = merged.sort_values('year')
         years_vs = merged['year'].astype(int).tolist()
-        spend_m_vs = (merged['total_expenditure'] / 1e6).tolist()
+        spend_m_vs = (merged['compensation'] / 1e6).tolist()
         n_enf = merged['n_actions'].tolist()
 
         c = chartjs.Chart(
@@ -221,14 +223,16 @@ def generate_charts(engine, prefix=''):
             'Bar', width=700, height=380,
         )
         c.set_labels([str(y) for y in years_vs])
-        c.add_dataset(spend_m_vs, 'Lobbying spend ($M)', backgroundColor=f"'{BLUE}'")
+        c.add_dataset(spend_m_vs, 'Lobbying spend ($M)', backgroundColor=f"'{BLUE}'",
+                      yAxisID="'y'")
         c.add_dataset(n_enf, 'Enforcement actions', backgroundColor=f"'{RED}'",
-                      type="'line'", yAxisID="'y2'")
+                      type="'line'", yAxisID="'y1'")
         c.set_params(
             js_inline=False,
             ylabel='Lobbying spend ($M)',
             xlabel='Year',
-            y2label='Enforcement actions',
+            y2nd=1,
+            y2nd_title='Enforcement actions',
         )
         c.jekyll_write(f'{CHART_DIR}/{prefix}lobbying_vs_enforcement.html')
         print(f'Wrote {prefix}lobbying_vs_enforcement.html')
@@ -261,7 +265,7 @@ def generate_post_charts(engine, prefix=''):
         merged = spend_trend.merge(budget, left_on='year', right_on='Year', how='inner')
         merged = merged.sort_values('year')
         years_sb = merged['year'].astype(int).tolist()
-        spend_m = (merged['total_expenditure'] / 1e6).tolist()
+        spend_m = (merged['compensation'] / 1e6).tolist()
         budget_m = (merged['DEPAdministration_inf_float'] / 1e6).tolist()
 
         c = chartjs.Chart(
@@ -269,14 +273,16 @@ def generate_post_charts(engine, prefix=''):
             'Bar', width=700, height=400,
         )
         c.set_labels([str(y) for y in years_sb])
-        c.add_dataset(spend_m, 'Industry lobbying spend ($M)', backgroundColor=f"'{ORANGE}'")
+        c.add_dataset(spend_m, 'Industry lobbying spend ($M)', backgroundColor=f"'{ORANGE}'",
+                      yAxisID="'y'")
         c.add_dataset(budget_m, 'DEP admin budget ($M, inflation-adj.)',
-                      backgroundColor=f"'{BLUE}'", type="'line'", yAxisID="'y2'")
+                      backgroundColor=f"'{BLUE}'", type="'line'", yAxisID="'y1'")
         c.set_params(
             js_inline=False,
             ylabel='Lobbying spend ($M)',
             xlabel='Year',
-            y2label='DEP budget ($M)',
+            y2nd=1,
+            y2nd_title='DEP budget ($M)',
         )
         c.jekyll_write(f'{CHART_DIR}/{prefix}lobbying_spend_vs_budget.html')
         print(f'Wrote {prefix}lobbying_spend_vs_budget.html')
@@ -286,7 +292,7 @@ def generate_post_charts(engine, prefix=''):
         env_lb = _env_bills(lobby_bills, leg_bills)
         if not env_lb.empty and 'passed' in env_lb.columns:
             employer_counts = (
-                env_lb.groupby(['bill_number', 'general_court'])['employer_name']
+                env_lb.groupby(['bill_number', 'general_court'])['entity_name']
                 .nunique()
                 .reset_index(name='employer_count')
             )
@@ -333,7 +339,7 @@ def _write_facts(employers: pd.DataFrame, spend_trend: pd.DataFrame, most_recent
             employers[employers['year'] == most_recent_year].shape[0]
         )
     if not spend_trend.empty:
-        latest_spend = spend_trend[spend_trend['year'] == most_recent_year]['total_expenditure']
+        latest_spend = spend_trend[spend_trend['year'] == most_recent_year]['compensation']
         if not latest_spend.empty:
             facts['lobbying_total_spend_latest'] = int(latest_spend.iloc[0])
 
