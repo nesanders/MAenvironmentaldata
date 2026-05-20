@@ -20,6 +20,7 @@ For full analysis and narrative context, follow the links in each section.
 [CSO Discharge Trends](#cso) &middot;
 [303(d) Impaired Waters](#303d) &middot;
 [MS4 Stormwater Compliance](#ms4) &middot;
+[Lobbying Spend](#lobbying) &middot;
 [CSO Data Quality Indicator](#data-quality) &middot;
 [Discharge by Watershed](#watershed)
 
@@ -310,6 +311,34 @@ discharge over the full reporting period to date.
 ### Monthly discharge volume by receiving watershed
 
 {% include charts/dash_MAEEADP_dashboard_monthly_volume_watershed.html %}
+
+---
+
+<a name="lobbying"></a>
+
+## Lobbying Spend on Environmental Bills
+
+Data: [MA Secretary of State lobbying disclosures]({{ site.url }}{{ site.baseurl }}/data/MA_lobbying.html), 2005–present.
+
+Lobbying disclosures filed semi-annually with the MA Secretary of State identify which organizations hired lobbyists, how much clients paid, and which specific bills were lobbied. Bills are scored for environmental relevance using Google Gemini embeddings; charts show only employers that lobbied at least one environmentally relevant bill. Compensation figures reflect total payments from each client to each lobbying entity per year.
+
+Data last updated **{{ site.data.ts_update_MA_lobbying.updated | date: "%-d %B %Y" }}**. Refreshed automatically on a weekly basis; exits early when no new semi-annual filings are posted (filings are submitted twice yearly, so most weeks see no change).
+
+### Annual lobbying spend on environmental bills
+
+{% include charts/dash_lobbying_spend_trend.html %}
+
+### Top employers — most recent complete year
+
+{% include charts/dash_lobbying_top_employers.html %}
+
+### Environmental bills lobbied per year
+
+{% include charts/dash_lobbying_bill_intensity.html %}
+
+### Lobbying spend vs. enforcement actions
+
+{% include charts/dash_lobbying_vs_enforcement.html %}
 
 ---
 
