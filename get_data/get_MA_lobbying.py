@@ -80,18 +80,30 @@ def _make_session() -> requests.Session:
     return s
 
 
-def _get(session, url, **kwargs) -> BeautifulSoup:
-    time.sleep(REQUEST_DELAY)
-    r = session.get(url, timeout=30, **kwargs)
-    r.raise_for_status()
-    return BeautifulSoup(r.text, 'html.parser')
+def _get(session, url, retries=5, **kwargs) -> BeautifulSoup:
+    for attempt in range(retries):
+        time.sleep(REQUEST_DELAY * (2 ** attempt) if attempt else REQUEST_DELAY)
+        try:
+            r = session.get(url, timeout=60, **kwargs)
+            r.raise_for_status()
+            return BeautifulSoup(r.text, 'html.parser')
+        except (requests.exceptions.Timeout, requests.exceptions.ConnectionError) as e:
+            print(f'  GET timeout/connection error (attempt {attempt+1}/{retries}): {e}')
+            if attempt == retries - 1:
+                raise
 
 
-def _post(session, url, data, timeout=120) -> BeautifulSoup:
-    time.sleep(REQUEST_DELAY)
-    r = session.post(url, data=data, timeout=timeout)
-    r.raise_for_status()
-    return BeautifulSoup(r.text, 'html.parser')
+def _post(session, url, data, timeout=180, retries=5) -> BeautifulSoup:
+    for attempt in range(retries):
+        time.sleep(REQUEST_DELAY * (2 ** attempt) if attempt else REQUEST_DELAY)
+        try:
+            r = session.post(url, data=data, timeout=timeout)
+            r.raise_for_status()
+            return BeautifulSoup(r.text, 'html.parser')
+        except (requests.exceptions.Timeout, requests.exceptions.ConnectionError) as e:
+            print(f'  POST timeout/connection error (attempt {attempt+1}/{retries}): {e}')
+            if attempt == retries - 1:
+                raise
 
 
 # ─── Search page ───────────────────────────────────────────────────────────────
@@ -282,7 +294,6 @@ def main():
 
     existing_links     = _load_csv(links_path)
     existing_employers = _load_csv(employers_path, index_col=0)
-    existing_lobbyists = _load_csv(lobbyists_path, index_col=0)
     existing_bills     = _load_csv(bills_path, index_col=0)
 
     n_links = len(existing_links) if existing_links is not None else 0
