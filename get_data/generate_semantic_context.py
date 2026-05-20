@@ -188,6 +188,40 @@ TABLE_DESCRIPTIONS = {
         'have quantitative progress data suitable for analysis. '
         'Charles River phosphorus dominates the quantitative data; other watersheds have fewer records.'
     ),
+    'MA_Lobbying_Employers': (
+        'MA Secretary of State lobbying disclosures: one row per (employer, year). '
+        'An "employer" is an organization that retains lobbyists to lobby the MA Legislature. '
+        'Data covers 2007–present; updated annually as the SoS portal publishes prior-year filings. '
+        'Key fields: employer_name, year, total_expenditure (dollars), subject_tags (filer-reported; '
+        'unreliable for environmental filtering — use MA_Legislature_Bills.is_environmental instead). '
+        'Join to MA_Lobbying_Bills on (employer_name, year) to see which bills an employer lobbied. '
+        'Join to MA_Lobbying_Lobbyists on (employer_name, year) to see which lobbyists they retained.'
+    ),
+    'MA_Lobbying_Lobbyists': (
+        'MA SoS lobbying disclosures: one row per (lobbyist, employer, year). '
+        'Key fields: lobbyist_name, employer_name, year, compensation (dollars paid to the lobbyist). '
+        'Join to MA_Lobbying_Employers on (employer_name, year) for employer spending context.'
+    ),
+    'MA_Lobbying_Bills': (
+        'MA SoS lobbying disclosures: fact table linking employers to bills they lobbied. '
+        'One row per (bill_number, general_court, employer_name, year). '
+        'Key fields: bill_number (e.g. H.1234, S.5678), general_court (MA legislative session number, '
+        'e.g. 193 for the 2023–2024 session), employer_name, year. '
+        'Join to MA_Legislature_Bills on (bill_number, general_court) for bill title, sponsor, '
+        'passed status, and env_relevance_score. '
+        'Join to MA_Lobbying_Employers on (employer_name, year) for employer total expenditure. '
+        'IMPORTANT: this table has NO spending amount column — spending lives in MA_Lobbying_Employers.'
+    ),
+    'MA_Legislature_Bills': (
+        'MA Legislature OpenAPI: one row per (bill_number, general_court session). '
+        'Key fields: bill_number (e.g. H.1234), general_court (session number), title (bill title), '
+        'sponsor_name, sponsor_chamber (House/Senate), committee (committee referral), '
+        'status (final status text), passed (1 if signed/enacted, 0 otherwise), '
+        'env_relevance_score (0–1 float; cosine similarity to environmental seed phrases via '
+        'gemini-embedding-2), is_environmental (1 if env_relevance_score >= 0.60). '
+        'Foreign key: bill_number + general_court → MA_Lobbying_Bills. '
+        'Use is_environmental=1 to filter to environmentally relevant bills for analysis.'
+    ),
 }
 
 # ─── Column-level notes for key tables ────────────────────────────────────────
@@ -282,6 +316,30 @@ COLUMN_NOTES = {
         'csoWaterBody': 'ALL CAPS waterBody value from MAEEADP_CSO. Joins on MAEEADP_CSO.waterBody.',
         'waterbody303d': 'Mixed case waterbody name from EPA_303d_Impairments. Joins on EPA_303d_Impairments.waterbody. WARNING: this table has no other columns — reportingCycle, hasTmdl, attainment all come from EPA_303d_Impairments, not this table.',
     },
+    'MA_Lobbying_Employers': {
+        'employer_name': 'Organization name as filed with the SoS. Spelling varies across years; use LIKE for fuzzy matching.',
+        'year': 'Calendar year of the filing (e.g. 2022). Filings for year Y are typically published mid-year Y+1.',
+        'total_expenditure': 'Annual lobbying expenditure in dollars (NULL if not reported).',
+        'subject_tags': 'Filer-assigned subject area tags (e.g. "Energy & Environment"). UNRELIABLE for environmental filtering — use MA_Legislature_Bills.is_environmental instead.',
+    },
+    'MA_Lobbying_Lobbyists': {
+        'lobbyist_name': 'Registered lobbyist name.',
+        'employer_name': 'Employer (client) that retained this lobbyist. Joins to MA_Lobbying_Employers.employer_name.',
+        'compensation': 'Amount paid to the lobbyist by this employer in dollars (NULL if not disclosed).',
+    },
+    'MA_Lobbying_Bills': {
+        'bill_number': 'MA bill number (e.g. H.1234, S.5678, HD.1234). Joins to MA_Legislature_Bills.bill_number.',
+        'general_court': 'MA legislative session number (e.g. 193 = 2023–2024). Joins to MA_Legislature_Bills.general_court.',
+        'employer_name': 'Lobbying employer. Joins to MA_Lobbying_Employers.employer_name.',
+        'year': 'Filing year. IMPORTANT: This table has NO spending amount — total expenditure is in MA_Lobbying_Employers.',
+    },
+    'MA_Legislature_Bills': {
+        'bill_number': 'MA bill number (e.g. H.1234). Join key to MA_Lobbying_Bills.',
+        'general_court': 'Session number. 185=2007-08, 186=2009-10, ..., 193=2023-24, 194=2025-26.',
+        'passed': '1 if the bill was signed into law or enacted; 0 if it died or is still pending.',
+        'env_relevance_score': 'Cosine similarity (0–1) to environmental regulation seed phrases via gemini-embedding-2. Higher = more environmentally relevant. NULL for unscored bills.',
+        'is_environmental': '1 if env_relevance_score >= 0.60 (calibrated threshold). Use this for filtering to environmentally relevant bills.',
+    },
 }
 
 # ─── Columns to skip in sample rows (too wide / noisy) ────────────────────────
@@ -356,6 +414,49 @@ JOIN_RELATIONSHIPS = """
   Example: SELECT m.municipality_normalized, AVG(m.mcm3_illicit_found) as avg_illicit, SUM(c.volumnOfEvent) as total_cso
   FROM MS4_AnnualReports m JOIN MAEEADP_CSO c ON m.municipality_normalized = c.municipality
   WHERE m.extraction_confidence != 'low' AND c.eventType LIKE 'CSO%' GROUP BY 1
+
+- **Lobbying spend on environmental bills by year**:
+  SELECT l.year, SUM(e.total_expenditure) AS total_spend
+  FROM MA_Lobbying_Employers e
+  JOIN MA_Lobbying_Bills l ON e.employer_name = l.employer_name AND e.year = l.year
+  JOIN MA_Legislature_Bills b ON l.bill_number = b.bill_number AND l.general_court = b.general_court
+  WHERE b.is_environmental = 1
+  GROUP BY l.year ORDER BY l.year
+  NOTE: total_expenditure is in MA_Lobbying_Employers; MA_Lobbying_Bills has NO spending column.
+
+- **Top employers on environmental bills** (most recent year):
+  SELECT e.employer_name, e.total_expenditure
+  FROM MA_Lobbying_Employers e
+  WHERE e.year = (SELECT MAX(year) FROM MA_Lobbying_Employers)
+  AND EXISTS (
+    SELECT 1 FROM MA_Lobbying_Bills l
+    JOIN MA_Legislature_Bills b ON l.bill_number = b.bill_number AND l.general_court = b.general_court
+    WHERE l.employer_name = e.employer_name AND l.year = e.year AND b.is_environmental = 1
+  )
+  ORDER BY e.total_expenditure DESC LIMIT 15
+
+- **Lobbying spend vs. enforcement count by year** (dual-axis):
+  WITH spend AS (
+    SELECT year, SUM(total_expenditure) AS lobbying_spend FROM MA_Lobbying_Employers GROUP BY year
+  ), enforcement AS (
+    SELECT strftime('%Y', EnforcementDate) AS year, COUNT(*) AS n_actions FROM MAEEADP_Enforcement GROUP BY 1
+  )
+  SELECT s.year, s.lobbying_spend, e.n_actions FROM spend s LEFT JOIN enforcement e ON s.year = e.year ORDER BY s.year
+
+- **Bill passage rate by lobbying spend tier**:
+  SELECT
+    CASE WHEN employer_count >= 10 THEN 'Heavily lobbied (10+ employers)'
+         WHEN employer_count >= 3  THEN 'Moderately lobbied (3–9 employers)'
+         ELSE 'Lightly lobbied (1–2 employers)' END AS lobby_tier,
+    AVG(CAST(b.passed AS FLOAT)) AS pass_rate,
+    COUNT(*) AS n_bills
+  FROM (
+    SELECT l.bill_number, l.general_court, COUNT(DISTINCT l.employer_name) AS employer_count
+    FROM MA_Lobbying_Bills l GROUP BY l.bill_number, l.general_court
+  ) counts
+  JOIN MA_Legislature_Bills b ON counts.bill_number = b.bill_number AND counts.general_court = b.general_court
+  WHERE b.is_environmental = 1
+  GROUP BY lobby_tier
 
 - **CSO discharges to 303(d) impaired waters** (two-step join):
   MAEEADP_CSO JOIN CSO_303d_Mapping ON MAEEADP_CSO.waterBody = CSO_303d_Mapping.csoWaterBody

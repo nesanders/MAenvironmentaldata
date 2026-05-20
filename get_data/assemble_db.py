@@ -315,6 +315,31 @@ if __name__ == '__main__':
 	data_csv['MS4_TMDL'] = _ms4_tmdl
 	print(f'MS4: {len(data_csv["MS4_AnnualReports"])} reports, {len(data_csv["MS4_TMDL"])} TMDL entries')
 
+	## MA Lobbying and Legislature data (loaded only if available; not yet in CI)
+	_lobbying_employers_path = '../docs/data/MA_lobbying_employers.csv'
+	_lobbying_lobbyists_path = '../docs/data/MA_lobbying_lobbyists.csv'
+	_lobbying_bills_path = '../docs/data/MA_lobbying_bills.csv'
+	_legislature_bills_path = '../docs/data/MA_legislature_bills.csv'
+
+	if os.path.exists(_lobbying_employers_path):
+		data_csv['MA_Lobbying_Employers'] = pd.read_csv(_lobbying_employers_path, index_col=0)
+		print(f"MA_Lobbying_Employers: {len(data_csv['MA_Lobbying_Employers'])} rows")
+	if os.path.exists(_lobbying_lobbyists_path):
+		data_csv['MA_Lobbying_Lobbyists'] = pd.read_csv(_lobbying_lobbyists_path, index_col=0)
+		print(f"MA_Lobbying_Lobbyists: {len(data_csv['MA_Lobbying_Lobbyists'])} rows")
+	if os.path.exists(_lobbying_bills_path):
+		data_csv['MA_Lobbying_Bills'] = pd.read_csv(_lobbying_bills_path, index_col=0)
+		print(f"MA_Lobbying_Bills: {len(data_csv['MA_Lobbying_Bills'])} rows")
+	if os.path.exists(_legislature_bills_path):
+		_leg_bills = pd.read_csv(_legislature_bills_path, index_col=0)
+		# Ensure boolean column is stored as int for SQLite compatibility
+		if 'is_environmental' in _leg_bills.columns:
+			_leg_bills['is_environmental'] = _leg_bills['is_environmental'].astype('Int64')
+		if 'passed' in _leg_bills.columns:
+			_leg_bills['passed'] = _leg_bills['passed'].astype('Int64')
+		data_csv['MA_Legislature_Bills'] = _leg_bills
+		print(f"MA_Legislature_Bills: {len(data_csv['MA_Legislature_Bills'])} rows")
+
 	data_csv['AMEND_metadata'] = pd.Series({
 		'Website':'https://nesanders.github.io/MAenvironmentaldata/index.html',
 		'GitHub':'https://github.com/nesanders/MAenvironmentaldata',

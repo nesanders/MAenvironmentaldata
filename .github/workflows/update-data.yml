@@ -54,6 +54,9 @@ jobs:
           python get_MA_precipitation.py
           python get_ATTAINS_303d.py
           python get_MS4_annual_reports.py --yes --skip-download
+          python get_MA_lobbying.py
+          python get_MA_legislature_bills.py
+          python score_lobbying_bills.py
 
       - name: Validate data
         working-directory: get_data
