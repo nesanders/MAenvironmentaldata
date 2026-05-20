@@ -226,40 +226,43 @@ def main():
     print(f'Fetching metadata for {len(to_fetch)} new bills...')
 
     session = _make_session()
-    new_rows = []
+    # Work against the combined DataFrame so flushes are always complete snapshots
+    combined = existing.copy() if existing is not None and not existing.empty else pd.DataFrame()
+    FLUSH_EVERY = 50
+
+    def _flush(n_done: int) -> None:
+        combined.to_csv(legislature_path)
+        print(f'  [{n_done}/{len(to_fetch)}] flushed {len(combined)} bill records')
 
     for i, row in enumerate(to_fetch):
         bid = str(row['bill_id'])
         gc = int(row['general_court'])
-        if (i + 1) % 100 == 0:
-            print(f'  {i + 1}/{len(to_fetch)}...')
         result = fetch_bill(session, bid, gc)
-        if result:
-            new_rows.append(result)
+        new_row = result if result else {
+            'bill_id': bid,
+            'general_court': gc,
+            'bill_number': None,
+            'bill_prefix': '',
+            'title': '',
+            'sponsor_name': '',
+            'status': '',
+            'passed': False,
+        }
+        new_df = pd.DataFrame([new_row])
+        if combined.empty:
+            combined = new_df
         else:
-            # Record a stub so we don't retry on every run
-            new_rows.append({
-                'bill_id': bid,
-                'general_court': gc,
-                'title': '',
-                'sponsor_name': '',
-                'status': '',
-                'passed': False,
-            })
+            combined = pd.concat([combined, new_df], ignore_index=True).drop_duplicates(
+                subset=['bill_id', 'general_court']
+            )
 
-    if not new_rows:
+        if (i + 1) % FLUSH_EVERY == 0 or (i + 1) == len(to_fetch):
+            _flush(i + 1)
+
+    if combined.empty:
         print('No new bills to write.')
         return
 
-    new_df = pd.DataFrame(new_rows)
-    if existing is not None and not existing.empty:
-        combined = pd.concat([existing, new_df], ignore_index=True).drop_duplicates(
-            subset=['bill_id', 'general_court']
-        )
-    else:
-        combined = new_df
-
-    combined.to_csv(legislature_path)
     print(f'Wrote {len(combined)} bill records to {legislature_path}')
 
     with open(DATA_DIR / 'ts_update_MA_legislature.yml', 'w') as f:

@@ -271,17 +271,26 @@ def main():
     lobbyists_path = DATA_DIR / 'MA_lobbying_lobbyists.csv'
     bills_path     = DATA_DIR / 'MA_lobbying_bills.csv'
 
-    # Load existing state
-    existing_links = None
-    existing_employers = existing_lobbyists = existing_bills = None
-    try:
-        existing_links     = pd.read_csv(links_path)
-        existing_employers = pd.read_csv(employers_path, index_col=0)
-        existing_lobbyists = pd.read_csv(lobbyists_path, index_col=0)
-        existing_bills     = pd.read_csv(bills_path, index_col=0)
-        print(f'Existing: {len(existing_links)} summary links, '
-              f'{len(existing_employers)} employer rows')
-    except FileNotFoundError:
+    # Load existing state — each file loaded independently so a missing optional
+    # file (e.g. lobbyists, which isn't written until lobbyist data is scraped)
+    # doesn't prevent resume from the others.
+    def _load_csv(path, **kwargs):
+        try:
+            return pd.read_csv(path, **kwargs)
+        except FileNotFoundError:
+            return None
+
+    existing_links     = _load_csv(links_path)
+    existing_employers = _load_csv(employers_path, index_col=0)
+    existing_lobbyists = _load_csv(lobbyists_path, index_col=0)
+    existing_bills     = _load_csv(bills_path, index_col=0)
+
+    n_links = len(existing_links) if existing_links is not None else 0
+    n_emp   = len(existing_employers) if existing_employers is not None else 0
+    n_bills = len(existing_bills) if existing_bills is not None else 0
+    if n_links or n_emp:
+        print(f'Resuming: {n_links} summary links, {n_emp} employer rows, {n_bills} bill rows')
+    else:
         print('No existing data — running full fetch')
 
     existing_disc_urls: set[str] = set()
@@ -291,11 +300,29 @@ def main():
     years = [args.year] if args.year else _years_to_check(existing_links)
     print(f'Checking years: {years}')
 
+    # Working copies of the DataFrames — mutated incrementally and flushed to disk
+    # after every disclosure so any interrupt loses at most one disclosure's work.
+    links_df     = existing_links     if existing_links     is not None else pd.DataFrame()
+    employers_df = existing_employers if existing_employers is not None else pd.DataFrame()
+    bills_df     = existing_bills     if existing_bills     is not None else pd.DataFrame()
+
+    def _append(df: pd.DataFrame, new_rows: list[dict], dedup_keys: list[str]) -> pd.DataFrame:
+        if not new_rows:
+            return df
+        new_df = pd.DataFrame(new_rows).drop_duplicates(subset=dedup_keys)
+        if df.empty:
+            return new_df
+        return pd.concat([df, new_df], ignore_index=True).drop_duplicates(subset=dedup_keys)
+
+    def _flush(n_new_disc: int) -> None:
+        links_df.to_csv(links_path, index=False)
+        employers_df.to_csv(employers_path)
+        bills_df.to_csv(bills_path)
+        print(f'    [flush] {len(links_df)} links, {len(employers_df)} employer rows, '
+              f'{len(bills_df)} bill rows (+{n_new_disc} new disclosures this session)')
+
     session = _make_session()
-    new_link_rows: list[dict] = []
-    new_employer_rows: list[dict] = []
-    new_lobbyist_rows: list[dict] = []
-    new_bill_rows: list[dict] = []
+    total_new_disc = 0
 
     for year in years:
         print(f'\n--- {year} ---')
@@ -304,6 +331,8 @@ def main():
 
         if args.limit:
             summary_urls = summary_urls[:args.limit]
+
+        year_new = 0
         for i, summary_url in enumerate(summary_urls):
             meta = fetch_disclosure_links(session, summary_url)
             entity_name = meta['entity_name']
@@ -313,22 +342,20 @@ def main():
                 if disc_url in existing_disc_urls:
                     continue  # already fetched
 
-                print(f'  [{i+1}/{len(summary_urls)}] {entity_name}: new disclosure')
                 detail = fetch_disclosure_detail(session, disc_url, year)
 
-                # Employer rows: one per (entity, client, year)
-                for comp in detail['compensation']:
-                    new_employer_rows.append({
+                new_employer_rows = [
+                    {
                         'entity_name': entity_name,
                         'client_name': comp['client_name'],
                         'year': year,
                         'reg_type': reg_type,
                         'compensation': comp['amount'],
-                    })
-
-                # Bill rows
-                for bill in detail['bills']:
-                    new_bill_rows.append({
+                    }
+                    for comp in detail['compensation']
+                ]
+                new_bill_rows = [
+                    {
                         'entity_name': entity_name,
                         'client_name': bill['client_name'],
                         'year': year,
@@ -338,49 +365,36 @@ def main():
                         'bill_title': bill['bill_title'],
                         'position': bill['position'],
                         'amount': bill['amount'],
-                    })
+                    }
+                    for bill in detail['bills']
+                ]
 
-                new_link_rows.append({
-                    'entity_name': entity_name,
-                    'year': year,
-                    'summary_url': summary_url,
-                    'disc_url': disc_url,
-                })
+                employers_df = _append(employers_df, new_employer_rows,
+                                       ['entity_name', 'client_name', 'year'])
+                bills_df     = _append(bills_df, new_bill_rows,
+                                       ['entity_name', 'client_name', 'bill_number', 'general_court'])
+                links_df     = _append(links_df,
+                                       [{'entity_name': entity_name, 'year': year,
+                                         'summary_url': summary_url, 'disc_url': disc_url}],
+                                       ['entity_name', 'year', 'disc_url'])
+
                 existing_disc_urls.add(disc_url)
+                total_new_disc += 1
+                year_new += 1
 
-    if not new_link_rows and not new_employer_rows:
+                # Flush to disk after every disclosure — fully resumable on interrupt
+                _flush(total_new_disc)
+
+            if (i + 1) % 50 == 0 or (i + 1) == len(summary_urls):
+                print(f'  [{i+1}/{len(summary_urls)}] {year_new} new disclosures so far this year')
+
+        print(f'  {year} done: {year_new} new disclosures')
+
+    if total_new_disc == 0:
         print('\nNo new disclosures found — nothing to write.')
         return
 
-    def _merge(existing, new_rows, dedup_keys):
-        new_df = pd.DataFrame(new_rows)
-        if new_df.empty:
-            return existing if existing is not None else pd.DataFrame()
-        new_df = new_df.drop_duplicates(subset=dedup_keys)
-        if existing is None or existing.empty:
-            return new_df
-        return pd.concat([existing, new_df], ignore_index=True).drop_duplicates(
-            subset=dedup_keys
-        )
-
-    links_df = _merge(existing_links, new_link_rows,
-                      ['entity_name', 'year', 'disc_url'])
-    employers_df = _merge(existing_employers, new_employer_rows,
-                          ['entity_name', 'client_name', 'year'])
-    bills_df = _merge(existing_bills, new_bill_rows,
-                      ['entity_name', 'client_name', 'bill_number', 'general_court'])
-
-    links_df.to_csv(links_path, index=False)
-    employers_df.to_csv(employers_path)
-    bills_df.to_csv(bills_path)
-    # Lobbyist table not yet populated (requires lobbyist-level detail scraping;
-    # entity pages list lobbyists but with less structured data — deferred)
-    if new_lobbyist_rows:
-        lobbyists_df = _merge(existing_lobbyists, new_lobbyist_rows,
-                              ['lobbyist_name', 'entity_name', 'year'])
-        lobbyists_df.to_csv(lobbyists_path)
-
-    print(f'\nWrote {len(links_df)} link rows, {len(employers_df)} employer rows, '
+    print(f'\nFinal totals: {len(links_df)} links, {len(employers_df)} employer rows, '
           f'{len(bills_df)} bill rows')
 
     with open(DATA_DIR / 'ts_update_MA_lobbying.yml', 'w') as f:
