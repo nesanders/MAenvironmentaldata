@@ -1,45 +1,8 @@
-# get_data — Data fetch scripts
+# MA Lobbying pipeline
 
-All scripts must be run from this directory (`get_data/`) because they use relative
-paths to `../docs/data/` for outputs and `../docs/assets/` for generated files.
-
-Run every script with the `amend_python` conda environment:
-
-```bash
-conda run -n amend_python python <script>.py
-# or directly (required for live log output — conda run buffers stdout):
-/home/nes/miniconda/envs/amend_python/bin/python -u <script>.py
-```
-
----
-
-## Weekly CI pipeline
-
-These scripts run automatically every Monday via `.github/workflows/update-data.yml`:
-
-| Order | Script | Data source |
-|-------|--------|-------------|
-| 1 | `get_EPARegion1_NPDES_permits.py` | EPA NPDES permit listings |
-| 2 | `get_budget_CTHRU.py` | MA Comptroller CTHRU (FY2005–present) |
-| 3 | `get_DEP_staff_SODA.py` | MA Comptroller payroll SODA API |
-| 4 | `get_EEA_data_portal.py` | EEA portal (permits, facilities, inspections, enforcement, drinking water) |
-| 5 | `get_eea_dp_cso.py` | EEA CSO discharge incidents |
-| 6 | `get_ATTAINS_303d.py` | EPA 303(d) impaired waters (biennial; exits early if unchanged) |
-| 7 | `get_MA_lobbying.py` | MA SoS lobbying disclosures (incremental) |
-| 8 | `get_MA_legislature_bills.py` | MA Legislature bill metadata (incremental) |
-| 9 | `score_lobbying_bills.py` | Gemini embeddings + environmental scoring (incremental) |
-| 10 | `validate_data.py` | Schema + row-count checks |
-| 11 | `assemble_db.py` | Build SQLite DB, upload to GCS, regenerate semantic context |
-
----
-
-## MA Lobbying pipeline (scripts 7–9 + cluster)
-
-### Overview
-
-The MA lobbying pipeline tracks which bills are being lobbied in the Massachusetts
-legislature, how much is spent, and whether those bills are environmentally relevant.
-It spans four scripts, the first three of which run in weekly CI:
+Tracks which bills are being lobbied in the Massachusetts legislature, how much is
+spent, and whether those bills are environmentally relevant. Four scripts, the first
+three of which run in weekly CI:
 
 ```
 get_MA_lobbying.py
@@ -52,9 +15,16 @@ cluster_lobbying_bills.py   ← manual / one-time
     ↓ MA_bill_cluster_labels.csv  (cluster_id column also written back to scored CSV)
 ```
 
+All scripts must be run from `get_data/`. Use the `amend_python` conda env, and run
+Python directly (not `conda run`) for live log output:
+
+```bash
+/home/nes/miniconda/envs/amend_python/bin/python -u <script>.py
+```
+
 ---
 
-### 1. `get_MA_lobbying.py` — Scrape the SoS lobbying portal
+## 1. `get_MA_lobbying.py` — Scrape the SoS lobbying portal
 
 **Source:** MA Secretary of State [LobbyistPublicSearch](https://www.sec.state.ma.us/LobbyistPublicSearch/)
 
@@ -84,8 +54,7 @@ The set of already-fetched `CompleteDisclosure` URLs is persisted in
 - All years with no cached links are fetched in full.
 - The current year and prior year are always re-searched (new filers arrive
   semi-annually); only new disclosure URLs trigger a detail fetch.
-- If no new disclosure URLs are found, the script exits immediately without
-  writing any files.
+- If no new disclosure URLs are found, the script exits immediately without writing files.
 
 **Resumability:**
 
@@ -123,7 +92,7 @@ Old filings (roughly pre-2013) use a different page structure:
 
 ---
 
-### 2. `get_MA_legislature_bills.py` — Fetch bill metadata from the Legislature API
+## 2. `get_MA_legislature_bills.py` — Fetch bill metadata from the Legislature API
 
 **Source:** [MA Legislature OpenAPI](https://malegislature.gov/api/swagger)
 
@@ -154,24 +123,24 @@ history action contains keywords like "Signed by the Governor" or "Chaptered".
 
 **Caching:**
 
-Raw JSON responses are cached as `MA_legislature_cache/{key}.json`. This directory
-is gitignored. The merged output CSV is flushed every 50 bills, so an interrupted run
-loses at most 50 bills' API calls (which are cheap and fast at 0.5 s/request).
+Raw JSON responses are cached as `MA_legislature_cache/{key}.json` (gitignored). The
+merged output CSV is flushed every 50 bills, so an interrupted run loses at most 50
+bills' worth of API calls.
 
 **Output:** `MA_legislature_bills.csv` — bill_id, bill_number, general_court, title,
 sponsor_name, status, passed.
 
-The full-text bill content stored in the JSON cache is also used by
-`score_lobbying_bills.py` to embed bill text rather than just titles.
+The full-text bill content stored in the JSON cache is used by `score_lobbying_bills.py`
+to embed bill text rather than just titles.
 
 ---
 
-### 3. `score_lobbying_bills.py` — Gemini embeddings + environmental scoring
+## 3. `score_lobbying_bills.py` — Gemini embeddings + environmental scoring
 
-**Requires:** `SECRET_GOOGLE_API_KEY` file in `get_data/` containing a Google AI
-Studio API key with access to `gemini-embedding-2`.
+**Requires:** `SECRET_GOOGLE_API_KEY` file in `get_data/` (Google AI Studio key with
+access to `gemini-embedding-2`; not committed to repo).
 
-**SDK:** Uses `google-genai` (new SDK), **not** the old `google-generativeai` package:
+**SDK:** Uses `google-genai` (new SDK), **not** `google-generativeai`:
 
 ```python
 from google import genai
@@ -185,18 +154,16 @@ client.models.embed_content(
 
 **What gets embedded:**
 
-For each bill, the script looks up the cached JSON from `MA_legislature_cache/` and
-uses the first 2,000 characters of the full bill text. If no cached JSON exists (about
-3% of bills), it falls back to the bill title from the lobbying CSV. Embedding full
-text rather than titles dramatically improves discrimination — titles are often generic
-legislative boilerplate.
+For each bill, the script reads the first 2,000 characters of full bill text from
+`MA_legislature_cache/`. If no cached JSON exists (~3% of bills), it falls back to
+the bill title. Full text dramatically improves discrimination — titles are often
+generic legislative boilerplate.
 
 **Incremental operation:**
 
 The Parquet file on GCS (`gs://openamend-data/MA_bill_embeddings.parquet`) is the
-authoritative store of all embeddings. On each run, bills already in the Parquet are
-skipped. Only new bills (from new lobbying data or new legislative sessions) are
-embedded. This means weekly CI typically embeds zero or a handful of bills.
+authoritative store of all embeddings. Bills already in the Parquet are skipped each
+run; only new bills are embedded. Weekly CI typically embeds zero or a handful.
 
 **Environmental scoring — differential cosine similarity:**
 
@@ -209,87 +176,50 @@ range), the script uses two reference sets of 20 real MA bills each:
 For each bill:
 
 ```
-env_score = max cosine similarity to any ENV_EXAMPLE_BILLS embedding
+env_score     = max cosine similarity to any ENV_EXAMPLE_BILLS embedding
 non_env_score = max cosine similarity to any NON_ENV_EXAMPLE_BILLS embedding
-differential = env_score - non_env_score
+differential  = env_score - non_env_score
 is_environmental = (differential > 0.05)
 ```
 
-This approach anchors scoring to real legislative language, avoids compressed ranges,
-and discriminates between superficially similar bills (e.g., public health vs.
-environmental health).
+This anchors scoring to real legislative language and discriminates between
+superficially similar bills (e.g. public health vs. environmental health).
 
 **Storage:**
 
-| Location | Contents | Updated |
-|----------|----------|---------|
-| `gs://openamend-data/MA_bill_embeddings.parquet` | Full embeddings (768-dim) + bill text + scores + cluster_ids | Every CI run |
-| `docs/data/MA_lobbying_bills_scored.csv` | Lightweight: scores + cluster_ids, no embeddings | Every CI run, committed to repo |
+| Location | Contents | Committed? |
+|----------|----------|------------|
+| `gs://openamend-data/MA_bill_embeddings.parquet` | 768-dim embeddings + full text + scores + cluster_ids | No (~100 MB) |
+| `docs/data/MA_lobbying_bills_scored.csv` | Scores + cluster_ids only, no embeddings | Yes (~300 KB) |
 
-The Parquet is ~100 MB for the full historical corpus and is **not** committed to the
-repo. The scored CSV is ~300 KB and is committed.
-
-**Cost:** Approximately $0.008/1,000 bills at current Gemini embedding pricing.
-The full 2024 corpus of 2,648 unique bills cost roughly $0.02 to embed.
+**Cost:** ~$0.008/1,000 bills. The 2024 corpus of 2,648 bills cost ~$0.02.
 
 ---
 
-### 4. `cluster_lobbying_bills.py` — K-means topic clustering (manual/one-time)
+## 4. `cluster_lobbying_bills.py` — K-means topic clustering (manual/one-time)
 
-This script is **not part of weekly CI**. Re-run it manually when the historical
-corpus changes significantly (e.g., after the full 2005–2026 fetch completes).
+Not part of weekly CI. Re-run manually when the historical corpus changes significantly
+(e.g. after the full 2005–2026 fetch completes).
 
 **What it does:**
 
 1. Loads all embeddings from the GCS Parquet.
-2. L2-normalises the vectors (puts clustering in cosine space).
-3. Runs k-means (`N_CLUSTERS=15`, `random_state=42`) to assign each bill to a topic cluster.
-4. For each cluster, sends the 20 most central bill titles to **Gemini 2.5 Flash**
-   and asks for a 3–5 word label.
-5. Writes cluster IDs back to the Parquet and to `MA_lobbying_bills_scored.csv`.
-6. Writes `MA_bill_cluster_labels.csv` with cluster ID, label, bill count, and
-   environmental bill count.
+2. L2-normalises the vectors (cosine-space clustering).
+3. Runs k-means (`N_CLUSTERS=15`, `random_state=42`) to assign each bill a topic cluster.
+4. Sends the 20 most central bill titles per cluster to **Gemini 2.5 Flash** for a
+   3–5 word label.
+5. Writes cluster IDs back to the Parquet and `MA_lobbying_bills_scored.csv`.
+6. Writes `MA_bill_cluster_labels.csv` (cluster_id, label, n_bills, n_env_bills).
 
 **Flags:**
 
 ```bash
-python cluster_lobbying_bills.py               # re-cluster + re-label
-python cluster_lobbying_bills.py --relabel     # keep existing cluster IDs, only redo Gemini labels
-python cluster_lobbying_bills.py --n-clusters 20  # change number of clusters
+python cluster_lobbying_bills.py                  # re-cluster + re-label
+python cluster_lobbying_bills.py --relabel        # keep cluster IDs, only redo labels
+python cluster_lobbying_bills.py --n-clusters 20  # change cluster count
 ```
 
-**Current clusters (2024 data, 15 clusters):**
-
-The two most environment-dense clusters are:
-- Cluster 11 "Health, Climate, and Community" (155/172 = 90% environmental)
-- Cluster 13 "Legislative Modernization and Reform" (166/248 = 67% environmental)
-
-No cluster is purely environmental — `is_environmental` is an individual bill
-property (from scoring), not a cluster property. Cluster labels reflect the dominant
-topic across all bills in the cluster, which dilutes the environmental signal in
-mixed clusters.
-
----
-
-## Other scripts (manual / not in CI)
-
-| Script | Purpose | When to run |
-|--------|---------|-------------|
-| `get_DEP_staff.py` | Older DEP staffing data | One-time; superseded by SODA |
-| `get_Census_ACS.py` | ACS demographic data | Manually as needed |
-| `get_Census_statepop.py` | State population | Manually as needed |
-| `get_ECOS_data.py` | ECOS per-capita budget survey | When ECOS publishes a new report (~every 3–5 years) |
-| `get_SSAWages.py` | SSA Average Wage Index | Currently blocked (ssa.gov 403); fallback CSV is used |
-| `transform_*.py` | One-time data transforms | Already applied; do not re-run |
-| `generate_semantic_context.py` | Regenerate AI Analysis context | Run after any DB schema change; auto-called by `assemble_db.py` |
-
----
-
-## Credentials
-
-| Secret | File | Used by |
-|--------|------|---------|
-| Google AI Studio API key | `SECRET_GOOGLE_API_KEY` | `score_lobbying_bills.py`, `cluster_lobbying_bills.py` |
-| SODA app + secret token | `SECRET_SODA_token` (two lines) | `get_DEP_staff_SODA.py` |
-
-Neither file is committed to the repo. In CI both are written from GitHub Secrets.
+**Important:** No cluster is purely environmental — `is_environmental` is an
+individual bill property derived from scoring, not a cluster property. Cluster labels
+reflect the dominant topic across all bills in the cluster, which dilutes the
+environmental signal in mixed clusters.
