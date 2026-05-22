@@ -1,0 +1,73 @@
+{% raw  %}
+<html>
+    <head>
+        <title>MA Lobbying Spend by Topic Cluster</title>
+        <script src='https://cdn.jsdelivr.net/npm/chart.js@4.4.4/dist/chart.umd.min.js'></script>
+    </head>
+    <body>
+        <div style="width: 700px; height: 420px; max-width: 99%" class="chartjs">
+
+            <canvas id="MA Lobbying Spend by Topic Cluster" height="420" width="700"></canvas>
+            <script>
+                Chart.defaults.font.size = 12;
+                var chart_data = {
+
+                    data: {
+                        labels: ["2024"],
+                        datasets: [{'data': [207.24468368924175], 'label': 'Legislative Modernization and Reform', 'backgroundColor': 'rgba(54, 110, 179, 0.85)', 'stack': 'topic'},{'data': [170.02749652619647], 'label': 'Government Finance and Public Services', 'backgroundColor': 'rgba(230, 140, 40, 0.85)', 'stack': 'topic'},{'data': [158.8119590928618], 'label': 'General State Policy', 'backgroundColor': 'rgba(60, 170, 80, 0.85)', 'stack': 'topic'},{'data': [135.5360316131142], 'label': 'Fiscal Policy and Public Benefits', 'backgroundColor': 'rgba(200, 60, 60, 0.85)', 'stack': 'topic'},{'data': [135.23164699922043], 'label': 'Public Health, Safety, and Welfare', 'backgroundColor': 'rgba(130, 80, 200, 0.85)', 'stack': 'topic'},{'data': [118.87502809308093], 'label': 'Health, Climate, and Community', 'backgroundColor': 'rgba(30, 160, 160, 0.85)', 'stack': 'topic'},{'data': [112.22726627967], 'label': 'Public Welfare and Regulation', 'backgroundColor': 'rgba(220, 180, 0, 0.85)', 'stack': 'topic'},{'data': [106.4779665303563], 'label': 'Health and Economic Rights', 'backgroundColor': 'rgba(150, 150, 150, 0.6)', 'stack': 'topic'},{'data': [95.07004449057541], 'label': 'Public Welfare and Administration', 'backgroundColor': 'rgba(54, 110, 179, 0.85)', 'stack': 'topic'},{'data': [90.73133908518015], 'label': 'Economic Affairs and Governance', 'backgroundColor': 'rgba(230, 140, 40, 0.85)', 'stack': 'topic'}]
+                    },
+                    type: 'bar',
+                    options: {
+                        scales: {
+                            y: {
+                                display: true,
+                                title: {
+                                    display: true,
+                                    text: 'Lobbying spend ($M)'
+                                },
+                                position: 'left',
+                                stacked: true
+                            },
+                            y1: {
+                                display: false,
+                                title: {
+                                    display: true,
+                                    text: ''
+                                },
+                                position: 'right'
+                            },
+                            x: {
+                                title: {
+                                    display: true,
+                                    text: 'Year'
+                                },
+                                stacked: true,
+                                ticks: {
+                                    autoSkip: true
+                                }
+                            }
+                        },
+                        plugins: {
+                            legend: {
+                                display: true
+                            },
+                            tooltip: {
+                                enabled: true
+                            }
+                        }
+                    }
+                }
+                
+                
+            </script>
+            <script>
+                {
+
+                    var ctx = document.getElementById("MA Lobbying Spend by Topic Cluster").getContext("2d");
+                    var mychart = new Chart(ctx, chart_data);
+                }
+            </script>
+        </div>
+    </body>
+</html>
+{% endraw  %}

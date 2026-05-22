@@ -1,0 +1,74 @@
+{% raw  %}
+<html>
+    <head>
+        <title>Top 15 MA Lobbying Employers — 2024</title>
+        <script src='https://cdn.jsdelivr.net/npm/chart.js@4.4.4/dist/chart.umd.min.js'></script>
+    </head>
+    <body>
+        <div style="width: 700px; height: 440px; max-width: 99%" class="chartjs">
+
+            <canvas id="Top 15 MA Lobbying Employers — 2024" height="440" width="700"></canvas>
+            <script>
+                Chart.defaults.font.size = 12;
+                var chart_data = {
+
+                    data: {
+                        labels: ["Thomas Bonarrigo", "Patrick Bench", "Christina Ascolillo", "Andrea Costa", "BCB Government Relations, Inc.", "Kathy Bell", "William Cass", "Jennifer Benson", "Bay State Strategies Group, LLC", "Steven Baddour", "Daniel R. Cullinane", "Ava Cabana", "John Cahill", "Jason Aluia", "Carlo Basile"],
+                        datasets: [{'data': [783.02, 818.4, 887.025, 889.31669, 928.0, 1125.0, 1134.932, 1136.49743, 1391.65, 1619.095, 1792.79998, 2042.79996, 2104.275, 2217.12796, 3223.48034], 'label': 'Spend ($K)', 'backgroundColor': 'rgba(230, 140, 40, 0.85)'}]
+                    },
+                    type: 'bar',
+                    options: {
+                        indexAxis: 'y',
+                        scales: {
+                            y: {
+                                display: true,
+                                title: {
+                                    display: true,
+                                    text: ''
+                                },
+                                position: 'left',
+                                stacked: false
+                            },
+                            y1: {
+                                display: false,
+                                title: {
+                                    display: true,
+                                    text: ''
+                                },
+                                position: 'right'
+                            },
+                            x: {
+                                title: {
+                                    display: true,
+                                    text: 'Lobbying spend ($K)'
+                                },
+                                stacked: false,
+                                ticks: {
+                                    autoSkip: true
+                                }
+                            }
+                        },
+                        plugins: {
+                            legend: {
+                                display: true
+                            },
+                            tooltip: {
+                                enabled: true
+                            }
+                        }
+                    }
+                }
+                
+                
+            </script>
+            <script>
+                {
+
+                    var ctx = document.getElementById("Top 15 MA Lobbying Employers — 2024").getContext("2d");
+                    var mychart = new Chart(ctx, chart_data);
+                }
+            </script>
+        </div>
+    </body>
+</html>
+{% endraw  %}

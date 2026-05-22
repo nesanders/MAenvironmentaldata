@@ -188,6 +188,9 @@ def _embed_texts(client, texts: list[str]) -> np.ndarray:
     for i, text in enumerate(texts):
         if (i + 1) % 200 == 0:
             print(f'    {i + 1}/{len(texts)}...')
+        if not text or not text.strip():
+            vectors.append([0.0] * EMBEDDING_DIM)
+            continue
         time.sleep(REQUEST_DELAY)
         for attempt in range(5):
             try:
@@ -225,10 +228,14 @@ def main():
     # Build bill_id lookup from legislature bills CSV (bill_id = H/S + number)
     leg_path = DATA_DIR / 'MA_legislature_bills.csv'
     bill_id_map: dict[tuple, str] = {}
+    leg_title_map: dict[tuple, str] = {}
     if leg_path.exists():
         leg = pd.read_csv(leg_path, index_col=0)
         for _, row in leg.dropna(subset=['bill_id', 'bill_number', 'general_court']).iterrows():
-            bill_id_map[(int(row['bill_number']), int(row['general_court']))] = str(row['bill_id'])
+            key = (int(row['bill_number']), int(row['general_court']))
+            bill_id_map[key] = str(row['bill_id'])
+            if row.get('title'):
+                leg_title_map[key] = str(row['title'])
 
     # Unique bills from lobbying data
     lobby = pd.read_csv(lobby_path, index_col=0)
@@ -246,6 +253,14 @@ def main():
     unique['bill_id'] = unique.apply(
         lambda r: bill_id_map.get((r['bill_number'], r['general_court'])), axis=1
     )
+    # Fill missing portal titles from Legislature API titles
+    missing_title = unique['bill_title'].isna() | (unique['bill_title'].str.strip() == '')
+    unique.loc[missing_title, 'bill_title'] = unique[missing_title].apply(
+        lambda r: leg_title_map.get((r['bill_number'], r['general_court'])), axis=1
+    )
+    n_filled = missing_title.sum() - (unique['bill_title'].isna() | (unique['bill_title'].str.strip() == '')).sum()
+    if n_filled:
+        print(f'  Filled {n_filled} missing titles from Legislature API')
     print(f'Unique bills in lobbying data: {len(unique)}')
     print(f'  {unique["bill_id"].notna().sum()} have legislature bill_id')
 

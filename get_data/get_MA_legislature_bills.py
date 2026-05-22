@@ -1,4 +1,4 @@
-"""Fetch bill metadata from the MA Legislature OpenAPI for bills appearing in lobbying data.
+W"""Fetch bill metadata from the MA Legislature OpenAPI for bills appearing in lobbying data.
 
 API docs: https://malegislature.gov/api/swagger
 
@@ -63,8 +63,10 @@ PASSED_ACTIONS = {
 # Chamber values in lobbying data → API bill ID prefix
 CHAMBER_PREFIX = {
     'House Bill': 'H',
+    'HB': 'H',           # legacy abbreviation
     'House Docket': 'HD',
     'Senate Bill': 'S',
+    'SB': 'S',           # legacy abbreviation
     'Senate Docket': 'SD',
 }
 

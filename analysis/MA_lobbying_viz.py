@@ -16,6 +16,7 @@ Data files written:
 
 import sys
 import os
+from pathlib import Path
 sys.path.insert(0, os.path.dirname(__file__))
 
 import pandas as pd
@@ -449,6 +450,7 @@ def _write_facts(employers: pd.DataFrame, spend_trend: pd.DataFrame, most_recent
 
 
 if __name__ == '__main__':
-    engine = create_engine('sqlite:///AMEND.db')
+    _db = Path(__file__).parent.parent / 'get_data' / 'AMEND.db'
+    engine = create_engine(f'sqlite:///{_db}')
     generate_charts(engine, prefix='')
     generate_post_charts(engine, prefix='')

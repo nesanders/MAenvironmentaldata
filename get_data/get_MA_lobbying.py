@@ -38,6 +38,7 @@ Outputs:
 """
 
 import argparse
+import csv
 import datetime
 import re
 import time
@@ -192,6 +193,15 @@ def _parse_amount(text: str) -> float | None:
 def fetch_disclosure_detail(session, disc_url: str, year: int) -> dict:
     """Parse a CompleteDisclosure page.
 
+    Two HTML formats exist depending on the filing year:
+
+    Modern (≥~2013): per-client compensation in grdvClientPaidToEntity;
+      per-client bill tables as grdvActivitiesNew{year}_{n}.
+
+    Legacy (<~2013): total salary paid in grdvSalaryPaid (no client breakdown);
+      all bill activity in a single grdvActivities table with columns:
+      Date | Bill No+Title | Lobbyist name | Client represented.
+
     Returns dict with:
       compensation: list of {client_name, amount}
       bills:        list of {client_name, chamber, bill_number, bill_title,
@@ -200,8 +210,9 @@ def fetch_disclosure_detail(session, disc_url: str, year: int) -> dict:
     soup = _get(session, disc_url)
     compensation = []
     bills = []
+    gc = _year_to_general_court(year)
 
-    # Client compensation table
+    # ── Modern format ─────────────────────────────────────────────────────────
     comp_table = soup.find(
         'table',
         id=lambda x: x and 'grdvClientPaidToEntity' in (x or '')
@@ -216,13 +227,10 @@ def fetch_disclosure_detail(session, disc_url: str, year: int) -> dict:
                 })
 
     # Bill activity tables — one per client per reporting period
-    # Table IDs: rptActivityNew2020_grdvActivitiesNew2020_{n}
-    gc = _year_to_general_court(year)
     for act_table in soup.find_all(
         'table',
         id=lambda x: x and re.search(r'grdvActivitiesNew\d{4}_\d+', x or '')
     ):
-        # Client name is in a span just before this table
         client_span = act_table.find_previous(
             'span',
             id=lambda x: x and 'lblClientName' in (x or '')
@@ -234,7 +242,7 @@ def fetch_disclosure_detail(session, disc_url: str, year: int) -> dict:
             class_=lambda c: c and 'Grid' in c and 'Header' not in c
         ):
             cells = [td.get_text(strip=True) for td in row.find_all('td')]
-            # Columns: House/Senate, Bill Number or Agency, Bill title, Position, Amount, Direct business
+            # Columns: House/Senate, Bill Number, Bill title, Position, Amount, Direct business
             if len(cells) >= 4:
                 bills.append({
                     'client_name': client_name,
@@ -245,6 +253,64 @@ def fetch_disclosure_detail(session, disc_url: str, year: int) -> dict:
                     'amount': _parse_amount(cells[4]) if len(cells) > 4 else None,
                     'general_court': gc,
                 })
+
+    if comp_table or bills:
+        return {'compensation': compensation, 'bills': bills}
+
+    # ── Legacy format ─────────────────────────────────────────────────────────
+    # Compensation: grdvSalaryPaid has total salary paid to lobbyists, not per
+    # client. Sum to a single entity-level row using a placeholder client name.
+    salary_table = soup.find(
+        'table',
+        id=lambda x: x and 'grdvSalaryPaid' in (x or '')
+    )
+    if salary_table:
+        total = 0.0
+        for row in salary_table.find_all('tr'):
+            cells = [td.get_text(strip=True) for td in row.find_all('td')]
+            if len(cells) >= 2:
+                amt = _parse_amount(cells[1])
+                if amt and 'Total' not in cells[0]:
+                    total += amt
+        if total:
+            compensation.append({'client_name': '_total_salary_', 'amount': total})
+
+    # Bills: single grdvActivities table — columns: Date | Bill+Title | Lobbyist | Client
+    act_table = soup.find(
+        'table',
+        id=lambda x: x and x.endswith('grdvActivities')
+    )
+    if act_table:
+        for row in act_table.find_all('tr'):
+            cells = [td.get_text(strip=True) for td in row.find_all('td')]
+            # Skip header and empty rows; need at least Date + Bill + Client
+            if len(cells) < 3:
+                continue
+            bill_cell = cells[1]   # e.g. "H1166" or "H1166 An Act..."
+            client_name = cells[3] if len(cells) > 3 else ''
+            if not bill_cell or bill_cell in ('Activity or Bill No and Title', 'N/A', ''):
+                continue
+            # Split bill number from title (bill number is the first token)
+            parts = bill_cell.split(None, 1)
+            bill_no = parts[0]
+            bill_title = parts[1] if len(parts) > 1 else ''
+            # Derive chamber from bill number prefix
+            chamber_map = {'H': 'House Bill', 'S': 'Senate Bill',
+                           'HD': 'House Docket', 'SD': 'Senate Docket'}
+            m = re.match(r'^([A-Z]+)(\d+)$', bill_no)
+            if not m:
+                continue
+            prefix, number = m.group(1), m.group(2)
+            chamber = chamber_map.get(prefix, prefix)
+            bills.append({
+                'client_name': client_name,
+                'chamber': chamber,
+                'bill_number': number,
+                'bill_title': bill_title,
+                'position': '',
+                'amount': None,
+                'general_court': gc,
+            })
 
     return {'compensation': compensation, 'bills': bills}
 
@@ -328,7 +394,9 @@ def main():
     def _flush(n_new_disc: int) -> None:
         links_df.to_csv(links_path, index=False)
         employers_df.to_csv(employers_path)
-        bills_df.to_csv(bills_path)
+        # QUOTE_NONNUMERIC ensures all string fields are quoted, preventing Jekyll's
+        # CSV parser from choking on non-ASCII characters (e.g. smart quotes in titles).
+        bills_df.to_csv(bills_path, quoting=csv.QUOTE_NONNUMERIC)
         print(f'    [flush] {len(links_df)} links, {len(employers_df)} employer rows, '
               f'{len(bills_df)} bill rows (+{n_new_disc} new disclosures this session)')
 

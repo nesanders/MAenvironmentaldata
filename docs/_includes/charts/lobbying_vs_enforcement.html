@@ -1,0 +1,73 @@
+{% raw  %}
+<html>
+    <head>
+        <title>MA Lobbying Spend vs. Enforcement Actions</title>
+        <script src='https://cdn.jsdelivr.net/npm/chart.js@4.4.4/dist/chart.umd.min.js'></script>
+    </head>
+    <body>
+        <div style="width: 700px; height: 380px; max-width: 99%" class="chartjs">
+
+            <canvas id="MA Lobbying Spend vs. Enforcement Actions" height="380" width="700"></canvas>
+            <script>
+                Chart.defaults.font.size = 12;
+                var chart_data = {
+
+                    data: {
+                        labels: ["2009", "2024"],
+                        datasets: [{'data': [1.97602, 74.94200714], 'label': 'Lobbying spend ($M)', 'backgroundColor': 'rgba(54, 110, 179, 0.85)', 'yAxisID': 'y'},{'data': [499, 339], 'label': 'Enforcement actions', 'backgroundColor': 'rgba(200, 60, 60, 0.85)', 'type': 'line', 'yAxisID': 'y1'}]
+                    },
+                    type: 'bar',
+                    options: {
+                        scales: {
+                            y: {
+                                display: true,
+                                title: {
+                                    display: true,
+                                    text: 'Lobbying spend ($M)'
+                                },
+                                position: 'left',
+                                stacked: false
+                            },
+                            y1: {
+                                display: true,
+                                title: {
+                                    display: true,
+                                    text: 'Enforcement actions'
+                                },
+                                position: 'right'
+                            },
+                            x: {
+                                title: {
+                                    display: true,
+                                    text: 'Year'
+                                },
+                                stacked: false,
+                                ticks: {
+                                    autoSkip: true
+                                }
+                            }
+                        },
+                        plugins: {
+                            legend: {
+                                display: true
+                            },
+                            tooltip: {
+                                enabled: true
+                            }
+                        }
+                    }
+                }
+                
+                
+            </script>
+            <script>
+                {
+
+                    var ctx = document.getElementById("MA Lobbying Spend vs. Enforcement Actions").getContext("2d");
+                    var mychart = new Chart(ctx, chart_data);
+                }
+            </script>
+        </div>
+    </body>
+</html>
+{% endraw  %}

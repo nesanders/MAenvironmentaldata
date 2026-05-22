@@ -69,7 +69,6 @@ def main():
 
     labels_df = pd.read_csv(LABELS_CSV)
     label_map = dict(zip(labels_df['cluster_id'].astype(int), labels_df['label']))
-    env_map   = dict(zip(labels_df['cluster_id'].astype(int), labels_df['n_env_bills']))
     size_map  = dict(zip(labels_df['cluster_id'].astype(int), labels_df['n_bills']))
 
     # Build embedding matrix
@@ -93,77 +92,104 @@ def main():
     parquet_df['x'] = coords[:, 0]
     parquet_df['y'] = coords[:, 1]
 
-    # One Plotly trace per cluster
+    # ── Build traces ────────────────────────────────────────────────────────────
+    # Two sub-traces per cluster (non-env + env) sharing a legendgroup so the
+    # legend shows one entry per cluster. Each point belongs to exactly one
+    # sub-trace, so hover is unambiguous.
+    #   non-env: small (5px), muted opacity, no outline
+    #   env:     large (10px), full opacity, black outline
+
     fig = go.Figure()
     cluster_ids = sorted(parquet_df['cluster_id'].unique())
 
-    for cid in cluster_ids:
-        mask = parquet_df['cluster_id'] == cid
-        sub  = parquet_df[mask]
-        lbl  = label_map.get(cid, f'Cluster {cid}')
-        n_env = env_map.get(cid, 0)
+    if 'is_environmental' not in parquet_df.columns:
+        parquet_df['is_environmental'] = False
+    parquet_df['is_environmental'] = parquet_df['is_environmental'].fillna(False).astype(bool)
+
+    for i, cid in enumerate(cluster_ids):
+        mask  = parquet_df['cluster_id'] == cid
+        sub   = parquet_df[mask].copy()
+        lbl   = label_map.get(cid, f'Cluster {cid}')
         n_tot = size_map.get(cid, len(sub))
         color = PALETTE[cid % len(PALETTE)]
 
-        # Mark environmental bills with a ring (open circle marker)
-        is_env = sub.get('is_environmental', pd.Series(False, index=sub.index)).fillna(False).astype(bool)
+        def _hover(row):
+            env_line = '🌿 <b>environmental</b>' if row['is_environmental'] else 'not environmental'
+            return (f'<b>{row.get("bill_title", "")}</b><br>'
+                    f'GC {int(row["general_court"])} · {lbl}<br>'
+                    f'{env_line}')
 
-        # Non-environmental points
-        if (~is_env).any():
-            hover = [
-                f'<b>{row.get("bill_title", "")}</b><br>'
-                f'GC {int(row["general_court"])} · {lbl}'
-                for _, row in sub[~is_env].iterrows()
-            ]
+        non_env = sub[~sub['is_environmental']]
+        env     = sub[sub['is_environmental']]
+
+        # Non-environmental sub-trace (muted)
+        if not non_env.empty:
             fig.add_trace(go.Scatter(
-                x=sub[~is_env]['x'], y=sub[~is_env]['y'],
+                x=non_env['x'], y=non_env['y'],
                 mode='markers',
-                marker=dict(color=color, size=5, opacity=0.55),
-                name=f'{lbl} ({n_tot} bills, {n_env} env)',
+                marker=dict(color=color, size=5, opacity=0.35),
+                name=f'{lbl} ({n_tot})',
                 legendgroup=str(cid),
-                hovertext=hover,
+                legendgrouptitle=dict(text='Topic clusters') if i == 0 else dict(text=''),
+                hovertext=[_hover(r) for _, r in non_env.iterrows()],
                 hoverinfo='text',
                 showlegend=True,
             ))
 
-        # Environmental points — same colour, larger + outlined
-        if is_env.any():
-            hover_env = [
-                f'<b>{row.get("bill_title", "")}</b><br>'
-                f'GC {int(row["general_court"])} · {lbl}<br>'
-                f'<i>environmental</i>'
-                for _, row in sub[is_env].iterrows()
-            ]
+        # Environmental sub-trace (vivid, outlined) — same legendgroup, no legend entry
+        if not env.empty:
             fig.add_trace(go.Scatter(
-                x=sub[is_env]['x'], y=sub[is_env]['y'],
+                x=env['x'], y=env['y'],
                 mode='markers',
                 marker=dict(
-                    color=color, size=8, opacity=0.9,
-                    line=dict(color='white', width=1),
+                    color=color, size=10, opacity=1.0,
+                    line=dict(color='black', width=1.5),
                 ),
-                name=f'  ↳ environmental',
+                name=f'{lbl} env',
                 legendgroup=str(cid),
-                hovertext=hover_env,
+                hovertext=[_hover(r) for _, r in env.iterrows()],
                 hoverinfo='text',
                 showlegend=False,
             ))
 
+    # Dummy trace for legend explanation of the env marker style
+    fig.add_trace(go.Scatter(
+        x=[None], y=[None], mode='markers',
+        marker=dict(color='grey', size=10, opacity=1.0,
+                    line=dict(color='black', width=1.5)),
+        name='Environmental bill',
+        legendgroup='env_key',
+        legendgrouptitle=dict(text='Marker style'),
+        showlegend=True,
+    ))
+    fig.add_trace(go.Scatter(
+        x=[None], y=[None], mode='markers',
+        marker=dict(color='grey', size=5, opacity=0.35),
+        name='Non-environmental',
+        legendgroup='env_key',
+        showlegend=True,
+    ))
+
     fig.update_layout(
         title=dict(
-            text='MA Lobbying Bills — Topic Clusters (t-SNE projection of Gemini embeddings)',
-            font=dict(size=14),
+            text=(
+                'MA Lobbying Bills — Topic Clusters (t-SNE of Gemini embeddings)<br>'
+                '<sup>Large outlined dot = environmental · small dot = non-environmental'
+                ' · colour = topic cluster · hover for details</sup>'
+            ),
+            font=dict(size=13),
         ),
         xaxis=dict(visible=False),
         yaxis=dict(visible=False),
         legend=dict(
-            title='Cluster',
-            font=dict(size=11),
+            font=dict(size=10),
             itemsizing='constant',
+            tracegroupgap=10,
         ),
-        margin=dict(l=10, r=10, t=50, b=10),
-        width=800,
-        height=550,
-        plot_bgcolor='#f8f8f8',
+        margin=dict(l=10, r=10, t=65, b=10),
+        width=820,
+        height=580,
+        plot_bgcolor='#f5f5f5',
         paper_bgcolor='white',
         hovermode='closest',
     )
