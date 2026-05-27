@@ -27,6 +27,7 @@ Outputs:
   ../docs/data/ts_update_MA_legislature.yml
 """
 
+import csv
 import datetime
 import json
 import time
@@ -237,7 +238,7 @@ def main():
     FLUSH_EVERY = 50
 
     def _flush(n_done: int) -> None:
-        combined.to_csv(legislature_path)
+        combined.to_csv(legislature_path, quoting=csv.QUOTE_NONNUMERIC)
         print(f'  [{n_done}/{len(to_fetch)}] flushed {len(combined)} bill records')
 
     for i, row in enumerate(to_fetch):
