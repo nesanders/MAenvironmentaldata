@@ -1,20 +1,20 @@
 {% raw  %}
 <html>
     <head>
-        <title>Top 15 MA Lobbying Clients — 2025</title>
+        <title>Top 20 Clients by Cumulative Environmental Lobbying Spend</title>
         <script src='https://cdn.jsdelivr.net/npm/chart.js@4.4.4/dist/chart.umd.min.js'></script>
     </head>
     <body>
-        <div style="width: 700px; height: 440px; max-width: 99%" class="chartjs">
+        <div style="width: 750px; height: 520px; max-width: 99%" class="chartjs">
 
-            <canvas id="Top 15 MA Lobbying Clients — 2025" height="440" width="700"></canvas>
+            <canvas id="Top 20 Clients by Cumulative Environmental Lobbying Spend" height="520" width="750"></canvas>
             <script>
                 Chart.defaults.font.size = 12;
                 var chart_data = {
 
                     data: {
-                        labels: ["Boston Electrometallurgical Corporation", "Brighton Marine Inc", "Vertex Pharmaceuticals Incorporated", "Uber Technologies, Inc.", "Massachusetts Health & Hospital Association", "Mass General Brigham Incorporated", "Pharmaceutical Research and Manufacturers of America Corporation", "Wine & Spirit Wholesalers of Massachusetts", "_total_salary_", "Sterling Suffolk Racecourse, LLC", "National Strategies, LLC", "DraftKings Inc.", "Keolis Commuter Services, LLC", "Sports Betting Alliance", "Massachusetts Biotechnology Council, Inc"],
-                        datasets: [{'data': [150.0, 150.0, 156.0, 156.0, 159.0, 160.5, 176.45835, 184.0, 187.8, 210.0, 215.5, 219.0, 225.0, 255.0, 255.01591], 'label': 'Spend ($K)', 'backgroundColor': 'rgba(230, 140, 40, 0.85)'}]
+                        labels: ["American Fuel & Petrochemical Manufacturers", "Casella Waste Systems, Inc.", "Mettler Packaging LLC", "Pulte Homes of New England LLC", "Eversource", "Marine Biological Laboratory", "Eversource Energy", "Sports Betting Alliance", "Consumers for Sensible Energy", "Equinor Wind U.S. LLC", "Uber Technologies, Inc.", "Beth Israel Lahey Health, Inc.", "Orsted Wind Power North America Inc.", "Massachusetts Biotechnology Council, Inc.", "PepsiCo, Inc.", "NextEra Energy Resources, LLC", "American Chemistry Council", "Baystate Racing LLC", "Sterling Suffolk Racecourse, LLC", "FirstLight Power Resources"],
+                        datasets: [{'data': [0.111475, 0.11369615384615385, 0.12, 0.12054545454545454, 0.13047121535181236, 0.135, 0.13513320463320463, 0.14, 0.141, 0.142403, 0.1430453738512949, 0.14447319749216303, 0.1455, 0.1512826923076923, 0.15310407239819007, 0.16227272727272726, 0.16867562293947289, 0.1755, 0.19305555555555556, 0.21025], 'label': 'Total env-bill spend ($M, all years)', 'backgroundColor': 'rgba(60, 170, 80, 0.85)'}]
                     },
                     type: 'bar',
                     options: {
@@ -40,7 +40,7 @@
                             x: {
                                 title: {
                                     display: true,
-                                    text: 'Lobbying spend ($K)'
+                                    text: 'Cumulative env-bill spend ($M)'
                                 },
                                 stacked: false,
                                 ticks: {
@@ -64,7 +64,7 @@
             <script>
                 {
 
-                    var ctx = document.getElementById("Top 15 MA Lobbying Clients — 2025").getContext("2d");
+                    var ctx = document.getElementById("Top 20 Clients by Cumulative Environmental Lobbying Spend").getContext("2d");
                     var mychart = new Chart(ctx, chart_data);
                 }
             </script>

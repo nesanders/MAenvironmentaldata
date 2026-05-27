@@ -77,6 +77,20 @@ All four follow the existing `{% include %}` pattern in `docs/dashboard.md`.
 - Session (General Court) index: resolves bill numbers across sessions (190th, 191st, etc.)
 - Sponsor data: cross-reference sponsor names against lobbying employer targets to identify which legislators are most frequently lobbied on environmental topics (analysis-post level, not dashboard)
 
+#### Pending: re-fetch 2010–2016 bill data
+
+The 2010+ disclosure pages use a 5-column format (`Activity or Bill No and Title | Position | DirectBiz | Client | Compensation`) rather than the 2009 4-column format (`Date | Bill+Title | Lobbyist | Client`). The scraper parser was reading the wrong column as the bill cell, so 2010–2016 fetches captured employer compensation but zero bills.
+
+Fix is already applied in `get_MA_lobbying.py` (header-based format detection — looks for `'Activity'` in the first header cell to choose `bill_col=0, client_col=3` vs. the 2009 layout). The currently-running historical scrape (started 2026-05-21) has already cached those years' `disc_url`s as "fetched", so the fix won't take effect until those rows are re-queued.
+
+Recovery steps (run from `get_data/` after the main scrape finishes through 2026):
+1. Confirm main scrape complete: check `MA_lobbying_summary_links.csv` has rows through 2026
+2. Delete year 2010–2016 rows: `python -c "import pandas as pd; df = pd.read_csv('../docs/data/MA_lobbying_summary_links.csv', index_col=0); df = df[~df['year'].astype(int).between(2010, 2016)]; df.to_csv('../docs/data/MA_lobbying_summary_links.csv')"`
+3. Restart scraper: `/home/nes/miniconda/envs/amend_python/bin/python -u get_MA_lobbying.py` — will re-fetch only those years using the fixed parser
+4. Run `get_MA_legislature_bills.py` to pick up any new general courts found
+5. Run `score_lobbying_bills.py`, `cluster_lobbying_bills.py`, `assemble_db.py`, `generate_semantic_context.py`
+6. Re-run `MA_lobbying_viz.py` and update the draft analysis post
+
 #### Implementation sequence
 1. Manual exploration: browse SoS portal to document exact URL patterns, pagination parameters, and field names before writing scraper
 2. Write `get_MA_lobbying.py` with caching; run manually on one year to validate

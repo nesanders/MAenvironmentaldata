@@ -1,0 +1,73 @@
+{% raw  %}
+<html>
+    <head>
+        <title>Environmental Lobbying Spend by Topic Cluster</title>
+        <script src='https://cdn.jsdelivr.net/npm/chart.js@4.4.4/dist/chart.umd.min.js'></script>
+    </head>
+    <body>
+        <div style="width: 750px; height: 420px; max-width: 99%" class="chartjs">
+
+            <canvas id="Environmental Lobbying Spend by Topic Cluster" height="420" width="750"></canvas>
+            <script>
+                Chart.defaults.font.size = 12;
+                var chart_data = {
+
+                    data: {
+                        labels: ["2019", "2020", "2021", "2022", "2023", "2024"],
+                        datasets: [{'data': [0.0, 0.0, 0.0, 0.0, 10.307220470761942, 10.941908305382599], 'label': 'Diverse State Policy Initiatives', 'backgroundColor': 'rgba(54, 110, 179, 0.85)', 'stack': 'a'},{'data': [4.070981707428498, 6.291008292523069, 5.24961051587183, 3.6675265058780435, 0.1779138655462185, 1.0317534347389106], 'label': 'Energy Policy and Decarbonization', 'backgroundColor': 'rgba(230, 140, 40, 0.85)', 'stack': 'a'},{'data': [0.0, 0.0, 0.0, 0.0, 3.586780497392542, 8.613110418535594], 'label': 'Public Well-being and Access', 'backgroundColor': 'rgba(60, 170, 80, 0.85)', 'stack': 'a'},{'data': [0.0, 0.0, 0.0, 0.0, 2.909407089784447, 4.048481686644864], 'label': 'Public Policy and Governance', 'backgroundColor': 'rgba(200, 60, 60, 0.85)', 'stack': 'a'},{'data': [1.146309561385318, 0.7568972316054843, 2.5251977521589097, 1.5405317633366633, 0.0025555555555555557, 0.7837356141230316], 'label': 'Public Sector, COVID-19, & Economy', 'backgroundColor': 'rgba(130, 80, 200, 0.85)', 'stack': 'a'},{'data': [1.1170925979724315, 0.34378519098248655, 0.7004959008721663, 0.49156170863910603, 0.0, 0.0008333333333333334], 'label': 'Sustainable and Equitable Development', 'backgroundColor': 'rgba(30, 160, 160, 0.85)', 'stack': 'a'},{'data': [0.8030146390697565, 0.6004438248889606, 0.7113567256226752, 0.5081535263070264, 0.0, 0.0075], 'label': 'Regulatory and Commercial Laws', 'backgroundColor': 'rgba(220, 180, 0, 0.85)', 'stack': 'a'},{'data': [0.0, 0.0, 0.0, 0.0, 0.6437540435058794, 0.43349967472615725], 'label': 'Healthcare and Public Services', 'backgroundColor': 'rgba(150, 150, 150, 0.6)', 'stack': 'a'},{'data': [0.10184305414399636, 0.06908, 0.2419164354744192, 0.3426891558391608, 0.14517080745341615, 0.8604762425155112], 'label': 'Other', 'backgroundColor': 'rgba(54, 110, 179, 0.85)', 'stack': 'a'}]
+                    },
+                    type: 'bar',
+                    options: {
+                        scales: {
+                            y: {
+                                display: true,
+                                title: {
+                                    display: true,
+                                    text: 'Allocated spend ($M)'
+                                },
+                                position: 'left',
+                                stacked: true
+                            },
+                            y1: {
+                                display: false,
+                                title: {
+                                    display: true,
+                                    text: ''
+                                },
+                                position: 'right'
+                            },
+                            x: {
+                                title: {
+                                    display: true,
+                                    text: 'Year'
+                                },
+                                stacked: true,
+                                ticks: {
+                                    autoSkip: true
+                                }
+                            }
+                        },
+                        plugins: {
+                            legend: {
+                                display: true
+                            },
+                            tooltip: {
+                                enabled: true
+                            }
+                        }
+                    }
+                }
+                
+                
+            </script>
+            <script>
+                {
+
+                    var ctx = document.getElementById("Environmental Lobbying Spend by Topic Cluster").getContext("2d");
+                    var mychart = new Chart(ctx, chart_data);
+                }
+            </script>
+        </div>
+    </body>
+</html>
+{% endraw  %}

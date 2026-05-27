@@ -1,46 +1,45 @@
 {% raw  %}
 <html>
     <head>
-        <title>Top 15 MA Lobbying Clients — 2025</title>
+        <title>MA Lobbying Spend vs. DEP Budget (inflation-adjusted)</title>
         <script src='https://cdn.jsdelivr.net/npm/chart.js@4.4.4/dist/chart.umd.min.js'></script>
     </head>
     <body>
-        <div style="width: 700px; height: 440px; max-width: 99%" class="chartjs">
+        <div style="width: 700px; height: 400px; max-width: 99%" class="chartjs">
 
-            <canvas id="Top 15 MA Lobbying Clients — 2025" height="440" width="700"></canvas>
+            <canvas id="MA Lobbying Spend vs. DEP Budget (inflation-adjusted)" height="400" width="700"></canvas>
             <script>
                 Chart.defaults.font.size = 12;
                 var chart_data = {
 
                     data: {
-                        labels: ["Boston Electrometallurgical Corporation", "Brighton Marine Inc", "Vertex Pharmaceuticals Incorporated", "Uber Technologies, Inc.", "Massachusetts Health & Hospital Association", "Mass General Brigham Incorporated", "Pharmaceutical Research and Manufacturers of America Corporation", "Wine & Spirit Wholesalers of Massachusetts", "_total_salary_", "Sterling Suffolk Racecourse, LLC", "National Strategies, LLC", "DraftKings Inc.", "Keolis Commuter Services, LLC", "Sports Betting Alliance", "Massachusetts Biotechnology Council, Inc"],
-                        datasets: [{'data': [150.0, 150.0, 156.0, 156.0, 159.0, 160.5, 176.45835, 184.0, 187.8, 210.0, 215.5, 219.0, 225.0, 255.0, 255.01591], 'label': 'Spend ($K)', 'backgroundColor': 'rgba(230, 140, 40, 0.85)'}]
+                        labels: ["2019", "2020", "2021", "2022", "2023", "2024"],
+                        datasets: [{'data': [8.341891559999999, 9.58408437, 11.58140393, 7.58762966, 20.27611891, 28.79368973], 'label': 'Industry lobbying spend ($M)', 'backgroundColor': 'rgba(230, 140, 40, 0.85)', 'yAxisID': 'y'},{'data': [37.60870536390118, 40.28206302422945, 46.254922289813294, 36.60585418435639, 47.59754731934593, 52.038191], 'label': 'DEP admin budget ($M, inflation-adj.)', 'backgroundColor': 'rgba(54, 110, 179, 0.85)', 'type': 'line', 'yAxisID': 'y1'}]
                     },
                     type: 'bar',
                     options: {
-                        indexAxis: 'y',
                         scales: {
                             y: {
                                 display: true,
                                 title: {
                                     display: true,
-                                    text: ''
+                                    text: 'Lobbying spend ($M)'
                                 },
                                 position: 'left',
                                 stacked: false
                             },
                             y1: {
-                                display: false,
+                                display: true,
                                 title: {
                                     display: true,
-                                    text: ''
+                                    text: 'DEP budget ($M)'
                                 },
                                 position: 'right'
                             },
                             x: {
                                 title: {
                                     display: true,
-                                    text: 'Lobbying spend ($K)'
+                                    text: 'Year'
                                 },
                                 stacked: false,
                                 ticks: {
@@ -64,7 +63,7 @@
             <script>
                 {
 
-                    var ctx = document.getElementById("Top 15 MA Lobbying Clients — 2025").getContext("2d");
+                    var ctx = document.getElementById("MA Lobbying Spend vs. DEP Budget (inflation-adjusted)").getContext("2d");
                     var mychart = new Chart(ctx, chart_data);
                 }
             </script>

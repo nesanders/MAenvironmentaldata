@@ -9,6 +9,10 @@ Dashboard charts (called with prefix='dash_' by dashboard_charts.py):
 Analysis-post charts (no prefix, generate_post_charts):
   lobbying_spend_vs_budget          — Lobbying spend overlaid on DEP budget (dual-axis)
   lobbying_bill_pass_by_spend_tier  — Bill pass rate by lobbying intensity tier
+  lobbying_spend_vs_staff           — Env lobbying spend vs. DEP FTE headcount (dual-axis)
+  lobbying_env_cluster_share        — Env-bill lobbying spend by topic cluster, stacked over years
+  lobbying_top_env_employers        — Top 20 employers ranked by total env-bill lobbying spend
+  lobbying_cso_operators            — Lobbying spend by known CSO operators (permittees), by year
 
 Data files written:
   docs/data/facts_lobbying.yml      — Key facts for Jekyll post templates
@@ -77,15 +81,20 @@ def _env_bills(lobby_bills: pd.DataFrame, leg_bills: pd.DataFrame) -> pd.DataFra
 
 def _annual_env_spend(employers: pd.DataFrame, lobby_bills: pd.DataFrame,
                       leg_bills: pd.DataFrame) -> pd.DataFrame:
-    """Annual total employer spend for employers who lobbied at least one environmental bill."""
+    """Annual total client spend on environmental bills.
+
+    Filters MA_Lobbying_Employers to (entity, client, year) rows whose client
+    lobbied at least one environmental bill that year, then sums compensation.
+    Excludes the legacy 'Total salaries received' aggregate rows.
+    """
     if employers.empty or lobby_bills.empty:
         return pd.DataFrame()
     env_lb = _env_bills(lobby_bills, leg_bills)
     if env_lb.empty:
-        # Fallback: use all bills if scoring hasn't run yet
         env_lb = lobby_bills.copy()
-    env_employers = env_lb[['entity_name', 'year']].drop_duplicates()
-    merged = employers.merge(env_employers, on=['entity_name', 'year'], how='inner')
+    env_pairs = env_lb[['client_name', 'year']].drop_duplicates()
+    emp = employers[employers['client_name'] != 'Total salaries received']
+    merged = emp.merge(env_pairs, on=['client_name', 'year'], how='inner')
     return (
         merged.groupby('year')['compensation']
         .sum()
@@ -144,18 +153,24 @@ def generate_charts(engine, prefix=''):
         if year_counts[most_recent_year] < year_counts[penultimate] * 0.5:
             most_recent_year = penultimate
 
+    # Aggregate by client (paying entity), not by lobbying firm
+    emp_year = employers[
+        (employers['year'] == most_recent_year)
+        & (employers['client_name'] != 'Total salaries received')
+    ]
     top_employers = (
-        employers[employers['year'] == most_recent_year]
-        .nlargest(15, 'compensation')[['entity_name', 'compensation']]
-        .sort_values('compensation')  # ascending for horizontal bar
+        emp_year.groupby('client_name')['compensation'].sum()
+        .nlargest(15)
+        .sort_values()  # ascending for horizontal bar
+        .reset_index()
     )
 
     if not top_employers.empty:
         c = chartjs.Chart(
-            f'Top 15 MA Lobbying Employers — {most_recent_year}',
+            f'Top 15 MA Lobbying Clients — {most_recent_year}',
             'HorizontalBar', width=700, height=440,
         )
-        c.set_labels(top_employers['entity_name'].tolist())
+        c.set_labels(top_employers['client_name'].tolist())
         spend_k = (top_employers['compensation'] / 1e3).tolist()
         c.add_dataset(spend_k, 'Spend ($K)', backgroundColor=f"'{ORANGE}'")
         c.set_params(js_inline=False, xlabel='Lobbying spend ($K)')
@@ -281,18 +296,20 @@ def _chart_spend_by_cluster(engine, employers: pd.DataFrame, lobby_bills: pd.Dat
     lb = lb.dropna(subset=['cluster_id'])
     lb['cluster_id'] = lb['cluster_id'].astype(int)
 
-    # Join employer compensation: match entity_name + year
-    lb_emp = lb.merge(employers[['entity_name', 'year', 'compensation']],
-                      on=['entity_name', 'year'], how='left')
+    # Join client compensation: match (entity_name, client_name, year)
+    emp = employers[employers['client_name'] != 'Total salaries received']
+    lb_emp = lb.merge(emp[['entity_name', 'client_name', 'year', 'compensation']],
+                      on=['entity_name', 'client_name', 'year'], how='left')
 
     # Annual spend per cluster (divide compensation equally across clusters
-    # lobbied by each entity in that year to avoid double-counting)
-    clusters_per_entity_year = (
-        lb_emp.groupby(['entity_name', 'year'])['cluster_id']
+    # lobbied by each (firm, client) pair in that year to avoid double-counting)
+    clusters_per_pair_year = (
+        lb_emp.groupby(['entity_name', 'client_name', 'year'])['cluster_id']
         .nunique()
         .reset_index(name='n_clusters')
     )
-    lb_emp = lb_emp.merge(clusters_per_entity_year, on=['entity_name', 'year'])
+    lb_emp = lb_emp.merge(clusters_per_pair_year,
+                          on=['entity_name', 'client_name', 'year'])
     lb_emp['spend_share'] = lb_emp['compensation'] / lb_emp['n_clusters']
 
     spend_by_cluster = (
@@ -354,10 +371,11 @@ def generate_post_charts(engine, prefix=''):
     # ── Post chart 1: Lobbying spend vs. DEP budget ───────────────────────────
     try:
         budget = pd.read_sql_query(
-            'SELECT Year, DEPAdministration_inf_float FROM MassBudget_summary', engine
+            'SELECT Year, DEPAdministration_inf FROM MassBudget_summary', engine
         )
         budget['Year'] = pd.to_numeric(budget['Year'], errors='coerce').astype('Int64')
-    except Exception:
+    except Exception as e:
+        print(f'  Budget query failed: {e}')
         budget = pd.DataFrame()
 
     spend_trend = _annual_env_spend(employers, lobby_bills, leg_bills)
@@ -367,7 +385,7 @@ def generate_post_charts(engine, prefix=''):
         merged = merged.sort_values('year')
         years_sb = merged['year'].astype(int).tolist()
         spend_m = (merged['compensation'] / 1e6).tolist()
-        budget_m = (merged['DEPAdministration_inf_float'] / 1e6).tolist()
+        budget_m = (merged['DEPAdministration_inf'].astype(float) / 1e6).tolist()
 
         c = chartjs.Chart(
             'MA Lobbying Spend vs. DEP Budget (inflation-adjusted)',
@@ -393,7 +411,7 @@ def generate_post_charts(engine, prefix=''):
         env_lb = _env_bills(lobby_bills, leg_bills)
         if not env_lb.empty and 'passed' in env_lb.columns:
             employer_counts = (
-                env_lb.groupby(['bill_number', 'general_court'])['entity_name']
+                env_lb.groupby(['bill_number', 'general_court'])['client_name']
                 .nunique()
                 .reset_index(name='employer_count')
             )
@@ -402,14 +420,14 @@ def generate_post_charts(engine, prefix=''):
 
             def _tier(n):
                 if n >= 10:
-                    return '10+ employers'
+                    return '10+ clients'
                 elif n >= 3:
-                    return '3–9 employers'
+                    return '3–9 clients'
                 else:
-                    return '1–2 employers'
+                    return '1–2 clients'
 
             tc['tier'] = tc['employer_count'].apply(_tier)
-            tier_order = ['1–2 employers', '3–9 employers', '10+ employers']
+            tier_order = ['1–2 clients', '3–9 clients', '10+ clients']
             summary = (
                 tc.groupby('tier')['passed']
                 .agg(['mean', 'count'])
@@ -431,14 +449,250 @@ def generate_post_charts(engine, prefix=''):
             c.jekyll_write(f'{CHART_DIR}/{prefix}lobbying_bill_pass_by_spend_tier.html')
             print(f'Wrote {prefix}lobbying_bill_pass_by_spend_tier.html')
 
+    # ── Post chart 3: Lobbying spend vs. DEP FTE headcount ────────────────────
+    try:
+        staff = pd.read_sql_query(
+            "SELECT year, COUNT(*) AS n_fte FROM MADEP_staff_Comptroller "
+            "WHERE pay_total_actual > 0 GROUP BY year", engine
+        )
+        staff['year'] = pd.to_numeric(staff['year'], errors='coerce').astype('Int64')
+    except Exception:
+        staff = pd.DataFrame()
+
+    if not spend_trend.empty and not staff.empty:
+        merged = spend_trend.merge(staff, on='year', how='inner').sort_values('year')
+        if not merged.empty:
+            years_s = merged['year'].astype(int).tolist()
+            spend_m = (merged['compensation'] / 1e6).tolist()
+            fte = merged['n_fte'].astype(int).tolist()
+
+            c = chartjs.Chart(
+                'Environmental Lobbying Spend vs. DEP Staff Headcount',
+                'Bar', width=700, height=400,
+            )
+            c.set_labels([str(y) for y in years_s])
+            c.add_dataset(spend_m, 'Industry lobbying spend ($M)',
+                          backgroundColor=f"'{ORANGE}'", yAxisID="'y'")
+            c.add_dataset(fte, 'DEP staff (FTE)',
+                          backgroundColor=f"'{BLUE}'", type="'line'", yAxisID="'y1'")
+            c.set_params(
+                js_inline=False,
+                ylabel='Lobbying spend ($M)',
+                xlabel='Year',
+                y2nd=1,
+                y2nd_title='DEP staff (FTE)',
+            )
+            c.jekyll_write(f'{CHART_DIR}/{prefix}lobbying_spend_vs_staff.html')
+            print(f'Wrote {prefix}lobbying_spend_vs_staff.html')
+
+    # ── Post chart 4: Env-bill lobbying spend by topic cluster, stacked ───────
+    # Joins employers→lobby_bills→scored→cluster_labels.
+    if (not employers.empty and not lobby_bills.empty
+            and 'cluster_id' in leg_bills.columns):
+        try:
+            cluster_labels = pd.read_sql_query(
+                'SELECT cluster_id, label FROM MA_Bill_Cluster_Labels', engine
+            )
+        except Exception:
+            cluster_labels = pd.DataFrame()
+
+        env_lb = _env_bills(lobby_bills, leg_bills)
+        if not env_lb.empty and not cluster_labels.empty:
+            # Attach cluster_id to each env lobby_bills row
+            scored_cluster = leg_bills[['bill_number', 'general_court', 'cluster_id']]
+            env_lb_c = env_lb.merge(
+                scored_cluster, on=['bill_number', 'general_court'], how='left'
+            )
+            # Allocate (firm, client) compensation equally across env bills they
+            # lobbied that year, then sum by (year, cluster_id).
+            pair_year_bills = (
+                env_lb_c.groupby(['entity_name', 'client_name', 'year'])
+                .size().reset_index(name='n_env_bills')
+            )
+            emp = employers[employers['client_name'] != 'Total salaries received']
+            emp_join = emp.merge(
+                pair_year_bills, on=['entity_name', 'client_name', 'year'], how='inner'
+            )
+            emp_join['per_bill'] = emp_join['compensation'] / emp_join['n_env_bills']
+            cluster_spend = env_lb_c.merge(
+                emp_join[['entity_name', 'client_name', 'year', 'per_bill']],
+                on=['entity_name', 'client_name', 'year'], how='left'
+            ).dropna(subset=['cluster_id', 'per_bill'])
+            cluster_spend['cluster_id'] = cluster_spend['cluster_id'].astype(int)
+            agg = (
+                cluster_spend.groupby(['year', 'cluster_id'])['per_bill']
+                .sum().reset_index()
+            )
+            agg = agg.merge(cluster_labels, on='cluster_id', how='left')
+            pivot = agg.pivot_table(
+                index='year', columns='label', values='per_bill', aggfunc='sum'
+            ).fillna(0).sort_index()
+            # Keep top 8 clusters by total spend, group rest into "Other"
+            totals = pivot.sum(axis=0).sort_values(ascending=False)
+            top = totals.head(8).index.tolist()
+            other_cols = [c for c in pivot.columns if c not in top]
+            if other_cols:
+                pivot['Other'] = pivot[other_cols].sum(axis=1)
+                pivot = pivot[top + ['Other']]
+            else:
+                pivot = pivot[top]
+
+            years = pivot.index.astype(int).tolist()
+            c = chartjs.Chart(
+                'Environmental Lobbying Spend by Topic Cluster',
+                'Bar', width=750, height=420,
+            )
+            c.set_labels([str(y) for y in years])
+            for i, col in enumerate(pivot.columns):
+                color = SECTOR_COLORS[i % len(SECTOR_COLORS)]
+                c.add_dataset(
+                    (pivot[col] / 1e6).tolist(), col,
+                    backgroundColor=f"'{color}'", stack="'a'",
+                )
+            c.set_params(
+                js_inline=False,
+                ylabel='Allocated spend ($M)',
+                xlabel='Year',
+                stacked=1,
+            )
+            c.jekyll_write(f'{CHART_DIR}/{prefix}lobbying_env_cluster_share.html')
+            print(f'Wrote {prefix}lobbying_env_cluster_share.html')
+
+    # ── Post chart 5: Top clients by cumulative environmental lobbying spend ──
+    if not employers.empty and not lobby_bills.empty:
+        env_lb = _env_bills(lobby_bills, leg_bills)
+        if not env_lb.empty:
+            # Per (firm, client, year): env share = env bills / total bills lobbied
+            pair_keys = ['entity_name', 'client_name', 'year']
+            bill_counts = (
+                lobby_bills.groupby(pair_keys).size()
+                .reset_index(name='n_all')
+            )
+            env_counts = (
+                env_lb.groupby(pair_keys).size()
+                .reset_index(name='n_env')
+            )
+            shares = bill_counts.merge(env_counts, on=pair_keys, how='left')
+            shares['n_env'] = shares['n_env'].fillna(0)
+            shares['env_share'] = shares['n_env'] / shares['n_all'].replace(0, np.nan)
+            emp = employers[employers['client_name'] != 'Total salaries received']
+            pair_year = emp.merge(shares, on=pair_keys, how='inner')
+            pair_year['env_spend'] = pair_year['compensation'] * pair_year['env_share']
+            top_clients = (
+                pair_year.groupby('client_name')['env_spend']
+                .sum().sort_values(ascending=False).head(20)
+            )
+            if not top_clients.empty:
+                # Reverse so largest is at top in horizontal bar (ascending order)
+                top_clients = top_clients.sort_values()
+                c = chartjs.Chart(
+                    'Top 20 Clients by Cumulative Environmental Lobbying Spend',
+                    'HorizontalBar', width=750, height=520,
+                )
+                c.set_labels(top_clients.index.tolist())
+                c.add_dataset(
+                    (top_clients.values / 1e6).tolist(),
+                    'Total env-bill spend ($M, all years)',
+                    backgroundColor=f"'{GREEN}'",
+                )
+                c.set_params(
+                    js_inline=False,
+                    ylabel='',
+                    xlabel='Cumulative env-bill spend ($M)',
+                )
+                c.jekyll_write(f'{CHART_DIR}/{prefix}lobbying_top_env_employers.html')
+                print(f'Wrote {prefix}lobbying_top_env_employers.html')
+
+    # ── Post chart 6: Lobbying spend by known CSO operators + proxies ─────────
+    # Cross-references MA_Lobbying_Employers.client_name with MAEEADP_CSO.permiteeName.
+    # Includes the Massachusetts Municipal Association as a proxy: it is the
+    # primary lobbyist for municipal CSO operators (most cities/towns lobby
+    # through MMA rather than directly).
+    try:
+        cso_permittees = pd.read_sql_query(
+            'SELECT DISTINCT permiteeName FROM MAEEADP_CSO WHERE permiteeName IS NOT NULL',
+            engine,
+        )
+    except Exception:
+        cso_permittees = pd.DataFrame()
+
+    PROXY_LOBBYISTS = {
+        'MASSACHUSETTS MUNICIPAL ASSOCIATION': 'Massachusetts Municipal Association (CSO proxy)',
+    }
+
+    if not employers.empty and not cso_permittees.empty:
+        import re
+        def _norm(s):
+            # Collapse 'AND'/'&' to space, drop punctuation, collapse whitespace
+            t = re.sub(r'[&]', ' ', str(s).upper())
+            t = re.sub(r'\bAND\b', ' ', t)
+            t = ''.join(ch if ch.isalnum() or ch == ' ' else ' ' for ch in t)
+            t = re.sub(r'\s+', ' ', t).strip()
+            return t
+
+        operator_norms = {_norm(p): p for p in cso_permittees['permiteeName'].dropna()}
+        operator_norms = {k: v for k, v in operator_norms.items() if len(k) > 4}
+
+        def _match_operator(name):
+            n = _norm(name)
+            for proxy_norm, label in PROXY_LOBBYISTS.items():
+                if proxy_norm in n:
+                    return label
+            for op_norm, op in operator_norms.items():
+                if op_norm in n or n in op_norm:
+                    return op
+            return None
+
+        emp = employers[employers['client_name'] != 'Total salaries received'].copy()
+        emp['cso_operator'] = emp['client_name'].apply(_match_operator)
+        cso_emp = emp.dropna(subset=['cso_operator'])
+        if not cso_emp.empty:
+            yearly = (
+                cso_emp.groupby(['year', 'cso_operator'])['compensation']
+                .sum().reset_index()
+            )
+            # Keep top 8 operators by total spend
+            top_ops = (
+                yearly.groupby('cso_operator')['compensation']
+                .sum().sort_values(ascending=False).head(8).index.tolist()
+            )
+            yearly = yearly[yearly['cso_operator'].isin(top_ops)]
+            pivot = yearly.pivot_table(
+                index='year', columns='cso_operator', values='compensation', aggfunc='sum'
+            ).fillna(0).sort_index()
+
+            years = pivot.index.astype(int).tolist()
+            c = chartjs.Chart(
+                'Total Lobbying Spend by Known CSO Operators',
+                'Bar', width=750, height=420,
+            )
+            c.set_labels([str(y) for y in years])
+            for i, col in enumerate(pivot.columns):
+                color = SECTOR_COLORS[i % len(SECTOR_COLORS)]
+                c.add_dataset(
+                    (pivot[col] / 1e6).tolist(), col,
+                    backgroundColor=f"'{color}'", stack="'a'",
+                )
+            c.set_params(
+                js_inline=False,
+                ylabel='Annual lobbying spend ($M)',
+                xlabel='Year',
+                stacked=1,
+            )
+            c.jekyll_write(f'{CHART_DIR}/{prefix}lobbying_cso_operators.html')
+            print(f'Wrote {prefix}lobbying_cso_operators.html')
+
 
 def _write_facts(employers: pd.DataFrame, spend_trend: pd.DataFrame, most_recent_year: int):
     facts = {}
     if not employers.empty:
+        emp_year = employers[
+            (employers['year'] == most_recent_year)
+            & (employers['client_name'] != 'Total salaries received')
+        ]
         facts['lobbying_most_recent_year'] = most_recent_year
-        facts['lobbying_n_employers'] = int(
-            employers[employers['year'] == most_recent_year].shape[0]
-        )
+        facts['lobbying_n_employers'] = int(emp_year['client_name'].nunique())
+        facts['lobbying_n_firms'] = int(emp_year['entity_name'].nunique())
     if not spend_trend.empty:
         latest_spend = spend_trend[spend_trend['year'] == most_recent_year]['compensation']
         if not latest_spend.empty:

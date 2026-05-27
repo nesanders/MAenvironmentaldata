@@ -226,10 +226,13 @@ def fetch_disclosure_detail(session, disc_url: str, year: int) -> dict:
                     'amount': _parse_amount(cells[1]),
                 })
 
-    # Bill activity tables — one per client per reporting period
+    # Bill activity tables — one per client per reporting period.
+    # Two ID patterns exist depending on portal version:
+    #   2014–2018: …rptActivityNew_grdvActivitiesNew_0       (no year suffix)
+    #   2019+:     …rptActivityNew2020_grdvActivitiesNew2020_0 (year suffix)
     for act_table in soup.find_all(
         'table',
-        id=lambda x: x and re.search(r'grdvActivitiesNew\d{4}_\d+', x or '')
+        id=lambda x: x and re.search(r'grdvActivitiesNew(\d{4})?_\d+', x or '')
     ):
         client_span = act_table.find_previous(
             'span',
@@ -275,28 +278,48 @@ def fetch_disclosure_detail(session, disc_url: str, year: int) -> dict:
         if total:
             compensation.append({'client_name': '_total_salary_', 'amount': total})
 
-    # Bills: single grdvActivities table — columns: Date | Bill+Title | Lobbyist | Client
+    # Bills: single grdvActivities table. Three known legacy column layouts.
+    # Registrant type (individual lobbyist vs. lobbying entity) — not year —
+    # determines whether the 2010+ table includes a "Lobbyist name" column.
+    #   2009 4-col:               Date | Bill+Title | Lobbyist | Client
+    #   2010+ individual 5-col:   Activity | Position | DirectBiz | Client | Compensation
+    #   2010+ entity 6-col:       Activity | Lobbyist | Position | DirectBiz | Client | Compensation
     act_table = soup.find(
         'table',
         id=lambda x: x and x.endswith('grdvActivities')
     )
     if act_table:
-        for row in act_table.find_all('tr'):
+        all_rows = act_table.find_all('tr')
+        header_cells = [
+            th.get_text(strip=True) for th in (
+                all_rows[0].find_all(['th', 'td']) if all_rows else []
+            )
+        ]
+        if header_cells and 'Activity' in header_cells[0]:
+            # 6-col entity layout has "Lobbyist name" as the second header cell
+            if len(header_cells) >= 2 and 'Lobbyist' in header_cells[1]:
+                bill_col, position_col, client_col = 0, 2, 4
+            else:
+                bill_col, position_col, client_col = 0, 1, 3
+        else:
+            bill_col, position_col, client_col = 1, None, 3
+
+        chamber_map = {'H': 'House Bill', 'S': 'Senate Bill',
+                       'HD': 'House Docket', 'SD': 'Senate Docket'}
+        for row in all_rows[1:]:
             cells = [td.get_text(strip=True) for td in row.find_all('td')]
-            # Skip header and empty rows; need at least Date + Bill + Client
-            if len(cells) < 3:
+            if len(cells) <= max(bill_col, client_col):
                 continue
-            bill_cell = cells[1]   # e.g. "H1166" or "H1166 An Act..."
-            client_name = cells[3] if len(cells) > 3 else ''
-            if not bill_cell or bill_cell in ('Activity or Bill No and Title', 'N/A', ''):
+            bill_cell = cells[bill_col]
+            client_name = cells[client_col]
+            position = cells[position_col] if position_col is not None else ''
+            if not bill_cell or bill_cell in (
+                'Activity or Bill No and Title', 'N/A', 'None', '', 'Total amount'
+            ):
                 continue
-            # Split bill number from title (bill number is the first token)
             parts = bill_cell.split(None, 1)
             bill_no = parts[0]
             bill_title = parts[1] if len(parts) > 1 else ''
-            # Derive chamber from bill number prefix
-            chamber_map = {'H': 'House Bill', 'S': 'Senate Bill',
-                           'HD': 'House Docket', 'SD': 'Senate Docket'}
             m = re.match(r'^([A-Z]+)(\d+)$', bill_no)
             if not m:
                 continue
@@ -307,7 +330,7 @@ def fetch_disclosure_detail(session, disc_url: str, year: int) -> dict:
                 'chamber': chamber,
                 'bill_number': number,
                 'bill_title': bill_title,
-                'position': '',
+                'position': position,
                 'amount': None,
                 'general_court': gc,
             })

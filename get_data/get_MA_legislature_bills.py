@@ -1,4 +1,4 @@
-W"""Fetch bill metadata from the MA Legislature OpenAPI for bills appearing in lobbying data.
+"""Fetch bill metadata from the MA Legislature OpenAPI for bills appearing in lobbying data.
 
 API docs: https://malegislature.gov/api/swagger
 
@@ -129,12 +129,16 @@ def _get_json(session: requests.Session, url: str, cache_key: str | None = None
 def _bill_id(bill_number, chamber: str) -> str | None:
     """Construct the API bill ID from a bare number and chamber string.
 
-    Returns None for chamber types with no legislature bill (e.g. Executive).
+    Returns None for chamber types with no legislature bill (e.g. Executive)
+    or for non-numeric bill_number values (parser artefacts like 'N', '4134HD4547').
     """
     prefix = CHAMBER_PREFIX.get(chamber)
     if prefix is None:
         return None
-    return f'{prefix}{int(bill_number)}'
+    try:
+        return f'{prefix}{int(bill_number)}'
+    except (ValueError, TypeError):
+        return None
 
 
 # ─── Bill metadata fetch ────────────────────────────────────────────────────────

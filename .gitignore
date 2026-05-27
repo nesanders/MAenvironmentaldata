@@ -107,6 +107,13 @@ docs/data/MA_bill_embeddings.parquet
 docs/data/MA_bill_embeddings.npy
 get_data/MA_legislature_cache/
 
+# MA lobbying large CSVs — stored in GCS, only samples committed
+docs/data/MA_lobbying_bills.csv
+docs/data/MA_lobbying_employers.csv
+docs/data/MA_lobbying_summary_links.csv
+docs/data/MA_lobbying_bills_scored.csv
+docs/data/MA_legislature_bills.csv
+
 get_data/backup_AMEND.db
 get_data/EEADP_drinkingWater.csv
 get_data/EPA_Region1_NPDES_permits/ma/final/MA0003905_finalma0003905permit.pdf

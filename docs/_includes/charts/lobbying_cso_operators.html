@@ -1,33 +1,32 @@
 {% raw  %}
 <html>
     <head>
-        <title>Top 15 MA Lobbying Clients — 2025</title>
+        <title>Total Lobbying Spend by Known CSO Operators</title>
         <script src='https://cdn.jsdelivr.net/npm/chart.js@4.4.4/dist/chart.umd.min.js'></script>
     </head>
     <body>
-        <div style="width: 700px; height: 440px; max-width: 99%" class="chartjs">
+        <div style="width: 750px; height: 420px; max-width: 99%" class="chartjs">
 
-            <canvas id="Top 15 MA Lobbying Clients — 2025" height="440" width="700"></canvas>
+            <canvas id="Total Lobbying Spend by Known CSO Operators" height="420" width="750"></canvas>
             <script>
                 Chart.defaults.font.size = 12;
                 var chart_data = {
 
                     data: {
-                        labels: ["Boston Electrometallurgical Corporation", "Brighton Marine Inc", "Vertex Pharmaceuticals Incorporated", "Uber Technologies, Inc.", "Massachusetts Health & Hospital Association", "Mass General Brigham Incorporated", "Pharmaceutical Research and Manufacturers of America Corporation", "Wine & Spirit Wholesalers of Massachusetts", "_total_salary_", "Sterling Suffolk Racecourse, LLC", "National Strategies, LLC", "DraftKings Inc.", "Keolis Commuter Services, LLC", "Sports Betting Alliance", "Massachusetts Biotechnology Council, Inc"],
-                        datasets: [{'data': [150.0, 150.0, 156.0, 156.0, 159.0, 160.5, 176.45835, 184.0, 187.8, 210.0, 215.5, 219.0, 225.0, 255.0, 255.01591], 'label': 'Spend ($K)', 'backgroundColor': 'rgba(230, 140, 40, 0.85)'}]
+                        labels: ["2024", "2025"],
+                        datasets: [{'data': [0.01, 0.015], 'label': 'SPRINGFIELD WATER & SEWER COMMISSION', 'backgroundColor': 'rgba(54, 110, 179, 0.85)', 'stack': 'a'}]
                     },
                     type: 'bar',
                     options: {
-                        indexAxis: 'y',
                         scales: {
                             y: {
                                 display: true,
                                 title: {
                                     display: true,
-                                    text: ''
+                                    text: 'Annual lobbying spend ($M)'
                                 },
                                 position: 'left',
-                                stacked: false
+                                stacked: true
                             },
                             y1: {
                                 display: false,
@@ -40,9 +39,9 @@
                             x: {
                                 title: {
                                     display: true,
-                                    text: 'Lobbying spend ($K)'
+                                    text: 'Year'
                                 },
-                                stacked: false,
+                                stacked: true,
                                 ticks: {
                                     autoSkip: true
                                 }
@@ -64,7 +63,7 @@
             <script>
                 {
 
-                    var ctx = document.getElementById("Top 15 MA Lobbying Clients — 2025").getContext("2d");
+                    var ctx = document.getElementById("Total Lobbying Spend by Known CSO Operators").getContext("2d");
                     var mychart = new Chart(ctx, chart_data);
                 }
             </script>

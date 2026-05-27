@@ -391,6 +391,21 @@ if __name__ == '__main__':
 		os.system('rm amend.db.gz')
 		print('Compressed DB uploaded to gs://openamend-data/amend.db.gz')
 
+	## Write sample CSVs for large lobbying files (full CSVs are in GCS, not git)
+	_lobbying_samples = {
+		'MA_lobbying_bills':        (data_csv['MA_Lobbying_Bills'],         True),
+		'MA_lobbying_employers':    (data_csv['MA_Lobbying_Employers'],      True),
+		'MA_lobbying_summary_links': (pd.read_csv('../docs/data/MA_lobbying_summary_links.csv') if os.path.exists('../docs/data/MA_lobbying_summary_links.csv') else pd.DataFrame(), False),
+		'MA_lobbying_bills_scored': (data_csv['MA_Lobbying_Bills_Scored'],   True),
+		'MA_legislature_bills':     (data_csv['MA_Legislature_Bills'],       True),
+	}
+	for fname, (df, has_index) in _lobbying_samples.items():
+		if df.empty:
+			continue
+		out = f'../docs/data/{fname}_sample.csv'
+		df.head(100).to_csv(out, index=has_index)
+		print(f'Wrote sample: {out}')
+
 	## Generate semantic context for AI Analysis page
 	print('Generating semantic context for AI Analysis...')
 	semantic_context = generate_semantic_context('AMEND.db')
