@@ -1,101 +1,101 @@
 ,bill_number,general_court,bill_title,bill_id,env_relevance_score,is_environmental,cluster_id
-0,0,192,Legislative meetings related to resiliency. No legislation was filed.,,0.080746055,True,8
-1,1,192,"An Act making appropriations for the Fiscal Year 2024 for the maintenance of the departments, boards, commissions, institutions, and certain activities of the Commonwealth, for interest, sinking fund, and serial bond requirements, and for certain permanent improvements",H1,0.02309376,False,4
-2,100,192,An Act establishing a special commission to study women and homelessness,S100,0.037359595,False,9
-3,1000,192,An Act providing living organ donor protections,H1000,0.07768136,True,3
-4,1002,192,An Act supporting survivors of trafficking and abuse and encouraging increased access to opportunities through expungement and/or sealing of records,S1002,0.05165434,True,11
-5,1004,192,An Act reforming?the Massachusetts civil rights act,H1004,0.056099236,True,11
-6,1005,192,An Act relative to the licensure of automobile damage appraisers,S1005,0.02326715,False,11
-7,1006,192,An Act relative to the compulsory automobile insurance limits,H1006,0.089162886,True,11
-8,1007,192,An Act relative to insurance coverage of mobile integrated health,H1007,0.07454085,True,14
-9,1008,192,An Act requiring licensed auto insurance damage appraisers to provide safety notices to the owners of damaged motor vehicles,S1008,0.011417627,False,11
-10,1009,192,"An Act relative to uncollected co-pays, co-insurance and deductibles",S1009,-0.0040504932,False,11
-11,101,192,An Act protecting our soil and farms from PFAS contamination,H101,0.029140294,False,14
-12,1010,192,An Act relative to ambulance service reimbursement,H1010,0.03610885,False,0
-13,1011,192,An Act relative to fair and equitable compensation for medical services,H1011,0.08037341,True,11
-14,1012,192,An Act relative to transmitting indecent visual depictions by teens and the unlawful distribution of explicit images,S1012,0.028616607,False,11
-15,1014,192,An Act to improve child and adolescent mental health services,S1014,0.03578478,False,11
-16,1015,192,An Act providing for certain health insurance coverage,H1015,0.07099491,True,3
-17,1016,192,An Act to enact pharmacy benefit manager duties,H1016,0.054813027,True,11
-18,1017,192,An Act relative to pediatric care appointments,S1017,0.03255284,False,11
-19,1018,192,An Act further regulating the rental of motor vehicles,S1018,0.043995142,False,11
-20,1019,192,An Act ensuring pharmacy access,S1019,-0.005698025,False,11
-21,102,192,An Act relative to farmer-distilleries,H102,0.026592314,False,7
-22,1020,192,An Act relative to the fair treatment of employees,S1020,-0.0064209104,False,11
-23,1023,192,An Act relative to the expungement of convictions for marijuana possession,S1023,0.011335373,False,11
-24,1025,192,An Act to promote cancer screenings for firefighters,H1025,0.07730019,True,3
-25,1026,192,An Act to provide homeowners with fair insurance premiums,H1026,0.054757178,True,11
-26,1027,192,An Act relative to homeowners' insurance complaint education,H1027,0.03584194,False,3
-27,1029,192,An Act relative to prejudgment interest rates,H1029,0.07391864,True,3
-28,1030,192,An Act relative to human donor milk coverage,H1030,0.05514437,True,3
-29,1031,192,An Act to redirect excessive health insurer reserves to support health care needs,H1031,0.05149114,True,14
-30,1032,192,An Act relative to growth opportunities for state financial institutions,H1032,0.07992262,True,11
-31,1033,192,An Act to strengthen the state credit union charter,H1033,0.06364626,True,11
-32,1034,192,An Act to allow municipalities to deposit in credit unions,S1034,0.030904114,False,11
-33,1035,192,An Act to establish minimum reimbursement rate to insurance claimants,H1035,0.0458889,False,11
-34,1036,192,An Act relative to sexual assaults by adults in positions of authority or trust,S1036,-0.00029867887,False,11
-35,1038,192,An Act eliminating the statute of limitation in civil child sexual abuse cases,H1038,0.0040542483,False,9
-36,104,192,An Act relative to seeds,S104,0.025768638,False,11
-37,1041,192,An Act relative to preserving fertility,H1041,-0.0025223494,False,9
-38,1043,192,An Act relative to breast cancer equity and early detection,S1043,0.008034289,False,0
-39,1044,192,An Act relative to insurance point surcharges,H1044,0.031061769,False,9
-40,1045,192,An Act relative to unpaid health insurance deductibles,S1045,0.027231991,False,11
-41,1046,192,An Act relative to the cleanup of accidental home heating oil spills,H1046,0.04357475,False,9
-42,1047,192,An Act relative to eliminating surcharges for vehicle inspection violations,H1047,0.041211605,False,11
-43,1048,192,An Act relative to summary process and rental assistance,H1048,0.0017902851,False,11
-44,1049,192,An Act protecting consumers' privacy in mortgage applications,H1049,0.05191332,True,11
-45,105,192,An Act relative to data transparency in the cannabis industry,H105,0.022566617,False,14
-46,1050,192,An Act to improve patient access to non-emergency medical transportation,H1050,0.047735393,False,9
-47,1052,192,An Act relative to forfeiture reform,S1052,0.047314405,False,3
-48,1053,192,An Act establishing a commission to study the promotion of preferred pharmacy networks,H1053,0.024874091,False,9
-49,1054,192,An Act relative to epinephrine injectors,H1054,0.037451208,False,11
-50,1055,192,An Act relative to pharmaceutical gag clauses,H1055,0.029919505,False,9
-51,1056,192,An Act establishing a commission to study maximum allowable costs lists,S1056,0.061608255,True,11
-52,1057,192,An Act to strengthen laws combatting human trafficking and protecting survivors of modern-day slavery,H1057,0.004179418,False,9
-53,1058,192,An Act relative to insurance surcharges,S1058,0.0010303855,False,9
-54,1059,192,An Act relative to electronic automobile insurance charges,S1059,0.032175243,False,11
-55,106,192,An Act establishing an internal special audit unit within the Cannabis Control Commission,H106,0.030096412,False,14
-56,1061,192,An Act relative to emergency insulin access,H1061,0.009948432,False,9
-57,1063,192,An Act relative to insurance discounts,S1063,0.04566133,False,11
-58,1064,192,An Act removing the charitable immunity cap,H1064,0.015329719,False,9
-59,1065,192,An Act relative to surcharges on motor vehicle insurance premiums,S1065,0.06150645,True,11
-60,1067,192,An Act relative to public charity executive and board of directors compensation,S1067,0.031996846,False,14
-61,1068,192,An Act to further define medical necessity determinations,H1068,0.02513814,False,9
-62,1069,192,An Act to increase access to nurse-midwifery services,S1069,0.039435983,False,3
-63,1071,192,An Act to enhance courthouse security,H1071,0.0276165,False,9
-64,1072,192,An Act relative to behavioral health and nutrition counseling,H1072,0.01962912,False,9
-65,1073,192,An Act relative to telehealth parity for nutrition counseling,H1073,0.045244217,False,14
-66,1074,192,An Act relative to cancer patient access to biomarker testing to provide appropriate therapy,H1074,0.04298824,False,9
-67,1075,192,An Act ensuring support groups are part of the pathway of care following the annual mental health wellness exam,H1075,0.035987675,False,9
-68,1076,192,An Act relative to the ownership of pets by convicted animal abusers,H1076,0.042888165,False,9
-69,1077,192,An Act relative to insurance company rebates,S1077,0.031853616,False,11
-70,1078,192,An Act making changes to certain references in the banking laws of the Commonwealth,H1078,0.020181775,False,9
-71,1079,192,An Act providing for temporary emergency licensing of appraisers of motor vehicle damage covered by auto insurance policies,S1079,0.027874112,False,14
-72,108,192,An Act establishing guardians as providers of medical care to support the rights of incapacitated persons,S108,0.02567482,False,14
-73,1080,192,An Act increasing penalties for hit and runs with recreational vehicles in the Commonwealth to be known as the James Ward Act,H1080,0.03682089,False,3
-74,1081,192,An Act relative to preserving preventative services without cost sharing,H1081,0.01601696,False,9
-75,1082,192,An Act relative to fair access for qualifying patients,H1082,0.047403455,False,3
-76,1083,192,An Act to facilitate alternatives to foreclosure,H1083,0.02116102,False,9
-77,1084,192,An Act relative to applied behavioral analysis therapy,H1084,0.049739957,False,11
-78,1086,192,An Act expanding the use of video and telephone conferencing,H1086,0.010002613,False,9
-79,1087,192,An Act preventing inappropriate denials by insurers for medically necessary services,H1087,0.02501434,False,9
-80,1088,192,An Act relative to greater fairness in insurance,S1088,0.027401686,False,11
-81,1089,192,An Act relative to gender identity in insurance,H1089,0.03189534,False,9
-82,109,192,An Act relative to supported decision-making agreements for certain adults with disabilities,S109,-0.009067416,False,11
-83,1090,192,An Act relative to transportation network company fees,H1090,0.015108645,False,9
-84,1091,192,An Act relative to reducing unnecessary delays in patient care,H1091,0.03348857,False,9
-85,1092,192,An Act relative to protecting innocent sellers,S1092,0.022202313,False,11
-86,1093,192,An Act relative to ensuring treatment for genetic craniofacial conditions,H1093,0.007490754,False,9
-87,1094,192,An Act expanding coverage of dental procedures,H1094,0.010760665,False,11
-88,1095,192,An Act establishing the fair calculation of labor rates paid by insurance companies to auto repairers in the Commonwealth,H1095,0.01774007,False,9
-89,1097,192,An Act relative to coercive control,H1097,0.027973652,False,9
-90,1098,192,An Act relative to auto insurance costs for traditionally low-and moderate income communities,H1098,0.025451422,False,9
-91,1099,192,An Act establishing a transportation network driver bill of rights,H1099,0.021884441,False,14
-92,1101,192,An Act regarding credit card surcharging,H1101,0.017767668,False,9
-93,1102,192,An Act eliminate penalty charges when canceling auto insurance,H1102,0.043322504,False,3
-94,1103,192,An Act relative to breast cancer equity and early detection,S1103,0.044582725,False,11
-95,1104,192,An Act protecting homeowners from unnecessary foreclosures,S1104,-0.03920716,False,11
-96,1106,192,An Act specifying an electronic system to ensure that sales of certain products containing pseudoephedrine (PSE) do not exceed limits established under federal law,H1106,0.023538768,False,9
-97,1107,192,An Act relative to fairness in debt collection,S1107,0.038989365,False,11
-98,1108,192,An Act relative to community behavioral health centers,H1108,0.021075249,False,3
-99,1110,192,An Act relative to dental insurance assignment of benefits,H1110,0.008756876,False,9
+0,0,192,Legislative meetings related to resiliency. No legislation was filed.,,0.052733183,0,13
+1,1,192,"An Act making appropriations for the Fiscal Year 2024 for the maintenance of the departments, boards, commissions, institutions, and certain activities of the Commonwealth, for interest, sinking fund, and serial bond requirements, and for certain permanent improvements",H1,-0.08080357,0,9
+2,100,192,An Act establishing a special commission to study women and homelessness,S100,0.003342986,0,6
+3,1000,192,An Act providing living organ donor protections,H1000,0.03968501,0,6
+4,1002,192,An Act supporting survivors of trafficking and abuse and encouraging increased access to opportunities through expungement and/or sealing of records,S1002,0.012397826,0,6
+5,1004,192,An Act reforming?the Massachusetts civil rights act,H1004,0.018933475,0,6
+6,1005,192,An Act relative to the licensure of automobile damage appraisers,S1005,-0.01626873,0,6
+7,1006,192,An Act relative to the compulsory automobile insurance limits,H1006,0.054876924,0,6
+8,1007,192,An Act relative to insurance coverage of mobile integrated health,H1007,0.012193322,0,6
+9,1008,192,An Act requiring licensed auto insurance damage appraisers to provide safety notices to the owners of damaged motor vehicles,S1008,-0.026369989,0,6
+10,1009,192,"An Act relative to uncollected co-pays, co-insurance and deductibles",S1009,-0.015853405,0,6
+11,101,192,An Act protecting our soil and farms from PFAS contamination,H101,-0.0036914945,0,6
+12,1010,192,An Act relative to ambulance service reimbursement,H1010,0.000624001,0,6
+13,1011,192,An Act relative to fair and equitable compensation for medical services,H1011,0.050798237,0,6
+14,1012,192,An Act relative to transmitting indecent visual depictions by teens and the unlawful distribution of explicit images,S1012,-0.009632766,0,6
+15,1014,192,An Act to improve child and adolescent mental health services,S1014,-0.0094640255,0,6
+16,1015,192,An Act providing for certain health insurance coverage,H1015,0.037605464,0,6
+17,1016,192,An Act to enact pharmacy benefit manager duties,H1016,0.028555334,0,6
+18,1017,192,An Act relative to pediatric care appointments,S1017,-0.0050760508,0,6
+19,1018,192,An Act further regulating the rental of motor vehicles,S1018,0.010115802,0,6
+20,1019,192,An Act ensuring pharmacy access,S1019,-0.010311425,0,6
+21,102,192,An Act relative to farmer-distilleries,H102,-0.0090302825,0,7
+22,1020,192,An Act relative to the fair treatment of employees,S1020,-0.0067304373,0,6
+23,1023,192,An Act relative to the expungement of convictions for marijuana possession,S1023,0.001253128,0,6
+24,1025,192,An Act to promote cancer screenings for firefighters,H1025,0.008532047,0,6
+25,1026,192,An Act to provide homeowners with fair insurance premiums,H1026,0.036256313,0,6
+26,1027,192,An Act relative to homeowners' insurance complaint education,H1027,0.00935185,0,6
+27,1029,192,An Act relative to prejudgment interest rates,H1029,0.037890315,0,6
+28,1030,192,An Act relative to human donor milk coverage,H1030,0.024457991,0,6
+29,1031,192,An Act to redirect excessive health insurer reserves to support health care needs,H1031,-0.03833562,0,6
+30,1032,192,An Act relative to growth opportunities for state financial institutions,H1032,-0.0039952993,0,6
+31,1033,192,An Act to strengthen the state credit union charter,H1033,-0.012663424,0,6
+32,1034,192,An Act to allow municipalities to deposit in credit unions,S1034,-0.0074703097,0,6
+33,1035,192,An Act to establish minimum reimbursement rate to insurance claimants,H1035,-0.018155098,0,6
+34,1036,192,An Act relative to sexual assaults by adults in positions of authority or trust,S1036,-0.02684784,0,6
+35,1038,192,An Act eliminating the statute of limitation in civil child sexual abuse cases,H1038,-0.021972656,0,6
+36,104,192,An Act relative to seeds,S104,-0.0007534623,0,6
+37,1041,192,An Act relative to preserving fertility,H1041,-0.025766075,0,6
+38,1043,192,An Act relative to breast cancer equity and early detection,S1043,-0.0398857,0,6
+39,1044,192,An Act relative to insurance point surcharges,H1044,-0.036522448,0,6
+40,1045,192,An Act relative to unpaid health insurance deductibles,S1045,-0.041788816,0,6
+41,1046,192,An Act relative to the cleanup of accidental home heating oil spills,H1046,-0.052835166,0,6
+42,1047,192,An Act relative to eliminating surcharges for vehicle inspection violations,H1047,-0.040506363,0,6
+43,1048,192,An Act relative to summary process and rental assistance,H1048,-0.03870827,0,6
+44,1049,192,An Act protecting consumers' privacy in mortgage applications,H1049,-0.03933561,0,6
+45,105,192,An Act relative to data transparency in the cannabis industry,H105,-0.0052748322,0,6
+46,1050,192,An Act to improve patient access to non-emergency medical transportation,H1050,-0.055414855,0,6
+47,1052,192,An Act relative to forfeiture reform,S1052,-0.017962933,0,6
+48,1053,192,An Act establishing a commission to study the promotion of preferred pharmacy networks,H1053,-0.038141847,0,6
+49,1054,192,An Act relative to epinephrine injectors,H1054,-0.021478236,0,6
+50,1055,192,An Act relative to pharmaceutical gag clauses,H1055,-0.019238174,0,6
+51,1056,192,An Act establishing a commission to study maximum allowable costs lists,S1056,0.019428074,0,6
+52,1057,192,An Act to strengthen laws combatting human trafficking and protecting survivors of modern-day slavery,H1057,-0.036556244,0,6
+53,1058,192,An Act relative to insurance surcharges,S1058,-0.012189865,0,6
+54,1059,192,An Act relative to electronic automobile insurance charges,S1059,-0.0042162538,0,6
+55,106,192,An Act establishing an internal special audit unit within the Cannabis Control Commission,H106,-0.00010210276,0,6
+56,1061,192,An Act relative to emergency insulin access,H1061,-0.01341939,0,6
+57,1063,192,An Act relative to insurance discounts,S1063,0.013309717,0,6
+58,1064,192,An Act removing the charitable immunity cap,H1064,-0.033222616,0,6
+59,1065,192,An Act relative to surcharges on motor vehicle insurance premiums,S1065,-0.011292696,0,6
+60,1067,192,An Act relative to public charity executive and board of directors compensation,S1067,-0.026544094,0,6
+61,1068,192,An Act to further define medical necessity determinations,H1068,-0.007819772,0,6
+62,1069,192,An Act to increase access to nurse-midwifery services,S1069,0.0031238198,0,6
+63,1071,192,An Act to enhance courthouse security,H1071,-0.06396246,0,6
+64,1072,192,An Act relative to behavioral health and nutrition counseling,H1072,-0.01817441,0,6
+65,1073,192,An Act relative to telehealth parity for nutrition counseling,H1073,-0.013731718,0,6
+66,1074,192,An Act relative to cancer patient access to biomarker testing to provide appropriate therapy,H1074,-0.009497285,0,6
+67,1075,192,An Act ensuring support groups are part of the pathway of care following the annual mental health wellness exam,H1075,-0.021136284,0,6
+68,1076,192,An Act relative to the ownership of pets by convicted animal abusers,H1076,-0.0049693584,0,6
+69,1077,192,An Act relative to insurance company rebates,S1077,-0.006026447,0,6
+70,1078,192,An Act making changes to certain references in the banking laws of the Commonwealth,H1078,-0.021713436,0,6
+71,1079,192,An Act providing for temporary emergency licensing of appraisers of motor vehicle damage covered by auto insurance policies,S1079,0.00855726,0,6
+72,108,192,An Act establishing guardians as providers of medical care to support the rights of incapacitated persons,S108,-0.0034398437,0,6
+73,1080,192,An Act increasing penalties for hit and runs with recreational vehicles in the Commonwealth to be known as the James Ward Act,H1080,-0.044028997,0,6
+74,1081,192,An Act relative to preserving preventative services without cost sharing,H1081,-0.032632887,0,6
+75,1082,192,An Act relative to fair access for qualifying patients,H1082,-0.0405097,0,6
+76,1083,192,An Act to facilitate alternatives to foreclosure,H1083,-0.0073825717,0,6
+77,1084,192,An Act relative to applied behavioral analysis therapy,H1084,0.016544104,0,6
+78,1086,192,An Act expanding the use of video and telephone conferencing,H1086,-0.04942429,0,6
+79,1087,192,An Act preventing inappropriate denials by insurers for medically necessary services,H1087,-0.02220434,0,6
+80,1088,192,An Act relative to greater fairness in insurance,S1088,-0.0049749017,0,6
+81,1089,192,An Act relative to gender identity in insurance,H1089,-0.03292638,0,6
+82,109,192,An Act relative to supported decision-making agreements for certain adults with disabilities,S109,-0.033991277,0,6
+83,1090,192,An Act relative to transportation network company fees,H1090,-0.01857382,0,6
+84,1091,192,An Act relative to reducing unnecessary delays in patient care,H1091,-0.017361403,0,6
+85,1092,192,An Act relative to protecting innocent sellers,S1092,-0.00793308,0,6
+86,1093,192,An Act relative to ensuring treatment for genetic craniofacial conditions,H1093,-0.038267076,0,6
+87,1094,192,An Act expanding coverage of dental procedures,H1094,-0.006890714,0,6
+88,1095,192,An Act establishing the fair calculation of labor rates paid by insurance companies to auto repairers in the Commonwealth,H1095,-0.030623376,0,6
+89,1097,192,An Act relative to coercive control,H1097,-0.0054243803,0,6
+90,1098,192,An Act relative to auto insurance costs for traditionally low-and moderate income communities,H1098,-0.016626835,0,6
+91,1099,192,An Act establishing a transportation network driver bill of rights,H1099,-0.016183436,0,6
+92,1101,192,An Act regarding credit card surcharging,H1101,-0.0065791607,0,6
+93,1102,192,An Act eliminate penalty charges when canceling auto insurance,H1102,-0.000983119,0,6
+94,1103,192,An Act relative to breast cancer equity and early detection,S1103,0.002598226,0,6
+95,1104,192,An Act protecting homeowners from unnecessary foreclosures,S1104,-0.03920716,0,6
+96,1106,192,An Act specifying an electronic system to ensure that sales of certain products containing pseudoephedrine (PSE) do not exceed limits established under federal law,H1106,-0.022645235,0,6
+97,1107,192,An Act relative to fairness in debt collection,S1107,-0.00075161457,0,6
+98,1108,192,An Act relative to community behavioral health centers,H1108,-0.041011214,0,6
+99,1110,192,An Act relative to dental insurance assignment of benefits,H1110,-0.022830784,0,6

@@ -1,17 +1,36 @@
 cluster_id,label,n_bills,n_env_bills,example_titles
-0,Government Operations and Public Welfare,203,1,"An Act relative to the retirement of state university and community college police officers | An Act honoring, empowering, and recognizing our servicemembers and veterans | An Act to modernize funding for community media programming | An Act relative to fines on certain commercial and revenue property | An Act creating the office of senior justice in the judicial branch"
-1,Sustainable and Equitable Development,825,72,An Act to reduce greenhouse gas emissions | An Act to reduce greenhouse gas emissions | An Act to reduce drug costs through transparency | An Act to advance modern and sustainable solutions for transportation | An Act to advance modern and sustainable solutions for transportation
-2,"Healthcare access, transparency, safety",1080,7,An Act establishing a public health option | An Act establishing a public health option | An Act to provide liability protections for health care workers and facilities during the COVID-19 Pandemic | An Act to provide liability protections for health care workers and facilities during the COVID-19 Pandemic | An Act to provide more timely treatment of inpatient mental health care
-3,Diverse State Policy Initiatives,691,261,"An Act banning the retail sale of dogs, cats and rabbits in new pet shops | An Act to consider the safety of artificial grass and turf surfaces | An Act ensuring safe drinking water in schools | An Act to promote public procurement and inclusive entrepreneurship | An Act relative to sheriff's citations"
-4,"Public Sector, COVID-19, & Economy",1077,116,An Act relative to COVID-19 complications for public safety employees | An Act relative to the Architectural Access Board | An Act relative to the Architectural Access Board | An Act relative to the Architectural Access Board | An Act relative to the MBTA Retirement Fund
-5,"Patient Access, Cost, Transparency",723,8,An Act relative to promoting healthcare access and affordability for patients | An Act relative to patient care access | An Act relative to patient care access | An Act relative to health insurance coverage for structured outpatient addiction programs | An Act relative to health insurance coverage for structured outpatient addiction programs
-6,Undefined legislative topic,334,0, |  |  |  | 
-7,Regulatory and Commercial Laws,1058,104,An Act relative to automobile insurance premiums | An Act relative to motor vehicle service contracts | An Act relative to motor vehicle service contracts | An Act relative to motor vehicle service contracts | An Act relative to motor vehicle service contracts
-8,Energy Policy and Decarbonization,586,389,An Act relative to clean energy resources | An Act relative to enhancing reliability of renewable resources in the Commonwealth | An Act relative to enhancing reliability of renewable resources in the Commonwealth | An Act relative to enhancing reliability of renewable resources in the Commonwealth | An Act relative to enhancing reliability of renewable resources in the Commonwealth
-9,Healthcare and Public Services,434,12,An Act relative to determination of need of new technology | An Act relative to college athlete compensation | An Act to facilitate alternatives to foreclosure | An Act relative to reducing unnecessary delays in patient care | An Act to increase access to lactation care and services
-10,Student Education and Safety,385,6,An Act relative to educational opportunity for students | An Act relative to educational opportunity for students | An Act relative to educational opportunity for students | An Act relative to educational opportunity for students | An Act relative to educational opportunity for students
-11,Public Well-being and Access,688,177,An Act relative to the fair treatment of employees | An Act establishing a commission to study maximum allowable costs lists | An Act empowering health care consumers | An Act to expand access to career technical education and other alternative pathways that improve student opportunities and outcomes | An Act relative to inducements in the purchase and sale of alcoholic beverages
-12,State Budget and Policy,85,1,"HB980
+0,"Public Safety, Crime, and Firearms",2116,10,An Act relative to public safety | An Act relative to public safety | An Act relative to public safety | An Act relative to firearm laws | An Act relative to improving safety on the roads of the Commonwealth
+1,Permanent Telehealth Access,1563,0, |  |  |  | 
+2,"Fiscal, Regulatory, Public Safety",686,17,Implementation of Chapter 224 (2012) | Relative to transportation finance | Relative to Homeowner Information Requirements | Relative to Motor Vehicle Police Chases | Relative to Sales Tax Holiday for Energy Star Products
+3,Healthcare Access and Affordability,1691,0,An Act prioritizing patient access to care | An Act prioritizing patient access to care | An Act promoting patient safety and equitable access to care | An Act promoting patient safety and equitable access to care | An Act to provide more timely treatment of inpatient mental health care
+4,Sustainable Energy and Climate,1944,76,An Act to promote a clean energy future | An Act to promote a clean energy future | An Act to reduce greenhouse gas emissions | An Act to reduce greenhouse gas emissions | An Act to Invest in Our Communities
+5,Consumer Financial Protections,2694,127,An Act relative to insurance coverage for homeowner heating safety and remediation of oil spills | An Act relative to homeowners’ insurance | An Act relative to homeowners’ insurance | An Act relative to homeowners’ insurance complaint education | An Act relative to prohibition on public-private cost shift
+6,Societal Well-being and Fairness,2569,38,"An Act establishing a commission to study maximum allowable costs lists | An Act banning the retail sale of dogs, cats and rabbits in new pet shops | An Act conserving our natural resources | An Act to modernize funding for community media programming | An Act relative to college athlete compensation"
+7,Alcohol Sales Regulations,1150,5,An Act relative to the sale of alcoholic beverages | An Act relative to the sale of alcoholic beverages | An Act Relative to the Sale of Alcoholic Beverages | An Act relative to the sale of alcoholic beverages | An Act relative to the sale of alcoholic beverages
+8,Student Education and Opportunity,850,0,An Act relative to educational opportunity for students | An Act relative to educational opportunity for students | An Act relative to educational opportunity for students | An Act relative to educational opportunity for students | An Act relative to educational opportunity for students
+9,Regional Economic Development,3196,187,An Act to promote municipal collaboration and regionalization throughout the Commonwealth | An Act to promote municipal collaboration and regionalization throughout the Commonwealth | An Act to promote municipal collaboration and regionalization throughout the Commonwealth | Feasibility of High Speed Rail Access Study | An Act to promote municipal collaboration and regionalization throughout the Commonwealth
+10,Government Spending and Regulation,2662,12,An Act making appropriations for the fiscal year 2023 | An Act making appropriations for the fiscal year 2023 | An Act providing remedies to consumers for clearing title after payoff of mortgages | An Act Providing Remedies for Consumers for Clearing Title after Payoff | An Act Providing for Job Creation by Small Businesses
+11,Public Safety Retirement and Benefits,1205,3,An Act relative to the retirement benefits of certain public safety employees | An Act relative to public safety officers and creditable service | An Act relative to public safety officers and creditable service | An Act relative to public safety officers and creditable service | An Act relative to public employee disability benefits for certain employees employed by the Commonwealth and its political subdivisions
+12,"Healthcare Access, Costs, Transparency",2517,0,An Act relative to promoting healthcare access and affordability for patients | An Act relative to promoting healthcare access and affordability for patients | An Act relative to healthcare cost control | An Act relative to primary care access | An Act relative to health care access
+13,Economic Competitiveness and Regulation,878,8,"An Act for healthy families and businesses
+HB2189 An Act establishing a district to operate a regional public safety communications and dispatch center for the Towns of Franklin, Norfolk, Plainville and Wrentham
+HB3109 An Act relative to the study of open road tolling in the Commonwealth
+HB3327 An Act financing improvements to the Commonwealth's transportation system
+HB3331 An Act supplementing certain existing capital spending authorizations
+SB354 An Act relative to healthy families and businesses
+SB387 An Act for a competitive economy through safer alternatives to toxic chemicals
+SB1117 An Act relative to the regionalization of public safety services
+SB1199 An Act relative to regional 911 emergency communication districts
+SB1334 An Act updating the research and development tax credit
+SB1420 An Act extending single sales factor apportionment to all retail and wholesale corporations | An Act To Established A Special Commission To Study The Economic Impact Of State Regulatory Law Upon The Manufacturing Industry In Massachusetts HB684 An Act Relative To The Toxic Use Reduction Act HB701 An Act Relative To Job Creation In The Commonwealth HB1258 An Act Relative To Unauthorized Entry Of A Critical Infrastructure HB2171 An Act Relative To Certain Tanks Used For The Storage Of Fluids SB1158 An Act Relative To Certain Tanks Used For The Storage Of Fluids SB1387 An Act To Promote Business Growth | An Act relative to improving public safety and reducing construction costs
+SB1527 An Act relative to interest on retainage
+HB2782 An Act relative to price adjustment
+SB1556 An Act relative to price adjustment
+HB214 An Act relative to improving public health, environment and economic development through investment in water and sewer infrastructure | An Act requiring public notice prior to restricting MassHealth coverage
+HB1950
+An Act to require equitable payment from the Commonwealth
+BUDGET Language contained in line item 4000-0500 HB 2, HB 4600, HB 4601, HB 4800, SB 4 , SB 2470 | An Act Relative To A Rate Freeze Of Benefit Unemployment Insurance In The Commonwealth; HB2548 An Act Establishing A Permanent Annual Sales Tax Holiday; HB2618 An Act Establishing A Sales Tax Holiday In The Commonwealth For The Year 2014; HB2620 An Act Establishing A Sales Tax Holiday In The Commonwealth For The Year 2013; SB175 An Act Establishing A Sales Tax Holiday In 2013; SB176 An Act Establishing A Sales Tax Holiday In 2014."
+14,State governance legislation,207,0,"HB980
 HB994
 HB996
 HB1234
@@ -44,105 +63,42 @@ SB830
 SB831
 SB842
 SB886
-SB1781 | HB2320
-HB2715
-HB2726
-HB2840
-HB2960
-HB3083
-HB3101
-HB3121
-HB3122
-HB3124
-HB3127
-HB3624
-HB3762
-HB3764
-SB194
-SB195
-SB436
-SB665
-SB980
-SB1255
-SB1340
-SB1341
-SB1363
-SB1364
-SB1418
-SB1438
-SB1473
-SB1477
-SB1478
-SB1481
-SB1485
-SB1487SB1509
-SB1520
-SB1524
-SB1528
-SB1536
-SB2019 | HB54
-HB108
-HB144
-HB919
-HB920
-HB1259
-HB1264
-HB1375
-HB1457
-HB1520
-HB1532HB1696
-HB1737
-HB2029
-HB2057
-HB2058
-HB2059
-HB2101HB2145
-HB2180
-HB2183
-HB2200
-HB2210
-HB2413
-HB2421
-HB2642
-HB2643
-HB2646
-HB2657
-HB3719
-HB3828
-HB4032
-SB254
-SB809
-SB830
-SB831
-SB886
-SB888
-SB965
-SB987
-SB1015
-SB1069
-SB1073
-SB1075
-SB1213
-SB1219
-SB1615
-SB1753
-SB1792
-SB1794 | HB181
-HB372
-HB443
-HB618
-HB2022
-HB2079
-HB2083HB3287
-HB3804
-HB3809
-HB4238
-SB47
-SB70
+SB1781 | HB2552
+HB2096
+HB2877HB2890
+HB3241
+SB985
+SB1009
+SB1555
+SB1474 | HB617
+HB1079
+HB1881HB3401
+HB3535
+HB3565
+SB1288
+SB1395
+HB2765
+HB2814SB479
+SB515
+SB1069 | HB1184
+HB1799
+HB1812
+HB1817
+HB2032
+HB2241
+HB2401
+HB2651
+HB272
+HB2764HB2769
+HB2914
+HB301
+HB305HB917
+HB918
+HB927
+SB104SB1053
+SB1211
+SB1764
+SB453
+SB454
 SB478
-SB501SB518
-SB907
-SB1900
-SB1929"
-13,State Programs and Oversight,77,23,An Act to modernize participation in public meetings | An Act relative to farmer-distilleries | An Act to promote high-quality early literacy instruction and improve student outcomes | An Act relative to the Affordable Homes Act | An Act strengthening Massachusetts' economic leadership
-14,Public Policy and Governance,497,103,An Act relative to the licensure of behavior analysts | An Act strengthening anti-trust laws | An Act to ensure access and continuity of care to specialist and hospital services for dual eligibles | An Act relative to funeral directors | Resolve relative to disclosure of radio frequency notifications
+SB968"
