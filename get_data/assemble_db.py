@@ -391,6 +391,19 @@ if __name__ == '__main__':
 		os.system('rm amend.db.gz')
 		print('Compressed DB uploaded to gs://openamend-data/amend.db.gz')
 
+		# Upload large lobbying CSVs to GCS (excluded from git due to size)
+		_gcs_lobbying_files = [
+			'../docs/data/MA_lobbying_bills.csv',
+			'../docs/data/MA_lobbying_employers.csv',
+			'../docs/data/MA_lobbying_bills_scored.csv',
+			'../docs/data/MA_legislature_bills.csv',
+		]
+		for _f in _gcs_lobbying_files:
+			if os.path.exists(_f):
+				_gcs_name = os.path.basename(_f)
+				os.system(f'gsutil cp {_f} gs://openamend-data/{_gcs_name}')
+				print(f'Uploaded {_gcs_name} to GCS')
+
 	## Write sample CSVs for large lobbying files (full CSVs are in GCS, not git)
 	_lobbying_samples = {
 		'MA_lobbying_bills':        (data_csv['MA_Lobbying_Bills'],         True),

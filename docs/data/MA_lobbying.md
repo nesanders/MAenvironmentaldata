@@ -42,9 +42,14 @@ The plot below shows all lobbied bills projected into two dimensions using [t-SN
 
 ## Download archive
 
-* [Lobbying employers (entity–client–year)](MA_lobbying_employers.csv)
-* [Lobbying bills (entity–client–bill–year)](MA_lobbying_bills.csv)
-* [Legislature bill metadata](MA_legislature_bills.csv)
+Full CSVs are stored in Google Cloud Storage (too large for the repository).
+These links will be active once the initial full-history scrape is complete and uploaded:
+
+* Lobbying employers (entity–client–year) — `gs://openamend-data/MA_lobbying_employers.csv`
+* Lobbying bills (entity–client–bill–year) — `gs://openamend-data/MA_lobbying_bills.csv`
+* Lobbying bills scored (env relevance + cluster) — `gs://openamend-data/MA_lobbying_bills_scored.csv`
+* Legislature bill metadata — `gs://openamend-data/MA_legislature_bills.csv`
+* [Bill embeddings (768-dim Parquet)](https://storage.googleapis.com/openamend-data/MA_bill_embeddings.parquet)
 
 ## Data tables
 
