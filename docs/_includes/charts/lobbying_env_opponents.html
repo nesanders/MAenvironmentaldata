@@ -1,45 +1,46 @@
 {% raw  %}
 <html>
     <head>
-        <title>MA Lobbying Spend vs. DEP Budget (inflation-adjusted)</title>
+        <title>Top 20 Clients Opposing Environmental Bills (all years)</title>
         <script src='https://cdn.jsdelivr.net/npm/chart.js@4.4.4/dist/chart.umd.min.js'></script>
     </head>
     <body>
-        <div style="width: 700px; height: 400px; max-width: 99%" class="chartjs">
+        <div style="width: 750px; height: 520px; max-width: 99%" class="chartjs">
 
-            <canvas id="MA Lobbying Spend vs. DEP Budget (inflation-adjusted)" height="400" width="700"></canvas>
+            <canvas id="Top 20 Clients Opposing Environmental Bills (all years)" height="520" width="750"></canvas>
             <script>
                 Chart.defaults.font.size = 12;
                 var chart_data = {
 
                     data: {
-                        labels: ["2019", "2020", "2021", "2022", "2023", "2024", "2025"],
-                        datasets: [{'data': [0.13614365347321905, 0.266783843068104, 0.2607588171715922, 0.45122083461833107, 0.12649417221425135, 0.3082939989926326, 1.8101842549856766], 'label': 'Industry lobbying spend ($M)', 'backgroundColor': 'rgba(230, 140, 40, 0.85)', 'yAxisID': 'y'},{'data': [37.60870536390118, 40.28206302422945, 46.254922289813294, 36.60585418435639, 47.59754731934593, 52.038191, null], 'label': 'DEP admin budget ($M, inflation-adj.)', 'backgroundColor': 'rgba(54, 110, 179, 0.85)', 'type': 'line', 'yAxisID': 'y1'}]
+                        labels: ["Personal Care Products Council", "Wheelabrator Environmental Systems, Inc.", "Sunbeam Products, Inc.", "Environmental League of Massachusetts Action Fund", "National Grid", "Environmental League of Massachusetts", "Massachusetts Hospital Association", "American Forest & Paper Association, Inc.", "Associated Builders and Contractors, MA Chapter", "Massachusetts Insurance Federation, Inc.", "Consumer Technology Association", "Massachusetts Property Insurance Underwriting Association", "Eastman Chemical Company", "Flint Hills Resources, Limited Partnership", "NAIOP Massachusetts", "Georgia-Pacific Limited Liability Company", "Massachusetts Municipal Association", "Retailers Association of Massachusetts", "Mass Audubon", "American Chemistry Council"],
+                        datasets: [{'data': [3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 4, 4, 4, 4, 5, 6, 6, 9], 'label': 'Unique env bills opposed', 'backgroundColor': 'rgba(200, 60, 60, 0.85)'}]
                     },
                     type: 'bar',
                     options: {
+                        indexAxis: 'y',
                         scales: {
                             y: {
                                 display: true,
                                 title: {
                                     display: true,
-                                    text: 'Lobbying spend ($M)'
+                                    text: ''
                                 },
                                 position: 'left',
                                 stacked: false
                             },
                             y1: {
-                                display: true,
+                                display: false,
                                 title: {
                                     display: true,
-                                    text: 'DEP budget ($M)'
+                                    text: ''
                                 },
                                 position: 'right'
                             },
                             x: {
                                 title: {
                                     display: true,
-                                    text: 'Year'
+                                    text: 'Unique environmental bills opposed'
                                 },
                                 stacked: false,
                                 ticks: {
@@ -63,7 +64,7 @@
             <script>
                 {
 
-                    var ctx = document.getElementById("MA Lobbying Spend vs. DEP Budget (inflation-adjusted)").getContext("2d");
+                    var ctx = document.getElementById("Top 20 Clients Opposing Environmental Bills (all years)").getContext("2d");
                     var mychart = new Chart(ctx, chart_data);
                 }
             </script>

@@ -12,6 +12,9 @@ Analysis-post charts (no prefix, generate_post_charts):
   lobbying_spend_vs_staff           — Env lobbying spend vs. DEP FTE headcount (dual-axis)
   lobbying_env_cluster_share        — Env-bill lobbying spend by topic cluster, stacked over years
   lobbying_top_env_employers        — Top 20 employers ranked by total env-bill lobbying spend
+  lobbying_env_positions            — Unique clients by Support/Oppose/Neutral position on env bills
+  lobbying_env_opponents            — Top 20 clients by unique env bills opposed (all years)
+  lobbying_pass_by_position         — Env bill pass rate by dominant lobbying position
   lobbying_cso_operators            — Lobbying spend by known CSO operators (permittees), by year
 
 Data files written:
@@ -52,7 +55,6 @@ def _load_data(engine):
             return pd.DataFrame()
 
     employers = _safe_read('SELECT * FROM MA_Lobbying_Employers')
-    lobbyists = _safe_read('SELECT * FROM MA_Lobbying_Lobbyists')
     lobby_bills = _safe_read('SELECT * FROM MA_Lobbying_Bills')
     # MA_Lobbying_Bills_Scored: is_environmental, env_relevance_score, cluster_id
     # MA_Legislature_Bills: passed status
@@ -66,7 +68,7 @@ def _load_data(engine):
         leg_bills = scored
     else:
         leg_bills = pd.DataFrame()
-    return employers, lobbyists, lobby_bills, leg_bills
+    return employers, lobby_bills, leg_bills
 
 
 def _env_bills(lobby_bills: pd.DataFrame, leg_bills: pd.DataFrame) -> pd.DataFrame:
@@ -81,24 +83,58 @@ def _env_bills(lobby_bills: pd.DataFrame, leg_bills: pd.DataFrame) -> pd.DataFra
 
 def _annual_env_spend(employers: pd.DataFrame, lobby_bills: pd.DataFrame,
                       leg_bills: pd.DataFrame) -> pd.DataFrame:
-    """Annual total client spend on environmental bills.
+    """Annual lobbying spend allocated to environmental bills (proportional).
 
-    Filters MA_Lobbying_Employers to (entity, client, year) rows whose client
-    lobbied at least one environmental bill that year, then sums compensation.
+    For each (entity, client, year) row in MA_Lobbying_Employers, computes
+    env_spend = compensation × (n_env_bills / n_all_bills) where both bill
+    counts are for that (entity, client, year) triple. Sums across all pairs
+    per year.
+
+    Proportional allocation avoids inflating spend for clients who lobbied a
+    single env bill alongside hundreds of unrelated bills.
+
+    Falls back to total env-client spend (non-proportional) if lobby_bills
+    has no year-level bill counts — but this should not occur in normal use.
+
     Excludes the legacy 'Total salaries received' aggregate rows.
     """
     if employers.empty or lobby_bills.empty:
         return pd.DataFrame()
     env_lb = _env_bills(lobby_bills, leg_bills)
     if env_lb.empty:
-        env_lb = lobby_bills.copy()
-    env_pairs = env_lb[['client_name', 'year']].drop_duplicates()
+        # No env scoring yet — fall back to total spend for clients with any bills
+        env_pairs = lobby_bills[['client_name', 'year']].drop_duplicates()
+        emp = employers[employers['client_name'] != 'Total salaries received']
+        merged = emp.merge(env_pairs, on=['client_name', 'year'], how='inner')
+        return (
+            merged.groupby('year')['compensation']
+            .sum()
+            .reset_index()
+            .sort_values('year')
+        )
+
+    pair_keys = ['entity_name', 'client_name', 'year']
+    # Count env bills per (firm, client, year)
+    env_counts = (
+        env_lb.groupby(pair_keys)['bill_number'].nunique()
+        .reset_index(name='n_env')
+    )
+    # Count all bills per (firm, client, year)
+    all_counts = (
+        lobby_bills.groupby(pair_keys)['bill_number'].nunique()
+        .reset_index(name='n_all')
+    )
+    fracs = env_counts.merge(all_counts, on=pair_keys, how='left')
+    fracs['env_frac'] = fracs['n_env'] / fracs['n_all'].replace(0, np.nan)
+
     emp = employers[employers['client_name'] != 'Total salaries received']
-    merged = emp.merge(env_pairs, on=['client_name', 'year'], how='inner')
+    merged = emp.merge(fracs, on=pair_keys, how='inner')
+    merged['env_spend'] = merged['compensation'] * merged['env_frac'].fillna(0)
     return (
-        merged.groupby('year')['compensation']
+        merged.groupby('year')['env_spend']
         .sum()
         .reset_index()
+        .rename(columns={'env_spend': 'compensation'})
         .sort_values('year')
     )
 
@@ -112,7 +148,7 @@ def generate_charts(engine, prefix=''):
     prefix : str
         Filename prefix (e.g. 'dash_' for dashboard charts).
     """
-    employers, lobbyists, lobby_bills, leg_bills = _load_data(engine)
+    employers, lobby_bills, leg_bills = _load_data(engine)
 
     if employers.empty:
         print('MA lobbying data not yet available — skipping lobbying charts.')
@@ -360,7 +396,7 @@ def _chart_spend_by_cluster(engine, employers: pd.DataFrame, lobby_bills: pd.Dat
 
 def generate_post_charts(engine, prefix=''):
     """Generate analysis-post lobbying charts (not suitable for weekly CI)."""
-    employers, lobbyists, lobby_bills, leg_bills = _load_data(engine)
+    employers, lobby_bills, leg_bills = _load_data(engine)
 
     if employers.empty:
         print('MA lobbying data not yet available — skipping post charts.')
@@ -603,7 +639,16 @@ def generate_post_charts(engine, prefix=''):
                 c.jekyll_write(f'{CHART_DIR}/{prefix}lobbying_top_env_employers.html')
                 print(f'Wrote {prefix}lobbying_top_env_employers.html')
 
-    # ── Post chart 6: Lobbying spend by known CSO operators + proxies ─────────
+    # ── Post chart 6: Support/Oppose/Neutral trend on env bills ──────────────
+    _chart_env_position_trend(lobby_bills, leg_bills, prefix)
+
+    # ── Post chart 7: Top opponents of env bills ──────────────────────────────
+    _chart_top_env_opponents(lobby_bills, leg_bills, prefix)
+
+    # ── Post chart 8: Env bill pass rate by dominant lobbying position ────────
+    _chart_pass_rate_by_position(lobby_bills, leg_bills, prefix)
+
+    # ── Post chart 9: Lobbying spend by known CSO operators + proxies ─────────
     # Cross-references MA_Lobbying_Employers.client_name with MAEEADP_CSO.permiteeName.
     # Includes the Massachusetts Municipal Association as a proxy: it is the
     # primary lobbyist for municipal CSO operators (most cities/towns lobby
@@ -681,6 +726,185 @@ def generate_post_charts(engine, prefix=''):
             )
             c.jekyll_write(f'{CHART_DIR}/{prefix}lobbying_cso_operators.html')
             print(f'Wrote {prefix}lobbying_cso_operators.html')
+
+
+def _chart_env_position_trend(lobby_bills: pd.DataFrame, leg_bills: pd.DataFrame,
+                               prefix: str):
+    """Stacked-area: unique clients taking Support/Oppose/Neutral positions on env bills by year.
+
+    Note: "opposing an environmental bill" does not always mean opposing environmental
+    protection — some env advocates oppose bills they consider inadequate or harmful.
+    The chart shows industry engagement with env-relevant legislation, not ideology.
+    """
+    if lobby_bills.empty or leg_bills.empty or 'is_environmental' not in leg_bills.columns:
+        return
+
+    env_ids = leg_bills[leg_bills['is_environmental'] == 1][
+        ['bill_number', 'general_court']
+    ].copy()
+    env_lb = lobby_bills.merge(env_ids, on=['bill_number', 'general_court'], how='inner')
+    if env_lb.empty:
+        return
+
+    pos_yr = (
+        env_lb[env_lb['position'].isin(['Support', 'Oppose', 'Neutral'])]
+        .groupby(['year', 'position'])['client_name']
+        .nunique()
+        .reset_index(name='n_clients')
+    )
+    pivot = pos_yr.pivot_table(
+        index='year', columns='position', values='n_clients', fill_value=0
+    ).sort_index()
+    for col in ['Support', 'Oppose', 'Neutral']:
+        if col not in pivot.columns:
+            pivot[col] = 0
+
+    # Drop sparse early years (fewer than 5 total clients across positions)
+    pivot = pivot[pivot[['Support', 'Oppose', 'Neutral']].sum(axis=1) >= 5]
+    if pivot.empty:
+        return
+
+    years = pivot.index.astype(int).tolist()
+    c = chartjs.Chart(
+        'Unique Clients by Position on Environmental Bills',
+        'Bar', width=700, height=380,
+    )
+    c.set_labels([str(y) for y in years])
+    c.add_dataset(pivot['Support'].tolist(), 'Support',
+                  backgroundColor=f"'{GREEN}'", stack="'pos'")
+    c.add_dataset(pivot['Neutral'].tolist(), 'Neutral',
+                  backgroundColor=f"'{GREY}'", stack="'pos'")
+    c.add_dataset(pivot['Oppose'].tolist(), 'Oppose',
+                  backgroundColor=f"'{RED}'", stack="'pos'")
+    c.set_params(
+        js_inline=False,
+        ylabel='Unique lobbying clients',
+        xlabel='Year',
+        stacked=True,
+    )
+    c.jekyll_write(f'{CHART_DIR}/{prefix}lobbying_env_positions.html')
+    print(f'Wrote {prefix}lobbying_env_positions.html')
+
+
+def _chart_top_env_opponents(lobby_bills: pd.DataFrame, leg_bills: pd.DataFrame,
+                              prefix: str):
+    """Horizontal bar: clients ranked by unique env bills opposed (all years).
+
+    "Opposing" an env-relevant bill can reflect either industry opposition to
+    new regulation, or an env group opposing a bill it considers harmful.
+    Top opponents are labelled accordingly where known.
+    """
+    if lobby_bills.empty or leg_bills.empty or 'is_environmental' not in leg_bills.columns:
+        return
+
+    env_ids = leg_bills[leg_bills['is_environmental'] == 1][
+        ['bill_number', 'general_court']
+    ].copy()
+    env_lb = lobby_bills.merge(env_ids, on=['bill_number', 'general_court'], how='inner')
+    if env_lb.empty:
+        return
+
+    oppose = (
+        env_lb[env_lb['position'] == 'Oppose']
+        .groupby('client_name')[['bill_number', 'general_court']]
+        .apply(lambda g: g.drop_duplicates().shape[0])
+        .reset_index(name='n_bills_opposed')
+        .sort_values('n_bills_opposed', ascending=False)
+        .head(20)
+        .sort_values('n_bills_opposed')  # ascending for horizontal bar
+    )
+    if oppose.empty:
+        return
+
+    c = chartjs.Chart(
+        'Top 20 Clients Opposing Environmental Bills (all years)',
+        'HorizontalBar', width=750, height=520,
+    )
+    c.set_labels(oppose['client_name'].tolist())
+    c.add_dataset(
+        oppose['n_bills_opposed'].tolist(),
+        'Unique env bills opposed',
+        backgroundColor=f"'{RED}'",
+    )
+    c.set_params(
+        js_inline=False,
+        ylabel='',
+        xlabel='Unique environmental bills opposed',
+    )
+    c.jekyll_write(f'{CHART_DIR}/{prefix}lobbying_env_opponents.html')
+    print(f'Wrote {prefix}lobbying_env_opponents.html')
+
+
+def _chart_pass_rate_by_position(lobby_bills: pd.DataFrame, leg_bills: pd.DataFrame,
+                                  prefix: str):
+    """Grouped bar: env bill pass rate by dominant lobbying position.
+
+    Classifies each env bill as 'Mostly supported', 'Mostly opposed', or
+    'Contested/Neutral' based on which position has the most unique clients.
+    Shows pass rate and bill count per category.
+    """
+    if lobby_bills.empty or leg_bills.empty or 'is_environmental' not in leg_bills.columns:
+        return
+    if 'passed' not in leg_bills.columns:
+        return
+
+    env_scored = leg_bills[leg_bills['is_environmental'] == 1][
+        ['bill_number', 'general_court', 'passed']
+    ].drop_duplicates()
+    if env_scored.empty:
+        return
+
+    env_lb = lobby_bills.merge(
+        env_scored[['bill_number', 'general_court']],
+        on=['bill_number', 'general_court'], how='inner'
+    )
+    pos_counts = (
+        env_lb[env_lb['position'].isin(['Support', 'Oppose'])]
+        .groupby(['bill_number', 'general_court', 'position'])['client_name']
+        .nunique()
+        .unstack(fill_value=0)
+        .reset_index()
+    )
+    for col in ['Support', 'Oppose']:
+        if col not in pos_counts.columns:
+            pos_counts[col] = 0
+
+    def _category(row):
+        if row['Support'] > row['Oppose']:
+            return 'Mostly supported'
+        if row['Oppose'] > row['Support']:
+            return 'Mostly opposed'
+        return 'Contested / Neutral'
+
+    pos_counts['category'] = pos_counts.apply(_category, axis=1)
+    tc = pos_counts.merge(env_scored, on=['bill_number', 'general_court'], how='left')
+
+    cat_order = ['Mostly supported', 'Mostly opposed', 'Contested / Neutral']
+    summary = (
+        tc.groupby('category')['passed']
+        .agg(pass_rate='mean', n_bills='count')
+        .reindex(cat_order)
+        .fillna(0)
+        .reset_index()
+    )
+
+    c = chartjs.Chart(
+        'Environmental Bill Pass Rate by Lobbying Position',
+        'Bar', width=520, height=360,
+    )
+    c.set_labels(cat_order)
+    c.add_dataset(
+        (summary['pass_rate'] * 100).round(1).tolist(),
+        'Pass rate (%)',
+        backgroundColor=[f"'{GREEN}'", f"'{RED}'", f"'{GREY}'"],
+    )
+    c.set_params(
+        js_inline=False,
+        ylabel='Pass rate (%)',
+        xlabel='Dominant lobbying position',
+    )
+    c.jekyll_write(f'{CHART_DIR}/{prefix}lobbying_pass_by_position.html')
+    print(f'Wrote {prefix}lobbying_pass_by_position.html')
 
 
 def _write_facts(employers: pd.DataFrame, spend_trend: pd.DataFrame, most_recent_year: int):
