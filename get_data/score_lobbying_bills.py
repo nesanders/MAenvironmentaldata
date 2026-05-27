@@ -53,7 +53,7 @@ API_KEY_PATH = Path('SECRET_GOOGLE_API_KEY')
 GCS_PARQUET = 'gs://openamend-data/MA_bill_embeddings.parquet'
 LOCAL_PARQUET = DATA_DIR / 'MA_bill_embeddings.parquet'  # local fallback/cache
 
-ENV_THRESHOLD = 0.08
+ENV_THRESHOLD = 0.06
 EMBEDDING_DIM = 768
 REQUEST_DELAY = 0.05
 
