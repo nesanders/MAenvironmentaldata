@@ -15,6 +15,7 @@ jobs:
       contents: write       # to push branch
       issues: write         # to open failure issues
       pull-requests: write  # to create PR
+      actions: write        # to dispatch update-charts.yml after merge
 
     steps:
       - uses: actions/checkout@v4
