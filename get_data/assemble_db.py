@@ -316,19 +316,49 @@ if __name__ == '__main__':
 	print(f'MS4: {len(data_csv["MS4_AnnualReports"])} reports, {len(data_csv["MS4_TMDL"])} TMDL entries')
 
 	## MA Lobbying and Legislature data (loaded only if available; not yet in CI)
+
+	# Entity name normalization — applied at DB assembly time so raw portal names
+	# are preserved in GCS CSVs while the DB exposes cleaned columns for analysis.
+	_ENTITY_SUPERFLUOUS = [
+		",", ".", "'", "’",
+		"LLC", " INC", "LLP", " PC", "P C",
+		"LAW OFFICE OF", "AND ASSOCIATES", "& ASSOCIATES", "AND ASSOC",
+		"ATTORNEY AT LAW", "ATTORNEY@LAW", "AND PARTNERS",
+		" PUBLIC POLICY GROUP", "LEGISLATIVE SERVICES", "POLICY GROUP",
+		"ASSOCIATES", "ATTORNET AT LAW", "COUNSELLORS AT LAW", "THE ",
+	]
+	_ENTITY_REPLACEMENTS = {"&": "AND", "ASSICIATES": "ASSOCIATES"}
+
+	def _normalize_entity(x):
+		if not isinstance(x, str):
+			return x
+		x = x.upper()
+		for token in _ENTITY_SUPERFLUOUS:
+			x = x.replace(token, "")
+		for token, replacement in _ENTITY_REPLACEMENTS.items():
+			x = x.replace(token, replacement)
+		for i in range(4, 0, -1):
+			x = x.replace(" " * i, " ")
+		return x.strip()
+
 	_lobbying_employers_path = '../docs/data/MA_lobbying_employers.csv'
 	_lobbying_lobbyists_path = '../docs/data/MA_lobbying_lobbyists.csv'
 	_lobbying_bills_path = '../docs/data/MA_lobbying_bills.csv'
 	_legislature_bills_path = '../docs/data/MA_legislature_bills.csv'
 
 	if os.path.exists(_lobbying_employers_path):
-		data_csv['MA_Lobbying_Employers'] = pd.read_csv(_lobbying_employers_path, index_col=0)
+		_emp = pd.read_csv(_lobbying_employers_path, index_col=0)
+		_emp['entity_name_norm'] = _emp['entity_name'].map(_normalize_entity)
+		_emp['client_name_norm'] = _emp['client_name'].map(_normalize_entity)
+		data_csv['MA_Lobbying_Employers'] = _emp
 		print(f"MA_Lobbying_Employers: {len(data_csv['MA_Lobbying_Employers'])} rows")
 	if os.path.exists(_lobbying_lobbyists_path):
 		data_csv['MA_Lobbying_Lobbyists'] = pd.read_csv(_lobbying_lobbyists_path, index_col=0)
 		print(f"MA_Lobbying_Lobbyists: {len(data_csv['MA_Lobbying_Lobbyists'])} rows")
 	if os.path.exists(_lobbying_bills_path):
-		_lb = pd.read_csv(_lobbying_bills_path, index_col=0)
+		_lb = pd.read_csv(_lobbying_bills_path, index_col=0, low_memory=False)
+		_lb['entity_name_norm'] = _lb['entity_name'].map(_normalize_entity)
+		_lb['client_name_norm'] = _lb['client_name'].map(_normalize_entity)
 		_lb['bill_number'] = pd.to_numeric(_lb['bill_number'], errors='coerce').astype('Int64')
 		if 'general_court' in _lb.columns:
 			_lb['general_court'] = pd.to_numeric(_lb['general_court'], errors='coerce').astype('Int64')

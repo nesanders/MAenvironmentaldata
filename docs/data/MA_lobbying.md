@@ -58,7 +58,7 @@ These links will be active once the initial full-history scrape is complete and 
 One row per (entity, client, year). Records how much each client paid each lobbying entity in a given year.
 
 | Entity Name | Client Name | Year | Reg Type | Compensation |
-| --- | --- | --- | --- | --- |{% for row in site.data.MA_lobbying_employers_sample %}
+| --- | --- | --- | --- | --- |{% for row in site.data.MA_lobbying_employers_sample limit:10 %}
 | {{ row.entity_name }} | {{ row.client_name }} | {{ row.year }} | {{ row.reg_type }} | {{ row.compensation }} |{% endfor %}
 {: .sortable}
 
@@ -67,7 +67,7 @@ One row per (entity, client, year). Records how much each client paid each lobby
 One row per (entity, client, bill, session). Records which bills each entity lobbied on behalf of each client, with the lobbying position.
 
 | Entity Name | Client Name | Year | Chamber | Bill Number | Bill Title | Position |
-| --- | --- | --- | --- | --- | --- | --- |{% for row in site.data.MA_lobbying_bills_sample %}
+| --- | --- | --- | --- | --- | --- | --- |{% for row in site.data.MA_lobbying_bills_sample limit:10 %}
 | {{ row.entity_name }} | {{ row.client_name }} | {{ row.year }} | {{ row.chamber }} | {{ row.bill_number }} | {{ row.bill_title }} | {{ row.position }} |{% endfor %}
 {: .sortable}
 
@@ -76,6 +76,6 @@ One row per (entity, client, bill, session). Records which bills each entity lob
 Bill metadata fetched from the [MA Legislature OpenAPI](https://malegislature.gov/api/swagger). Includes sponsor, final status, and derived `passed` boolean. Environmental relevance scores and cluster IDs are stored separately in `MA_lobbying_bills_scored.csv` (see above).
 
 | Bill Number | General Court | Title | Sponsor | Status | Passed |
-| --- | --- | --- | --- | --- | --- |{% for row in site.data.MA_legislature_bills_sample %}
+| --- | --- | --- | --- | --- | --- |{% for row in site.data.MA_legislature_bills_sample limit:10 %}
 | {{ row.bill_number }} | {{ row.general_court }} | {{ row.title }} | {{ row.sponsor_name }} | {{ row.status }} | {{ row.passed }} |{% endfor %}
 {: .sortable}
