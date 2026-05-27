@@ -53,7 +53,7 @@ API_KEY_PATH = Path('SECRET_GOOGLE_API_KEY')
 GCS_PARQUET = 'gs://openamend-data/MA_bill_embeddings.parquet'
 LOCAL_PARQUET = DATA_DIR / 'MA_bill_embeddings.parquet'  # local fallback/cache
 
-ENV_THRESHOLD = 0.05
+ENV_THRESHOLD = 0.08
 EMBEDDING_DIM = 768
 REQUEST_DELAY = 0.05
 
@@ -85,26 +85,55 @@ ENV_EXAMPLE_BILLS = [
 ]
 
 NON_ENV_EXAMPLE_BILLS = [
+    # Labor / wages
     'An Act requiring one fair wage',
-    'An Act to prohibit carrying firearms in sensitive places',
-    'An Act to aid economic recovery of the tourism industry',
-    'An Act protecting the right to time off for voting',
-    'An Act to improve sickle cell care',
-    'An Act establishing a college tuition tax deduction',
-    'An Act to lift kids out of deep poverty',
-    'An Act to promote the recruitment and retention of hospital workers',
-    'An Act to prohibit the sale of energy drinks to persons under the age of 18',
-    'An Act to support educational opportunity for all',
     'An Act clarifying the process for paying the wages of dismissed employees',
-    'An Act further regulating the rental of motor vehicles',
-    'An Act providing incentives to the digital interactive media and entertainment industries',
     'An Act to establish a hospital and community health center worker minimum wage',
-    'An Act establishing a tax credit for families caring for elderly relatives',
-    'An Act to secure while improving fans tickets',
-    'An Act to preserve the eternal bonds between people and their animals',
-    'An Act to require equitable payment from the Commonwealth',
-    'Supporting Local Services',
     'An Act relative to equitable pay in the public sector',
+    # Criminal justice / public safety
+    'An Act to prohibit carrying firearms in sensitive places',
+    'An Act further defining a hate crime',
+    'An Act limiting autonomous driving capabilities to zero emission and electric vehicles',
+    'An Act relative to disability pensions for violent crimes',
+    # Healthcare / insurance / medical
+    'An Act to improve sickle cell care',
+    'An Act to promote the recruitment and retention of hospital workers',
+    'An Act to ensure consumer cost protection under the dental medical loss ratio',
+    'An Act alleviating the burden of medical debt for patients and families',
+    'An Act relative to improving the outcomes for sudden cardiac arrest in the Commonwealth',
+    'An Act requiring full health insurance coverage for individuals with vitiligo',
+    'An Act to modernize the Massachusetts insurer insolvency fund',
+    # Education
+    'An Act establishing a college tuition tax deduction',
+    'An Act to support educational opportunity for all',
+    'An Act protecting against attempts to ban remove or restrict library access to materials',
+    'An Act relative to charter schools',
+    # Housing / finance / tax
+    'An Act to lift kids out of deep poverty',
+    'An Act establishing a tax credit for families caring for elderly relatives',
+    'An Act to require equitable payment from the Commonwealth',
+    'An Act relative to the Affordable Homes Act',
+    'An Act making appropriations for the fiscal year for the maintenance of the departments of the commonwealth',
+    # Liquor / municipal licensing
+    'An Act relative to liquor licenses in the city of Westfield',
+    'An Act authorizing the town of Wrentham to grant additional licenses for the sale of alcoholic beverages',
+    'Supporting Local Services',
+    # Digital / media / tech
+    'An Act providing incentives to the digital interactive media and entertainment industries',
+    'An Act to establish a digital advertising revenue commission',
+    'An Act relative to legal advertisements in online-only newspapers',
+    'An Act relative to access to a decedent electronic mail accounts',
+    # Legal / civil procedure
+    'An Act to modify the rules for taking depositions outside the Commonwealth',
+    'An Act to prohibit the sale of energy drinks to persons under the age of 18',
+    # LGBTQ / social services
+    'An Act relative to LGBTQ family building',
+    'An Act to preserve the eternal bonds between people and their animals',
+    'An Act protecting the right to time off for voting',
+    # Tourism / entertainment / other economy
+    'An Act to aid economic recovery of the tourism industry',
+    'An Act further regulating the rental of motor vehicles',
+    'An Act relative to carriers of property by motor vehicle',
 ]
 
 
@@ -220,6 +249,13 @@ def _cosine_sim(a: np.ndarray, b: np.ndarray) -> np.ndarray:
 # ─── Main ──────────────────────────────────────────────────────────────────────
 
 def main():
+    import argparse
+    parser = argparse.ArgumentParser()
+    parser.add_argument('--rescore', action='store_true',
+                        help='Re-score all existing embeddings with current example sets '
+                             '(no new API embedding calls for already-embedded bills)')
+    args = parser.parse_args()
+
     lobby_path = DATA_DIR / 'MA_lobbying_bills.csv'
     if not lobby_path.exists():
         print(f'ERROR: {lobby_path} not found. Run get_MA_lobbying.py first.')
@@ -230,12 +266,17 @@ def main():
     bill_id_map: dict[tuple, str] = {}
     leg_title_map: dict[tuple, str] = {}
     if leg_path.exists():
-        leg = pd.read_csv(leg_path, index_col=0)
-        for _, row in leg.dropna(subset=['bill_id', 'bill_number', 'general_court']).iterrows():
-            key = (int(row['bill_number']), int(row['general_court']))
-            bill_id_map[key] = str(row['bill_id'])
-            if row.get('title'):
-                leg_title_map[key] = str(row['title'])
+        try:
+            leg = pd.read_csv(leg_path, index_col=0)
+            needed = {'bill_id', 'bill_number', 'general_court'}
+            if needed.issubset(leg.columns):
+                for _, row in leg.dropna(subset=list(needed)).iterrows():
+                    key = (int(row['bill_number']), int(row['general_court']))
+                    bill_id_map[key] = str(row['bill_id'])
+                    if row.get('title'):
+                        leg_title_map[key] = str(row['title'])
+        except Exception as e:
+            print(f'  Warning: could not read {leg_path} ({e}) — skipping bill_id lookup')
 
     # Unique bills from lobbying data
     lobby = pd.read_csv(lobby_path, index_col=0)
@@ -279,58 +320,75 @@ def main():
     ]
     print(f'Embedding {len(unscored)} new bills...')
 
-    if unscored.empty:
-        print('Nothing to do.')
-        return
-
     api_key = _read_api_key()
     client = _make_client(api_key)
 
-    # Embed example bills once
+    # Embed example bills once (always needed — for new bills and for --rescore)
     print('Embedding reference examples...')
     env_emb = _embed_texts(client, ENV_EXAMPLE_BILLS)
     non_env_emb = _embed_texts(client, NON_ENV_EXAMPLE_BILLS)
 
-    # Build text to embed: full_text if available, else title
-    full_texts = unscored.apply(
-        lambda r: _get_full_text(r['bill_id'], r['general_court']), axis=1
-    )
-    n_with_text = (full_texts.str.len() > 0).sum()
-    print(f'  {n_with_text}/{len(unscored)} bills have full text from legislature cache')
+    if not unscored.empty:
+        # Build text to embed: full_text if available, else title
+        full_texts = unscored.apply(
+            lambda r: _get_full_text(r['bill_id'], r['general_court']), axis=1
+        )
+        n_with_text = (full_texts.str.len() > 0).sum()
+        print(f'  {n_with_text}/{len(unscored)} bills have full text from legislature cache')
 
-    embed_texts = (full_texts.where(full_texts.str.len() > 0, other=None)
-                   .fillna(unscored['bill_title'].fillna(''))).tolist()
+        embed_texts = (full_texts.where(full_texts.str.len() > 0, other=None)
+                       .fillna(unscored['bill_title'].fillna(''))).tolist()
 
-    # Embed in chunks
-    CHECKPOINT = 500
-    bill_emb_parts = []
-    for start in range(0, len(embed_texts), CHECKPOINT):
-        chunk = embed_texts[start:start + CHECKPOINT]
-        print(f'  Chunk {start}–{start + len(chunk)}...')
-        bill_emb_parts.append(_embed_texts(client, chunk))
-    bill_emb = np.vstack(bill_emb_parts)
+        # Embed in chunks
+        CHECKPOINT = 500
+        bill_emb_parts = []
+        for start in range(0, len(embed_texts), CHECKPOINT):
+            chunk = embed_texts[start:start + CHECKPOINT]
+            print(f'  Chunk {start}–{start + len(chunk)}...')
+            bill_emb_parts.append(_embed_texts(client, chunk))
+        bill_emb = np.vstack(bill_emb_parts)
 
-    # Score
-    env_sims = _cosine_sim(bill_emb, env_emb).max(axis=1)
-    non_env_sims = _cosine_sim(bill_emb, non_env_emb).max(axis=1)
-    diff_scores = env_sims - non_env_sims
+        # Score new bills
+        env_sims = _cosine_sim(bill_emb, env_emb).max(axis=1)
+        non_env_sims = _cosine_sim(bill_emb, non_env_emb).max(axis=1)
+        diff_scores = env_sims - non_env_sims
 
-    n_env = int((diff_scores >= ENV_THRESHOLD).sum())
-    print(f'  {n_env}/{len(unscored)} new bills flagged is_environmental')
+        n_env = int((diff_scores >= ENV_THRESHOLD).sum())
+        print(f'  {n_env}/{len(unscored)} new bills flagged is_environmental')
 
-    # Build new rows
-    new_rows = unscored[['bill_number', 'general_court', 'bill_title', 'bill_id']].copy()
-    new_rows['full_text'] = full_texts.values
-    new_rows['embedding'] = [bill_emb[i] for i in range(len(bill_emb))]
-    new_rows['env_relevance_score'] = diff_scores
-    new_rows['is_environmental'] = diff_scores >= ENV_THRESHOLD
-    new_rows['cluster_id'] = -1
+        # Build new rows
+        new_rows = unscored[['bill_number', 'general_court', 'bill_title', 'bill_id']].copy()
+        new_rows['full_text'] = full_texts.values
+        new_rows['embedding'] = [bill_emb[i] for i in range(len(bill_emb))]
+        new_rows['env_relevance_score'] = diff_scores
+        new_rows['is_environmental'] = diff_scores >= ENV_THRESHOLD
+        new_rows['cluster_id'] = -1
 
-    # Merge and save Parquet (full data including embeddings + text)
-    if existing is not None and not existing.empty:
-        combined = pd.concat([existing, new_rows], ignore_index=True)
+        # Merge
+        if existing is not None and not existing.empty:
+            combined = pd.concat([existing, new_rows], ignore_index=True)
+        else:
+            combined = new_rows
     else:
-        combined = new_rows
+        print('No new bills to embed.')
+        if existing is None:
+            print('Nothing to do.')
+            return
+        combined = existing
+
+    # --rescore: re-score ALL rows in combined using current example embeddings.
+    # This is fast (pure numpy) — no API calls for bill embeddings.
+    if args.rescore or not unscored.empty:
+        print(f'Scoring all {len(combined)} bills with current example sets...')
+        emb_matrix = np.array(combined['embedding'].tolist(), dtype=np.float32)
+        env_sims_all = _cosine_sim(emb_matrix, env_emb).max(axis=1)
+        non_env_sims_all = _cosine_sim(emb_matrix, non_env_emb).max(axis=1)
+        combined['env_relevance_score'] = env_sims_all - non_env_sims_all
+        combined['is_environmental'] = combined['env_relevance_score'] >= ENV_THRESHOLD
+        n_env_total = int(combined['is_environmental'].sum())
+        print(f'  {n_env_total}/{len(combined)} bills flagged is_environmental '
+              f'(threshold={ENV_THRESHOLD})')
+
     _save_parquet(combined)
 
     # Write lightweight scored CSV (no embeddings — committed to repo)
