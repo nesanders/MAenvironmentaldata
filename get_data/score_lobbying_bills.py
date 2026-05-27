@@ -54,7 +54,7 @@ API_KEY_PATH = Path('SECRET_GOOGLE_API_KEY')
 GCS_PARQUET = 'gs://openamend-data/MA_bill_embeddings.parquet'
 LOCAL_PARQUET = DATA_DIR / 'MA_bill_embeddings.parquet'  # local fallback/cache
 
-ENV_THRESHOLD = 0.06
+ENV_THRESHOLD = 0.05
 EMBEDDING_DIM = 768
 REQUEST_DELAY = 0.05
 
@@ -288,6 +288,10 @@ def main():
     parser.add_argument('--rescore', action='store_true',
                         help='Re-score all existing embeddings with current example sets '
                              '(no new API embedding calls for already-embedded bills)')
+    parser.add_argument('--reembed', action='store_true',
+                        help='Force re-embedding of ALL bills, ignoring existing Parquet. '
+                             'Use after changing preprocessing (boilerplate stripping, '
+                             'title prefix, MAX_TEXT_CHARS). Implies --rescore.')
     args = parser.parse_args()
 
     lobby_path = DATA_DIR / 'MA_lobbying_bills.csv'
@@ -345,12 +349,15 @@ def main():
     # Load existing Parquet
     existing = _load_parquet()
     already_done: set = set()
-    if existing is not None:
+    if existing is not None and not args.reembed:
         already_done = set(
             zip(existing['bill_number'].astype(int),
                 existing['general_court'].astype(int))
         )
         print(f'  {len(already_done)} already embedded')
+    elif args.reembed:
+        print(f'  --reembed: ignoring {len(existing) if existing is not None else 0} cached embeddings, re-embedding all bills')
+        existing = None  # discard; will be rebuilt from scratch
 
     unscored = unique[
         ~unique.apply(lambda r: (r['bill_number'], r['general_court']) in already_done, axis=1)

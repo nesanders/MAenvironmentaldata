@@ -1,101 +1,1631 @@
 ,bill_number,general_court,bill_title,bill_id,env_relevance_score,is_environmental,cluster_id
-0,0,192,Legislative meetings related to resiliency. No legislation was filed.,,0.052733183,0,13
-1,1,192,"An Act making appropriations for the Fiscal Year 2024 for the maintenance of the departments, boards, commissions, institutions, and certain activities of the Commonwealth, for interest, sinking fund, and serial bond requirements, and for certain permanent improvements",H1,-0.08080357,0,9
-2,100,192,An Act establishing a special commission to study women and homelessness,S100,0.003342986,0,6
-3,1000,192,An Act providing living organ donor protections,H1000,0.03968501,0,6
-4,1002,192,An Act supporting survivors of trafficking and abuse and encouraging increased access to opportunities through expungement and/or sealing of records,S1002,0.012397826,0,6
-5,1004,192,An Act reforming?the Massachusetts civil rights act,H1004,0.018933475,0,6
-6,1005,192,An Act relative to the licensure of automobile damage appraisers,S1005,-0.01626873,0,6
-7,1006,192,An Act relative to the compulsory automobile insurance limits,H1006,0.054876924,0,6
-8,1007,192,An Act relative to insurance coverage of mobile integrated health,H1007,0.012193322,0,6
-9,1008,192,An Act requiring licensed auto insurance damage appraisers to provide safety notices to the owners of damaged motor vehicles,S1008,-0.026369989,0,6
-10,1009,192,"An Act relative to uncollected co-pays, co-insurance and deductibles",S1009,-0.015853405,0,6
-11,101,192,An Act protecting our soil and farms from PFAS contamination,H101,-0.0036914945,0,6
-12,1010,192,An Act relative to ambulance service reimbursement,H1010,0.000624001,0,6
-13,1011,192,An Act relative to fair and equitable compensation for medical services,H1011,0.050798237,0,6
-14,1012,192,An Act relative to transmitting indecent visual depictions by teens and the unlawful distribution of explicit images,S1012,-0.009632766,0,6
-15,1014,192,An Act to improve child and adolescent mental health services,S1014,-0.0094640255,0,6
-16,1015,192,An Act providing for certain health insurance coverage,H1015,0.037605464,0,6
-17,1016,192,An Act to enact pharmacy benefit manager duties,H1016,0.028555334,0,6
-18,1017,192,An Act relative to pediatric care appointments,S1017,-0.0050760508,0,6
-19,1018,192,An Act further regulating the rental of motor vehicles,S1018,0.010115802,0,6
-20,1019,192,An Act ensuring pharmacy access,S1019,-0.010311425,0,6
-21,102,192,An Act relative to farmer-distilleries,H102,-0.0090302825,0,7
-22,1020,192,An Act relative to the fair treatment of employees,S1020,-0.0067304373,0,6
-23,1023,192,An Act relative to the expungement of convictions for marijuana possession,S1023,0.001253128,0,6
-24,1025,192,An Act to promote cancer screenings for firefighters,H1025,0.008532047,0,6
-25,1026,192,An Act to provide homeowners with fair insurance premiums,H1026,0.036256313,0,6
-26,1027,192,An Act relative to homeowners' insurance complaint education,H1027,0.00935185,0,6
-27,1029,192,An Act relative to prejudgment interest rates,H1029,0.037890315,0,6
-28,1030,192,An Act relative to human donor milk coverage,H1030,0.024457991,0,6
-29,1031,192,An Act to redirect excessive health insurer reserves to support health care needs,H1031,-0.03833562,0,6
-30,1032,192,An Act relative to growth opportunities for state financial institutions,H1032,-0.0039952993,0,6
-31,1033,192,An Act to strengthen the state credit union charter,H1033,-0.012663424,0,6
-32,1034,192,An Act to allow municipalities to deposit in credit unions,S1034,-0.0074703097,0,6
-33,1035,192,An Act to establish minimum reimbursement rate to insurance claimants,H1035,-0.018155098,0,6
-34,1036,192,An Act relative to sexual assaults by adults in positions of authority or trust,S1036,-0.02684784,0,6
-35,1038,192,An Act eliminating the statute of limitation in civil child sexual abuse cases,H1038,-0.021972656,0,6
-36,104,192,An Act relative to seeds,S104,-0.0007534623,0,6
-37,1041,192,An Act relative to preserving fertility,H1041,-0.025766075,0,6
-38,1043,192,An Act relative to breast cancer equity and early detection,S1043,-0.0398857,0,6
-39,1044,192,An Act relative to insurance point surcharges,H1044,-0.036522448,0,6
-40,1045,192,An Act relative to unpaid health insurance deductibles,S1045,-0.041788816,0,6
-41,1046,192,An Act relative to the cleanup of accidental home heating oil spills,H1046,-0.052835166,0,6
-42,1047,192,An Act relative to eliminating surcharges for vehicle inspection violations,H1047,-0.040506363,0,6
-43,1048,192,An Act relative to summary process and rental assistance,H1048,-0.03870827,0,6
-44,1049,192,An Act protecting consumers' privacy in mortgage applications,H1049,-0.03933561,0,6
-45,105,192,An Act relative to data transparency in the cannabis industry,H105,-0.0052748322,0,6
-46,1050,192,An Act to improve patient access to non-emergency medical transportation,H1050,-0.055414855,0,6
-47,1052,192,An Act relative to forfeiture reform,S1052,-0.017962933,0,6
-48,1053,192,An Act establishing a commission to study the promotion of preferred pharmacy networks,H1053,-0.038141847,0,6
-49,1054,192,An Act relative to epinephrine injectors,H1054,-0.021478236,0,6
-50,1055,192,An Act relative to pharmaceutical gag clauses,H1055,-0.019238174,0,6
-51,1056,192,An Act establishing a commission to study maximum allowable costs lists,S1056,0.019428074,0,6
-52,1057,192,An Act to strengthen laws combatting human trafficking and protecting survivors of modern-day slavery,H1057,-0.036556244,0,6
-53,1058,192,An Act relative to insurance surcharges,S1058,-0.012189865,0,6
-54,1059,192,An Act relative to electronic automobile insurance charges,S1059,-0.0042162538,0,6
-55,106,192,An Act establishing an internal special audit unit within the Cannabis Control Commission,H106,-0.00010210276,0,6
-56,1061,192,An Act relative to emergency insulin access,H1061,-0.01341939,0,6
-57,1063,192,An Act relative to insurance discounts,S1063,0.013309717,0,6
-58,1064,192,An Act removing the charitable immunity cap,H1064,-0.033222616,0,6
-59,1065,192,An Act relative to surcharges on motor vehicle insurance premiums,S1065,-0.011292696,0,6
-60,1067,192,An Act relative to public charity executive and board of directors compensation,S1067,-0.026544094,0,6
-61,1068,192,An Act to further define medical necessity determinations,H1068,-0.007819772,0,6
-62,1069,192,An Act to increase access to nurse-midwifery services,S1069,0.0031238198,0,6
-63,1071,192,An Act to enhance courthouse security,H1071,-0.06396246,0,6
-64,1072,192,An Act relative to behavioral health and nutrition counseling,H1072,-0.01817441,0,6
-65,1073,192,An Act relative to telehealth parity for nutrition counseling,H1073,-0.013731718,0,6
-66,1074,192,An Act relative to cancer patient access to biomarker testing to provide appropriate therapy,H1074,-0.009497285,0,6
-67,1075,192,An Act ensuring support groups are part of the pathway of care following the annual mental health wellness exam,H1075,-0.021136284,0,6
-68,1076,192,An Act relative to the ownership of pets by convicted animal abusers,H1076,-0.0049693584,0,6
-69,1077,192,An Act relative to insurance company rebates,S1077,-0.006026447,0,6
-70,1078,192,An Act making changes to certain references in the banking laws of the Commonwealth,H1078,-0.021713436,0,6
-71,1079,192,An Act providing for temporary emergency licensing of appraisers of motor vehicle damage covered by auto insurance policies,S1079,0.00855726,0,6
-72,108,192,An Act establishing guardians as providers of medical care to support the rights of incapacitated persons,S108,-0.0034398437,0,6
-73,1080,192,An Act increasing penalties for hit and runs with recreational vehicles in the Commonwealth to be known as the James Ward Act,H1080,-0.044028997,0,6
-74,1081,192,An Act relative to preserving preventative services without cost sharing,H1081,-0.032632887,0,6
-75,1082,192,An Act relative to fair access for qualifying patients,H1082,-0.0405097,0,6
-76,1083,192,An Act to facilitate alternatives to foreclosure,H1083,-0.0073825717,0,6
-77,1084,192,An Act relative to applied behavioral analysis therapy,H1084,0.016544104,0,6
-78,1086,192,An Act expanding the use of video and telephone conferencing,H1086,-0.04942429,0,6
-79,1087,192,An Act preventing inappropriate denials by insurers for medically necessary services,H1087,-0.02220434,0,6
-80,1088,192,An Act relative to greater fairness in insurance,S1088,-0.0049749017,0,6
-81,1089,192,An Act relative to gender identity in insurance,H1089,-0.03292638,0,6
-82,109,192,An Act relative to supported decision-making agreements for certain adults with disabilities,S109,-0.033991277,0,6
-83,1090,192,An Act relative to transportation network company fees,H1090,-0.01857382,0,6
-84,1091,192,An Act relative to reducing unnecessary delays in patient care,H1091,-0.017361403,0,6
-85,1092,192,An Act relative to protecting innocent sellers,S1092,-0.00793308,0,6
-86,1093,192,An Act relative to ensuring treatment for genetic craniofacial conditions,H1093,-0.038267076,0,6
-87,1094,192,An Act expanding coverage of dental procedures,H1094,-0.006890714,0,6
-88,1095,192,An Act establishing the fair calculation of labor rates paid by insurance companies to auto repairers in the Commonwealth,H1095,-0.030623376,0,6
-89,1097,192,An Act relative to coercive control,H1097,-0.0054243803,0,6
-90,1098,192,An Act relative to auto insurance costs for traditionally low-and moderate income communities,H1098,-0.016626835,0,6
-91,1099,192,An Act establishing a transportation network driver bill of rights,H1099,-0.016183436,0,6
-92,1101,192,An Act regarding credit card surcharging,H1101,-0.0065791607,0,6
-93,1102,192,An Act eliminate penalty charges when canceling auto insurance,H1102,-0.000983119,0,6
-94,1103,192,An Act relative to breast cancer equity and early detection,S1103,0.002598226,0,6
-95,1104,192,An Act protecting homeowners from unnecessary foreclosures,S1104,-0.03920716,0,6
-96,1106,192,An Act specifying an electronic system to ensure that sales of certain products containing pseudoephedrine (PSE) do not exceed limits established under federal law,H1106,-0.022645235,0,6
-97,1107,192,An Act relative to fairness in debt collection,S1107,-0.00075161457,0,6
-98,1108,192,An Act relative to community behavioral health centers,H1108,-0.041011214,0,6
-99,1110,192,An Act relative to dental insurance assignment of benefits,H1110,-0.022830784,0,6
+0,537,185,An Act To Assure Equitable Heath Coverage For All Children,,-0.042894244,0,15
+1,549,185,An Act Relative to Health Care Affordability,,-0.005761683,0,14
+2,873,185,An Act Strengthening Health Reform,,-0.048513412,0,14
+3,974,185,,,0.0,0,14
+4,1,185,,,0.0,0,14
+5,10,185,"and H4047 ""Transportation reform bills""",,-0.011382341,0,16
+6,100,185,"HB3797 
+SB92 
+SB554 
+SB555 
+SB579 
+Authority management issues
+Ch. 27 of 2009",,0.0043101907,0,16
+7,1000,185,"An Act Relative To Banks And Banking
+HB1050	An Act Relative To The Safety Of Public Deposits
+HB4800	An Act Making Appropriations For The Fiscal Year 2011 
+SB513	An Act Relative To The Safety Of Public Deposits
+HB4841	An Act Relative to Making Appropriations for the Fiscal years 2010 & 2011
+HB4868	An Act Relative to Making Appropriations for the Fiscal years 2010 & 2011
+HB5028	An Act Relative to Making Appropriations for the Fiscal years 2010 & 2011
+SB520	An Act To Include Credit Unions For Deposit Of Public Monies
+SB1783	An Act Providing For The Uniform Prudent Management Of Institutional Funds",,-0.018367767,0,14
+8,1002,185,,,0.0,0,13
+9,1003,185,,,0.0,0,16
+10,1004,185,,,0.0,0,15
+11,101,185,"HB102 HB104 HB106 HB1179 HB1194 HB1195 HB119
+6 HB1197 HB1198 HB1201 HB1202 HB1208 HB1219 HB1223
+HB1226 HB1227 HB1231 HB1232 HB1236 HB1238 HB1239 
+HB1242 HB1245 HB1310 HB1425 HB1455 HB1649 HB1654 H
+B1697 HB1700 HB1728 HB1779 HB1794 HB1809 HB1844 HB
+1868 HB1982 HB2001 HB2218 HB2263 HB2668 HB2712 HB2
+728 HB2755 HB2767 HB277 HB2835 HB2847 HB2933 HB294
+0 HB2958 HB2962 HB3083 HB309 HB310 HB3124 HB3452 H
+B3454 HB3457 HB3459 HB3474 HB3569 HB3572 HB3575 HB
+3583 HB3588 HB3623 HB3651 HB3683 HB3684 HB3686 HB3
+689 HB3781 HB3810 HB3812 HB3817 HB3821 HB3823 HB38
+56 HB3859 HB3921 HB395 HB3956 HB4043 HB4072 HB4084 HB4088 HB4100 HB4101 
+HB4106 HB787 HB811 HB858 HD2026 HD2267 HB1221 HB75
+0 HB2940 SB100 SB121 SB1316 SB1528 SB1533 SB1546 
+SB1609 SB168 SB1719 SB173 SB1791 SB1813 SB1847 SB1
+87 SB2052 SB226 SB3 SB455 SB6 SB634 SB648 SB651 SB
+667 SB670 SB694 SB718 SB751 SB765 SB766 SB768 SB77
+7 SB90 SD632 SB343 SB441 SB2060 SB1373",,-0.031735003,0,13
+12,1012,185,"HB1035
+HB1044
+HB1063
+HB1067
+HB1076
+HB1077
+HB1079
+HB108
+HB1085
+HB1087HB1088
+HB1092
+HB1093
+HB1259
+HB1332
+HB1388
+HB1389HB1452
+HB1520
+HB1521
+HB1696
+HB1813
+HB1844
+HB188
+HB1923
+HB1928
+HB1932
+HB1939HB1940
+HB1950
+HB2054
+HB2059
+HB2069
+HB2073
+HB2085HB2086
+HB2100
+HB2102
+HB2111
+HB2126
+HB2128
+HB2181
+HB22
+HB2806
+HB2807
+HB3021HB3595
+HB3597
+HB3599
+HB3614
+HB3629
+HB3717
+HB3760
+HB3779
+HB3920
+HB4258
+HB4271
+HB4275
+HB4438
+HB4441
+HB4459
+HB4513
+HB4744
+HB4747HB656
+HB972
+HB974
+HB978SB1262
+SB1299
+SB1615
+SB1752
+SB1755
+SB1779
+SB1780
+SB1783
+SB1794
+SB18
+SB2028SB2208
+SB2257
+SB2314
+SB2322
+SB2383
+SB313
+SB317
+SB318
+SB39
+SB457
+SB458
+SB480SB521
+SB534
+SB537
+SB545SB551
+SB553
+SB554
+SB556
+SB557
+SB558
+SB560
+SB561
+SB571
+SB573
+SB574
+SB577
+SB588
+SB609
+SB670
+SB807
+SB810
+SB811
+SB813
+SB815
+SB833SB834
+SB835
+SB837
+SB852SB853
+SB854
+SB866
+SB871
+SB873
+SB876
+SB897
+SB950",,-0.034297824,0,0
+13,1020,185,"HB1028
+HB1031
+HB1032
+HB1033
+HB1034
+HB1035
+HB1036
+HB1038
+HB1044
+HB1056
+HB1064
+HB1065
+HB1077
+HB1079
+HB109
+HB1091
+HB1092HB1093
+HB1097
+HB110
+HB1101
+HB1102
+HB1107
+HB1526
+HB1924
+HB1926
+HB1949
+HB1950HB1956
+HB2111
+HB2185
+HB2509
+HB3451
+HB3558
+HB3559HB3563
+HB3598
+HB3809
+HB3889
+HB3897
+HB4138
+HB4477
+HB4490
+HB860
+HB865
+HB879
+HB885
+HB898
+HB905
+HB908
+HB910
+HB914
+HB915
+HB921
+HB923
+HB930
+HB931
+HB932
+HB933
+HB936
+HB937
+HB938
+HB939HB939
+HB948
+HB950
+HB962HB972
+HB974
+HB976
+HB977
+Line Item: 4100-0060
+Line Item: 4513-1020
+SB1038
+SB1674
+SB1675
+SB17
+SB1737
+SB1738SB1745
+SB1747
+SB1752
+SB19SB2099
+SB2156
+SB2223
+SB2271
+SB2437
+SB316
+SB324
+SB327
+SB329
+SB330
+SB445
+SB448
+SB449
+SB451
+SB457
+SB458
+SB463
+SB465
+SB467
+SB469SB470
+SB473
+SB478
+SB482SB485
+SB493
+SB496
+SB501
+SB508
+SB516
+SB518
+SB523
+SB528
+SB529
+SB532
+SB541
+SB547
+SB549
+SB551
+SB553
+SB558
+SB560
+SB563
+SB585
+SB588SB77
+SB835
+SB859
+SB861
+Line item: 4580-1000
+DOI Small Group Regulations
+Medicaid Pharmacy Carve-out",,-0.018806815,0,14
+14,1024,185,,,0.0,0,16
+15,1028,185,An Act to improve asthma management,,-0.0055992603,0,16
+16,103,185,,,0.0,0,14
+17,1032,185,"HB1044
+HB1046
+HB1056
+HB1186
+HB1255
+HB1265
+HB1273
+HB1323
+HB1324
+HB1327
+HB133
+HB1338
+HB1348
+HB1360
+HB1372
+HB1373
+HB1404HB1405
+HB1434
+HB1440
+HB1446
+HB1456
+HB1487
+HB1506
+HB1581
+HB1590
+HB1592
+HB1659
+HB168
+HB1689
+HB17
+HB1712
+HB1780
+HB1794
+HB1795
+HB1797
+HB1799
+HB18
+HB1803
+HB1805
+HB1807
+HB1808
+HB1814
+HB1815
+HB1816
+HB1817
+HB1822
+HB1828
+HB1830
+HB1831HB1833
+HB1834
+HB1835
+HB1836
+HB1838
+HB1839
+HB1842HB1846
+HB1847
+HB1848
+HB1853
+HB1859
+HB1860
+HB1861
+HB1863
+HB1864
+HB1865
+HB1866
+HB1867
+HB1868
+HB1870
+HB1880
+HB19
+HB1926
+HB1936
+HB1937
+HB1941
+HB1942
+HB1948
+HB1952
+HB1953
+HB1963
+HB198
+HB199
+HB1992
+HB20
+HB200
+HB2005
+HB202
+HB207
+HB208
+HB21
+HB212
+HB2189
+HB2208
+HB2239
+HB2240
+HB2270
+HB228
+HB2297
+HB2474
+HB2592HB2666
+HB2667
+HB2673
+HB2674
+HB2676
+HB2678
+HB2694HB2700
+HB2702
+HB2706
+HB2707
+HB2708
+HB2721
+HB2731
+HB2735
+HB2742
+HB2743
+HB2744
+HB2745
+HB2746
+HB2748
+HB2751
+HB2754
+HB2763
+HB2777HB2778
+HB2792
+HB2793
+HB2799
+HB2807
+HB2812
+HB2818HB282
+HB2823
+HB2826
+HB2836
+HB2837
+HB2846
+HB2848
+HB2852
+HB2864
+HB2884
+HB2886HB2891
+HB2893
+HB2900
+HB2901
+HB2902
+HB2903
+HB2904HB2905
+HB2918
+HB2920
+HB2931
+HB2943
+HB2960
+HB2989
+HB2998
+HB3001
+HB3021
+HB3033
+HB3034
+HB3079
+HB31
+HB3124
+HB3125
+HB3188
+HB3215
+HB3249
+HB325
+HB3313
+HB3323HB3324
+HB3330
+HB3387
+HB3440
+HB3443
+HB3484
+HB3485HB3515
+HB3517
+HB3523
+HB3526
+HB3534
+HB3544
+HB3545
+HB3547
+HB3556
+HB3563
+HB3578
+HB3579
+HB3580
+HB3581
+HB3582
+HB3583
+HB3586
+HB3587HB3588
+HB3607
+HB3615
+HB3648
+HB3649
+HB3675
+HB3693HB3694
+HB3727
+HB3743
+HB3750
+HB3754
+HB3760
+HB3809
+HB3825
+HB3842
+HB3881
+HB3973
+HB3990
+HB4056
+HB4072
+HB4076
+HB4090
+HB4094
+HB4107HB4123
+HB4127
+HB4129
+HB4133
+HB4138
+HB4142
+HB4143HB4159
+HB4163
+HB4164
+HB4166
+HB4167
+HB4181
+HB4201
+HB4207
+HB4253
+HB4266
+HB4271
+HB4288
+HB4293
+HB4359
+HB4373
+HB4374
+HB4410
+HB66
+HB665
+HB713
+HB730
+HB757
+HB759
+HB778
+HB785
+HB803
+HB808
+HB831
+HB833
+HB837
+HB879
+HB893
+HB905
+HB907
+HB913HB92
+HB921
+HB931
+HB932
+HB938
+HB950
+HB951
+HB971
+HB974
+HB976
+HB977
+HB978
+HD4442
+HD4467
+SB103
+SB1048
+SB1083
+SB1089
+SB1225
+SB123SB1237
+SB1238
+SB124
+SB1240
+SB1241
+SB1245
+SB1246
+SB1247
+SB1265
+SB1279
+SB1299
+SB1304
+SB1309
+SB133
+SB1333
+SB1344
+SB1347
+SB1357SB1373
+SB1376
+SB1377
+SB1382
+SB1383
+SB1385
+SB1387
+SB1404
+SB1412
+SB1426
+SB1435
+SB1448
+SB1453
+SB1464
+SB1487
+SB1489
+SB1524
+SB1529SB155
+SB1552
+SB1571
+SB1591
+SB1595
+SB1608
+SB1611
+SB1652
+SB1659
+SB1671
+SB1677
+SB1678
+SB1679
+SB1686
+SB1709
+SB1721
+SB1723
+SB1729SB174
+SB1741
+SB1762
+SB1776
+SB1860
+SB1885
+SB1939
+SB1964
+SB1994
+SB2028
+SB2042
+SB2061
+SB2117
+SB2170
+SB2183
+SB2195
+SB2201
+SB2203SB2210
+SB2216
+SB313
+SB316
+SB323
+SB404
+SB42
+SB432SB442
+SB445
+SB449
+SB457
+SB463
+SB465
+SB469
+SB473
+SB478
+SB496
+SB498
+SB501
+SB51
+SB516
+SB517
+SB521
+SB523SB53
+SB554
+SB58
+SB609
+SB625
+SB659
+SB668
+SB671
+SB673
+SB677
+SB678
+SB680
+SB681
+SB682
+SB687
+SB688
+SB689SB690
+SB695
+SB696
+SB698SB706
+SB710
+SB711
+SB718
+SB719
+SB720
+SB724
+SB725
+SB726
+SB727
+SB729
+SB732
+SB733
+SB735
+SB758
+SB77
+SB779SB787
+SB788
+SB792
+SB86
+SB87
+SB915
+SB924
+SB940
+SB962
+SB963
+SB98
+SB988",,-0.03532046,0,16
+18,1034,185,An Act Relative To Insurance Coverage For Craniofacial Disorders,,-0.021851063,0,14
+19,1035,185,,,0.0,0,16
+20,1038,185,An Act to include dental benefits in all Commonwealth Care Plans,,-0.1260395,0,0
+21,104,185,,,0.0,0,15
+22,1042,185,,,0.0,0,13
+23,1044,185,- Widows,,-0.035844266,0,14
+24,1046,185,"H168
+H1079
+S446, H3452
+S529
+S478, H3809, S501, H923
+H2024
+H4129, H4139, H4101, S2060, H4100, H1, S3, S2053
+S2054, S2055, S2060
+H1091
+S757, H3586
+S868
+Connector Small Group Pilot
+S867
+H1107
+Cost Trend Hearings
+H2118
+S810
+Disparities Council
+S476, S475
+EHR Implementation
+H1106, S526, S542, S591
+S1299, H2807
+S485
+Intermediate Level of Care bulletin
+S541
+S514, H1042, H3678, H1047, H3679
+956 CMR 5.00
+H991, S456
+H104, H3486
+H879, H908, H910, H933, S469, S473, H977, S496
+S518, S451, S523, S921, H951, H1031, S465, H939
+S448, H932, S449, H1032, S463, H950, H1056, H898
+S445, S516
+S455, H992
+H919, H920
+211 CMR 52
+S553
+H108, S18
+payment reform
+S528, S968
+S869, H2109
+H974
+Provider Termination Consumer Advisory Bulletin
+129 CMR 3.00
+114.6 CMR 3.00
+129 CMR 2.00
+Reserves Assessment
+Reserves Study
+H1080
+Small Group Rates
+S495
+105 CMR 130, 105 CMR 140
+H1077
+H971
+H3453, 114.6 CMR 14.00
+H2343",,-0.019128203,0,2
+25,1047,185,,,0.0,0,15
+26,1054,185,"HB3240
+HB3639
+HB3640
+SB1935",,-0.021471798,0,15
+27,1059,185,,,0.0,0,15
+28,106,185,HB274 HB294 HB302 HB322 HB330 HB334 HB1856 HB2234 HB3015 HB3016 HB4062 HB4063 HB4064 HB4065 HB4066 HB4068 HB4081 HB4082 HD1850 SB11 SB85 SB140 SB145 SB157 SB164 SB174 SB184 SB1361 SB2035 SB2037 SB2038 SB2039 SB2040 SB2041 SB2042,,-0.028912902,0,14
+29,1060,185,,,0.0,0,14
+30,1061,185,"An Act reforming the process of appraising motor vehicle damage covered by auto insurance policies
+HB3207 An Act providing additional consumer protections in the repair of damaged motor vehicles 
+SB122 An Act relative to auto body labor rates
+SB124 An Act creating a civil legal action to be enforced by the attorney general of the Commonwealth to protect an individual's right to repair an automobile
+SB185 An Act to create a board of registration of automotive mechanics
+SB191 An Act providing protections against fraud in the repair of damaged vehicles
+SB459 An Act to facilitate the resolution of auto insurance claims in emergencies
+SB460 An Act to further define unfair and deceptive acts and practices in the business of insurance
+SB522 An Act reducing automobile insurance costs and premiums in the Commonwealth
+SB528 An Act relative to insurance companies and quality measures
+
+""Attorney Martin Corry, Jr., & Corry Associates LLC has been retained by Alliance of Automotive Service Providers MA/RI to represent the interests of Alliance of Automotive Service Providers MA/RI for the months January-June, 2010. This retainer is for services rendered and has been disclosed as required by law. No payment has been made for any individual legislative petition, regardless of the position taken by the client & Attorney Martin Corry, Jr., & Corry Associates LLC on behalf of said client.""",,-0.02428335,0,15
+31,1063,185,,,0.0,0,16
+32,1064,185,"HB1816
+ 
+HB2020
+ 
+HB3583
+ 
+HB4129
+ 
+SB455
+ 
+SB457
+ 
+SB475
+ 
+SB557
+ 
+SB562
+ 
+SB568
+ 
+SB1299
+ 
+SB1467
+ 
+SB1772",,-0.010729969,0,16
+33,107,185,"HB1188
+HB1202
+HB1218
+HB1219
+HB1224
+HB1227
+HB1450
+HB1455
+HB1566
+HB1568HB1665
+HB1695
+HB1697
+HB1700
+HB1701
+HB1736
+HB1778HB1779
+HB1981
+HB1982
+HB2003
+HB2004
+HB2140
+HB2668
+HB2692
+HB2702
+HB2726
+HB2765
+HB2778
+HB2780
+HB2822
+HB2881
+HB2933
+HB2938
+HB2960HB3014
+HB3037
+HB3061
+HB3061
+HB3065
+HB3065
+HB3083HB3095
+HB310
+HB3124
+HB3308
+HB3362
+HB3364
+HB337
+HB3411
+HB3412
+HB3446
+HB3462HB3491
+HB3570
+HB3572
+HB3575
+HB3583
+HB3615
+HB3646
+HB3647
+HB3670
+HB3672
+HB3673
+HB3674
+HB3675
+HB3699
+HB3760
+HB3762
+HB3951
+HB4072HB702
+HB750
+HB756
+HB775HB782
+HB806
+HB808
+HB811
+HB818
+HB834
+HB849
+HB852
+HB853
+HB88
+HB960
+HD2622
+SB103
+SB104
+SB105
+SB1323
+SB1387
+SB1504
+SB1508
+SB1577SB1607
+SB168
+SB1912
+SB193SB1953
+SB1963
+SB2019
+SB205
+SB206
+SB2061
+SB2101
+SB373
+SB382
+SB386
+SB387
+SB388
+SB389
+SB394
+SB396
+SB411
+SB412
+SB436
+SB441
+SB6
+SB623
+SB625
+SB636
+SB653
+SB663
+SB765
+SB767
+SB770
+SB783
+SB817
+SB88
+SB882
+SB90SB96
+SB97
+SD1336
+Greenhouse gas policy
+Energy conservation and decoupling
+Building Code
+Stormwater
+Ch. 21E
+Ch. 91
+MEPA
+Highway Access Permit
+MESA
+Transportation reform",,0.007968426,0,16
+34,1073,185,,,0.0,0,14
+35,1077,185,,,0.0,0,16
+36,1079,185,,,0.0,0,14
+37,108,185,HB241 HB1063 HB1067 HB1076 HB1686 HB1696 HB1869 HB1931 HB2026 HB2030 HB2031 HB2032 HB2069 HB2085 HB2086 HB2100 HB2109 HB2123 HB2164 HB2165 HB2173 HB2358 HB2481 HB2518 HB2574 HB3591 HB3912 SB18 SB79 SB231 SB259 SB508 SB531 SB557 SB561 SB569 SB571 SB578 SB579 SB587 SB615 SB798 SB799 SB803 SB814 SB831 SB838 SB841 SB844 SB845 SB854 SB855 SB856 SB857 SB866 SB867 SB869 SB872 SB876 SB886 SB887 SB888 SB890 SB898 SB899 SB900 SB937 SB988 SB1087 SB1093 SB1095 SB1120 SB1183 SB1218 SB1615 SB1753 SB1755 SB1757 SB1794 SB1937 SB2028 SD1956,,-0.023002446,0,2
+38,1080,185,,,0.0,0,16
+39,1081,185,manufacturers coupons & rebates,,0.0055315495,0,16
+40,1082,185,"An Act improving MassHealth
+HB1104
+An Act improving access to coverage for Medicaid beneficiaries",,-0.015592575,0,16
+41,1084,185,,,0.0,0,13
+42,1087,185,An Act To Ensure Equitable Health Coverage For All Children,,-0.05322981,0,13
+43,1088,185,,,0.0,0,16
+44,109,185,"An Act Prohibiting The Use Of Health Data For Marketing Purposes
+HB110	An Act To Prevent The Sharing Of Prescription Data
+SB17	An Act Relative To Data Mining
+SB19	An Act Protecting The Confidentiality Of Patient Prescription Records",,-0.013752937,0,0
+45,1090,185,,,0.0,0,16
+46,1091,185,,,0.0,0,16
+47,1092,185,,,0.0,0,16
+48,1093,185,,,0.0,0,14
+49,1095,185,,,0.0,0,16
+50,1098,185,,,0.0,0,20
+51,11,185,Budget Line Item 4800-0038,,-0.01977849,0,13
+52,110,185,,,0.0,0,13
+53,1100,185,An Act Relative To Equitable Dental Reimbursement Rates For Services Provided To Publicly Aided Patients,,-0.008792043,0,16
+54,1101,185,An Act To Include Dental Benefits In All Commonwealth Care Plans,,-0.022772372,0,15
+55,1102,185,An Act relative to health care affordability.,,-0.041579902,0,14
+56,1103,185,"An Act requiring public notice prior to restricting MassHealth coverage
+HB1950
+An Act to require equitable payment from the Commonwealth
+BUDGET Language contained in line item 4000-0500 HB 2, HB 4600, HB 4601, HB 4800, SB 4 , SB 2470",,-0.019083977,0,0
+57,1104,185,"An Act improving access to coverage for Medicaid beneficiaries
+HB3679 An Act repealing mandated benefits that are no longer effective
+HB4799 An Act relative to increasing access to affordable health insurance coverage
+HB4911 An Act relative to improving access to coverage for Medicaid beneficiaries
+SB455 An Act increasing access to affordable health insurance coverage
+
+Bill #:	HB978   	An Act to streamline the physician credentialing process
+Bill #:	HB992   	An Act increasing access to affordable health insurance coverage
+Bill #:	HB1082   	An Act improving MassHealth 
+Bill #:	HB1083   	An Act improving the insurance partnership program 
+Bill #:	HB1089   	An Act relative to strengthening the determination of need process 
+Bill #:	HB1104   	An Act improving access to coverage for Medicaid beneficiaries 
+Bill #:	HB1105   	An Act relative to administrative simplification for MassHealth 
+Bill #:	HB2954   	An Act imposing a moratorium on mandated benefits 
+Bill #:	HB3679   	An Act repealing mandated benefits that are no longer effective 
+Bill #:	HB3779   	An Act relative to medical malpractice reform 
+Bill #:	SB462   	An Act to establish standards for long term care insurance 
+Bill #:	SB494   	An Act requiring standard credentialing of physicians by health insurers 
+Bill #:	SB564   	An act relating to equitable provider reimbursement 
+Bill #:	SB565   	An act relative to strengthening the DoN Program 
+Bill #:	SB566   	An act to promote electronic transmission of health care transactions",,-0.026051521,0,13
+58,1106,185,,,0.0,0,13
+59,1107,185,,,0.0,0,16
+60,1110,185,,,0.0,0,13
+61,1117,185,,,0.0,0,13
+62,1141,185,,,0.0,0,13
+63,1148,185,An Act Relative to the treatment of chronic lyme disease,,0.00871259,0,16
+64,115,185,"HB132
+HB135
+HB136
+HB137
+HB143
+HB144
+HB153
+HB154
+HB155
+HB156
+HB165
+HB177
+HB181
+HB182
+HB183
+HB346
+HB349
+HB379
+HB387
+HB388HB391
+HB392
+HB393
+HB405HB406
+HB411
+HB414
+HB415
+HB416
+HB418
+HB420
+HB422
+HB423
+HB425
+HB426
+HB436
+HB438
+HB445
+HB447
+HB452
+HB454
+HB458
+HB459
+HB468
+HB481HB484
+HB487
+HB489
+HB491HB492
+HB493
+HB496
+HB500
+HB501
+HB504
+HB505
+HB508
+HB512
+HB519
+HB521
+HB940
+HB1027
+HB1055
+HB1070
+HB1416HB1433
+HB1482
+HB1589
+HB1613
+HB1641
+HB1768
+HB1780
+HB1860
+HB1934
+HB1953
+HB2061
+HB2063
+HB2116
+HB2203
+HB2301
+HB2342
+HB2439
+HB2484HB2624
+HB2641
+HB2926
+HB3286
+HB3307
+HB3656
+HB3658HB3661
+HB3739
+HB3785
+HB3803
+HB3808
+HB4079
+HD1732
+HD2830
+SB45
+SB46
+SB47
+SB65SB70
+SB213
+SB222
+SB224
+SB227
+SB229
+SB230
+SB239
+SB251
+SB254
+SB263
+SB265
+SB267
+SB270
+SB278
+SB280
+SB292
+SB293
+SB501
+SB652
+SB716SB764
+SB779
+SB957
+SB976SB1039
+SB1453
+SB1608
+SB1741
+SB1948
+SB1959
+SD107",,-0.038218558,0,16
+65,1151,185,H4664,,-0.034540623,0,15
+66,1152,185,,,0.0,0,14
+67,116,185,"HB129
+HB1255
+HB3857HB4047
+HB4129
+HB4155
+HB4160
+HB4181
+SB68
+SB81
+SB1671
+SB1741",,-0.023570895,0,13
+68,1162,185,,,0.0,0,16
+69,1170,185,,,0.0,0,16
+70,1173,185,An Act allowing the use of credit cards to pay tuition; HB4768 An Act relative to the use of credit cards for payment to the Commonwealth; SB2275 An Act concerning financial literacy in schools;,,-0.018931985,0,3
+71,1174,185,,,0.0,0,13
+72,1175,185,,,0.0,0,14
+73,1180,185,S1262,,-0.010962933,0,15
+74,1188,185,"An Act Standardizing Zoning Appeals Processes
+HB1193	An Act Encouraging Inclusionary Zoning
+HB1981	An Act To Clarify Site Plan Review
+HB1986	An Act Relative To Sustainable Land Use Relative To Subdivisions
+HB2726	An Act To Establish A Green Building Income And Excise Tax Credit
+HB2962	An Act Relative To The Development Of Underused State Owned Property And The Disposition Of State Owned Surplus Real Property
+HB3121	An Act Relative To Energy Efficient Construction
+HB3252	An Act Relative To Local Zoning Regulations At Laurence G. Hanscom Field
+HB20	An Act To Assist Small Business.
+HB31	An Act Creating A Statewide Mutual Aid System.
+HB197	An Act Relative To Financing The Smart Growth Housing Trust Fund
+HB204	An Act Incorporating Carsharing In Smart Growth Planning
+HB737	An Act To Provide For The Statewide Conservation Of Inland Fisheries And Wildlife
+HB782	An Act Relative To Solid Waste Disposal Facilities
+HB784	An Act Relative To The Middlesex Canal Commission 
+HB853	An Act Protecting Certain Public Parks
+HB1180	An Act Promoting Community Responsibility
+HB1182	An Act Further Defining Low And Moderate Income Housing
+HB1186	An Act Making Chapter 40b, So-called, More Responsive To The Commonwealth's Cities And Towns
+HB1188	An Act Standardizing Zoning Appeals Processes
+HB1189	An Act Relative To Accessory Apartments
+HB1191	An Act Amending The Definition Of 'uneconomic' In Chapter 40b, So Called
+HB1192	An Act To Promote Local And Regional Affordable Housing Planning
+HB1193	An Act Encouraging Inclusionary Zoning
+HB1194	An Act Relative To Accessory Apartments
+HB1195	An Act Relative To Permit Applications For Low And Moderate Income Housing Being Considered By Planning Boards
+HB1197	An Act Relative To Comprehensive Permits
+HB1198	An Act Relative To Requirements For Subsidized Low And Moderate Income Housing
+HB1201	An Act Preserving Publicly Assisted Affordable Housing
+HB1219	An Act To Promote Open Space Residential Development
+HB1224	An Act Relative To Streamlining Permitting For Housing
+HB1225	An Act Relative To Affordable Housing And The Preservation Of A Community's Water Resources
+HB1226	An Act Relative To Zoning Density
+HB1227	An Act Relative To Authorize Limited Rate Of Growth Controls And To Promote Housing Production
+HB1228	An Act Relative To Affordable Housing
+HB1568	An Act To Legitimize Structures After Six Or Ten Years Of Continuous Use
+HB1679	An Act Relative To The Definition Of A Common Nuisance 
+HB1695	An Act Relative To Standing To File Certain Appeals In The Superior Or Land Court
+HB1965	An Act Relative To Provide Funds For Ada Compliance In Cities And Towns
+HB1973	An Act Relative To Vacant Lot Zoning
+HB1981	An Act To Clarify Site Plan Review
+HB1984	An Act Relative To Municipal Relief
+HB1986	An Act Relative To Sustainable Land Use Relative To Subdivisions
+HB1999	An Act Relative To Wind Energy
+HB2726	An Act To Establish A Green Building Income And Excise Tax Credit
+HB2962	An Act Relative To The Development Of Underused State Owned Property And The Disposition Of State Owned Surplus Real Property
+HB2987	An Act Relative To The Development Of Underused State Owned Real Property And The Disposition Of State Owned Surplus Real Property
+HB3025	An Act Further Regulating The Development Of Underused State Owned Real Property And The Disposition Of State Owned Surplus Real Property
+HB3065	An Act Relative To Comprehensive Wind Energy Siting Reform
+HB3179	An Act Creating The Mass Rail Transit Fund
+HB3252	An Act Relative To Local Zoning Regulations At Laurence G. Hanscom Field
+HB3364	An Act Relative To The Development Of Air Rights Over The Massachusetts Turnpike
+HB3570	An Act Relative To Comprehensive Zoning Permits In Cities And Towns
+HB3575	An Act To Encourage Smart Growth Zoning And Housing Production
+HB3808	An Act Relative To Zoning Regulations
+HD2830	An Act Relative To Zoning Provisions
+SB6	An Act Providing For Disposition Of Surplus State Real Property Based On Smart Growth Land Use Policies. 
+SB97	An Act To Promote Livable Communities And Zoning Reform Act
+SB103	An Act Relative To Renewal Communities And Smart Growth Zoning
+SB373	An Act Providing For The Statewide Conservation Of Inland Fisheries And Wildlife
+SB377	An Act Clarifying Certain Farm Commodities As Agriculture In The Commonwealth
+SB623	An Act Updating Chapter 40r
+SB625	An Act Promoting Affordable Housing And Community Planning In The Commonwealth
+SB636	An Act Adopting Inclusionary Zoning In The Commonwealth
+SB652	An Act Empowering Zoning Boards Of Appeals
+SB764	An Act Requiring A State Zoning Guide For Social Service Agencies And Municipalities
+SB1547	An Act Relative To Providers Of Personal Wireless Services
+SB1607	An Act Relative To The Land Court Department Of The Trial Court
+SD1336	An Act Updating Chapter 40r
+HB3241	An Act Providing Additional Funding For The Affordable Housing Trust Fund 
+HB3691	An Act Relative To Private Mortgage Insurance And The Affordable Housing Trust Fund
+HB540	An Act Relative To Assisted Living Residencies 
+HB543	An Act Authorizing The Establishment Of Senior Citizen Safety Zones
+HB1689	An Act Relative To Criminal Offender Record Information Checks For Assisted Living Employees
+SB304	An Act Relative To Residents Of Nursing And Assisted Living Facilities
+SB325	An Act To Create A Statewide Assisted Living Facility Master Plan
+HB1000	An Act Relative To Banks And Banking
+HB1	An Act Making Appropriations For The Fiscal Year 2010.
+HB107	An Act To Reform, Rebuild And Renew The Transportation System Of The Commonwealth For The Twenty-first Century.
+HB1159	A Communication From His Excellency The Governor Submitting A List Of Detailed Additional Allotment Reductions Made By Him In Accordance With Section 9c Of Chapter 29 Of The General Laws
+HB4072	An Act Relating To Clean Energy
+SB11	An Act Reorganizing Certain Agencies Of The Executive Department. 
+HB3904	An Act Relative To The Re-codification Of The Massachusetts Housing Finance Authority
+SB2078	An Act Providing For The Uniform Prudent Management Of Institutional Funds
+HB12	An Act Relative To Public Procurement.
+HB14	An Act Establishing The Inspector General Recovery Fund.
+HB786	An Act Relative To The Protection Of Inland Waters
+HB1179	An Act Promoting Sustainable Development In Affordable Housing
+HB1180	An Act Promoting Community Responsibility
+HB1182	An Act Further Defining Low And Moderate Income Housing
+HB1183	An Act Relative To Low And Moderate Income Housing
+HB1184	An Act Relative To Chapter 40b Housing, So-called
+HB1186	An Act Making Chapter 40b, So-called, More Responsive To The Commonwealth's Cities And Towns
+HB1187	An Act Increasing Affordable Housing In 40b Developments, So Called
+HB1188	An Act Standardizing Zoning Appeals Processes
+HB1190	An Act Providing For A Moratorium On 40b, So-called
+HB1191	An Act Amending The Definition Of 'uneconomic' In Chapter 40b, So Called
+HB1192	An Act To Promote Local And Regional Affordable Housing Planning
+HB1195	An Act Relative To Permit Applications For Low And Moderate Income Housing Being Considered By Planning Boards
+HB1196	An Act Relative To The Definition Of Low Or Moderate Income Housing
+HB1197	An Act Relative To Comprehensive Permits
+HB1198	An Act Relative To Requirements For Subsidized Low And Moderate Income Housing
+HB1200	An Act To Define Affordable Housing
+HB1202	An Act To Allow Impact Fees
+HB1203	An Act Relative To Low And Moderate Income Housing
+HB1204	An Act Relative To The Definition Of Low And Moderate Income Housing
+HB1205	An Act Promoting Green Affordable Housing In The Commonwealth 
+HB1206	An Act To Correctly Count 40b Units
+HB1207	An Act To Promote Affordable Housing In The Commonwealth 
+HB1208	An Act To Promote Energy Efficience In Affordable Housing
+HB1210	An Act Establishing Commonwealth Affordability Standards
+HB1211	An Act Relative To Protecting Low And Moderate Income Housing
+HB1212	An Act Relative To Safeguarding The Intent Of The Low And Moderate Income Housing Law
+HB1213	An Act Relative To Low And Moderate Income Housing
+HB1214	An Act Providing For An Investigation And Study By A Special Commission Relative To The Development Of Affordable Housi....
+HB1224	An Act Relative To Streamlining Permitting For Housing
+HB1225	An Act Relative To Affordable Housing And The Preservation Of A Community's Water Resources
+HB1228	An Act Relative To Affordable Housing
+HB1229	An Act Relative To A Lottery For 40b Housing Residents
+HB1230	An Act Relative To Defining Affordable Housing Under Chapter 40b
+HB1233	An Act Relative To Housing Appeals Under Chapter 40b
+HB1236	An Act Relative To Affordable Housing Units And Condominium Fees
+HB1245	An Act Relative To Private Subdivision Fees
+HB1984	An Act Relative To Municipal Relief
+HB2489	An Act Expanding Benefits Available To Municipalities With Membership In The Group Insurance Commission
+HB2668	An Act Relative To Clean And Renewable Energy
+HB2962	An Act Relative To The Development Of Underused State Owned Property And The Disposition Of State Owned Surplus Real Property
+HB2969	An Act Relative To Improving Public Safety And Reducing Construction Costs
+HB2987	An Act Relative To The Development Of Underused State Owned Real Property And The Disposition Of State Owned Surplus Real Property
+HB3001	An Act To Promote Municipal Efficiency And Innovation Through Regional Collaboration
+HB3061	An Act To Promote Reliable And High Quality Utility Sevice In The Commonwealth
+HB3179	An Act Creating The Mass Rail Transit Fund
+HB3455	An Act To Resolve Establishing A Special Commission To Examine Chapter 40b So Called And Make Recommendations
+HB3462	An Act To Exclude Cities And Towns That Adopt A Housing Linkage Program From Certain Provisions Of Chapter 40b 
+HB3577	An Act Relative To Affordable Housing Condominium Fees And Uses
+HB3811	An Act Relative To Including Mobile Homes And Group Homes, Manufactured Homes, In-law Apartments And Certain Retirement Homes In The Calculation Of Low And Moderate Income Housing
+HB4011	An Act Relative To 40b Deed Transfers
+SB6	An Act Providing For Disposition Of Surplus State Real Property Based On Smart Growth Land Use Policies. 
+SB620	An Act Relative To The Counting Of Certain Residences As Affordable Housing
+SB632	An Act Relative To The Long Term Affordability Of 40b Housing
+SB644	An Act Relative To 40b Project Definitions
+SB646	An Act Relative To 40b Cost Certification
+SB653	An Act Reforming Chapter 40b
+SB656	An Act Relative To Strengthening The Cost Certification Process Of 40b 
+SB767	An Act To Allow Impact Fees
+SB770	An Act Relative To Affordable Housing Built Near Wetlands
+SB771	An Act Relative To Affordable Housing Use Restrictions
+SB772	An Act Relative To Affordable Housing Built In Historic Districts
+SB773	An Act Relative To Tracking Affordable Housing Projects
+SB2062	A Report Of The Senate Committee On Post Audit And Oversight Submitting A Report Entitled ""chapter 40b: Building Accountability Into The Massachusetts Affordable Housing Program""
+HB624	An Act Allowing The Non-profit Corporation Home Of The Brave, Inc., To Construct And Operate Public Homes For Veterans
+HB4092	An Act Clarifying Surplusing Of Property.
+HB1	An Act Making Appropriations For The Fiscal Year 2010.
+HB71	An Act Relative To The Definition Of Regular Compensation.
+HB107	An Act To Reform, Rebuild And Renew The Transportation System Of The Commonwealth For The Twenty-first Century.
+HB494	An Act Relating To Improving Quality In Early Education And Care By Family Child Care Providers
+HB2330	An Act Relative To Creditable Service For Early Retirement
+HB2356	An Act Relative To The Retirement Of Certain Correctional Employees
+HB2360	An Act To Preserve And Protect The Integrity Of The State Pension System
+HB2393	An Act Providing An Early Retirement Incentive For Certain Employees Of The Department Of Transitional Assistance
+HB2511	An Act Limiting Rehiring Of Retirees
+HB2622	An Act To Establish An Early Retirement Incentive For Certain Career Public Employees
+HB2633	An Act Providing For An Early Retirement Incentive Program For Public Employees
+HB3061	An Act To Promote Reliable And High Quality Utility Sevice In The Commonwealth
+HB3134	An Act To Promote Reliable And High Quality Utility Service In The Commonwealth
+HB3733	An Act To Provide For Early Retirement For Classroom Teachers
+HB3832	An Act Providing An Early Retirement Incentive For Certain Employees Of The Department Of Transitional Assistance
+HD3090	An Act Relative To Early Retirement Options For Public Employees In Norfolk County
+SB13	An Act To Reform, Rebuild And Renew The Transportation System Of The Commonwealth For The Twenty-first Century.
+SB1041	An Act Relative To Early Retirement And The Termination Retirement Allowance 
+SB1051	An Act Providing For A Limited Early Retirement Incentive For State Employees
+SB1091	An Act To Establish An Early Retirement Incentive Program For The Blue Hills Retirement System
+SB1206	An Act Providing For An For An Early Retirement Incentive For State Employees
+HB1124	An Act Relative To The Establishment Of An Enterprise Fund For The Brook School Apartments In The Town Of Weston
+HB1243	An Act Creating Smoke Free Elderly Housing Units In The Commonwealth
+HB3663	An Act Requiring Defibrillators In Senior Housing Facilities
+HB3879	An Act Relative To Elderly Housing
+HB1215	An Act Relative To Employer Assisted Housing 
+HB1244	An Act Relative To Employer Assisted Housing
+SB625	An Act Promoting Affordable Housing And Community Planning In The Commonwealth
+HB1221	An Act Establishing An Apprentice Training Program For The Rehabilitation Of Foreclosed Properties
+HB1232	An Act To Protect Tenants In Foreclosed Properties From Evictions
+HB1310	An Act Imposing A Transfer Fee On Mortgage Foreclosures
+HB1510	An Act To Establish A Temporary Moratorium On Foreclosures In The Commonwealth
+HB1566	An Act To Provide Landowner's Title Protection
+HB1649	An Act Regarding Massachusetts Foreclosure Mediation Program
+HB1682	An Act Relative To Mortgage Foreclosure And Active Duty Servicemembers 
+HB1729	An Act To Amend The Foreclosure Statute To Require Judicial Foreclosure
+HB3521	An Act Relative To Publication Of Notice In Mortgage Foreclosures
+HB3522	An Act To Protect And Preserve Neighborhoods
+HB3569	An Act Regulating Homeowners In Common Interest Communities
+HB3571	An Act To Stabilize Neighborhoods Through The Protection Of Tenants In Foreclosed Properties
+HB3573	An Act Preserving Publicly Assisted Affordable Housing
+HB3608	An Act To Stabilize Neighborhoods
+HB3689	An Act Authorizing Municipalities To Protect Low And Moderate Income Tenants And Units Of Governmentally Involved Housing
+HB3692	An Act Relative To Stabilizing Communities 
+HB3726	An Act To Reinvest In Massachusetts
+HB3746	An Act Relative To Charges Associated With Condominiums In Tax Title
+HB3767	An Act Relative To Abandoned Property
+HB3810	An Act To Adopt Protections For New Bedford's Governmentally Involved Housing Stock
+HB3812	An Act To Restore Boston's Governmentally Involved Housing Protection 
+HB3820	An Act Requiring Judicial Approval Of Foreclosures Of Residential Mortgages In The City Of Worcester 
+HB3821	An Act Protecting Tenants From Unjustified Evictions On Foreclosed Properties In The City Of Worcester 
+HB3822	An Act Imposing A Moratorium On The Foreclosure Of Predatory Sub-prime Mortgages In The City Of Worcester 
+HB3890	An Act Relative To The Prevention Of Foreclosed Property Blight
+HB3891	An Act Relative To Foreclosed Property Upkeep
+HB3894	An Act Requiring Public Viewing Before Auctioning Housing Units
+HB3904	An Act Relative To The Re-codification Of The Massachusetts Housing Finance Authority
+HB4003	An Act Relative To A Foreclosure Mediation Program
+HB4047	Text Of The Amendment Recommended By The House Committee On Ways And Means To The Senate Bill Modernizing The Transportation Systems Of The Commonwealth.
+HB4083	An Act Establishing Judicial Review Of Foreclosures In The City Of Lawrence
+HB4085	An Act Establishing A Temporary Moratorium On Foreclosures In The City Of Lawrence
+SB452	An Act Adopting The Federal Secure And Fair Enforcement For Mortgages Licensing Act Of 2008. 
+SB471	An Act Relative To Preserving Homeownership
+SB635	An Act Relative To Creating A Statutory Housing Restriction And Providing Remedies Related To Statutory Housing
+SB785	An Act Regulating The Maintenance Of Vacant And Foreclosing Residential Properties
+SB1371	An Act Creating A Private Mortgage Insurance Tax Deduction
+SB1379	An Act To Stabilize Neighborhoods
+SB1609	An Act Requiring Just Cause For Eviction And Foreclosed Properties
+SB1612	An Act Protecting Homeowners Facing Foreclosure
+SB1613	An Act To Require Judicial Foreclosure
+SB1614	An Act Requiring Just Cause For Eviction And Foreclosed Properties
+SB1751	An Act To Establish A Moratorium On Foreclosures In The Commonwealth
+SB1778	An Act To Require Judicial Foreclosure
+SB1805	An Act To Establish A Foreclosure Mediation Program 
+SB1847	An Act To Stabilize Tenancies In Foreclosed Properties
+HB1	An Act Making Appropriations For The Fiscal Year 2010.
+HB107	An Act To Reform, Rebuild And Renew The Transportation System Of The Commonwealth For The Twenty-first Century.
+HB333	An Act Related To Economic Development And Fiscal Accountability
+HB1807	An Act To Prevent Private Employers And State Government To Require Drug Testing As A Condition Of Employment, Work Of Any Nature, Within Commonwealth Of Massachusetts Republic
+HB2127	An Act To Establish The Massachusetts Health Care Trust 
+HB2962	An Act Relative To The Development Of Underused State Owned Property And The Disposition Of State Owned Surplus Real Property
+HB2987	An Act Relative To The Development Of Underused State Owned Real Property And The Disposition Of State Owned Surplus Real Property
+HB3039	An Act Regulating Open Meetings Of State, Local And Regional Public Bodies
+HB3121	An Act Relative To Energy Efficient Construction
+HB858	An Act Providing Mortgage Customers Additional Mandatory Information Regarding Their Accounts
+HB906	An Act Relative To Homeowners Insurance
+HB1049	An Act Relative To Mortgage Payments
+HB1592	An Act Regulating Notaries Public To Protect Consumers From Fraud And Other Abuses
+HB2712	An Act Providing For A Certain Green Tax Credit
+HB3456	An Act Relative To Low And Moderate Income Housing
+HD4408	An Act Relative To Prohibiting The Issuance Of Mortgages To Persons Convicted Of Arson
+HB88	An Act Adopting The Uniform Assignment Of Rents Act.
+HB100	An Act Relative To Extending The Commonwealth's Power To Guarantee Obligations Of The Massachusetts Turnpike Authority.
+HB1220	An Act Relative To Energy Efficiency In Affordable Housing
+HB1221	An Act Establishing An Apprentice Training Program For The Rehabilitation Of Foreclosed Properties
+HB1222	An Act Relative To Community Housing And Services
+HB1242	An Act To Prevent Homelessness By Removing Barriers To Subsidized Housing
+HB3051	An Act To Reduce Paperwork In The Commonwealth
+HB3148	An Act Relative To The History Of Slavery In The Commonwealth
+HB3456	An Act Relative To Low And Moderate Income Housing
+HB3615	An Act Incorporating The Commonwealths Sustainable Development Principles Into The Policies Of Executive And Quasi-public Agencies
+HB3689	An Act Authorizing Municipalities To Protect Low And Moderate Income Tenants And Units Of Governmentally Involved Housing
+HB3853	An Act Improving The Laws Relating To Ethics And Lobbying
+HB3904	An Act Relative To The Re-codification Of The Massachusetts Housing Finance Authority
+HB4155	An Act Making Appropriations For The Fiscal Year 2010 To Provide For Supplementing Certain Existing Appropriations And For Certain Other Activities And Projects
+SB10	An Act Modernizing The Transportation Systems Of The Commonwealth
+SB347	An Act To Restore Public Confidence In Government By Eliminating ""pay-to-play"" Opportunities
+SB617	An Act Authorizing Municipalities To Protect Low And Moderate Income Tenants And Units Of Governmentally Involved Housing
+SB646	An Act Relative To 40b Cost Certification
+SB655	An Act Relative To Governmentally Involved Housing In The City Of Quincy
+SB1415	An Act Relative To Lobbyist Reform
+SB1432	An Act Relative To Oversight Of Capital Expenditures In The Commonwealth
+SB1546	An Act Relative To Energy Efficiency In Affordable Housing
+SB2050	An Act Relative To Improving The Laws Relating To Ethics And Lobbying. 
+SB2052	Printed As Amended Text To An Act Relative To Improving The Laws Relating To Ethics And Lobbying. 
+HB980	An Act Adopting The Federal Secure And Fair Enforcement For Mortgage Licensing Act Of 2008
+HB2945	An Act Allowing A Tax Deduction For Private Mortgage Insurance
+HB25	An Act To Increase Efficiency In The Delivery Of Economic Development Services.
+HB1181	An Act Providing For Nonsmoking Units In Elderly Housing
+HB2336	An Act Relative To Termination Allowances
+HB2896	An Act To Encourage Affordable Housing
+HB3574	An Act Relative To Employer Assisted Housing
+HB3853	An Act Improving The Laws Relating To Ethics And Lobbying
+HB3856	Printed As Amended Version Of The Engrossed Bill Relative To Improving The Laws Relating To Ethics And Lobbying.
+HB4133	Report Of The Committee Of Conference On The Disagreeing Votes Of The Two Branches, With Reference To The Senate Amendment Of The House Bill To Improve The Laws Relating To Campaign Finance, Ethics And Lobbying.
+HB4142	An Act Providing For Reporting Dates Of Capital Gains Revenue And Transferring Certain Funds (being A Printed Copy Of Section 22 Contained In Hb4129)
+SB226	An Act To Encourage Affordable Housing In Cities And Towns
+SB626	An Act Relative To Low And Moderate Income Housing
+SB739	An Act Relative To Affordable Housing Community Planning
+SB1846	An Act To Criminalize Mortgage Fraud
+SB1848	An Act To Require Commercially Reasonable Efforts To Avoid Foreclosure
+SB2023	An Act Modernizing The Transportation Systems Of The Commonwealth 
+SD2076	An Act To Further Regulate The Development Of Underused State Owned Real Property And The Disposition Of State Owned Surplus Real Property
+HB1201	An Act Preserving Publicly Assisted Affordable Housing
+HB3463	An Act Preserving Publicly Assisted Affordable Housing
+HB3573	An Act Preserving Publicly Assisted Affordable Housing
+SB90	An Act To Sustain Community Preservation
+SB634	An Act Relative To Community Preservation Act Expenditures To Provide Housing For Low And Moderate Income Community Residents
+SB666	An Act Preserving Publicly Assisted Affordable Housing
+SB2097	An Act Preserving Publicly Assisted Affordable Housing
+HB1201	An Act Preserving Publicly Assisted Affordable Housing
+HB1205	An Act Promoting Green Affordable Housing In The Commonwealth 
+HB1220	An Act Relative To Energy Efficiency In Affordable Housing
+HB1222	An Act Relative To Community Housing And Services
+HB1242	An Act To Prevent Homelessness By Removing Barriers To Subsidized Housing
+HB3458	An Act To Deny Convicted Sex Offenders Access To Public Subsidized Housing
+SB2111	An Act Preserving Publicly Assisted Affordable Housing 
+HB3972	An Act Providing For An Investigation And Study By A Special Commission Relative To Quasi Public Agencies
+HB4072	An Act Relating To Clean Energy
+SB1435	Resolve Relative To State Government Accountability, Economy And Efficiency
+HB3689	An Act Authorizing Municipalities To Protect Low And Moderate Income Tenants And Units Of Governmentally Involved Housing
+SB648	An Act To Promote Manufactured Housing In The Commonwealth
+HB1223	An Act Relative To Rent Escrow
+HB1744	An Act Relative To Rent Escrow
+HB3780	An Act Requiring Rent Escrow
+HB1223	An Act Relative To Rent Escrow
+HB3576	An Act Excluding Payments For Foster Care In Computing Rent And Determining Eligibility For Subsidized Housing 
+HB3690	An Act Relative To Moving To Economic Opportunity Housing
+HB1217	An Act Relative To The Department Of Housing And Community Development 
+SB785	An Act Regulating The Maintenance Of Vacant And Foreclosing Residential Properties
+HB3903	An Act Relative To Development Of Local Housing Authority Surplus Land
+SB86	An Act Relative To Smart Growth Housing Trust Fund
+HB11	An Act Relative To Retirement Board Members.
+SB2079	Report Of The Committee Of Conference On The Disagreeing Votes Of The Two Branches, With Reference To The House Amendments To The Senate Bill Providing Responsible Reforms In The Pension System.
+HB1231	An Act Relative To Rental And Tenant Selection
+SB640	An Act Relative To Illegal Immigrants And Publicly Subsidized Housing;
+Authority management issues",,-0.05075133,0,13
+75,12,185,state budget - Department of Public Health funding,,-0.013469994,0,16
+76,1200,185,,,0.0,0,3
+77,1201,185,"HB1425
+HB3683
+SB1791
+HB4169
+SB2191
+HB750
+HB1223
+SB441
+SB121
+HB1226
+HB1227
+HB3474
+SB768
+HB3651",,-0.029142976,0,3
+78,1208,185,"HB2320
+HB2715
+HB2726
+HB2840
+HB2960
+HB3083
+HB3101
+HB3121
+HB3122
+HB3124
+HB3127
+HB3624
+HB3762
+HB3764
+SB194
+SB195
+SB436
+SB665
+SB980
+SB1255
+SB1340
+SB1341
+SB1363
+SB1364
+SB1418
+SB1438
+SB1473
+SB1477
+SB1478
+SB1481
+SB1485
+SB1487SB1509
+SB1520
+SB1524
+SB1528
+SB1536
+SB2019",,-0.02300942,0,16
+79,121,185,"HB169
+HB1179
+HB1181HB1182
+HB1183
+HB1184
+HB1185
+HB1186
+HB1187
+HB1190HB1192
+HB1195
+HB1198
+HB1199
+HB1200
+HB1201
+HB1203
+HB1204
+HB1206
+HB1211
+HB1212
+HB1213
+HB1217
+HB1222
+HB1228
+HB1229
+HB1230
+HB1237HB1242
+HB1243
+HB1265
+HB1379
+HB1383
+HB1929
+HB2216HB2357
+HB2962
+HB2987
+HB2994
+HB3052
+HB3456
+HB3458
+HB3460
+HB3462
+HB3463
+HB3573
+HB3576
+HB3662
+HB3663
+HB3682
+HB3685
+HB3689
+HB3691HB3759
+HB3799
+HB3810
+HB3811
+HB3812
+HB4088
+HD1694HD2026
+HD3898
+SB43
+SB66
+SB76
+SB365
+SB618
+SB619
+SB622
+SB624
+SB625
+SB626
+SB627
+SB632
+SB635
+SB639
+SB640SB642
+SB643
+SB644
+SB645SB651
+SB653
+SB655
+SB657
+SB658
+SB662
+SB666
+SB739
+SB771
+SB773
+SB942
+SB1057
+SB1425
+SB1427
+SB1433
+SB1449SB1546, HB106, SB15, SB2045, HB4100, HB4101, SB3, SB2060, HB4129",,-0.043399274,0,16
+80,1216,185,An Act Promoting fair working standards in the production of housing,,-0.049404025,0,16
+81,1219,185,An Act to promote open space residential development,,-0.0015574694,0,16
+82,122,185,,,0.0,0,16
+83,1220,185,,,0.0,0,13
+84,1221,185,HB1838 HB107 HB1839 HB1216 HB3759 HB4128 SB2026 HB2971 HB4068 HB4054,,-0.007470548,0,16
+85,1222,185,- COLA,,0.0028297305,0,14
+86,1223,185,,,0.0,0,15
+87,123,185,,,0.0,0,0
+88,1231,185,,,0.0,0,16
+89,1232,185,,,0.0,0,16
+90,1237,185,,,0.0,0,13
+91,124,185,"HB757
+SB442
+SB1383SB1385",,-0.0021751523,0,13
+92,1242,185,,,0.0,0,16
+93,1254,185,"H1388
+H1452
+H1520
+H1843
+S 500
+S 547
+S 573
+S 574
+S1755
+S1779
+S1780",,-0.025808394,0,15
+94,126,185,,,0.0,0,14
+95,1262,185,,,0.0,0,15
+96,1269,185,,,0.0,0,16
+97,1270,185,,,0.0,0,14
+98,1275,185,,,0.0,0,13
+99,128,185,,,0.0,0,16
