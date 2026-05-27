@@ -16,17 +16,17 @@ Filings are refreshed automatically on a weekly basis; the script exits early wh
 
 ## Environmental relevance scoring
 
-To identify which bills are environmentally relevant, each bill's full text (fetched from the [MA Legislature OpenAPI](https://malegislature.gov/api/swagger) and truncated to 2,000 characters) is embedded using Google's **Gemini Embedding model** (`gemini-embedding-2`, 768-dimensional vectors). Bills for which full text is unavailable fall back to their title.
+To identify which bills are environmentally relevant, each bill's full text (fetched from the [MA Legislature OpenAPI](https://malegislature.gov/api/swagger)) is preprocessed by stripping repeated legislative scaffolding (e.g. "Chapter X of the General Laws, as appearing in the 2020 Official Edition, is hereby amended by inserting after…") that appears identically across thousands of bills regardless of topic. The bill title is then prepended to the cleaned body, and the combined text is truncated to 3,000 characters before embedding. Bills for which no full text is available fall back to the title alone. The cleaned text is embedded using Google's **Gemini Embedding model** (`gemini-embedding-2`, 768-dimensional vectors).
 
-Environmental relevance is scored using **differential cosine similarity**: for each bill, the maximum cosine similarity to a set of 20 known environmental bills is computed, and the maximum cosine similarity to a set of 20 known non-environmental bills is subtracted. Bills with a differential score above **0.05** are flagged as `is_environmental` (~22% of all lobbied bills in 2024).
+Environmental relevance is scored using **differential cosine similarity**: for each bill, the maximum cosine similarity to a set of 42 known environmental bills is computed, and the maximum cosine similarity to a set of 42 known non-environmental bills is subtracted. Bills with a differential score above **0.06** are flagged as `is_environmental` (~1.9% of all uniquely lobbied bills). The non-environmental reference set spans eight policy domains — labor, criminal justice, healthcare, education, housing, municipal licensing, digital/media, and LGBTQ/social — to prevent cross-domain false positives.
 
-This approach avoids the "compressed range" problem of seed-phrase scoring, where all bills cluster in a narrow similarity band and thresholds become arbitrary. By anchoring to real bills rather than short phrases, the model distinguishes genuinely environmental legislation from superficially similar health, infrastructure, or governance bills.
+**Data coverage note:** Bills from the two oldest legislative sessions (GC 183–184, 2005–2008) have no full text in the Legislature API and are often missing titles in the lobbying portal as well. These ~1,500 bills embed as zero vectors and are excluded from topic clustering (assigned `cluster_id = -1`). They are retained in the lobbying activity data but do not appear in the t-SNE visualization.
 
 Embeddings are stored in a Parquet file on Google Cloud Storage (`gs://openamend-data/MA_bill_embeddings.parquet`) alongside bill full text. The lightweight scored CSV (scores and cluster IDs only, no embeddings) is committed to this repository.
 
 ## Topic clustering
 
-All lobbied bills are clustered into **15 topic groups** using **k-means** on the L2-normalised Gemini embeddings (cosine-space clustering). Each cluster is labelled using **Gemini 2.5 Flash**, which receives the 20 most central bill titles in the cluster and returns a 3–5 word topic label. Clustering is a one-time operation re-run manually when the historical data changes significantly.
+All lobbied bills with valid embeddings (~24,400 bills) are clustered into **25 topic groups** using **k-means** on the L2-normalised Gemini embeddings (cosine-space clustering). Each cluster is labelled using **Gemini 2.5 Flash**, which receives the 20 most central bill titles in the cluster and returns a 3–5 word topic label. Clustering is a one-time operation re-run manually when the historical data changes significantly.
 
 | Cluster | Label | Bills | Env. bills |
 |---------|-------|------:|----------:|{% for row in site.data.MA_bill_cluster_labels %}

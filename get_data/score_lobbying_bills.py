@@ -41,6 +41,7 @@ Outputs:
 """
 
 import json
+import re
 import time
 from pathlib import Path
 
@@ -57,9 +58,9 @@ ENV_THRESHOLD = 0.06
 EMBEDDING_DIM = 768
 REQUEST_DELAY = 0.05
 
-# Full-text truncation: first N chars of bill text (avoids 8192-token limit on
-# very long bills; ~2000 chars ≈ 500 tokens, well within model limit)
-MAX_TEXT_CHARS = 2000
+# Character budget for bill body text after stripping scaffolding.
+# 3000 chars ≈ 750 tokens — well within the gemini-embedding-2 limit.
+MAX_TEXT_CHARS = 3000
 
 ENV_EXAMPLE_BILLS = [
     'An Act to protect Massachusetts public health from PFAS',
@@ -183,8 +184,26 @@ def _save_parquet(df: pd.DataFrame) -> None:
 
 # ─── Text helpers ──────────────────────────────────────────────────────────────
 
+# Patterns that identify legislative scaffolding repeated identically across
+# thousands of bills regardless of topic. Stripping these before embedding
+# increases the proportion of substantive policy content in the text window.
+_SCAFFOLD_RE = re.compile(
+    r'(?:Chapter|Section|Part)\s+\w+(?:\s+of\s+(?:chapter\s+\w+\s+of\s+)?the\s+General\s+Laws)?'
+    r'(?:,\s+as\s+(?:appearing|so\s+appearing|amended)[^,\n]{0,80})?'
+    r',?\s+is\s+hereby\s+amended\s+by\s+(?:inserting|striking|adding|deleting)[^\n]{0,120}'
+    r'|as\s+(?:so\s+)?appearing\s+in\s+the\s+\d{4}\s+Official\s+Edition'
+    r'|is\s+hereby\s+amended\s+by\s+(?:inserting|striking|adding|deleting)\s+\w+\s+\w+'
+    r'|(?:in\s+place\s+thereof|thereof)\s+the\s+following\s+(?:words|section|clause|paragraph)[:\-\s]{0,5}'
+    r'|\bSECTION\s+\d+\.\s+'
+    r'|\bof\s+the\s+General\s+Laws\b'
+    r'|in\s+line\s+\d+(?:\s+through\s+\d+)?,?\s+the\s+words?\s+"[^"]{0,60}"',
+    re.IGNORECASE,
+)
+_WHITESPACE_RE = re.compile(r'\s{2,}')
+
+
 def _get_full_text(bill_id: str | None, general_court: int) -> str:
-    """Read full bill text from legislature cache JSON, truncated to MAX_TEXT_CHARS."""
+    """Read full bill text from legislature cache JSON. Returns raw text or ''."""
     if not bill_id:
         return ''
     cache_file = CACHE_DIR / f'bill_{general_court}_{bill_id}.json'
@@ -192,9 +211,24 @@ def _get_full_text(bill_id: str | None, general_court: int) -> str:
         return ''
     try:
         data = json.loads(cache_file.read_text(encoding='utf-8'))
-        return (data.get('DocumentText') or '')[:MAX_TEXT_CHARS]
+        return data.get('DocumentText') or ''
     except Exception:
         return ''
+
+
+def _build_embed_text(title: str, raw_text: str) -> str:
+    """Construct the string to embed for a bill.
+
+    Strips legislative scaffolding from the body text, prepends the bill title
+    (which is always clean, specific signal), and truncates to MAX_TEXT_CHARS.
+    Falls back to title alone when no body text is available.
+    """
+    if raw_text and raw_text.strip():
+        cleaned = _SCAFFOLD_RE.sub(' ', raw_text)
+        cleaned = _WHITESPACE_RE.sub(' ', cleaned).strip()[:MAX_TEXT_CHARS]
+        prefix  = title.strip() if title else ''
+        return f'{prefix}\n\n{cleaned}' if prefix else cleaned
+    return title or ''
 
 
 # ─── Embedding helpers ─────────────────────────────────────────────────────────
@@ -271,7 +305,10 @@ def main():
             needed = {'bill_id', 'bill_number', 'general_court'}
             if needed.issubset(leg.columns):
                 for _, row in leg.dropna(subset=list(needed)).iterrows():
-                    key = (int(row['bill_number']), int(row['general_court']))
+                    try:
+                        key = (int(float(row['bill_number'])), int(float(row['general_court'])))
+                    except (ValueError, TypeError):
+                        continue
                     bill_id_map[key] = str(row['bill_id'])
                     if row.get('title'):
                         leg_title_map[key] = str(row['title'])
@@ -329,15 +366,20 @@ def main():
     non_env_emb = _embed_texts(client, NON_ENV_EXAMPLE_BILLS)
 
     if not unscored.empty:
-        # Build text to embed: full_text if available, else title
+        # Build text to embed: stripped body + title prefix, falling back to title
         full_texts = unscored.apply(
             lambda r: _get_full_text(r['bill_id'], r['general_court']), axis=1
         )
         n_with_text = (full_texts.str.len() > 0).sum()
         print(f'  {n_with_text}/{len(unscored)} bills have full text from legislature cache')
 
-        embed_texts = (full_texts.where(full_texts.str.len() > 0, other=None)
-                       .fillna(unscored['bill_title'].fillna(''))).tolist()
+        embed_texts = [
+            _build_embed_text(
+                title=str(row['bill_title']) if pd.notna(row.get('bill_title')) else '',
+                raw_text=full_texts.iloc[i],
+            )
+            for i, (_, row) in enumerate(unscored.iterrows())
+        ]
 
         # Embed in chunks
         CHECKPOINT = 500
@@ -356,9 +398,9 @@ def main():
         n_env = int((diff_scores >= ENV_THRESHOLD).sum())
         print(f'  {n_env}/{len(unscored)} new bills flagged is_environmental')
 
-        # Build new rows
+        # Build new rows — store cleaned embed text (not raw) as full_text
         new_rows = unscored[['bill_number', 'general_court', 'bill_title', 'bill_id']].copy()
-        new_rows['full_text'] = full_texts.values
+        new_rows['full_text'] = embed_texts
         new_rows['embedding'] = [bill_emb[i] for i in range(len(bill_emb))]
         new_rows['env_relevance_score'] = diff_scores
         new_rows['is_environmental'] = diff_scores >= ENV_THRESHOLD

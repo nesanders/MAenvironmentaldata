@@ -35,7 +35,7 @@ API_KEY_PATH = Path('SECRET_GOOGLE_API_KEY')
 GCS_PARQUET = 'gs://openamend-data/MA_bill_embeddings.parquet'
 LOCAL_PARQUET = DATA_DIR / 'MA_bill_embeddings.parquet'
 
-N_CLUSTERS_DEFAULT = 15
+N_CLUSTERS_DEFAULT = 25
 N_LABEL_EXAMPLES = 20   # bill titles sent to Gemini per cluster for labeling
 GEMINI_DELAY = 1.0      # seconds between Gemini calls
 
@@ -110,23 +110,36 @@ def main():
     scored = scored[scored['_key'].isin(emb_map)].reset_index(drop=True)
     scored = scored.drop(columns=['_key'])
 
+    # Drop zero-vector rows — bills with no title and no cached text embed as
+    # all-zeros and cluster arbitrarily. Assign them cluster_id = -1 (unclustered).
+    norms = np.linalg.norm(emb, axis=1)
+    valid = norms > 0.01
+    n_zero = int((~valid).sum())
+    if n_zero:
+        print(f'  Skipping {n_zero} zero-vector bills (no title or text) — assigned cluster_id=-1')
+        scored.loc[~valid, 'cluster_id'] = -1
+        emb   = emb[valid]
+        scored_clustered = scored[valid].reset_index(drop=True)
+    else:
+        scored_clustered = scored
+
     # Normalize embeddings for cosine-space clustering
     emb_norm = normalize(emb, norm='l2')
 
     if args.relabel:
         # Use existing cluster_ids from scored CSV — skip re-clustering
         print(f'Relabeling existing clusters (skipping k-means)...')
-        labels = scored['cluster_id'].values
+        labels = scored_clustered['cluster_id'].values
         n_clusters = int(labels.max()) + 1
         # Reconstruct centroids from existing assignments
         km_centers = np.array([
             emb_norm[labels == c].mean(axis=0) for c in range(n_clusters)
         ])
     else:
-        print(f'Clustering {len(scored)} bills into {args.n_clusters} clusters...')
+        print(f'Clustering {len(scored_clustered)} bills into {args.n_clusters} clusters...')
         km = KMeans(n_clusters=args.n_clusters, random_state=42, n_init=10)
         labels = km.fit_predict(emb_norm)
-        scored['cluster_id'] = labels
+        scored_clustered['cluster_id'] = labels
         km_centers = km.cluster_centers_
         n_clusters = args.n_clusters
 
@@ -141,7 +154,7 @@ def main():
     cluster_rows = []
     for cid in range(n_clusters):
         mask = labels == cid
-        cluster_bills = scored[mask]
+        cluster_bills = scored_clustered[mask]
         n_bills = int(mask.sum())
         n_env = int(cluster_bills['is_environmental'].sum())
 
@@ -175,7 +188,9 @@ def main():
     labels_path = DATA_DIR / 'MA_bill_cluster_labels.csv'
     labels_df.to_csv(labels_path, index=False)
 
-    # Write scored CSV (lightweight, no embeddings)
+    # Merge cluster assignments from scored_clustered back into full scored
+    # (zero-vector rows in scored already have cluster_id=-1 from earlier)
+    scored.update(scored_clustered[['cluster_id']])
     scored.drop(columns=['_key'], errors='ignore').to_csv(scored_path)
 
     # Write cluster_ids back into Parquet on GCS

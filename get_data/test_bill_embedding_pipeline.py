@@ -269,7 +269,18 @@ def main():
         cdf.to_parquet(args.cache, index=False)
         print(f'Saved embeddings to {args.cache}')
 
-    emb_norm = normalize(cached_emb, norm='l2')
+    # ── Drop zero-vector rows before clustering ───────────────────────────────
+    # Bills with no title and no cached text embed as all-zeros; they cluster
+    # together arbitrarily and hover as "nan". Assign cluster_id=-1 and exclude.
+    norms = np.linalg.norm(cached_emb, axis=1)
+    valid = norms > 0.01
+    n_zero = int((~valid).sum())
+    if n_zero:
+        print(f'  Excluding {n_zero} zero-vector bills (no title/text) from clustering')
+    sample['cluster_id'] = -1
+    sample_valid  = sample[valid].reset_index(drop=True)
+    emb_valid     = cached_emb[valid]
+    emb_norm      = normalize(emb_valid, norm='l2')
 
     # ── Score env relevance with current example sets ─────────────────────────
     print('Scoring env relevance...')
@@ -277,33 +288,33 @@ def main():
     client  = _make_client(api_key)
     env_emb     = _embed_texts(client, ENV_EXAMPLE_BILLS)
     non_env_emb = _embed_texts(client, NON_ENV_EXAMPLE_BILLS)
-    diff = _cosine_sim(cached_emb, env_emb).max(axis=1) - \
-           _cosine_sim(cached_emb, non_env_emb).max(axis=1)
-    sample = sample.copy()
-    sample['env_score_new'] = diff
-    sample['is_env_new']    = diff >= ENV_THRESHOLD
-    n_env_new = sample['is_env_new'].sum()
-    print(f'  {n_env_new}/{len(sample)} bills flagged env '
+    diff = _cosine_sim(emb_valid, env_emb).max(axis=1) - \
+           _cosine_sim(emb_valid, non_env_emb).max(axis=1)
+    sample_valid = sample_valid.copy()
+    sample_valid['env_score_new'] = diff
+    sample_valid['is_env_new']    = diff >= ENV_THRESHOLD
+    n_env_new = sample_valid['is_env_new'].sum()
+    print(f'  {n_env_new}/{len(sample_valid)} bills flagged env '
           f'(threshold={ENV_THRESHOLD})')
 
     # ── Cluster ───────────────────────────────────────────────────────────────
     print(f'Clustering into {args.k} clusters (k-means)...')
     km     = KMeans(n_clusters=args.k, random_state=42, n_init=10)
     labels = km.fit_predict(emb_norm)
-    sample['cluster_id'] = labels
+    sample_valid['cluster_id'] = labels
 
     # ── Label clusters ────────────────────────────────────────────────────────
     cluster_labels: dict[int, str] = {}
     if not args.no_label:
         print('Labeling clusters with Gemini...')
         for cid in range(args.k):
-            mask      = labels == cid
-            sub       = sample[mask]
-            n_bills   = mask.sum()
-            n_env     = int(sub['is_env_new'].sum())
-            centroid  = km.cluster_centers_[cid]
-            dists     = np.linalg.norm(emb_norm[mask] - centroid, axis=1)
-            top_idx   = np.argsort(dists)[:20]
+            mask       = labels == cid
+            sub        = sample_valid[mask]
+            n_bills    = mask.sum()
+            n_env      = int(sub['is_env_new'].sum())
+            centroid   = km.cluster_centers_[cid]
+            dists      = np.linalg.norm(emb_norm[mask] - centroid, axis=1)
+            top_idx    = np.argsort(dists)[:20]
             top_titles = sub.iloc[top_idx]['bill_title'].fillna('').tolist()
             try:
                 label = _label_cluster(client, top_titles, cid)
@@ -314,18 +325,18 @@ def main():
             print(f'  Cluster {cid:2d}: "{label}" ({n_bills} bills, {n_env} env)')
     else:
         for cid in range(args.k):
-            sub   = sample[labels == cid]
+            sub   = sample_valid[labels == cid]
             n_env = int(sub['is_env_new'].sum())
             cluster_labels[cid] = f'C{cid} ({n_env} env)'
         print('Skipped Gemini labeling (--no-label)')
 
     # ── t-SNE ─────────────────────────────────────────────────────────────────
     print('Running t-SNE...')
-    tsne   = TSNE(n_components=2, perplexity=min(40, len(sample) // 10),
+    tsne   = TSNE(n_components=2, perplexity=min(40, len(sample_valid) // 10),
                   max_iter=1000, random_state=42, init='pca', learning_rate='auto')
     coords = tsne.fit_transform(emb_norm)
-    sample['x'] = coords[:, 0]
-    sample['y'] = coords[:, 1]
+    sample_valid['x'] = coords[:, 0]
+    sample_valid['y'] = coords[:, 1]
 
     # ── Plot ──────────────────────────────────────────────────────────────────
     PALETTE = [
@@ -338,16 +349,17 @@ def main():
 
     fig = go.Figure()
     for cid in range(args.k):
-        mask    = sample['cluster_id'] == cid
-        sub     = sample[mask]
+        mask    = sample_valid['cluster_id'] == cid
+        sub     = sample_valid[mask]
         lbl     = cluster_labels.get(cid, f'Cluster {cid}')
         color   = PALETTE[cid % len(PALETTE)]
         non_env = sub[~sub['is_env_new']]
         env     = sub[sub['is_env_new']]
 
         def _hover(row, lbl=lbl):
+            title   = row.get('bill_title', '') or f'Bill {row["bill_number"]}'
             env_str = '🌿 env' if row['is_env_new'] else ''
-            return (f'<b>{row.get("bill_title","")}</b><br>'
+            return (f'<b>{title}</b><br>'
                     f'{lbl} · GC {int(row["general_court"])}<br>'
                     f'env_score={row["env_score_new"]:.3f} {env_str}')
 
