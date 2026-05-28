@@ -64,9 +64,10 @@ HEADERS = {
     )
 }
 
-# General Court 183 started in 2005; each covers two calendar years.
+# General Court 183 started in January 2003; each covers two calendar years.
+# GC184 = 2005-2006, GC194 = 2025-2026, etc.
 FIRST_GENERAL_COURT = 183
-FIRST_GC_START_YEAR = 2005
+FIRST_GC_START_YEAR = 2003
 
 
 def _year_to_general_court(year: int) -> int:

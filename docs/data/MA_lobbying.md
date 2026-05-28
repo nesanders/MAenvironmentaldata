@@ -9,7 +9,7 @@ ancillary: 0
 
 The [MA Secretary of State](https://www.sec.state.ma.us/LobbyistPublicSearch/) publishes semi-annual lobbying disclosure filings for all registered lobbyists and lobbying entities in Massachusetts. Filers report which clients hired them, how much each client paid, and which specific bills they lobbied on behalf of each client (with chamber, bill number, title, and position — Support, Oppose, or Neutral).
 
-Data is available from 2005 (183rd General Court) through the present, spanning 22 years across 11 legislative sessions. Each two-year legislative session is identified by a General Court number (GC 183 = 2005–2006, GC 194 = 2025–2026, etc.).
+Data is available from 2005 (184th General Court) through the present, spanning 22 years across 11 legislative sessions. Each two-year legislative session is identified by a General Court number (GC 184 = 2005–2006, GC 194 = 2025–2026, etc.).
 
 The data from this source has been archived on this site, last updated on **{{ site.data.ts_update_MA_lobbying.updated | date: "%-d %B %Y %I:%M %P" }}**.
 Filings are refreshed automatically on a weekly basis; the script exits early when no new semi-annual filings have been posted.
@@ -34,7 +34,9 @@ All lobbied bills with valid embeddings (~24,400 bills) are clustered into **25 
 
 ### Bill embedding space (t-SNE)
 
-The plot below shows all lobbied bills projected into two dimensions using [t-SNE](https://en.wikipedia.org/wiki/T-distributed_stochastic_neighbor_embedding) (perplexity 40, 1,000 iterations). Each point is a bill; colour indicates topic cluster; larger points with white rings are bills flagged as environmentally relevant. Hover over any point for the bill title.
+The plot below shows environmental bills projected into the policy landscape using [t-SNE](https://en.wikipedia.org/wiki/T-distributed_stochastic_neighbor_embedding). **Coloured, outlined dots** are the 329 environmentally-relevant bills, coloured by topic cluster; **grey dots** are a stratified background sample (~120 per cluster, ~3,000 total) providing geographic context. Hover over any point for the bill title.
+
+Note: MA legislative bill embeddings are semantically dense — even after boilerplate stripping, mean inter-cluster cosine distance is only ~0.006 vs. mean intra-cluster spread of ~0.53. Visualising all 25,000+ bills produces a featureless blob because the underlying high-dimensional structure does not project cleanly to two dimensions. The subsample approach makes the environmentally-relevant bills legible without misrepresenting the cluster separation.
 
 {% include charts/lobbying_bill_tsne.html %}
 

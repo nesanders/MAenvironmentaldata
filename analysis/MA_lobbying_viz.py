@@ -15,6 +15,7 @@ Analysis-post charts (no prefix, generate_post_charts):
   lobbying_env_positions            — Unique clients by Support/Oppose/Neutral position on env bills
   lobbying_env_opponents            — Top 20 clients by unique env bills opposed (all years)
   lobbying_pass_by_position         — Env bill pass rate by dominant lobbying position
+  lobbying_env_score_vs_clients     — Scatter: env score vs. lobbying intensity, env + top-500 non-env
   lobbying_cso_operators            — Lobbying spend by known CSO operators (permittees), by year
 
 Data files written:
@@ -648,7 +649,10 @@ def generate_post_charts(engine, prefix=''):
     # ── Post chart 8: Env bill pass rate by dominant lobbying position ────────
     _chart_pass_rate_by_position(lobby_bills, leg_bills, prefix)
 
-    # ── Post chart 9: Lobbying spend by known CSO operators + proxies ─────────
+    # ── Post chart 9: Env score vs. lobbying intensity scatter ───────────────
+    _chart_env_score_vs_clients(engine, prefix)
+
+    # ── Post chart 10: Lobbying spend by known CSO operators + proxies ────────
     # Cross-references MA_Lobbying_Employers.client_name with MAEEADP_CSO.permiteeName.
     # Includes the Massachusetts Municipal Association as a proxy: it is the
     # primary lobbyist for municipal CSO operators (most cities/towns lobby
@@ -905,6 +909,173 @@ def _chart_pass_rate_by_position(lobby_bills: pd.DataFrame, leg_bills: pd.DataFr
     )
     c.jekyll_write(f'{CHART_DIR}/{prefix}lobbying_pass_by_position.html')
     print(f'Wrote {prefix}lobbying_pass_by_position.html')
+
+
+def _chart_env_score_vs_clients(engine, prefix: str, top_n_nonenv: int = 500):
+    """Scatter: environmental relevance score (x) vs. unique lobbying clients (y, log scale).
+
+    Three groups:
+      Environmental       — all env-relevant bills (green, outlined)
+      Appropriations      — annual budget / line-item bills (purple); separated because
+                            they attract hundreds of clients for budget reasons unrelated
+                            to the bill's policy topic — they dominate the y-axis and
+                            are a distinct lobbying mechanism
+      Non-env policy      — top-N most-lobbied non-appropriations, non-env bills (grey)
+
+    Y-axis is log-scaled: most bills have 1–10 clients, appropriations have 300+,
+    so linear scale compresses the interesting region.
+    Marginal histograms show the density distribution of each group along both axes.
+    Threshold line (x = 0.05) only on main scatter and top (x) marginal.
+    """
+    import plotly.express as px
+
+    try:
+        scored = pd.read_sql_query(
+            'SELECT bill_number, general_court, bill_id, bill_title, '
+            '       env_relevance_score, is_environmental '
+            'FROM MA_Lobbying_Bills_Scored',
+            engine,
+        )
+        counts = pd.read_sql_query(
+            'SELECT bill_number, general_court, '
+            '       COUNT(DISTINCT client_name) AS n_clients '
+            'FROM MA_Lobbying_Bills '
+            'GROUP BY bill_number, general_court',
+            engine,
+        )
+    except Exception as e:
+        print(f'  env_score_vs_clients: DB query failed ({e}) — skipping')
+        return
+
+    df = scored.merge(counts, on=['bill_number', 'general_court'], how='left')
+    df['n_clients'] = df['n_clients'].fillna(0).astype(int)
+    df['bill_title'] = df['bill_title'].fillna('').astype(str)
+
+    # Classify appropriations by title pattern — these are the annual budget bills
+    # and their line-item amendments, which attract 100–350 clients purely because
+    # they're the vehicle for all state spending decisions.
+    _approp_re = (
+        r'(?i)making appropriations|appropriation.*fiscal year'
+        r'|line item \d|amendment.*\d{4}-\d{4}'
+    )
+    df['is_approp'] = df['bill_title'].str.contains(_approp_re, regex=True, na=False)
+
+    env       = df[df['is_environmental'] == 1].copy()
+    approp    = df[(df['is_environmental'] == 0) & df['is_approp']].copy()
+    policy_nonenv = (
+        df[(df['is_environmental'] == 0) & ~df['is_approp']]
+        .nlargest(top_n_nonenv, 'n_clients')
+        .copy()
+    )
+
+    def _group(row):
+        if row['is_environmental'] == 1:
+            return 'Environmental'
+        if row['is_approp']:
+            return 'Appropriations bill'
+        return f'Non-env policy (top {top_n_nonenv})'
+
+    plot_df = pd.concat([env, approp, policy_nonenv], ignore_index=True)
+    plot_df['group'] = plot_df.apply(_group, axis=1)
+    # log1p for y so bills with 0 clients don't vanish; displayed as n_clients
+    plot_df['n_clients_log'] = np.log1p(plot_df['n_clients'])
+    # Short title for hover name (shown bold at top)
+    plot_df['title_short'] = plot_df['bill_title'].str.slice(0, 90)
+
+    color_map = {
+        'Environmental':                  '#2ca02c',
+        'Appropriations bill':             '#9467bd',
+        f'Non-env policy (top {top_n_nonenv})': '#aaaaaa',
+    }
+
+    fig = px.scatter(
+        plot_df,
+        x='env_relevance_score',
+        y='n_clients',
+        color='group',
+        color_discrete_map=color_map,
+        hover_name='title_short',
+        hover_data={
+            'title_short': False,
+            'bill_title': False,
+            'is_environmental': False,
+            'is_approp': False,
+            'group': False,
+            'n_clients_log': False,
+            'env_relevance_score': ':.3f',
+            'n_clients': True,
+            'bill_id': True,
+            'general_court': True,
+        },
+        marginal_x='histogram',
+        marginal_y='histogram',
+        labels={
+            'env_relevance_score': 'Environmental relevance score',
+            'n_clients':           'Unique lobbying clients',
+            'bill_id':             'Bill ID',
+            'general_court':       'General Court',
+            'group':               '',
+        },
+        title=(
+            'Environmental Relevance vs. Lobbying Intensity<br>'
+            f'<sup>All env bills · top {top_n_nonenv} non-env policy bills · '
+            'appropriations bills shown separately · hover for title</sup>'
+        ),
+        opacity=0.72,
+        width=820,
+        height=620,
+    )
+
+    # Env dots: slightly larger, outlined
+    fig.update_traces(
+        selector=dict(type='scatter', name='Environmental'),
+        marker=dict(size=8, line=dict(color='black', width=0.8)),
+    )
+    fig.update_traces(
+        selector=dict(type='scatter', name='Appropriations bill'),
+        marker=dict(size=5),
+    )
+    fig.update_traces(
+        selector=dict(type='scatter', name=f'Non-env policy (top {top_n_nonenv})'),
+        marker=dict(size=5),
+    )
+
+    # Threshold line on main scatter and top x-marginal.
+    # Plain add_vline without row/col — plotly draws it at x=0.05 on each subplot's
+    # own x-axis. The right marginal histogram's x-axis is in units of bill count
+    # (0–300+), so x=0.05 lands at the invisible left edge there. No row/col
+    # specification avoids the axis-matching infinite-loop bug in plotly express
+    # marginal figures.
+    fig.add_vline(
+        x=0.05, line_dash='dot', line_color='#2ca02c', line_width=1.2,
+        annotation_text='env threshold (0.05)',
+        annotation_position='top right',
+        annotation_font_size=10,
+    )
+
+    # Log scale on main scatter y-axis.
+    # Must NOT use log_y=True in px.scatter — it transforms a shared axis in a
+    # way that breaks marginal histogram rendering.
+    # In px.scatter with marginal_x + marginal_y, yaxis is the main scatter y-axis
+    # and yaxis2 (right marginal) has matches='y', so both get log together which
+    # is correct: the marginal histogram's n_clients axis stays in sync.
+    fig.update_layout(yaxis=dict(
+        type='log',
+        tickmode='array',
+        tickvals=[1, 2, 5, 10, 20, 50, 100, 200, 350],
+        ticktext=['1', '2', '5', '10', '20', '50', '100', '200', '350'],
+    ))
+
+    fig.update_layout(
+        legend=dict(orientation='h', yanchor='bottom', y=1.02, xanchor='left', x=0),
+        plot_bgcolor='#f8f8f8',
+        paper_bgcolor='white',
+    )
+
+    out = Path(CHART_DIR) / f'{prefix}lobbying_env_score_vs_clients.html'
+    html = fig.to_html(full_html=False, include_plotlyjs='cdn', config={'responsive': True})
+    out.write_text('{% raw  %}\n' + html + '\n{% endraw %}\n', encoding='utf-8')
+    print(f'Wrote {prefix}lobbying_env_score_vs_clients.html')
 
 
 def _write_facts(employers: pd.DataFrame, spend_trend: pd.DataFrame, most_recent_year: int):

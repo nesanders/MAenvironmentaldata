@@ -1,9 +1,25 @@
-"""Generate a t-SNE scatter plot of MA lobbying bill embeddings coloured by topic cluster.
+"""Generate a t-SNE scatter plot of MA lobbying bill embeddings.
 
-Reads the bill embeddings Parquet (GCS preferred, local fallback), runs t-SNE to
-reduce to 2-D, and writes an interactive Plotly HTML to docs/_includes/charts/.
+Visual design philosophy
+─────────────────────────
+MA legislative bill embeddings are semantically dense — all bills share heavy
+regulatory language, so inter-cluster cosine distances are ~0.006 vs.
+intra-cluster spread of ~0.53. Running t-SNE on all 25k bills produces a
+featureless blob regardless of perplexity, because the structure simply doesn't
+separate in 2-D.
 
-The HTML is self-contained and referenced from the MA_lobbying.md dataset page.
+Instead the chart shows TWO layers:
+
+  Background (grey)  — stratified sample of ~120 non-environmental bills per
+                        cluster, rendered as tiny translucent grey dots. Provides
+                        geographic context for the policy landscape.
+
+  Signal (coloured)  — all 329 env-relevant bills, one colour per cluster,
+                        large outlined dots. These are what the visitor cares about.
+
+t-SNE is computed on the combined ~3,300 point sample (all env + background),
+which runs in seconds and produces cleaner structure than the full 25k set.
+Perplexity is scaled to ~√N of the subsample.
 
 Run from the analysis/ directory:
     /path/to/python -u MA_lobbying_tsne.py
@@ -23,20 +39,24 @@ import plotly.graph_objects as go
 
 sys.path.insert(0, str(Path(__file__).parent))
 
-GCS_PARQUET  = 'gs://openamend-data/MA_bill_embeddings.parquet'
+GCS_PARQUET   = 'gs://openamend-data/MA_bill_embeddings.parquet'
 LOCAL_PARQUET = Path('../docs/data/MA_bill_embeddings.parquet')
-LABELS_CSV   = Path('../docs/data/MA_bill_cluster_labels.csv')
-OUT_HTML     = Path('../docs/_includes/charts/lobbying_bill_tsne.html')
+LABELS_CSV    = Path('../docs/data/MA_bill_cluster_labels.csv')
+OUT_HTML      = Path('../docs/_includes/charts/lobbying_bill_tsne.html')
 
-TSNE_PERPLEXITY = 40
+# Non-env bills sampled per cluster for background context.
+# 120 × 25 clusters ≈ 3 000 background points + ~329 env = ~3 300 total.
+BG_PER_CLUSTER  = 120
 TSNE_ITER       = 1000
 RANDOM_STATE    = 42
 
-# Colour palette — same 8 cycling colours used in MA_lobbying_viz.py, extended to 15
-PALETTE = [
-    '#366EB3', '#E68C28', '#3CAA50', '#C83C3C', '#8250C8',
-    '#1EA0A0', '#DCB400', '#969696', '#4B8BBE', '#FF7043',
-    '#66BB6A', '#EF5350', '#AB47BC', '#26C6DA', '#D4E157',
+# 25-colour palette — qualitative, perceptually distinct, no cycling
+PALETTE_25 = [
+    '#1f77b4', '#ff7f0e', '#2ca02c', '#d62728', '#9467bd',
+    '#8c564b', '#e377c2', '#7f7f7f', '#bcbd22', '#17becf',
+    '#aec7e8', '#ffbb78', '#98df8a', '#ff9896', '#c5b0d5',
+    '#c49c94', '#f7b6d2', '#c7c7c7', '#dbdb8d', '#9edae5',
+    '#393b79', '#637939', '#8c6d31', '#843c39', '#7b4173',
 ]
 
 
@@ -61,121 +81,118 @@ def _load_parquet() -> pd.DataFrame:
 def main():
     parquet_df = _load_parquet()
 
-    # Keep only rows that have a cluster assignment
-    parquet_df = parquet_df[parquet_df['cluster_id'].notna() &
-                            (parquet_df['cluster_id'] != -1)].copy()
+    # Restrict to clustered bills
+    parquet_df = parquet_df[
+        parquet_df['cluster_id'].notna() & (parquet_df['cluster_id'] != -1)
+    ].copy()
     parquet_df['cluster_id'] = parquet_df['cluster_id'].astype(int)
-    print(f'{len(parquet_df)} bills with cluster assignments')
-
-    labels_df = pd.read_csv(LABELS_CSV)
-    label_map = dict(zip(labels_df['cluster_id'].astype(int), labels_df['label']))
-    size_map  = dict(zip(labels_df['cluster_id'].astype(int), labels_df['n_bills']))
-
-    # Build embedding matrix
-    emb = np.vstack(parquet_df['embedding'].apply(
-        lambda v: np.array(v, dtype=np.float32)
-    ).values)
-    emb_norm = normalize(emb, norm='l2')
-
-    # t-SNE
-    print(f'Running t-SNE (perplexity={TSNE_PERPLEXITY}, iter={TSNE_ITER})...')
-    tsne = TSNE(
-        n_components=2,
-        perplexity=TSNE_PERPLEXITY,
-        max_iter=TSNE_ITER,
-        random_state=RANDOM_STATE,
-        init='pca',
-        learning_rate='auto',
-    )
-    coords = tsne.fit_transform(emb_norm)
-    parquet_df = parquet_df.copy()
-    parquet_df['x'] = coords[:, 0]
-    parquet_df['y'] = coords[:, 1]
-
-    # ── Build traces ────────────────────────────────────────────────────────────
-    # Two sub-traces per cluster (non-env + env) sharing a legendgroup so the
-    # legend shows one entry per cluster. Each point belongs to exactly one
-    # sub-trace, so hover is unambiguous.
-    #   non-env: small (5px), muted opacity, no outline
-    #   env:     large (10px), full opacity, black outline
-
-    fig = go.Figure()
-    cluster_ids = sorted(parquet_df['cluster_id'].unique())
 
     if 'is_environmental' not in parquet_df.columns:
         parquet_df['is_environmental'] = False
     parquet_df['is_environmental'] = parquet_df['is_environmental'].fillna(False).astype(bool)
 
-    for i, cid in enumerate(cluster_ids):
-        mask  = parquet_df['cluster_id'] == cid
-        sub   = parquet_df[mask].copy()
-        lbl   = label_map.get(cid, f'Cluster {cid}')
-        n_tot = size_map.get(cid, len(sub))
-        color = PALETTE[cid % len(PALETTE)]
+    labels_df = pd.read_csv(LABELS_CSV)
+    label_map = dict(zip(labels_df['cluster_id'].astype(int), labels_df['label']))
+    nenv_map  = dict(zip(labels_df['cluster_id'].astype(int), labels_df['n_env_bills']))
 
-        def _hover(row):
-            env_line = '🌿 <b>environmental</b>' if row['is_environmental'] else 'not environmental'
-            return (f'<b>{row.get("bill_title", "")}</b><br>'
-                    f'GC {int(row["general_court"])} · {lbl}<br>'
-                    f'{env_line}')
+    # ── Build subsample ──────────────────────────────────────────────────────
+    # Keep ALL env bills; sample BG_PER_CLUSTER non-env bills per cluster.
+    env_df  = parquet_df[parquet_df['is_environmental']].copy()
+    non_env = parquet_df[~parquet_df['is_environmental']]
 
-        non_env = sub[~sub['is_environmental']]
-        env     = sub[sub['is_environmental']]
+    rng = np.random.default_rng(RANDOM_STATE)
+    bg_parts = []
+    for cid in sorted(non_env['cluster_id'].unique()):
+        sub = non_env[non_env['cluster_id'] == cid]
+        n   = min(BG_PER_CLUSTER, len(sub))
+        bg_parts.append(sub.sample(n=n, random_state=int(rng.integers(0, 2**31))))
 
-        # Non-environmental sub-trace (muted)
-        if not non_env.empty:
-            fig.add_trace(go.Scatter(
-                x=non_env['x'], y=non_env['y'],
-                mode='markers',
-                marker=dict(color=color, size=5, opacity=0.35),
-                name=f'{lbl} ({n_tot})',
-                legendgroup=str(cid),
-                legendgrouptitle=dict(text='Topic clusters') if i == 0 else dict(text=''),
-                hovertext=[_hover(r) for _, r in non_env.iterrows()],
-                hoverinfo='text',
-                showlegend=True,
-            ))
+    bg_df  = pd.concat(bg_parts, ignore_index=True)
+    sample = pd.concat([env_df, bg_df], ignore_index=True)
+    print(f'Subsample: {len(env_df)} env + {len(bg_df)} background = {len(sample)} total')
 
-        # Environmental sub-trace (vivid, outlined) — same legendgroup, no legend entry
-        if not env.empty:
-            fig.add_trace(go.Scatter(
-                x=env['x'], y=env['y'],
-                mode='markers',
-                marker=dict(
-                    color=color, size=10, opacity=1.0,
-                    line=dict(color='black', width=1.5),
-                ),
-                name=f'{lbl} env',
-                legendgroup=str(cid),
-                hovertext=[_hover(r) for _, r in env.iterrows()],
-                hoverinfo='text',
-                showlegend=False,
-            ))
+    # ── Embeddings ───────────────────────────────────────────────────────────
+    emb      = np.vstack(sample['embedding'].apply(
+        lambda v: np.array(v, dtype=np.float32)
+    ).values)
+    emb_norm = normalize(emb, norm='l2')
 
-    # Dummy trace for legend explanation of the env marker style
+    # ── t-SNE ────────────────────────────────────────────────────────────────
+    # Perplexity ≈ √N is a sensible heuristic for subsampled sets.
+    perplexity = max(20, min(80, int(np.sqrt(len(sample)))))
+    print(f'Running t-SNE (n={len(sample)}, perplexity={perplexity}, iter={TSNE_ITER})...')
+    tsne = TSNE(
+        n_components=2,
+        perplexity=perplexity,
+        max_iter=TSNE_ITER,
+        random_state=RANDOM_STATE,
+        init='pca',
+        learning_rate='auto',
+    )
+    coords  = tsne.fit_transform(emb_norm)
+    sample  = sample.copy()
+    sample['x'] = coords[:, 0]
+    sample['y'] = coords[:, 1]
+
+    # ── Build Plotly figure ──────────────────────────────────────────────────
+    fig = go.Figure()
+
+    bg   = sample[~sample['is_environmental']]
+    envs = sample[sample['is_environmental']]
+
+    # Layer 1 — grey background (all non-env, single trace for performance)
     fig.add_trace(go.Scatter(
-        x=[None], y=[None], mode='markers',
-        marker=dict(color='grey', size=10, opacity=1.0,
-                    line=dict(color='black', width=1.5)),
-        name='Environmental bill',
-        legendgroup='env_key',
-        legendgrouptitle=dict(text='Marker style'),
+        x=bg['x'], y=bg['y'],
+        mode='markers',
+        marker=dict(color='#aaaaaa', size=4, opacity=0.20),
+        name='Non-environmental bills',
+        hovertext=[
+            f'<b>{row.get("bill_title", "")}</b><br>'
+            f'GC {int(row["general_court"])} · {label_map.get(int(row["cluster_id"]), "")}'
+            for _, row in bg.iterrows()
+        ],
+        hoverinfo='text',
         showlegend=True,
+        legendgroup='bg',
+        legendgrouptitle=dict(text='Background'),
     ))
-    fig.add_trace(go.Scatter(
-        x=[None], y=[None], mode='markers',
-        marker=dict(color='grey', size=5, opacity=0.35),
-        name='Non-environmental',
-        legendgroup='env_key',
-        showlegend=True,
-    ))
+
+    # Layer 2 — env bills, one trace per cluster that has any env bills
+    env_cluster_ids = sorted(envs['cluster_id'].unique())
+    for i, cid in enumerate(env_cluster_ids):
+        sub  = envs[envs['cluster_id'] == cid]
+        lbl  = label_map.get(cid, f'Cluster {cid}')
+        nenv = nenv_map.get(cid, len(sub))
+        color = PALETTE_25[cid % len(PALETTE_25)]
+
+        fig.add_trace(go.Scatter(
+            x=sub['x'], y=sub['y'],
+            mode='markers',
+            marker=dict(
+                color=color, size=11, opacity=0.92,
+                line=dict(color='black', width=1.2),
+            ),
+            name=f'{lbl} ({nenv} env)',
+            hovertext=[
+                f'<b>{row.get("bill_title", "")}</b><br>'
+                f'GC {int(row["general_court"])} · 🌿 environmental<br>'
+                f'Cluster: {lbl}<br>'
+                f'Score: {row.get("env_relevance_score", ""):.3f}'
+                for _, row in sub.iterrows()
+            ],
+            hoverinfo='text',
+            showlegend=True,
+            legendgroup='env',
+            legendgrouptitle=dict(text='Environmental bills by cluster') if i == 0 else dict(text=''),
+        ))
 
     fig.update_layout(
         title=dict(
             text=(
-                'MA Lobbying Bills — Topic Clusters (t-SNE of Gemini embeddings)<br>'
-                '<sup>Large outlined dot = environmental · small dot = non-environmental'
-                ' · colour = topic cluster · hover for details</sup>'
+                'MA Lobbying Bills — Environmental Bills in the Policy Landscape'
+                '<br><sup>Coloured = environmentally-relevant bills (329) · '
+                'grey = background sample (~3 000 non-env) · '
+                'colour = topic cluster · hover for details</sup>'
             ),
             font=dict(size=13),
         ),
@@ -184,12 +201,12 @@ def main():
         legend=dict(
             font=dict(size=10),
             itemsizing='constant',
-            tracegroupgap=10,
+            tracegroupgap=8,
         ),
-        margin=dict(l=10, r=10, t=65, b=10),
-        width=820,
-        height=580,
-        plot_bgcolor='#f5f5f5',
+        margin=dict(l=10, r=10, t=70, b=10),
+        width=880,
+        height=600,
+        plot_bgcolor='#f8f8f8',
         paper_bgcolor='white',
         hovermode='closest',
     )

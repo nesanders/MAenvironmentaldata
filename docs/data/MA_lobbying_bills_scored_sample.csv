@@ -1,8 +1,8 @@
 ,bill_number,general_court,bill_title,bill_id,env_relevance_score,is_environmental,cluster_id
-0,537,185,An Act To Assure Equitable Heath Coverage For All Children,,-0.042894244,0,15
+0,537,185,An Act To Assure Equitable Heath Coverage For All Children,,-0.042894244,0,7
 1,549,185,An Act Relative to Health Care Affordability,,-0.005761683,0,14
-2,873,185,An Act Strengthening Health Reform,,-0.048513412,0,14
-3,974,185,,,0.0,0,14
+2,873,185,An Act Strengthening Health Reform,,-0.048513412,0,3
+3,974,185,,,0.0,0,22
 4,1,185,,,0.0,0,14
 5,10,185,"and H4047 ""Transportation reform bills""",,-0.011382341,0,16
 6,100,185,"HB3797 
