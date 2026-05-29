@@ -1,5 +1,5 @@
 # AMEND Database Semantic Context
-Generated: 2026-05-27
+Generated: 2026-05-29
 
 ## Global Data Notes
 
@@ -1168,27 +1168,27 @@ EEA00PES00000000L8	KENNETH   FIALKOSKY	AL-0028553	AL	PESTICIDE CREDENTIAL	PESTIC
 
 ---
 
-### MA_Bill_Cluster_Labels (25 rows)
+### MA_Bill_Cluster_Labels (26 rows)
 Topic cluster labels for MA lobbying bill clusters derived from k-means on Gemini embeddings. One row per cluster_id (0–14). Key fields: cluster_id (join key to MA_Lobbying_Bills_Scored.cluster_id), label (3–5 word topic description, e.g. "Clean Energy Policy"), n_bills (total bills in cluster), n_env_bills (environmental bills in cluster). IMPORTANT: this table has NO bill_number or general_court column — it is a lookup table only. To get bills by topic, join MA_Lobbying_Bills_Scored on cluster_id, then join MA_Lobbying_Bills.
 
 ```sql
 CREATE TABLE "MA_Bill_Cluster_Labels" (
 	"index" BIGINT, 
-	cluster_id BIGINT, 
+	cluster_id TEXT, 
 	label TEXT, 
-	n_bills BIGINT, 
-	example_titles TEXT, 
-	n_env_bills BIGINT
+	n_bills FLOAT, 
+	n_env_bills FLOAT, 
+	example_titles TEXT
 )
 ```
 
 /* 5 rows from MA_Bill_Cluster_Labels:
-cluster_id	label	n_bills	example_titles	n_env_bills
-0	Regulation, Licensing, and Protection	1235	An Act relative to the protection of propane gas ratepayers | An Act clarifying authority and responsibilities of the department of public utilities | An Act relative to consumer protection on online automobile franchise transactions | An Act relative to ensuring the safety of residents of facilities under the authority of the Department of Mental Health and the Department of Developmental Services | An Act to support MassMakers	10
-1	Healthcare Access, Cost, Transparency	1468	An Act relative to preventing overdose deaths and increasing access to treatment | An Act relative to the availability of prescription medication during an emergency | An Act relative to health care cost transparency | An Act relative to health care cost transparency | An Act relative to the creation of a municipal licensing commission	19
-2	Annual Commonwealth Budget	926	An Act making appropriations for the fiscal year 2026 for the maintenance of the departments, boards, commissions, institutions, and certain activities of the commonwealth, for interest, sinking fund, and serial bond requirements, and for certain permanent improvements | An Act making appropriations for the fiscal year 2026 for the maintenance of the departments, boards, commissions, institutions, and certain activities of the commonwealth, for interest, sinking fund, and serial bond requirements, and for certain permanent improvements | An Act making appropriations for the Fiscal Year 2024 for the maintenance of the departments, boards, commissions, institutions, and certain activities of the Commonwealth, for interest, sinking fund, and serial bond requirements, and for certain permanent improvements | An Act making appropriations for the fiscal year 2021 for the maintenance of the departments, boards, commissions, institutions and certain activities of the commonwealth, for interest, sinking fund and serial bond requirements and for certain permanent improvements | An Act making appropriations for the fiscal year 2021 for the maintenance of the departments, boards, commissions, institutions and certain activities of the commonwealth, for interest, sinking fund and serial bond requirements and for certain permanent improvements	9
-3	Climate and Green Infrastructure	1676	An Act authorizing the Water Supply District of Acton to enter into a lease, license or other disposition of land held for water supply purposes for the construction, operation and maintenance of a solar energy generating and energy storage facility | An Act relative to the electrification of new and substantially remodeled or rehabilitated building | An Act relative to consumer access to residential energy information | An Act protecting motorists and emergency personnel | An Act to establish a grant and loan program for low noise, low emissions landscape maintenance equipment	18
-4	Mental and Behavioral Health Access	773	An Act promoting consumer choice in health care | An Act to prevent inappropriate denials by insurers for medically necessary services | An Act relative to HVAC safety accountability and public transparency | An Act relative to unilateral contract changes | An Act providing equitable access to behavioral health services for MassHealth consumers	10
+cluster_id	label	n_bills	n_env_bills	example_titles
+0	Municipal Environmental Governance	1983.0	50.0	An Act promoting healthy communities | An Act to allow simple majority voting | An Act to allow simple majority voting | An Act to reduce duplicative permitting in septic system upgrades | An Act empowering towns and cities to protect residents and the environment from harmful pesticides
+1	Patient Safety, Staff, and Transparency	1289.0	1.0	An Act ensuring access to qualified health professionals | An Act relative to hospital medical staffs | An Act regulating surgical assistants | An Act to protect the independence of clinical decision making | An Act To Provide For The Autonomy Of Hospital Medical Staffs
+2	Waste Reduction and Recycling	463.0	181.0	An Act relative to enhancing circularity in recycling | Rep. Kaufman, Jay (D) - An Act to reduce solid waste in the Commonwealth | An Act to reduce packaging waste | An Act to reduce plastics | An Act to reduce plastic packaging waste
+3	Comprehensive Student Education and Wellness	1572.0	7.0	An Act implementing the Every Student Succeeds Act | An Act empowering students and schools to thrive | An Act regarding breakfast after the bell | An Act regarding breakfast after the bell | An Act to remodel public school athletics through social-emotional learning
+4	Infrastructure Investment for Growth	1124.0	8.0	An Act relative to job creation, workforce development and infrastructure investment | An act financing the general governmental infrastructure of the Commonwealth | An Act financing the general governmental infrastructure of the Commonwealth | An Act financing improvements to the Commonwealth's transportation system | An Act relative to open spaces and tax incentives
 */
 
 **Column notes:**
@@ -1196,178 +1196,7 @@ cluster_id	label	n_bills	example_titles	n_env_bills
 - `label`: 3–5 word topic label generated by Gemini 2.5 Flash (e.g. "Clean Energy Policy").
 - `n_bills`: Total number of bills assigned to this cluster.
 - `n_env_bills`: Number of bills in this cluster flagged is_environmental=1.
-- `example_titles`: “An Act to Improve Educational Outcomes for Children in the Commonwealth from Birth to School Age” | An Act relative to poaching. Talked with bill sponsor, committee members. | An Act relative to increasing transparency in public construction | An Act relative to excise tax collections of electric motor vehicles | An Act requiring the Commissioner of Insurance to study the labor rates paid by auto insurers for the repair of damage motor vehicles., HB980
-HB994
-HB996
-HB1234
-HB1403
-HB1503
-HB1533HB1566
-HB1584
-HB1591
-HB1593
-HB1656
-HB1691
-HB2933HB3773
-HB3998
-HB4011
-SB1590
-SB1603
-SB1619 | HB499
-HB2057
-HB2058HB2062
-HB2101
-HB2103
-HB2136
-HB2691
-HD3988
-SB146
-SB208
-SB217
-SB254
-SB830
-SB831
-SB842
-SB886
-SB1781 | HB280
-HB281
-HB3010HB3067
-HB3070
-HB3071
-HB3072
-HB3081
-HB3087
-HB3098
-HB3131
-HB4180
-
-HB4741
-HB4788
-HB4792
-SB990
-SB1322
-SB1507
-SB1512
-SB1514
-SB1519SB1527
-SB1538
-SB1540
-SB2482
-SB2577 | HB181
-HB372
-HB443
-HB618
-HB2022
-HB2079
-HB2083HB3287
-HB3804
-HB3809
-HB4238
-SB47
-SB70
-SB478
-SB501SB518
-SB907
-SB1900
-SB1929 | HB334
-HB2487
-HB4063HB4065
-HB4067
-HB4068
-HB4081
-HB4082
-SB174
-SB2035
-SB2038
-SB2040, HB339
-HB340
-HB348 (support with changes)
-HB602
-HB616
-HB1002 (support with changes)
-HB1091
-HB1220
-HB1221
-HB1222
-HB1223
-HB1232HB1234
-HB1235
-HB1236
-HB1237
-HB1238
-HB1239
-HB1240HB1241
-HB1471
-HB1482
-HB1493
-HB1515
-HB2070
-HB2071
-HB2076
-HB2078
-HB2081
-HB2084
-HB2092
-HB2093
-HB2094
-HB2098
-HB2099
-HB2100
-HB2382HB2784
-HB2785
-HB3134
-HB3354
-SB108 (support with changes)
-SB419
-SB441
-SB442
-SB443
-SB444
-SB456
-SB466SB469
-SB482
-SB508
-SB516SB522
-SB523
-SB524
-SB525
-SB526
-SB538
-SB541
-SB545
-SB546
-SB547
-SB552
-SB555
-SB1068
-SB1103
-SB1131
-SB1141SB1165
-SB1168
-SB1170
-Discussions with DPH regarding External Appeals | An Act Further Regulating Group Insurance Commission Benefits For State Employees And Retired State Employees
-HB2351	An Act Regulating Appeals Under The Group Insurance Commission
-HB2509	An Act Regarding Municipal Health Insurance Plans
-HB2641	An Act Relative To The Group Insurance Commission 
-HB3563	An Act Establishing Transparency In "pay-for-performance" Provisions In Health Insurance Contracts
-HB3583	An Act Regarding Treble Damages
-HB4129	Report Of The Committee Of Conference On The Disagreeing Votes Of The Two Branches With Reference To The Senate Amendment Of The House Bill Making Appropriations For The Fiscal Year 2010 For The Maintenance Of The Departments, Boards, Commissions, Institutions And Certain Activities Of The Commonwealth, For Interest, Sinking Fund And Serial Bond Requirements And For Certain Permanent Improvements.
-SB507	An Act Relative To Reducing The Cost Of Health Care Through Parity For The Same Services
-SB888	An Act To Ensure Safe Medication Administration
-SB1220	An Act Relative To Fairness In Health Insurance
-SB1467	An Act Making Technical Corrections To The State Trademarks Act | An Act Relative To Research And Development In The Biotechnology Industry
-HB803	An Act Amending The Toxics Use Reduction Act
-HB808	An Act Reducing Human Exposure To Particulate Matter Pollution
-HB1780	An Act To Require National Background Checks
-HB1816	An Act Providing Unpaid Family And Medical Leave
-HB3583	An Act Regarding Treble Damages
-HB4129	Report Of The Committee Of Conference On The Disagreeing Votes Of The Two Branches With Reference To The Senate Amendment Of The House Bill Making Appropriations For The Fiscal Year 2010 For The Maintenance Of The Departments, Boards, Commissions, Institutions And Certain Activities Of The Commonwealth, For Interest, Sinking Fund And Serial Bond Requirements And For Certain Permanent Improvements.
-SB193	An Act Clarifying Chapter 111l  Biotechnology
-SB273	An Act To Improve Stem Education In The Commonwealth
-SB1261	An Act Establishing A Woody Biomass Tax Credit
-SB1279	An Act Extending The Investment Tax Credit To All Corporations
-SB1467	An Act Making Technical Corrections To The State Trademarks Act
-SB1524	An Act Relative To Expanding Energy Efficiency In The Commonwealth | An Act clarifying the meal break law to allow for private enforcement
+- `example_titles`: Resolve providing for an investigation and study by a special commission relative to robotic surgery in the Commonwealth | Resolve establishing a commission to consider the inclusion of nuclear energy in Massachusetts' future energy planning | An Act relative to establishing a food justice frontline | Resolve providing for a commission to study the affects of offshore wind projects on Massachusetts fisheries | Resolve Providing for a "Special Commission on Peace Officer Standards and Training" to Study and Make Recommendations Concerning the Implementation of a Peace Officers Standards and Training (POST) System, An act relative to the protection fo children | An Act to protect the commonwealth from dangerous persons | An Act to protect victims of crimes and the public | An Act clarifying consent laws for adolescents | An Act relative to consensual adolescent sexual activity, An Act transitioning Massachusetts to clean electricity, heating and transportation | An Act transitioning Massachusetts to clean electricity, heating and transportation | An Act transitioning the Commonwealth to 100% clean electricity, heating, and transportation | An Act transitioning the Commonwealth to 100% clean electricity, heating, and transportation | An Act investing in a prosperous, clean commonwealth by 2030, An Act to prevent wage theft, promote employer accountability, and enhance public enforcement | An Act to prevent wage theft, promote employer accountability, and enhance public enforcement | An Act to prevent wage theft, promote employer accountability, and enhance public enforcement | An Act to prevent wage theft, promote employer accountability, and enhance public enforcement | An Act relative to independent contractors, An Act to improve access to behavioral health services | An Act to improve access to behavioral health services | An Act improving access to behavioral health services | An Act providing equitable access to behavioral health services for MassHealth consumers | An Act expanding access to mental health services, An Act to empower communities to transition to renewable energy | An Act relative to municipal lighting authorities | An Act promoting local energy investment and infrastructure modernization | An Act promoting local energy investment and infrastructure modernization | An Act promoting local energy investment and infrastructure modernization, An Act relative to the safe operation of motor vehicles | An Act relative to the safe operation of motor vehicles | An Act prohibiting video recording or broadcasting while driving | An Act relative to the use of video screens while operating a motor vehicle | An Act relative to the safe operation of motor vehicles, An Act relative to the lawful sale of handguns | An Act relative to the lawful sale of handguns | An Act relative to the lawful sale of handguns | An Act relative to waterfowl hunting | An Act relative to unloaded rifles or shotguns, An Act relative to pharmaceutical price transparency and cost sharing | An Act relative to pharmaceutical price transparency and cost sharing. | An Act relative to consumer protection for prescription drug purchases | An Act creating patient choice and education in the dispensing of opiate drugs | An act creating patient choice and education in the dispensing of opiate drugs, An Act relative to motor vehicle surcharges | An Act Relative to Motor Vehicle Surcharges | An Act relative to home owners insurance and funding repairs | An Act relative to automobile insurance companies | An Act Relative to Automobile Insurance Companies, An Act relative to job creation, workforce development and infrastructure investment | An act financing the general governmental infrastructure of the Commonwealth | An Act financing the general governmental infrastructure of the Commonwealth | An Act financing improvements to the Commonwealth's transportation system | An Act relative to open spaces and tax incentives, An Act relative to ensuring treatment for genetic craniofacial conditions | An Act relative to ensuring treatment for genetic craniofacial conditions | An Act relative to ensuring treatment for genetic craniofacial conditions | An Act relative to ensuring treatment for genetic craniofacial conditions | An Act relative to ensuring treatment for genetic craniofacial conditions, An Act relative to enhancing circularity in recycling | Rep. Kaufman, Jay (D) - An Act to reduce solid waste in the Commonwealth | An Act to reduce packaging waste | An Act to reduce plastics | An Act to reduce plastic packaging waste, An Act relative to assisted living and the frail elder waiver | An Act relative to assist families care for elders | An Act relative to intensive case management for clinically complex older adults | An Act relative to stabilizing the Commonwealth?s nursing facilities | An Act promoting affordability of home care services, An Act relative to Mass Port police officers | An Act relative to Mass Port police officers | An Act relative to Mass Port police officers | An Act relative to Mass Port police officers | An Act relative to the retirement of MassPort officers, An Act regarding right of first refusal in the event of foreclosure and short sales and deeds in lieu | An Act for a right of first refusal for foreclosed property (Foreclosure TOPA) | An Act supporting affordable housing with a local option for a fee to be applied to certain real estate transactions | An Act to guarantee a tenant’s first right of refusal | An Act authorizing municipalities to protect low and moderate income tenants and units of governmentally involved housing, An Act promoting healthy communities | An Act to allow simple majority voting | An Act to allow simple majority voting | An Act to reduce duplicative permitting in septic system upgrades | An Act empowering towns and cities to protect residents and the environment from harmful pesticides, An Act making appropriations for fiscal year 2025 to provide for supplementing certain existing appropriations and for certain other activities and projects | An Act making appropriations for fiscal year 2025 to provide for supplementing certain existing appropriations and for certain other activities and projects | An Act making appropriations for the fiscal year 2025 to provide for supplementing certain existing appropriations and for certain other activities and projects | An Act making appropriations for the fiscal year 2025 to provide for supplementing certain existing appropriations and for certain other activities and projects | An Act making appropriations for the fiscal year 2025 to provide for supplementing certain existing appropriations and for certain other activities and projects, An Act implementing the Every Student Succeeds Act | An Act empowering students and schools to thrive | An Act regarding breakfast after the bell | An Act regarding breakfast after the bell | An Act to remodel public school athletics through social-emotional learning, An Act ensuring access to qualified health professionals | An Act relative to hospital medical staffs | An Act regulating surgical assistants | An Act to protect the independence of clinical decision making | An Act To Provide For The Autonomy Of Hospital Medical Staffs, An Act eliminating telecommunications tax exemptions | AN ACT RELATIVE TO CERTAIN TAX EXEMPTIONS ., An Act clarifying the meal break law to allow for private enforcement
 HB757	An Act for a competitive economy through safer alternatives to toxic chemicals
 HB4952	An Act increasing the experience and background necessary to operate low pressure processed steam boilers
 HB4865	An Act relative to a competitive economy through safer alternatives to toxic chemicals
@@ -1389,25 +1218,213 @@ HB3881	An Act relative to toxic fire retardant prevention
 SB389	An Act to create environmental justice
 SB730	An Act to establish a self sufficiency standard in the Commonwealth
 SB2517	An Act to protect motor vehicle owners' and independent repairers' right to repair
-HB1846	An Act to provide incentives for productive workers compensation audits | Letter Of Transmittal -- Public Safety And Security.
-HB44	An Act Relative To Amusement Devices.
-HB1780	An Act To Require National Background Checks
-HB1816	An Act Providing Unpaid Family And Medical Leave
-HB3583	An Act Regarding Treble Damages
-HB4129	Report Of The Committee Of Conference On The Disagreeing Votes Of The Two Branches With Reference To The Senate Amendment Of The House Bill Making Appropriations For The Fiscal Year 2010 For The Maintenance Of The Departments, Boards, Commissions, Institutions And Certain Activities Of The Commonwealth, For Interest, Sinking Fund And Serial Bond Requirements And For Certain Permanent Improvements.
-SB116	An Act Relative To Applications For Inspectors Of Amusement Devices
-SB1467	An Act Making Technical Corrections To The State Trademarks Act
-SB1518	An Act Promoting Further Renewable Energy Competition
-SB1821	An Act Further Defining A Bona Fide Coin-operated Amusement Machine, An Act to provide liability protections for health care workers and facilities during the COVID-19 Pandemic | An Act to provide liability protections for health care workers and facilities during the COVID-19 Pandemic | An Act to improve access to behavioral health services | An Act addressing barriers to care for mental health | An Act addressing barriers to care for mental health, An Act to preserve early education support for families | An Act Relative To The Sales Tax | An Act authorizing the town of Provincetown to apply the local option room occupancy excise to all seasonal rental properties in the town | An Act relative to short-term rentals | An Act relative to fair investment, An Act to plan, preserve, and protect | An Act relative to solid waste management and recycling | An Act relative to strengthening and expanding higher education opportunities | An Act relative to recycling | An Act relative to recycling, An Act to enhance the lives of survivors of human trafficking | An Act advancing and expanding access to telemedicine services | An Act relative to protecting innocent sellers | An Act relative to the age of consent in certain criminal prosecutions and civil actions for sexual assault and rape of a child | An Act to strengthen laws combatting human trafficking and protecting survivors of modern-day slavery, An Act to Amend Retirement Benefits for Certain Employees of the Department of Corrections . | An Act to Amend Retirement Benefits for Certain Employees of the Department of Corrections . | An Act relative to retirement plans | An Act Relative to the Definition of Group 4 of the Retirement System. | An Act relative to anesthesiologist assistants, An Act relative to the protection of propane gas ratepayers | An Act clarifying authority and responsibilities of the department of public utilities | An Act relative to consumer protection on online automobile franchise transactions | An Act relative to ensuring the safety of residents of facilities under the authority of the Department of Mental Health and the Department of Developmental Services | An Act to support MassMakers, An Act relative to the impact of natural gas transfer facilities on public health | An Act relative to Safe Driving | An Act Relative to Safe Driving | An Act relative to the safe operation of motor vehicles | An Act relative to Massachusetts Solar Access Law, An Act relative to student assessment data | An Act relative to affirming and maintaining equal access to public education for all children | An Act to promote the education success of court involved children | An Act relative to the cybersecurity of the internet connected devices and autonomous vehicles | An Act relative to maintenance of certification, An Act relative to school operational efficiency | An Act relative to Mosquito Control | An Act relative to Lyme disease treatment | An Act relative to civil infractions for juveniles | An Act relative to immediate COVID-19 recovery needs., An Act relative to preventing overdose deaths and increasing access to treatment | An Act relative to the availability of prescription medication during an emergency | An Act relative to health care cost transparency | An Act relative to health care cost transparency | An Act relative to the creation of a municipal licensing commission, An Act relative to motor vehicle financial protection products | An Act relative to equity and public contracting | An Act relative to Massachusetts Solar Access Law | An Act relative to all-electronic tolling data privacy | An Act relative to consumer data privacy, An Act relative to local on-site sewage disposal systems | An Act to address affordable housing | An Act exempting medications used for the treatment of opioid use disorder from the prior approval process under the Massachusetts Medicaid program | An Act relative to medication assisted treatment for opioid addiction | An Act Relative to Medication Assisted Treatment for Opioid Addiction, An Act relative to insurance surcharges | An Act to require health care coverage for medically necessary treatment for speech therapy, occupational therapy, physical therapy, disease, illness, injury, or bodily dysfunction which are required by a students individual educational program | An Act relative to communications between health insurers and patients | An Act relative to transparency in homeowners insurance rate setting | An Act relative to prejudgment interest rates, An Act relative to ending unnecessary hospitalizations and reducing emergency department boarding | An Act relative to the Soldiers’ Home in Holyoke | An Act relative to applied behavioral analysis therapy | An Act relative to protecting the residents of the Commonwealth | An Act relative to non-civil service lay off lists, An Act relative to COVID-19 Data Collection | An Act relative to immediate COVID-19 recovery needs | An Act relative to strengthening Massachusetts’ economic leadership | An Act relative to the licensure of behavior analysts | An Act relative to immediate covid-19 recovery, An Act promoting consumer choice in health care | An Act to prevent inappropriate denials by insurers for medically necessary services | An Act relative to HVAC safety accountability and public transparency | An Act relative to unilateral contract changes | An Act providing equitable access to behavioral health services for MassHealth consumers, An Act making appropriations for the fiscal year 2026 for the maintenance of the departments, boards, commissions, institutions, and certain activities of the commonwealth, for interest, sinking fund, and serial bond requirements, and for certain permanent improvements | An Act making appropriations for the fiscal year 2026 for the maintenance of the departments, boards, commissions, institutions, and certain activities of the commonwealth, for interest, sinking fund, and serial bond requirements, and for certain permanent improvements | An Act making appropriations for the Fiscal Year 2024 for the maintenance of the departments, boards, commissions, institutions, and certain activities of the Commonwealth, for interest, sinking fund, and serial bond requirements, and for certain permanent improvements | An Act making appropriations for the fiscal year 2021 for the maintenance of the departments, boards, commissions, institutions and certain activities of the commonwealth, for interest, sinking fund and serial bond requirements and for certain permanent improvements | An Act making appropriations for the fiscal year 2021 for the maintenance of the departments, boards, commissions, institutions and certain activities of the commonwealth, for interest, sinking fund and serial bond requirements and for certain permanent improvements, An Act making appropriations for fiscal year 2022 to provide for supplementing certain existing appropriations and for certain other activities and projects | An Act making appropriations for the fiscal year 2024 to provide for supplementing certain existing appropriations and for certain other activities and projects | An Act relative to making transfers between health funds | An Act making appropriations for the fiscal year 2023 for the maintenance of the departments, boards, commissions, institutions, and certain activities of the commonwealth, for interest, sinking fund, and serial bond requirements, and for certain permanent improvements | An Act alleviating the burden of medical debt for patients and families, An Act establishing the Martha's Vineyard housing bank | An Act relative to extending certain COVID-19 measures adopted during the state of emergency | An Act relative to the impact of natural gas transfer facilities on public health | An Act to create a Massachusetts rare disease advisory council | An Act relative to insurance company rebates, An Act directing the administration to amend the Frail Elder Home and Community-Based Waiver to permit eligible older adults to choose to reside in Certified Assisted Living Residences | An Act relative to stabilizing the Commonwealth’s nursing facilities | An Act relative to nursing facility care | An Act relative to an affordable health plan | An Act to Provide Access to Hearing Aids, An Act authorizing the Water Supply District of Acton to enter into a lease, license or other disposition of land held for water supply purposes for the construction, operation and maintenance of a solar energy generating and energy storage facility | An Act relative to the electrification of new and substantially remodeled or rehabilitated building | An Act relative to consumer access to residential energy information | An Act protecting motorists and emergency personnel | An Act to establish a grant and loan program for low noise, low emissions landscape maintenance equipment, An Act authorizing and directing the retirement board of the town of Weymouth to pay a certain retirement benefit to the surviving spouse of fallen officer, Michael Chesna, of the Weymouth Police Department | An Act relative to personal health information portability and accessibility | An Act to allow the Mayor of the City of Somerville to posthumously appoint Sean A. Collier a Somerville Police Officer | An Act prioritizing patient access to care | An Act relative to anesthesiologist assistants
+HB1846	An Act to provide incentives for productive workers compensation audits | HB1188
+HB1202
+HB1218
+HB1219
+HB1224
+HB1227
+HB1450
+HB1455
+HB1566
+HB1568HB1665
+HB1695
+HB1697
+HB1700
+HB1701
+HB1736
+HB1778HB1779
+HB1981
+HB1982
+HB2003
+HB2004
+HB2140
+HB2668
+HB2692
+HB2702
+HB2726
+HB2765
+HB2778
+HB2780
+HB2822
+HB2881
+HB2933
+HB2938
+HB2960HB3014
+HB3037
+HB3061
+HB3061
+HB3065
+HB3065
+HB3083HB3095
+HB310
+HB3124
+HB3308
+HB3362
+HB3364
+HB337
+HB3411
+HB3412
+HB3446
+HB3462HB3491
+HB3570
+HB3572
+HB3575
+HB3583
+HB3615
+HB3646
+HB3647
+HB3670
+HB3672
+HB3673
+HB3674
+HB3675
+HB3699
+HB3760
+HB3762
+HB3951
+HB4072HB702
+HB750
+HB756
+HB775HB782
+HB806
+HB808
+HB811
+HB818
+HB834
+HB849
+HB852
+HB853
+HB88
+HB960
+HD2622
+SB103
+SB104
+SB105
+SB1323
+SB1387
+SB1504
+SB1508
+SB1577SB1607
+SB168
+SB1912
+SB193SB1953
+SB1963
+SB2019
+SB205
+SB206
+SB2061
+SB2101
+SB373
+SB382
+SB386
+SB387
+SB388
+SB389
+SB394
+SB396
+SB411
+SB412
+SB436
+SB441
+SB6
+SB623
+SB625
+SB636
+SB653
+SB663
+SB765
+SB767
+SB770
+SB783
+SB817
+SB88
+SB882
+SB90SB96
+SB97
+SD1336
+Greenhouse gas policy
+Energy conservation and decoupling
+Building Code
+Stormwater
+Ch. 21E
+Ch. 91
+MEPA
+Highway Access Permit
+MESA
+Transportation reform | An Act relative to financial services contracts for dental benefits corporations;
+SB2363 An Act relative to oral cancer therapy;
+SB2359: An Act to establish standards for long term care insurance;
+SB2134: An Act to establish standards for long term care insurance (SB411: An Act to establish standards for long term care insurance);
+HB4464: An Order relative to authorizing the committee on Financial Services to make an investigation and study of certain Senate and House documents concerning health care insurance and insurance coverage issues; 
+HB295: An Act relative to increasing consumer access to licensed marriage and family therapy; 
+HB304: An Act to define the use of observation services;
+HB3928:  An Act relative to the treatment of cleft palate and cleft lip;  
+HB4070:  An Act relative to Health Care Quality Improvement and Cost Reduction Act of 2012; 
+SB2362: An Act establishing the Massachusetts Childhood Vaccine Program; 
+SB2120:  An Act establishing the Massachusetts Childhood Vaccine Program; 
+HB585: An Act to protect patients from breakthrough seizures; 
+HB 4420: An Act relative to miscellaneous insurance and banking issues; 
+HB4257:  An Act to limit retroactive denials of health insurance  (HB1204 An Act to limit retroactive denials of health insurance claims);
+HB2137: An Act providing for the equitable apportionment of certain liens; 
+HB1216: An Act relative to manufacturers' coupons and rebates; 
+SB69: An Act providing for insurance coverage for vision screening for children; 
+SB72: An Act relative to increasing consumer access to licensed marriage and family therapists; 
+SB285: An Act establishing a special commission to promote prescription pharmaceutical affordability in the Commonwealth;
+SB519: An Act relative to health care affordability;
+SB527: An Act defining the use of observational services;
+SB2121: An Act to provide for tobacco cessation benefits;
+SB821: An Act establishing accountability for managed care organizations;
+SB2440: Order relative to authorizing the joint committee on the Judiciary to make an investigation and study of certain current Senate documents relative to the Judiciary (SB825 An Act revising the charitable immunity cap);
+SB1070: An Act relative to oral cancer therapy;
+SB498 - An Act relative to student health insurance;
+HB3916: An Act relative to financial services contracts for dental benefits corporations;
+HB3917: An Act relative to payment for use of ambulance services;
+HB3928: An Act relative to the treatment of cleft palate and cleft lip;
+HB3981: Text of a further amendment to the Senate amendment of the engrossed Bill relative to tiered and selective network health plans;
+HB4200 (Sections 129, 130, 131): Committee of Conference on the disagreeing votes of the two branches of the House Bill making appropriations for the fiscal year 2013;
+SB2270: Printed as amended version of the engrossed Bill relative to improving the quality of health care and reducing costs through increased transparency, efficiency and innovation. SB2400: An act improving the quality of health care and reducing costs through increased transparency, efficiency and innovation. | - An Act Establishing A Board Of Casting Agents
+HB1270- An Act Relative To The Protection Of Talented Children And Their Families
+HB2511-An Act Relative To Increasing Economic Development And Business Opportunity In The Design And Manufacture Of Video Games Through The Use Of Tax Credits
+HB2526-An Act Relative To Film Tax Credit Percentage
+HB2629-An Act To Promote Sales Tax Fairness For Main Street Retailers
+HB2630-An Act Relative To The Tax Expenditure Budget
+HB2662-An Act Relative To Tax Credits, Education And Training For The Design And Development Of Video Game And Interactive Digital Media Products
+HB2738-An Act Relative To Targeted Investment Of Taxpayer Dollars
+HB3382-An Act Relative To Transportation Finance
+HB3526- An Act To Ensure Compliance With Federal Marketplace Fairness 
+HB3535-An Act Relative To Transportation Finance 
+SB1441-An Act Relative To Eligible Production Expenses For The Film Tax Credit
+SB1630-An Act Protecting The Commercial Value Of Artists, Entertainers, And Other Notable Personalities
+HB 1 - An Act making appropriations for FY2014
+HB3382 - An Act relative to transportation finance
+HB3415 - An Act relative to transportation finance
+SB1766 - An Act relative to transportation finance
+SB1770 - An Act relative to transportation finance
+HB3400 - An Act making appropriations for the fiscal year 2014 for the maintenance of the departments, boards, commissions, institutions and certain activities of the Commonwealth, for interest, sinking fund and serial bond requirements and for certain permanent improvements
+HB3401 - Printed as amended version of the Bill making appropriations for the fiscal year 2014 for the maintenance of departments, boards, commissions, institutions and certain activities of the Commonwealth, for interest, sinking fund and serial bond requirements and for certain permanent improvements
+H3538 - An Act making appropriations for the Fiscal Year 2014 for the maintenance of the departments, boards, commissions, institutions and certain activities of the commonwealth, for interest, sinking fund and serial bond requirements and for certain permanent improvements
+SB3 - Text of the Senate amendments to the House Bill making appropriations for the fiscal year 2014 for the maintenance of the departments, boards, commissions, institutions and certain activities of the Commonwealth, for interest, sinking fund and serial bond requirements and for certain permanent improvements
+SB1800 - Text of the Senate amendments to the House Bill making appropriations for the fiscal year 2014 for the maintenance of the departments, boards, commissions, institutions and certain activities of the Commonwealth, for interest, sinking fund and serial bond requirements and for certain permanent improvements
+Government Relations Group is paid a monthly retainer which encompasses all activity and is not paid on an hourly or per issue basis. | An Act Increasing The School Choice Cap
+HB225	An Act Protecting The Commonwealth's Lakes And Ponds
+HB1596	An Act Relative To Creditable Service For Teachers In Charter Schools
+HB1925	An Act Establishing A Charter School Working Group
+HB1926	An Act Establishing A Charter School Commission
+HB1935	An Act Relative To Charter School Renewal
+HB1951	An Act To Improve Access To Charter Schools For Students With Disabilities And Limited English Proficiency
+HB2721	An Act Relative To Unused District School Buildings
+SB231	An Act Establishing A Charter School Working Group.
+SB246	An Act Establishing A Charter School Working Group., An Act authorizing the town of Tewksbury to grant 8 additional licenses for the sale of alcoholic beverages to be drunk on the premises | An Act authorizing the city of Fitchburg to grant 1 additional license for the sale of all alcoholic beverages not to be drunk on the premises | An Act authorizing the town of Walpole to grant an additional license for the sale of wines and malt beverages not to be drunk on the premises | An Act authorizing the town of Dedham to grant four additional licenses for the sale of all alcoholic beverages, four wine and malt licenses, all to be drunk on the premises, and one wine and malt package store license | An Act relative to special one-day licenses to sell or dispense alcoholic beverages, An Act Relative to State Personnel | An Act Relative to State Personnel | An Act relative to modernize municipal finance and government | An Act relative to Protecting Senior Health | Senate Ways and Means - An Act establishing a sick leave bank for Christine Chrzanowski, an employee of the Department of Mental Health, An Act Establishing the Massachusetts Data Privacy Act | Establishing the Massachusetts Consumer Data Privacy Act | An Act relative to consumer data privacy | An Act advancing the economic development of the commonwealth through comprehensive data privacy | An Act establishing the Massachusetts Information Privacy Act
 
 ---
 
-### MA_Legislature_Bills (31,658 rows)
+### MA_Legislature_Bills (31,511 rows)
 MA Legislature OpenAPI: one row per (bill_number, general_court session). Key fields: bill_number (e.g. H.1234), general_court (session number), title (bill title), sponsor_name, status (final status text), passed (1 if signed/enacted, 0 otherwise). Foreign key: bill_number + general_court → MA_Lobbying_Bills. NOTE: environmental relevance scoring lives in MA_Lobbying_Bills_Scored, not here.
 
 ```sql
 CREATE TABLE "MA_Legislature_Bills" (
-	"index" FLOAT, 
+	"index" BIGINT, 
 	bill_id TEXT, 
 	bill_number BIGINT, 
 	bill_prefix TEXT, 
@@ -1421,18 +1438,18 @@ CREATE TABLE "MA_Legislature_Bills" (
 
 /* 5 rows from MA_Legislature_Bills:
 bill_id	bill_number	bill_prefix	general_court	title	sponsor_name	status	passed
-H4999	4999	H	192	An Act relative to the maximum age requirement for original appointment as a police officer in the town of Dedham	Joint Committee on Public Service	Signed by the Governor, Chapter 276 of the Acts of 2022	1
-H4773	4773	H	192	An Act amending the charter of the town of Swampscott	Lori A. Ehrlich	No further action taken	0
-S1405	1405	S	192	An Act relative to HIV routine screening and care	Julian Cyr	No further action taken	0
-S607	607	S	192	An Act relative to stronger emissions limits	Marc R. Pacheco	No further action taken	0
-H1069	1069	H	192	An Act empowering health care consumers	William J. Driscoll, Jr.	Accompanied a study order, see H5222	0
+H4999	4999	H	193	An Act promoting access to midwifery care and out-of-hospital birth options	Midwifery Care and Out-of-Hospital options	Signed by the Governor, Chapter 186 of the Acts of 2024	1
+H4773	4773	H	193	An Act promoting access to midwifery care and out-of-hospital birth options	House Committee on Ways and Means	Published as amended, see H4785	0
+S1405	1405	S	193	An Act relative to newborn screenings for congenital cytomegalovirus	Joan B. Lovely	No further action taken	0
+S607	607	S	193	An Act to increase access to nurse-midwifery services	Brendan P. Crighton	No further action taken	0
+H1069	1069	H	193	An Act to increase access to nurse-midwifery services	Kay Khan	Senate concurred	0
 */
 
 **Column notes:**
 - `bill_number`: MA bill number (e.g. H.1234). Join key to MA_Lobbying_Bills and MA_Lobbying_Bills_Scored.
 - `general_court`: Session number. 185=2009-10, 186=2011-12, ..., 192=2021-22, 193=2023-24, 194=2025-26.
 - `passed`: 1 if the bill was signed into law or enacted; 0 if it died or is still pending.
-- `bill_prefix`: H, S, HD, SD, False, True
+- `bill_prefix`: ALL CAPS. H, S, HD, SD
 
 ---
 
@@ -1441,7 +1458,7 @@ MA SoS lobbying disclosures: fact table linking employers to bills they lobbied.
 
 ```sql
 CREATE TABLE "MA_Lobbying_Bills" (
-	"index" BIGINT, 
+	"Unnamed: 0" BIGINT, 
 	entity_name TEXT, 
 	client_name TEXT, 
 	year BIGINT, 
@@ -1457,12 +1474,12 @@ CREATE TABLE "MA_Lobbying_Bills" (
 ```
 
 /* 5 rows from MA_Lobbying_Bills:
-entity_name	client_name	year	general_court	chamber	bill_number	bill_title	position	amount	entity_name_norm	client_name_norm
-Aaron Agulnek	BAY STATE BIRTH COALITION, INC.	2024	192	House Bill	4999	An Act promoting access to midwifery care and out-of-hospital birth options	Neutral	0.0	AARON AGULNEK	BAY STATE BIRTH COALITION
-Aaron Agulnek	BAY STATE BIRTH COALITION, INC.	2024	192	House Bill	4773	An Act promoting access to midwifery care and out-of-hospital birth options	Support	0.0	AARON AGULNEK	BAY STATE BIRTH COALITION
-Aaron Agulnek	Vanessa Colleran	2024	192	Senate Bill	1405	An Act relative to newborn screenings for congenital cytomegalovirus	Support	0.0	AARON AGULNEK	VANESSA COLLERAN
-Aaron Agulnek	Vanessa Colleran	2024	192	House Bill	4999	An Act promoting access to midwifery care and out-of-hospital birth options	Neutral	0.0	AARON AGULNEK	VANESSA COLLERAN
-Aaron Agulnek	Massachusetts Affiliate of ACNM, Inc	2024	192	House Bill	4999	An Act promoting access to midwifery care and out-of-hospital birth options	Neutral	0.0	AARON AGULNEK	MASSACHUSETTS AFFILIATE OF ACNM
+Unnamed: 0	entity_name	client_name	year	general_court	chamber	bill_number	bill_title	position	amount	entity_name_norm	client_name_norm
+0	Aaron Agulnek	BAY STATE BIRTH COALITION, INC.	2024	193	House Bill	4999	An Act promoting access to midwifery care and out-of-hospital birth options	Neutral	0.0	AARON AGULNEK	BAY STATE BIRTH COALITION
+1	Aaron Agulnek	BAY STATE BIRTH COALITION, INC.	2024	193	House Bill	4773	An Act promoting access to midwifery care and out-of-hospital birth options	Support	0.0	AARON AGULNEK	BAY STATE BIRTH COALITION
+2	Aaron Agulnek	Vanessa Colleran	2024	193	Senate Bill	1405	An Act relative to newborn screenings for congenital cytomegalovirus	Support	0.0	AARON AGULNEK	VANESSA COLLERAN
+3	Aaron Agulnek	Vanessa Colleran	2024	193	House Bill	4999	An Act promoting access to midwifery care and out-of-hospital birth options	Neutral	0.0	AARON AGULNEK	VANESSA COLLERAN
+4	Aaron Agulnek	Massachusetts Affiliate of ACNM, Inc	2024	193	House Bill	4999	An Act promoting access to midwifery care and out-of-hospital birth options	Neutral	0.0	AARON AGULNEK	MASSACHUSETTS AFFILIATE OF ACNM
 */
 
 **Column notes:**
@@ -1493,11 +1510,11 @@ CREATE TABLE "MA_Lobbying_Bills_Scored" (
 
 /* 5 rows from MA_Lobbying_Bills_Scored:
 bill_number	general_court	bill_title	bill_id	env_relevance_score	is_environmental	cluster_id
-537	185	An Act To Assure Equitable Heath Coverage For All Children	NULL	-0.042894244	0	7
-549	185	An Act Relative to Health Care Affordability	NULL	-0.005761683	0	14
-873	185	An Act Strengthening Health Reform	NULL	-0.048513412	0	3
-974	185	NULL	NULL	0.0	0	22
-1	185	NULL	NULL	0.0	0	14
+537	186	An Act To Assure Equitable Heath Coverage For All Children	S537	-0.0040966272354125	0	18
+549	186	An Act Relative to Health Care Affordability	S549	-0.0452432036399841	0	18
+873	186	An Act Strengthening Health Reform	S873	-0.0194134712219238	0	1
+974	186	An Act to regulate health insurance contracts/policies.	H974	-0.0548492074012756	0	21
+1	186	A message from His Excellency the Governor submitting the annual budget of the Commonwealth for the fiscal year beginning July first, two thousand nine	H1	-0.0527363419532775	0	4
 */
 
 **Column notes:**

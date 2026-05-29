@@ -444,7 +444,10 @@ def main():
     scored_cols = ['bill_number', 'general_court', 'bill_title', 'bill_id',
                    'env_relevance_score', 'is_environmental', 'cluster_id']
     scored_path = DATA_DIR / 'MA_lobbying_bills_scored.csv'
-    combined[scored_cols].to_csv(scored_path)
+    import csv as _csv
+    out = combined[scored_cols].copy()
+    out['is_environmental'] = out['is_environmental'].astype(int)
+    out.to_csv(scored_path, quoting=_csv.QUOTE_NONNUMERIC)
     n_total_env = int(combined['is_environmental'].sum())
     print(f'Wrote {len(combined)} rows to scored CSV ({n_total_env} environmental)')
 

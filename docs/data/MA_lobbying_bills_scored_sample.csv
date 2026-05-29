@@ -1,18 +1,18 @@
 ,bill_number,general_court,bill_title,bill_id,env_relevance_score,is_environmental,cluster_id
-0,537,185,An Act To Assure Equitable Heath Coverage For All Children,,-0.042894244,0,7
-1,549,185,An Act Relative to Health Care Affordability,,-0.005761683,0,14
-2,873,185,An Act Strengthening Health Reform,,-0.048513412,0,3
-3,974,185,,,0.0,0,22
-4,1,185,,,0.0,0,14
-5,10,185,"and H4047 ""Transportation reform bills""",,-0.011382341,0,16
-6,100,185,"HB3797 
+0,537,186,An Act To Assure Equitable Heath Coverage For All Children,S537,-0.0040966272354125,0,18
+1,549,186,An Act Relative to Health Care Affordability,S549,-0.0452432036399841,0,18
+2,873,186,An Act Strengthening Health Reform,S873,-0.0194134712219238,0,1
+3,974,186,An Act to regulate health insurance contracts/policies.,H974,-0.0548492074012756,0,21
+4,1,186,"A message from His Excellency the Governor submitting the annual budget of the Commonwealth for the fiscal year beginning July first, two thousand nine",H1,-0.0527363419532775,0,4
+5,10,186,"and H4047 ""Transportation reform bills""",S10,-0.0087350606918334,0,13
+6,100,186,"HB3797 
 SB92 
 SB554 
 SB555 
 SB579 
 Authority management issues
-Ch. 27 of 2009",,0.0043101907,0,16
-7,1000,185,"An Act Relative To Banks And Banking
+Ch. 27 of 2009",H100,-0.0107224583625793,0,13
+7,1000,186,"An Act Relative To Banks And Banking
 HB1050	An Act Relative To The Safety Of Public Deposits
 HB4800	An Act Making Appropriations For The Fiscal Year 2011 
 SB513	An Act Relative To The Safety Of Public Deposits
@@ -20,11 +20,11 @@ HB4841	An Act Relative to Making Appropriations for the Fiscal years 2010 & 2011
 HB4868	An Act Relative to Making Appropriations for the Fiscal years 2010 & 2011
 HB5028	An Act Relative to Making Appropriations for the Fiscal years 2010 & 2011
 SB520	An Act To Include Credit Unions For Deposit Of Public Monies
-SB1783	An Act Providing For The Uniform Prudent Management Of Institutional Funds",,-0.018367767,0,14
-8,1002,185,,,0.0,0,13
-9,1003,185,,,0.0,0,16
-10,1004,185,,,0.0,0,15
-11,101,185,"HB102 HB104 HB106 HB1179 HB1194 HB1195 HB119
+SB1783	An Act Providing For The Uniform Prudent Management Of Institutional Funds",S1000,-0.0248819589614868,0,13
+8,1002,186,An Act  relative to policies of insurance.,H1002,-0.0462728142738342,0,21
+9,1003,186,An Act relative to viatical settlements .,H1003,-0.0441014766693115,0,21
+10,1004,186,An Act relative to medical examinations.,H1004,-0.0022749900817871,0,1
+11,101,186,"HB102 HB104 HB106 HB1179 HB1194 HB1195 HB119
 6 HB1197 HB1198 HB1201 HB1202 HB1208 HB1219 HB1223
 HB1226 HB1227 HB1231 HB1232 HB1236 HB1238 HB1239 
 HB1242 HB1245 HB1310 HB1425 HB1455 HB1649 HB1654 H
@@ -41,8 +41,8 @@ HB4106 HB787 HB811 HB858 HD2026 HD2267 HB1221 HB75
 SB1609 SB168 SB1719 SB173 SB1791 SB1813 SB1847 SB1
 87 SB2052 SB226 SB3 SB455 SB6 SB634 SB648 SB651 SB
 667 SB670 SB694 SB718 SB751 SB765 SB766 SB768 SB77
-7 SB90 SD632 SB343 SB441 SB2060 SB1373",,-0.031735003,0,13
-12,1012,185,"HB1035
+7 SB90 SD632 SB343 SB441 SB2060 SB1373",H101,-0.0451977252960205,0,13
+12,1012,186,"HB1035
 HB1044
 HB1063
 HB1067
@@ -157,8 +157,8 @@ SB871
 SB873
 SB876
 SB897
-SB950",,-0.034297824,0,0
-13,1020,185,"HB1028
+SB950",H1012,-0.0149142146110534,0,13
+13,1020,186,"HB1028
 HB1031
 HB1032
 HB1033
@@ -282,11 +282,11 @@ SB859
 SB861
 Line item: 4580-1000
 DOI Small Group Regulations
-Medicaid Pharmacy Carve-out",,-0.018806815,0,14
-14,1024,185,,,0.0,0,16
-15,1028,185,An Act to improve asthma management,,-0.0055992603,0,16
-16,103,185,,,0.0,0,14
-17,1032,185,"HB1044
+Medicaid Pharmacy Carve-out",H1020,-0.0142633318901062,0,13
+14,1024,186,An Act banning the use of certain socio-economic factors for insurance underwriting and rating of motor vehicle liability  insurance.,H1024,-0.0368871688842773,0,21
+15,1028,186,An Act to improve asthma management,H1028,0.0095524191856384,0,18
+16,103,186,An Act transferring county sheriffs to the Commonwealth.,H103,-0.022733449935913,0,4
+17,1032,186,"HB1044
 HB1046
 HB1056
 HB1186
@@ -692,14 +692,14 @@ SB940
 SB962
 SB963
 SB98
-SB988",,-0.03532046,0,16
-18,1034,185,An Act Relative To Insurance Coverage For Craniofacial Disorders,,-0.021851063,0,14
-19,1035,185,,,0.0,0,16
-20,1038,185,An Act to include dental benefits in all Commonwealth Care Plans,,-0.1260395,0,0
-21,104,185,,,0.0,0,15
-22,1042,185,,,0.0,0,13
-23,1044,185,- Widows,,-0.035844266,0,14
-24,1046,185,"H168
+SB988",H1032,-0.0183512568473815,0,13
+18,1034,186,An Act Relative To Insurance Coverage For Craniofacial Disorders,H1034,-0.0319668054580688,0,18
+19,1035,186,An Act relative to pre-authorization of medical and health care services.,H1035,-0.0209838151931762,0,18
+20,1038,186,An Act to include dental benefits in all Commonwealth Care Plans,S1038,-0.0615882873535156,0,18
+21,104,186,An Act strengthening the Commonwealth’s partnership with municipalities.,H104,-0.0215794444084167,0,5
+22,1042,186,An Act relative to dental insurance for certain retired teachers.,S1042,-0.0265950560569763,0,12
+23,1044,186,- Widows,S1044,-0.0340147018432617,0,12
+24,1046,186,"H168
 H1079
 S446, H3452
 S529
@@ -754,16 +754,16 @@ S495
 H1077
 H971
 H3453, 114.6 CMR 14.00
-H2343",,-0.019128203,0,2
-25,1047,185,,,0.0,0,15
-26,1054,185,"HB3240
+H2343",H1046,-0.0173439979553222,0,13
+25,1047,186,An Act relative to health reimbursement accounts.,S1047,-0.0095735788345336,0,18
+26,1054,186,"HB3240
 HB3639
 HB3640
-SB1935",,-0.021471798,0,15
-27,1059,185,,,0.0,0,15
-28,106,185,HB274 HB294 HB302 HB322 HB330 HB334 HB1856 HB2234 HB3015 HB3016 HB4062 HB4063 HB4064 HB4065 HB4066 HB4068 HB4081 HB4082 HD1850 SB11 SB85 SB140 SB145 SB157 SB164 SB174 SB184 SB1361 SB2035 SB2037 SB2038 SB2039 SB2040 SB2041 SB2042,,-0.028912902,0,14
-29,1060,185,,,0.0,0,14
-30,1061,185,"An Act reforming the process of appraising motor vehicle damage covered by auto insurance policies
+SB1935",H1054,-0.0089887380599975,0,13
+27,1059,186,An Act relative to structured settlements and reserves.,H1059,-0.0262252688407897,0,21
+28,106,186,HB274 HB294 HB302 HB322 HB330 HB334 HB1856 HB2234 HB3015 HB3016 HB4062 HB4063 HB4064 HB4065 HB4066 HB4068 HB4081 HB4082 HD1850 SB11 SB85 SB140 SB145 SB157 SB164 SB174 SB184 SB1361 SB2035 SB2037 SB2038 SB2039 SB2040 SB2041 SB2042,,-0.0289129018783569,0,13
+29,1060,186,An Act relative to annuities.,H1060,-0.0414085388183593,0,0
+30,1061,186,"An Act reforming the process of appraising motor vehicle damage covered by auto insurance policies
 HB3207 An Act providing additional consumer protections in the repair of damaged motor vehicles 
 SB122 An Act relative to auto body labor rates
 SB124 An Act creating a civil legal action to be enforced by the attorney general of the Commonwealth to protect an individual's right to repair an automobile
@@ -774,9 +774,9 @@ SB460 An Act to further define unfair and deceptive acts and practices in the bu
 SB522 An Act reducing automobile insurance costs and premiums in the Commonwealth
 SB528 An Act relative to insurance companies and quality measures
 
-""Attorney Martin Corry, Jr., & Corry Associates LLC has been retained by Alliance of Automotive Service Providers MA/RI to represent the interests of Alliance of Automotive Service Providers MA/RI for the months January-June, 2010. This retainer is for services rendered and has been disclosed as required by law. No payment has been made for any individual legislative petition, regardless of the position taken by the client & Attorney Martin Corry, Jr., & Corry Associates LLC on behalf of said client.""",,-0.02428335,0,15
-31,1063,185,,,0.0,0,16
-32,1064,185,"HB1816
+""Attorney Martin Corry, Jr., & Corry Associates LLC has been retained by Alliance of Automotive Service Providers MA/RI to represent the interests of Alliance of Automotive Service Providers MA/RI for the months January-June, 2010. This retainer is for services rendered and has been disclosed as required by law. No payment has been made for any individual legislative petition, regardless of the position taken by the client & Attorney Martin Corry, Jr., & Corry Associates LLC on behalf of said client.""",H1061,-0.0183841586112976,0,13
+31,1063,186,An Act making strategic Investments in the commonwealth’s chronically distressed hospitals program.,H1063,-0.0137602686882019,0,4
+32,1064,186,"HB1816
  
 HB2020
  
@@ -800,8 +800,8 @@ SB1299
  
 SB1467
  
-SB1772",,-0.010729969,0,16
-33,107,185,"HB1188
+SB1772",H1064,0.0004434585571289,0,4
+33,107,186,"HB1188
 HB1202
 HB1218
 HB1219
@@ -935,39 +935,40 @@ Ch. 91
 MEPA
 Highway Access Permit
 MESA
-Transportation reform",,0.007968426,0,16
-34,1073,185,,,0.0,0,14
-35,1077,185,,,0.0,0,16
-36,1079,185,,,0.0,0,14
-37,108,185,HB241 HB1063 HB1067 HB1076 HB1686 HB1696 HB1869 HB1931 HB2026 HB2030 HB2031 HB2032 HB2069 HB2085 HB2086 HB2100 HB2109 HB2123 HB2164 HB2165 HB2173 HB2358 HB2481 HB2518 HB2574 HB3591 HB3912 SB18 SB79 SB231 SB259 SB508 SB531 SB557 SB561 SB569 SB571 SB578 SB579 SB587 SB615 SB798 SB799 SB803 SB814 SB831 SB838 SB841 SB844 SB845 SB854 SB855 SB856 SB857 SB866 SB867 SB869 SB872 SB876 SB886 SB887 SB888 SB890 SB898 SB899 SB900 SB937 SB988 SB1087 SB1093 SB1095 SB1120 SB1183 SB1218 SB1615 SB1753 SB1755 SB1757 SB1794 SB1937 SB2028 SD1956,,-0.023002446,0,2
-38,1080,185,,,0.0,0,16
-39,1081,185,manufacturers coupons & rebates,,0.0055315495,0,16
-40,1082,185,"An Act improving MassHealth
+Transportation reform",H107,0.0110623836517333,0,13
+34,1073,186,An Act Relative to a Temporary Suspension of the Minimum Creditable Coverage Requirements.,H1073,-0.0138558745384216,0,18
+35,1077,186,An Act Relative to Minimizing Unnecessary Health Care Costs by Streamlining Administrative Requirements.,H1077,-0.0373836755752563,0,18
+36,1079,186,An Act to further define adverse determinations by insurers.,H1079,-0.0182907581329345,0,10
+37,108,186,HB241 HB1063 HB1067 HB1076 HB1686 HB1696 HB1869 HB1931 HB2026 HB2030 HB2031 HB2032 HB2069 HB2085 HB2086 HB2100 HB2109 HB2123 HB2164 HB2165 HB2173 HB2358 HB2481 HB2518 HB2574 HB3591 HB3912 SB18 SB79 SB231 SB259 SB508 SB531 SB557 SB561 SB569 SB571 SB578 SB579 SB587 SB615 SB798 SB799 SB803 SB814 SB831 SB838 SB841 SB844 SB845 SB854 SB855 SB856 SB857 SB866 SB867 SB869 SB872 SB876 SB886 SB887 SB888 SB890 SB898 SB899 SB900 SB937 SB988 SB1087 SB1093 SB1095 SB1120 SB1183 SB1218 SB1615 SB1753 SB1755 SB1757 SB1794 SB1937 SB2028 SD1956,H108,0.0008912682533264,0,13
+38,1080,186,An Act relative to manufacturers coupons and rebates.,H1080,-0.0190104246139526,0,15
+39,1081,186,manufacturers coupons & rebates,H1081,-0.0412923693656921,0,15
+40,1082,186,"An Act improving MassHealth
 HB1104
-An Act improving access to coverage for Medicaid beneficiaries",,-0.015592575,0,16
-41,1084,185,,,0.0,0,13
-42,1087,185,An Act To Ensure Equitable Health Coverage For All Children,,-0.05322981,0,13
-43,1088,185,,,0.0,0,16
-44,109,185,"An Act Prohibiting The Use Of Health Data For Marketing Purposes
+An Act improving access to coverage for Medicaid beneficiaries",S1082,-0.0210204720497131,0,12
+41,1084,186,An Act relative to shared responsibility in health reform.,H1084,-0.0050108432769775,0,18
+42,1087,186,An Act To Ensure Equitable Health Coverage For All Children,H1087,-0.0071159601211547,0,18
+43,1088,186,An Act relative to providing for review of proposed changes to health care provider mandates by the Division of Health Care Finance and Policy.,H1088,-0.0094250440597534,0,18
+44,109,186,"An Act Prohibiting The Use Of Health Data For Marketing Purposes
 HB110	An Act To Prevent The Sharing Of Prescription Data
 SB17	An Act Relative To Data Mining
-SB19	An Act Protecting The Confidentiality Of Patient Prescription Records",,-0.013752937,0,0
-45,1090,185,,,0.0,0,16
-46,1091,185,,,0.0,0,16
-47,1092,185,,,0.0,0,16
-48,1093,185,,,0.0,0,14
-49,1095,185,,,0.0,0,16
-50,1098,185,,,0.0,0,20
-51,11,185,Budget Line Item 4800-0038,,-0.01977849,0,13
-52,110,185,,,0.0,0,13
-53,1100,185,An Act Relative To Equitable Dental Reimbursement Rates For Services Provided To Publicly Aided Patients,,-0.008792043,0,16
-54,1101,185,An Act To Include Dental Benefits In All Commonwealth Care Plans,,-0.022772372,0,15
-55,1102,185,An Act relative to health care affordability.,,-0.041579902,0,14
-56,1103,185,"An Act requiring public notice prior to restricting MassHealth coverage
+SB19	An Act Protecting The Confidentiality Of Patient Prescription Records",H109,0.0010385513305664,0,15
+45,1090,186,An Act relative to the retirement options of certain educational personnel.,S1090,-0.009455382823944,0,12
+46,1091,186,An Act relative to co-payments and deductibles for chronic diseases.,H1091,-0.006290853023529,0,18
+47,1092,186,An Act to extend patient protections to recipients of MassHealth .,H1092,-0.0142861008644104,0,18
+48,1093,186,An Act authorizing health care professionals to negotiate with health care insurers and providing for the powers and duties of the attorney general.,H1093,-0.038802146911621,0,1
+49,1095,186,An Act relative to credible service for school nurses.,S1095,-0.0203610658645629,0,12
+50,1098,186,An Act Relative to prescription drugs.,H1098,0.0134432911872863,0,15
+51,11,186,Budget Line Item 4800-0038,,-0.0197784900665283,0,4
+52,110,186,"An Act relative to continuing education requirements for operators of hoisting machinery.
+",S110,0.0093894004821777,0,0
+53,1100,186,An Act Relative To Equitable Dental Reimbursement Rates For Services Provided To Publicly Aided Patients,H1100,-0.042680025100708,0,18
+54,1101,186,An Act To Include Dental Benefits In All Commonwealth Care Plans,H1101,-0.0575893521308898,0,18
+55,1102,186,An Act relative to health care affordability.,H1102,-0.0501240491867065,0,18
+56,1103,186,"An Act requiring public notice prior to restricting MassHealth coverage
 HB1950
 An Act to require equitable payment from the Commonwealth
-BUDGET Language contained in line item 4000-0500 HB 2, HB 4600, HB 4601, HB 4800, SB 4 , SB 2470",,-0.019083977,0,0
-57,1104,185,"An Act improving access to coverage for Medicaid beneficiaries
+BUDGET Language contained in line item 4000-0500 HB 2, HB 4600, HB 4601, HB 4800, SB 4 , SB 2470",H1103,-0.0158981084823608,0,18
+57,1104,186,"An Act improving access to coverage for Medicaid beneficiaries
 HB3679 An Act repealing mandated benefits that are no longer effective
 HB4799 An Act relative to increasing access to affordable health insurance coverage
 HB4911 An Act relative to improving access to coverage for Medicaid beneficiaries
@@ -987,14 +988,15 @@ Bill #:	SB462   	An Act to establish standards for long term care insurance
 Bill #:	SB494   	An Act requiring standard credentialing of physicians by health insurers 
 Bill #:	SB564   	An act relating to equitable provider reimbursement 
 Bill #:	SB565   	An act relative to strengthening the DoN Program 
-Bill #:	SB566   	An act to promote electronic transmission of health care transactions",,-0.026051521,0,13
-58,1106,185,,,0.0,0,13
-59,1107,185,,,0.0,0,16
-60,1110,185,,,0.0,0,13
-61,1117,185,,,0.0,0,13
-62,1141,185,,,0.0,0,13
-63,1148,185,An Act Relative to the treatment of chronic lyme disease,,0.00871259,0,16
-64,115,185,"HB132
+Bill #:	SB566   	An act to promote electronic transmission of health care transactions",H1104,-0.0155457854270935,0,13
+58,1106,186,"An Act Relative to Prescription Drug Coverage.
+",H1106,-0.0005543828010559,0,15
+59,1107,186,An Act to Promote Health Insurance Transparency .,H1107,-0.0389221906661987,0,18
+60,1110,186,An Act to maintain faculty and college excellence in the Commonwealth.,H1110,-0.0292928814888,0,16
+61,1117,186,An Act limiting termination retirement allowances.,H1117,-0.0202680826187133,0,12
+62,1141,186,A message from His Excellency the Governor (under Section 7H of Chapter 29 of the General Laws) submitting to the General Court recommended corrective amendments to his original budget submission,H1141,-0.0384519696235656,0,4
+63,1148,186,An Act Relative to the treatment of chronic lyme disease,H1148,0.0099892616271972,0,1
+64,115,186,"HB132
 HB135
 HB136
 HB137
@@ -1117,10 +1119,10 @@ SB1608
 SB1741
 SB1948
 SB1959
-SD107",,-0.038218558,0,16
-65,1151,185,H4664,,-0.034540623,0,15
-66,1152,185,,,0.0,0,14
-67,116,185,"HB129
+SD107",H115,-0.0162057280540466,0,13
+65,1151,186,H4664,H1151,0.0035618543624877,0,6
+66,1152,186,An Act Establishing a Renewable Portfolio Standard for New Baseload Low Cost Renewable Energy.,H1152,0.0337741374969482,0,20
+67,116,186,"HB129
 HB1255
 HB3857HB4047
 HB4129
@@ -1130,14 +1132,14 @@ HB4181
 SB68
 SB81
 SB1671
-SB1741",,-0.023570895,0,13
-68,1162,185,,,0.0,0,16
-69,1170,185,,,0.0,0,16
-70,1173,185,An Act allowing the use of credit cards to pay tuition; HB4768 An Act relative to the use of credit cards for payment to the Commonwealth; SB2275 An Act concerning financial literacy in schools;,,-0.018931985,0,3
-71,1174,185,,,0.0,0,13
-72,1175,185,,,0.0,0,14
-73,1180,185,S1262,,-0.010962933,0,15
-74,1188,185,"An Act Standardizing Zoning Appeals Processes
+SB1741",H116,-0.0039823651313781,0,13
+68,1162,186,An Act relative to student fees.,H1162,-0.018094003200531,0,3
+69,1170,186,An Act making faculty sabbatical provisions at state colleges consistent with other higher education institutions.,H1170,-0.0174524188041687,0,0
+70,1173,186,An Act allowing the use of credit cards to pay tuition; HB4768 An Act relative to the use of credit cards for payment to the Commonwealth; SB2275 An Act concerning financial literacy in schools;,S1173,-0.0194217562675476,0,13
+71,1174,186,An Act relative to the John and Abigail Adams Scholarship Program. ,H1174,-0.0116413235664367,0,3
+72,1175,186,An Act to promote educational parity within institutions of higher learning .,H1175,-0.0167375206947326,0,3
+73,1180,186,S1262,S1180,-0.0198214650154113,0,18
+74,1188,186,"An Act Standardizing Zoning Appeals Processes
 HB1193	An Act Encouraging Inclusionary Zoning
 HB1981	An Act To Clarify Site Plan Review
 HB1986	An Act Relative To Sustainable Land Use Relative To Subdivisions
@@ -1454,10 +1456,11 @@ HB11	An Act Relative To Retirement Board Members.
 SB2079	Report Of The Committee Of Conference On The Disagreeing Votes Of The Two Branches, With Reference To The House Amendments To The Senate Bill Providing Responsible Reforms In The Pension System.
 HB1231	An Act Relative To Rental And Tenant Selection
 SB640	An Act Relative To Illegal Immigrants And Publicly Subsidized Housing;
-Authority management issues",,-0.05075133,0,13
-75,12,185,state budget - Department of Public Health funding,,-0.013469994,0,16
-76,1200,185,,,0.0,0,3
-77,1201,185,"HB1425
+Authority management issues",H1188,-0.0519481897354126,0,13
+75,12,186,state budget - Department of Public Health funding,,-0.0134699940681457,0,4
+76,1200,186,"An Act providing additional benefits to survivors of certain public safety employees.
+",S1200,-0.0442184805870056,0,12
+77,1201,186,"HB1425
 HB3683
 SB1791
 HB4169
@@ -1470,8 +1473,8 @@ HB1226
 HB1227
 HB3474
 SB768
-HB3651",,-0.029142976,0,3
-78,1208,185,"HB2320
+HB3651",H1201,-0.0583082437515258,0,8
+78,1208,186,"HB2320
 HB2715
 HB2726
 HB2840
@@ -1507,8 +1510,8 @@ SB1520
 SB1524
 SB1528
 SB1536
-SB2019",,-0.02300942,0,16
-79,121,185,"HB169
+SB2019",H1208,-0.0500476360321044,0,13
+79,121,186,"HB169
 HB1179
 HB1181HB1182
 HB1183
@@ -1596,23 +1599,24 @@ SB1057
 SB1425
 SB1427
 SB1433
-SB1449SB1546, HB106, SB15, SB2045, HB4100, HB4101, SB3, SB2060, HB4129",,-0.043399274,0,16
-80,1216,185,An Act Promoting fair working standards in the production of housing,,-0.049404025,0,16
-81,1219,185,An Act to promote open space residential development,,-0.0015574694,0,16
-82,122,185,,,0.0,0,16
-83,1220,185,,,0.0,0,13
-84,1221,185,HB1838 HB107 HB1839 HB1216 HB3759 HB4128 SB2026 HB2971 HB4068 HB4054,,-0.007470548,0,16
-85,1222,185,- COLA,,0.0028297305,0,14
-86,1223,185,,,0.0,0,15
-87,123,185,,,0.0,0,0
-88,1231,185,,,0.0,0,16
-89,1232,185,,,0.0,0,16
-90,1237,185,,,0.0,0,13
-91,124,185,"HB757
+SB1449SB1546, HB106, SB15, SB2045, HB4100, HB4101, SB3, SB2060, HB4129",H121,-0.0130873918533325,0,13
+80,1216,186,An Act Promoting fair working standards in the production of housing,H1216,-0.0386381149291992,0,16
+81,1219,186,An Act to promote open space residential development,H1219,-0.020160436630249,0,8
+82,122,186,An Act relative to the amount of money allowed for burial expenses.,H122,0.0015413761138916,0,0
+83,1220,186,An Act relative to energy efficiency in affordable housing.,H1220,-0.0416207313537597,0,20
+84,1221,186,HB1838 HB107 HB1839 HB1216 HB3759 HB4128 SB2026 HB2971 HB4068 HB4054,H1221,-0.0341395735740661,0,8
+85,1222,186,- COLA,S1222,-0.0165694952011108,0,12
+86,1223,186,An Act relative to rent escrow.,H1223,-0.0036857724189758,0,8
+87,123,186,An Act relative to clear and conspicuous price disclosures.,S123,-0.0047934651374816,0,5
+88,1231,186,"An Act to establish a study commission on tax policy and carbon emissions reduction.
+",S1231,0.0568172335624694,1,6
+89,1232,186,An Act to protect tenants in foreclosed properties from evictions.,H1232,-0.0205930471420288,0,8
+90,1237,186,An Act relative to public housing.,H1237,-0.0548279881477355,0,8
+91,124,186,"HB757
 SB442
-SB1383SB1385",,-0.0021751523,0,13
-92,1242,185,,,0.0,0,16
-93,1254,185,"H1388
+SB1383SB1385",H124,-0.0082738399505615,0,13
+92,1242,186,An Act to prevent homelessness by removing barriers to subsidized housing.,H1242,-0.0488757491111755,0,8
+93,1254,186,"H1388
 H1452
 H1520
 H1843
@@ -1622,10 +1626,13 @@ S 573
 S 574
 S1755
 S1779
-S1780",,-0.025808394,0,15
-94,126,185,,,0.0,0,14
-95,1262,185,,,0.0,0,15
-96,1269,185,,,0.0,0,16
-97,1270,185,,,0.0,0,14
-98,1275,185,,,0.0,0,13
-99,128,185,,,0.0,0,16
+S1780",H1254,-0.0138511657714843,0,21
+94,126,186,An Act relative to the Architectual Access Board.,H126,-0.0171235799789428,0,0
+95,1262,186,"An Act promoting wellness in the workplace.
+",S1262,-0.0072289109230041,0,7
+96,1269,186,"An Act establishing a mandatory sentence for destruction, defacement or damage to burial tombs and grave markers.",H1269,-0.0081110000610351,0,9
+97,1270,186,"An Act establishing the Commonwealth Lung Cancer Early Detection and Treatment Research Fund.
+",S1270,-0.006422221660614,0,4
+98,1275,186,"An Act Relative to Taxation Veterans & Active Duty Military Personnel.
+",S1275,0.0018724799156188,0,7
+99,128,186,An Act relative to deceased poor and indigent persons.,H128,-0.0075146555900573,0,17

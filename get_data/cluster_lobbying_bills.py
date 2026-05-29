@@ -340,7 +340,8 @@ def _write_labels_and_csv(args, km_centers, labels, scored_v,
 
     labels_df = pd.DataFrame(cluster_rows)
     labels_path = DATA_DIR / 'MA_bill_cluster_labels.csv'
-    labels_df.to_csv(labels_path, index=False)
+    import csv as _csv
+    labels_df.to_csv(labels_path, index=False, quoting=_csv.QUOTE_NONNUMERIC)
 
     scored_full.update(scored_v[['cluster_id']])
     scored_full.drop(columns=['_key'], errors='ignore').to_csv(scored_path)

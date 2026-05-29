@@ -1,101 +1,104 @@
 ,bill_id,bill_number,bill_prefix,general_court,title,sponsor_name,status,passed
-0.0,H4999,4999,H,192,An Act relative to the maximum age requirement for original appointment as a police officer in the town of Dedham,Joint Committee on Public Service,"Signed by the Governor, Chapter 276 of the Acts of 2022",1
-1.0,H4773,4773,H,192,An Act amending the charter of the town of Swampscott,Lori A. Ehrlich,No further action taken,0
-2.0,S1405,1405,S,192,An Act relative to HIV routine screening and care,Julian Cyr,No further action taken,0
-3.0,S607,607,S,192,An Act relative to stronger emissions limits,Marc R. Pacheco,No further action taken,0
-4.0,H1069,1069,H,192,An Act empowering health care consumers,"William J. Driscoll, Jr.","Accompanied a study order, see H5222",0
-5.0,H1202,1202,H,192,An Act to ensure access to generic medication,Alan Silvia,"Accompanied a study order, see H5222",0
-6.0,S108,108,S,192,An Act relative to an agricultural healthy incentives program,Anne M. Gobi,No further action taken,0
-7.0,H5033,5033,H,192,An Act authorizing the commissioner of Capital Asset Management and Maintenance to convey a certain parcel of land in the town of Tewksbury,Joint Committee on State Administration and Regulatory Oversight,No further action taken,0
-8.0,H4800,4800,H,192,An Act relative to equity in the cannabis industry,,"H4791, published as amended",0
-9.0,H2007,2007,H,192,An Act relative to the creative economy,Mary S. Keefe,"Accompanied a study order, see H5023",0
-10.0,H4058,4058,H,192,An Act facilitating the appropriation and expenditure of community preservation funds for community housing purposes in the town of Chatham,Sarah K. Peake,No further action taken,0
-11.0,H5100,5100,H,192,An Act authorizing the city of Watertown to acquire property in the city of Waltham,"John J. Lawn, Jr.","Signed by the Governor, Chapter 220 of the Acts of 2022",1
-12.0,H2135,2135,H,192,An Act to improve the local infrastructure development program,Christine P. Barber,No further action taken,0
-13.0,S1267,1267,S,192,An Act to transfer Bridgewater State Hospital from the Department of Corrections to the Department of Mental Health,Cynthia Stone Creem,No further action taken,0
-14.0,H2217,2217,H,192,An Act relative to online death attestations,James Arciero,"Accompanied a study order, see H5035",0
-15.0,H1950,1950,H,192,An Act relative to wage transparency,Josh S. Cutler,"Accompanied a new draft, see S2721",0
-16.0,H2812,2812,H,192,An Act relative to student loan debt relief tax credit,James Arciero,"Accompanied a study order, see H4894",0
-17.0,S1837,1837,S,192,An Act to promote employee ownership,Julian Cyr,No further action taken,0
-18.0,S2673,2673,S,192,An Act to protect innovation and entrepreneurship in the Commonwealth,Joint Committee on Consumer Protection and Professional Licensure,No further action taken,0
-19.0,H4451,4451,H,192,An Act exempting the Deputy Police Chief of the town of Wrentham from the civil service law,Shawn Dooley,No further action taken,0
-20.0,S2227,2227,S,192,An Act to expand offshore wind development in the Commonwealth,Marc R. Pacheco,"Accompanied a new draft, see H4348",0
-21.0,H3314,3314,H,192,An Act relative to enhancing reliability of renewable resources in the Commonwealth,"Thomas A. Golden, Jr.","Accompanied a study order, see H5042",0
-22.0,H1434,1434,H,192,An Act to prevent COVID-19 evictions and foreclosures and promote an equitable housing recovery,Frank A. Moran,"Accompanied a study order, see H5268",0
-23.0,S673,673,S,192,An Act ensuring access to full spectrum pregnancy care.,Cindy F. Friedman,"Accompanied a study order, see S2693",0
-24.0,H1075,1075,H,192,An Act regarding the assignment of insurance proceeds,Peter J. Durant,"Accompanied a study order, see H5167",0
-25.0,H946,946,H,192,An Act relative to lithium-ion batteries,"Bradley H. Jones, Jr.",No further action taken,0
-26.0,S691,691,S,192,An Act relative to emergency insulin access ,Eric P. Lesser,"Accompanied a study order, see S2917",0
-27.0,H5077,5077,H,192,An Act authorizing the town of Hancock to allow firefighters and police to continue serving past age 65,Joint Committee on Public Service,No further action taken,0
-28.0,H1918,1918,H,192,An Act relative to health care proxies,Thomas P. Walsh,"Accompanied a study order, see H4844",0
-29.0,S1152,1152,S,192,An Act establishing penalties for the filing of false reports against police officers,John C. Velis,"Accompanied a study order, see S2665",0
-30.0,H2216,2216,H,192,An Act relative to certification of resident care assistants,James Arciero,"Accompanied a study order, see H5035",0
-31.0,S1429,1429,S,192,An Act preserving access to essential health services in a state of emergency,James B. Eldridge,"Accompanied a study order, see S2772",0
-32.0,H3880,3880,H,192,An Act relative to step therapy and in vitro fertilization,"William J. Driscoll, Jr.","Accompanied a study order, see H5222",0
-33.0,H2241,2241,H,192,An Act relative to health care transparency ,Gerard J. Cassidy,"Accompanied a new draft, see H4812",0
-34.0,S664,664,S,192,An Act ensuring access to medications,James B. Eldridge,"Accompanied a study order, see S2917",0
-35.0,H2255,2255,H,192,"An Act for environmental, and water testing requirements, and funding thereof",Michael S. Day,"Accompanied a study order, see H5035",0
-36.0,S1379,1379,S,192,An Act to promote healthy communities and the environment,Sonia Chang-Diaz,"Accompanied a study order, see S2692",0
-37.0,S1357,1357,S,192,An Act authorizing the town of Westport to convey a non-exclusive access easement in a portion of town property at 493 Old County Road to benefit 497 Old County Road,Michael J. Rodrigues,"Signed by the Governor, Chapter 58 of the Acts of 2022",1
-38.0,H2215,2215,H,192,An Act relative to certainty of continuing education for chiropractors,James Arciero,"Accompanied a study order, see H5035",0
-39.0,H5159,5159,H,192,An Act authorizing the commissioner of Capital Asset Management and Maintenance to convey a certain parcel in the Roxbury section of the city of Boston,House Committee on Ways and Means,"Signed by the Governor, Chapter 148 of the Acts of 2022",1
-40.0,H4799,4799,H,192,Extension Order - Public Service,Kenneth I. Gordon,"Adopted, in concurrence",0
-41.0,H4442,4442,H,192,An Act further regulating the enforcement of illegal hunting practices,House Committee on Ways and Means,"Signed by the Governor, Chapter 145 of the Acts of 2022",1
-42.0,S2475,2475,S,192,An Act relative to extending certain COVID-19 measures adopted during the state of emergency.,Covid-19 measures extension,"Signed by the Governor, Chapter 20 of the Acts of 2021",1
-43.0,S376,376,S,192,An Act relative to the screening of prospective school employees for prior investigations into child abuse or sexual misconduct,Patrick M. O'Connor,Accompanied S369,0
-44.0,S1244,1244,S,192,An Act to promote pay transparency,Marc R. Pacheco,Hearing scheduled for 07/27/2021 from 10:30 AM-03:30 PM in Virtual Hearing,0
-45.0,H1985,1985,H,192,An Act protecting an employee's right to rebuttal of personnel records,Kenneth I. Gordon,Accompanied S1182,0
-46.0,S345,345,S,192,An Act to create a facilities loan program for private special education schools,John F. Keenan,"Accompanied a new draft, see S2727",0
-47.0,H135,135,H,192,An Act to regulate face surveillance,David M. Rogers,"Accompanied a new draft, see H5091",0
-48.0,S75,75,S,192,"An Act relative to establishing a minimum age of entry for cannabis-related events, conferences, forums and exhibitions",Jason M. Lewis,"Accompanied a study order, see S2661",0
-49.0,H144,144,H,192,"Resolve establishing a special commission to review advancements in educational technology, digital/online learning and related programs ",Thomas P. Walsh,"Accompanied a study order, see H5040",0
-50.0,S1890,1890,S,192,An Act relative to commuter transit benefits,John F. Keenan,Hearing scheduled for 12/22/2021 from 10:00 AM-05:00 PM in Virtual Hearing,0
-51.0,H1748,1748,H,192,An Act relative to judicial discretion for probation,Kate Lipper-Garabedian,"Accompanied a study order, see H4844",0
-52.0,S930,930,S,192,An Act relative to archaic laws,William N. Brownsberger,"New draft substituted, see S2956",0
-53.0,S1362,1362,S,192,An Act providing a tax exemption for certain qualifying real estate in the town of Hamilton,Bruce E. Tarr,"Signed by the Governor, Chapter 112 of the Acts of 2021",1
-54.0,H2223,2223,H,192,An Act relative to HLTV 111 tests,Bruce J. Ayers,"Accompanied a study order, see H5461",0
-55.0,S1156,1156,S,192,An Act relative to bereavement leave,Michael J. Barrett,Hearing scheduled for 07/13/2021 from 10:30 AM-04:30 PM in Virtual Hearing,0
-56.0,H1881,1881,H,192,An Act relative to possession of a dangerous weapon,Alyson M. Sullivan,"Accompanied a study order, see H4844",0
-57.0,H1891,1891,H,192,An Act relative to authorizing electronic signatures for electronic applications for criminal complaint,Paul F. Tucker,"Accompanied a study order, see H4844",0
-58.0,H1088,1088,H,192,An Act exempting visiting trainees from certain employment requirements,William C. Galvin,Hearing scheduled for 10/26/2021 from 11:00 AM-03:00 PM in Virtual Hearing,0
-59.0,S1161,1161,S,192,An Act relative to employees of private railroads,Michael D. Brady,"Accompanied a study order, see S2682",0
-60.0,S1177,1177,S,192,An Act relative to enhanced enforcement of civil penalties,Sal N. DiDomenico,"Accompanied a new draft, see H4681",0
-61.0,H4282,4282,H,192,An Act authorizing the city of Cambridge to impose a real estate transfer fee,Marjorie C. Decker,No further action taken,0
-62.0,H1892,1892,H,192,An Act authorizing electronic signatures on search warrant applications,Paul F. Tucker,"Accompanied a study order, see H4844",0
-63.0,H1886,1886,H,192,An Act concerning nondisclosure agreements,Alyson M. Sullivan,"Accompanied a study order, see H4844",0
-64.0,H1709,1709,H,192,An Act to end child marriage in Massachusetts ,Kay Khan,"Accompanied a study order, see H5173",0
-65.0,H4970,4970,H,192,Extension Order - Health Care Financing,"John J. Lawn, Jr.","Adopted, in concurrence, by a standing vote (8 to 1)",0
-66.0,S99,99,S,192,An Act relative to foster kids,Diana DiZoglio,"Accompanied a study order, see S2624",0
-67.0,H1350,1350,H,192,An Act establishing a community college campus hunger pilot program,Joan Meschino,"Accompanied a new draft, see H4697",0
-68.0,S880,880,S,192,An Act facilitating site plan review,Diana DiZoglio,"Accompanied a study order, see S2760",0
-69.0,S864,864,S,192,An Act creating a multi-family housing incentive pilot program,Harriette L. Chandler,"Accompanied a study order, see H5276",0
-70.0,H4977,4977,H,192,"An Act investing in future opportunities for resiliency, workforce, and revitalized downtowns","Joint Committee on Bonding, Capital Expenditures and State Assets",Rejected,0
-71.0,H4360,4360,H,192,An Act authorizing Nantucket land transfers,Denise C. Garlick,"Signed by the Governor, Chapter 93 of the Acts of 2022",1
-72.0,H4429,4429,H,192,Extension Order - Revenue,Mark J. Cusack,"Adopted, in concurrence",0
-73.0,S2713,2713,S,192,Order relative to authorizing the joint committee on Election Laws to make an investigation and study of a certain current Senate document authorizing citizens in the town of Brookline who have reached the age of sixteen years or older to register and vote in municipal election with the town,Joint Committee on Election Laws,No further action taken,0
-74.0,H1308,1308,H,192,An Act to improve oral health for all Massachusetts residents,Smitty Pignatelli,"Accompanied a study order, see H5222",0
-75.0,S877,877,S,192,An Act requiring the disclosure of services covered by condominium fees and property taxes,Diana DiZoglio,"Accompanied a study order, see H5276",0
-76.0,H1302,1302,H,192,An Act relative to applied behavioral health clinic rates,James J. O'Day,No further action taken,0
-77.0,S1354,1354,S,192,An Act authorizing the town of Middleborough to change the name of its Board of Selectmen to Select Board,Marc R. Pacheco,"New draft (Pacheco) substituted, see S2778",0
-78.0,H4459,4459,H,192,An Act relative to work and family mobility during and subsequent to the COVID-19 emergency,Joint Committee on Transportation,"New draft substituted, see H4461",0
-79.0,H4601,4601,H,192,An Act relative to the pesticide board,"Joint Committee on Environment, Natural Resources and Agriculture",No further action taken,0
-80.0,H2,2,H,192,"An Act making appropriations for the fiscal year 2023 for the maintenance of the departments, boards, commissions, institutions, and certain activities of the commonwealth, for interest, sinking fund, and serial bond requirements, and for certain permanent improvements",Charles D. Baker,No further action taken,0
-81.0,H1253,1253,H,192,An Act relative to the closing of hospital essential services,Edward F. Coppinger,"Accompanied a new draft, see H4248",0
-82.0,S2800,2800,S,192,Order relative to authorizing the joint committee on Health Care Financing to make an investigation and study of certain current Senate documents relative to health care financing,Joint Committee on Health Care Financing,No further action taken,0
-83.0,S1335,1335,S,192,An Act relative to proceeds from the sale of bonds,Cindy F. Friedman,No further action taken,0
-84.0,H4566,4566,H,192,An Act expanding access to adoption,Jack Patrick Lewis,"Text of an amendment, see S2616",0
-85.0,S1457,1457,S,192,An Act to improve access to family physicians,Eric P. Lesser,Accompanied H2318,0
-86.0,S1415,1415,S,192,An Act relative to students of chiropractic,Diana DiZoglio,"Accompanied a study order, see S2692",0
-87.0,H1415,1415,H,192,An Act relative to housing authority executive director contracts,Kevin G. Honan,No further action taken,0
-88.0,H188,188,H,192,An Act fast-tracking adoptions for children in DCF custody,"Donald R. Berthiaume, Jr.","Accompanied a study order, see H4893",0
-89.0,S756,756,S,192,An Act relative to step therapy and patient safety,Julian Cyr,Accompanied H1311,0
-90.0,S1465,1465,S,192,An Act to reduce healthcare costs by promoting non-biased prescriber education,Jason M. Lewis,"Accompanied a new draft, see H4465",0
-91.0,S2835,2835,S,192,The Judiciary - Extension Order,James B. Eldridge,"Adopted, in concurrence",0
-92.0,H4709,4709,H,192,An Act establishing the behavioral health trust fund and the behavioral health advisory commission,Charles D. Baker,See H4288,0
-93.0,H4496,4496,H,192,"An Act authorizing the state retirement board to retire Jamie J. Magarian, a uniformed member of the Department of State Police at the regular rate of compensation",Joint Committee on Public Service,No further action taken,0
-94.0,H2253,2253,H,192,An Act to create a timely stroke system of care to save lives,Mark J. Cusack,"Accompanied a study order, see H5441",0
-95.0,H197,197,H,192,An Act to support the transition to adult services for persons with disabilities,Mark J. Cusack,"Accompanied a study order, see H4909",0
-96.0,H2777,2777,H,192,"An Act establishing a sick leave bank for Charles E. McCabe, an employee of the Massachusetts Department of Developmental Services",Todd M. Smola,No further action taken,0
-97.0,S76,76,S,192,An Act to enhance enforcement against unlicensed marijuana operators,Michael O. Moore,"Accompanied a study order, see S2661",0
-98.0,H542,542,H,192,An Act relative to accommodations for special needs students taking the MCAS examination,Bruce J. Ayers,"Accompanied a study order, see H5074",0
-99.0,H3052,3052,H,192,An Act providing permanency to the Massachusetts Educational Financing Authority's college savings tax deduction program,Jeffrey N. Roy,"Accompanied a study order, see H4894",0
+0,H4999,4999,H,193,An Act promoting access to midwifery care and out-of-hospital birth options,Midwifery Care and Out-of-Hospital options,"Signed by the Governor, Chapter 186 of the Acts of 2024",1
+1,H4773,4773,H,193,An Act promoting access to midwifery care and out-of-hospital birth options,House Committee on Ways and Means,"Published as amended, see H4785",0
+2,S1405,1405,S,193,An Act relative to newborn screenings for congenital cytomegalovirus,Joan B. Lovely,No further action taken,0
+3,S607,607,S,193,An Act to increase access to nurse-midwifery services,Brendan P. Crighton,No further action taken,0
+4,H1069,1069,H,193,An Act to increase access to nurse-midwifery services,Kay Khan,Senate concurred,0
+5,H1202,1202,H,193,An Act to preserve special needs trusts for disabled seniors,Kate Hogan,"New draft substituted, see H4841",0
+6,S108,108,S,193,An Act establishing guardians as providers of medical care to support the rights of incapacitated persons,Joan B. Lovely,"Accompanied a study order, see S2795",0
+7,H5033,5033,H,193,An Act to improve quality and oversight of long-term care,Long Term Care,"Signed by the Governor, Chapter 197 of the Acts of 2024",1
+8,H4800,4800,H,193,"An Act making appropriations for the fiscal year 2025 for the maintenance of the departments, boards, commissions, institutions, and certain activities of the commonwealth, for interest, sinking fund, and serial bond requirements, and for certain permanent improvements","General Appropriation Bill, FY25",Item 7066-0036 passed over veto - 155 YEAS to 2 NAYS (See YEA and NAY No. 191),0
+9,H2007,2007,H,193,An Act enabling physician assistants to authorize psychiatric holds and ensure adequate training on their use,Edward R. Philips,"Accompanied a study order, see H4897",0
+10,H4058,4058,H,193,An Act expanding access to mental health services,Marjorie C. Decker,"Accompanied a study order, see H4879",0
+11,H5100,5100,H,193,An Act relative to strengthening Massachusetts’ economic leadership,Economic Development,"For actions on the sections returned with recommendations of amendment, see H5111",0
+12,H2135,2135,H,193,An Act relative to removing barriers to care for physician assistants,Christine P. Barber,Accompanied S1354,0
+13,S1267,1267,S,193,An Act expanding access to mental health services,Jacob R. Oliveira,"Accompanied a study order, see S2642",0
+14,H2217,2217,H,193,An Act relative to limited service clinics,Kay Khan,"Accompanied a study order, see H4739",0
+15,H1950,1950,H,193,An Act relative to physician assistant non-competes,Jon Santiago,"Accompanied a study order, see H4570",0
+16,H2812,2812,H,193,An Act establishing fairness for agricultural laborers,Carlos González,"Accompanied a study order, see H5045",0
+17,S1837,1837,S,193,An Act establishing fairness for agricultural laborers,Adam Gomez,"Accompanied a study order, see H5045",0
+18,S2673,2673,S,193,An Act relative to social work uplifting practices and exam removal.,Joint Committee on Higher Education,No further action taken,0
+19,H4451,4451,H,193,An Act relative to social work uplifting practices and exam removal,Joint Committee on Higher Education,No further action taken,0
+20,S2227,2227,S,193,An Act to end debt-based driving restrictions and remove economic roadblocks,Julian Cyr,"Accompanied a study order, see S2796",0
+21,H3314,3314,H,193,An Act to end debt-based driving restrictions and remove economic roadblocks,Brandy Fluker Oakley,"Accompanied a study order, see H4928",0
+22,H1434,1434,H,193,An Act reducing barriers to employment through credit discrimination,Josh S. Cutler,No further action taken,0
+23,S673,673,S,193,An Act ensuring support groups are part of the pathway of care following the annual mental health wellness exam,Joan B. Lovely,"Accompanied a study order, see H4634",0
+24,H1075,1075,H,193,An Act ensuring support groups are part of the pathway of care following the annual mental health wellness exam,Michael P. Kushmerek,"Accompanied a study order, see H4854",0
+25,H946,946,H,193,An Act to increase access to lactation care and services,Christine P. Barber,"Accompanied a study order, see H4691",0
+26,S691,691,S,193,An Act to increase access to lactation care and services,Susan L. Moran,"Accompanied a study order, see H4634",0
+27,H5077,5077,H,193,making appropriations for the fiscal year 2024 to provide for supplementing certain existing appropriations and for certain other activities and projects,House Committee on Ways and Means,"Signed by the Governor, Chapter 248 of the Acts of 2024",1
+28,H1918,1918,H,193,An Act relative to employment protections for victims of abusive behavior,Jay D. Livingstone,No further action taken,0
+29,S1152,1152,S,193,An Act relative to employment protections for victims of abusive behavior,Cynthia Stone Creem,Accompanied H1918,0
+30,H2216,2216,H,193,An Act relative to dental hygienists,Kay Khan,"Accompanied a study order, see H4739",0
+31,S1429,1429,S,193,An Act relative to dental hygienists,Michael O. Moore,"Accompanied a study order, see S2648",0
+32,H3880,3880,H,193,An Act relative to dental hygienist reciprocal licensure,Tackey Chan,"New draft substituted, see H4842",0
+33,H2241,2241,H,193,An Act enabling trained dental hygienists to administer dermal fillers and botox,Frank A. Moran,"Accompanied a study order, see H4739",0
+34,S664,664,S,193,An Act relative to the sustainability of public health dental hygienists through adequate reimbursements,Robyn K. Kennedy,"Accompanied a study order, see H4634",0
+35,H2255,2255,H,193,An Act relative to the sustainability of public health dental hygienists through adequate reimbursements,Smitty Pignatelli,"Accompanied a study order, see H4739",0
+36,S1379,1379,S,193,An Act to improve oral health for all Massachusetts residents,Adam Gomez,"Accompanied a new draft, see S2740",0
+37,S1357,1357,S,193,An Act enabling trained dental hygienists to administer dermal fillers and botox,Julian Cyr,"Accompanied a study order, see S2648",0
+38,H2215,2215,H,193,An Act protecting children from harmful diet pills and muscle-building supplements,Kay Khan,No further action taken,0
+39,H5159,5159,H,193,An Act enhancing the market review process,Market Review Process,"Signed by the Governor, Chapter 343 of the Acts of 2024",1
+40,H4799,4799,H,193,An Act making appropriations for the fiscal year 2024 to provide for supplementing certain existing appropriations and for certain other activities and projects,,"Signed by the Governor, Chapter 206 of the Acts of 2024",1
+41,H4442,4442,H,193,An Act creating a special legislative commission to study barriers to job retention for low-income workers,Joint Committee on Labor and Workforce Development,No further action taken,0
+42,S2475,2475,S,193,An Act relative to the licensure of behavior analysts,Joint Committee on Consumer Protection and Professional Licensure,No further action taken,0
+43,S376,376,S,193,An Act relative to Massachusetts home care eligibility,Patricia D. Jehlen,No further action taken,0
+44,S1244,1244,S,193,An Act building resiliency in communities through mental health,Julian Cyr,Accompanied H1985,0
+45,H1985,1985,H,193,An Act building resiliency in communities through mental health,Brandy Fluker Oakley,No further action taken,0
+46,S345,345,S,193,An Act to update accuracy of membership to the state advisory council on early education and care,Rebecca L. Rausch,No further action taken,0
+47,H135,135,H,193,An Act establishing basic needs assistance for Massachusetts immigrant residents ,Antonio F. D. Cabral,No further action taken,0
+48,S75,75,S,193,An Act to lift kids out of deep poverty,Sal N. DiDomenico,No further action taken,0
+49,H144,144,H,193,An Act to lift kids out of deep poverty,Marjorie C. Decker,No further action taken,0
+50,S1890,1890,S,193,An Act excluding the Segal AmeriCorps Education Award from taxable income,Susan L. Moran,No further action taken,0
+51,H1748,1748,H,193,"An Act relative to access to a decedent's electronic mail accounts
+
+",Jeffrey N. Roy,"Accompanied a study order, see H4517",0
+52,S930,930,S,193,An Act relative to access to a decedent's electronic mail accounts,Cynthia Stone Creem,"Accompanied a study order, see S2612",0
+53,S1362,1362,S,193,An Act relative to the Massachusetts lead law and promoting equal access to lead-free housing,James B. Eldridge,"Accompanied a study order, see S2648",0
+54,H2223,2223,H,193,An Act relative to the Massachusetts lead law and promoting equal access to lead-free housing,David Henry Argosky LeBoeuf,"Accompanied a study order, see H4739",0
+55,S1156,1156,S,193,An Act protecting an employee's right to rebuttal of personnel records,Sal N. DiDomenico,No further action taken,0
+56,H1881,1881,H,193,An Act clarifying the wage act to protect hospital workers from being deprived of their wages,Denise C. Garlick,"Accompanied a study order, see H5014",0
+57,H1891,1891,H,193,An Act clarifying the prevailing wage act to protect actions by the attorney general,Kenneth I. Gordon,No further action taken,0
+58,H1088,1088,H,193,An Act relative to greater fairness in insurance,Jay D. Livingstone,"Accompanied a study order, see H4705",0
+59,S1161,1161,S,193,An Act clarifying the prevailing wage act to protect actions by the attorney general,Sal N. DiDomenico,No further action taken,0
+60,S1177,1177,S,193,An Act clarifying the wage act to protect hospital workers from being deprived of their wages,Paul R. Feeney,Accompanied H1881,0
+61,H4282,4282,H,193,An Act relative to defense against abusive waivers,Joint Committee on Labor and Workforce Development,No further action taken,0
+62,H1892,1892,H,193,An Act relative to anti-retaliation protections for public employees,Kenneth I. Gordon,"Accompanied a study order, see H5043",0
+63,H1886,1886,H,193,An Act protecting an employee's right to rebuttal of personnel records,Kenneth I. Gordon,Accompanied S1156,0
+64,H1709,1709,H,193,An Act to further protect employees through a private right of action,Tram T. Nguyen,"Accompanied a study order, see H4517",0
+65,H4970,4970,H,193,An Act to ensure legal parentage equality,Legal Parentage Equality,"Signed by the Governor, Chapter 166 of the Acts of 2024",1
+66,S99,99,S,193,An Act creating a special commission to study the current refugee resettlement infrastructure and ensure the successful integration of refugees in Massachusetts ,Robyn K. Kennedy,No further action taken,0
+67,H1350,1350,H,193,An Act to guarantee a tenant’s first right of refusal,Jay D. Livingstone,No further action taken,0
+68,S880,880,S,193,An Act to guarantee a tenant’s first right of refusal,Patricia D. Jehlen,No further action taken,0
+69,S864,864,S,193,"An Act promoting access to counsel and housing stability in Massachusetts
+",Sal N. DiDomenico,No further action taken,0
+70,H4977,4977,H,193,An Act relative to the Affordable Homes Act,Affordable Homes Act,"Signed by the Governor, Chapter 150 of the Acts of 2024",1
+71,H4360,4360,H,193,An Act promoting access to counsel and housing stability in Massachusetts,Joint Committee on the Judiciary,No further action taken,0
+72,H4429,4429,H,193,An Act relative to fairness in debt collection,Joint Committee on Financial Services,No further action taken,0
+73,S2713,2713,S,193,An Act relative to fairness in debt collection,Senate Committee on Ways and Means,No further action taken,0
+74,H1308,1308,H,193,An Act relative to the use of credit reporting in housing,Manny Cruz,No further action taken,0
+75,S877,877,S,193,An Act relative to the use of credit reporting in housing,Adam Gomez,No further action taken,0
+76,H1302,1302,H,193,An Act relative to manufactured housing,Tackey Chan,No further action taken,0
+77,S1354,1354,S,193,An Act relative to removing barriers to care for physician assistants,Julian Cyr,No further action taken,0
+78,H4459,4459,H,193,An Act relative to strengthening Massachusetts' economic leadership,Maura T. Healey,"Accompanied a new draft, see H4722",0
+79,H4601,4601,H,193,"An Act making appropriations for the fiscal year 2025 for the maintenance of the departments, boards, commissions, institutions, and certain activities of the commonwealth, for interest, sinking fund, and serial bond requirements, and for certain permanent improvements",,"Reported, in part, by H4800",0
+80,H2,2,H,193,"An Act making appropriations for the fiscal year 2025 for the maintenance of the departments, boards, commissions, institutions, and certain activities of the Commonwealth, for interest, sinking fund, and serial bond requirements, and for certain permanent improvements",Maura T. Healey,No further action taken,0
+81,H1253,1253,H,193,An Act relative to social work uplifting practices and exam removal ,Christine P. Barber,"Accompanied a new draft, see H4451",0
+82,S2800,2800,S,193,"An Act making appropriations for the fiscal year 2025 for the maintenance of the departments, boards, commissions, institutions, and certain activities of the commonwealth, for interest, sinking fund, and serial bond requirements, and for certain permanent improvements",,See H4601,0
+83,S1335,1335,S,193,An Act updating the regulations governing licensed birth centers in Massachusetts,Joanne M. Comerford,"Accompanied a new draft, see H4566",0
+84,H4566,4566,H,193,An Act promoting access to midwifery care and out-of-hospital birth options,Joint Committee on Public Health,"New draft substituted, see H4773",0
+85,S1457,1457,S,193,An Act promoting access to midwifery care and out-of-hospital birth options,Rebecca L. Rausch,"Accompanied a new draft, see H4566",0
+86,S1415,1415,S,193,An Act relative to birthing justice in the Commonwealth,Liz Miranda,"Accompanied a new draft, see S2734",0
+87,H1415,1415,H,193,An Act to increase the penalty for school tardiness,Tackey Chan,"Accompanied a study order, see H4517",0
+88,H188,188,H,193,An Act establishing guardians as providers of medical care to support the rights of incapacitated persons,Sally P. Kerans,Accompanied S108,0
+89,S756,756,S,193,An Act preserving special needs trusts for disabled seniors,Patricia D. Jehlen,Accompanied H1202,0
+90,S1465,1465,S,193,An Act protecting children from harmful diet pills and muscle-building supplements,Michael F. Rush,Accompanied H2215,0
+91,S2835,2835,S,193,An Act relative to adoptions,Cynthia Stone Creem,"Accompanied a new draft, see S3009",0
+92,H4709,4709,H,193,An Act relative to adoptions,Lindsay N. Sabadosa,"Accompanied a new draft, see S3009",0
+93,H4496,4496,H,193,An Act making appropriations for the fiscal year 2024 to provide for supplementing certain existing appropriations and for certain other activities and projects,Maura T. Healey,No further action taken,0
+94,H2253,2253,H,193,An Act to improve oral health for all Massachusetts residents,Smitty Pignatelli,"Accompanied a new draft, see S2740",0
+95,H197,197,H,193,An Act creating a special commission to study the current refugee resettlement infrastructure and ensure the successful integration of refugees in Massachusetts ,David Henry Argosky LeBoeuf,Accompanied S99,0
+96,H2777,2777,H,193,An Act excluding the Segal AmeriCorps Educational Award from taxable income,"William J. Driscoll, Jr.",Accompanied S1890,0
+97,S76,76,S,193,An Act establishing basic needs assistance for Massachusetts immigrant residents,Sal N. DiDomenico,Accompanied H135,0
+98,H542,542,H,193,An Act to promote racially inclusive curriculum in schools,Tram T. Nguyen,"Accompanied a new draft, see H4519",0
+99,H3052,3052,H,193,An Act promoting the civil rights and inclusion of American Muslims in the Commonwealth,Vanna Howard,No further action taken,0
