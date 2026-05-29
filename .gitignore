@@ -127,6 +127,4 @@ get_data/backup_AMEND.db
 get_data/AMEND.db
 docs/assets/debug_screenshot.png
 
-docs/data/MA_bill_emb_mean.npy
-docs/data/MA_bill_kmeans.joblib
 docs/data/MA_legislature_bills.csv.bak_wrong_gc
