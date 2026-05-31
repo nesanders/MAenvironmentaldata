@@ -285,7 +285,7 @@ Then re-run `assemble_db.py` and `MA_lobbying_viz.py` to propagate new cluster l
 
 ## LLM summary + taxonomy pilot diagnostics (495-bill sample, gemini-2.5-flash)
 
-**Run date:** May 2026  **Cost:** $0.0525 for 495 bills  ($0.106/1k bills, $2.76 projected 26k corpus)
+**Run date:** May 2026  **Cost:** $0.0525 for 495 bills (LLM only — see corrected full-corpus estimate below)
 
 ### 1. Env classification — reference set precision/recall
 
@@ -339,15 +339,37 @@ Both scores are negative, indicating bills are on average closer to the nearest 
 
 ### 5. Cost actuals
 
+**Pricing (as of May 2026):**
+
+| Model | Operation | Price |
+|-------|-----------|-------|
+| gemini-2.5-flash | Input (uncached) | $0.075 / 1M tokens |
+| gemini-2.5-flash | Input (cached) | $0.01875 / 1M tokens |
+| gemini-2.5-flash | Output | $0.300 / 1M tokens |
+| gemini-2.5-flash | Thinking tokens | $3.50 / 1M tokens |
+| gemini-embedding-2 | Input | $0.20 / 1M tokens |
+
+**Pilot run (495 bills, LLM only — embedding not tracked initially):**
+
 | Metric | Value |
 |--------|-------|
 | Input tokens (total) | 981,288 |
 | Cached tokens | 792,990 (80.8%) |
 | Avg input / bill | 1,982 tokens |
 | Avg output / bill | 152 tokens |
-| Actual cost (495 bills) | $0.0525 |
-| Projected cost (26k full corpus) | **$2.76** |
+| LLM cost (495 bills) | $0.0525 |
 | Savings from prompt caching | ~46% |
+
+**Full-corpus cost estimate (all 25,932 bills, corrected):**
+
+| Component | Tokens | Cost |
+|-----------|--------|------|
+| LLM summarize (generate_content) | ~52M input, ~4M output | ~$2.77 |
+| Summary embed (gemini-embedding-2, ~100 tok/summary) | ~2.6M | ~$0.52 |
+| Bill embed in score_lobbying.py (~700 tok/bill) | ~18.2M | ~$3.64 |
+| **Total all-in** | | **~$6.93** |
+
+Note: the initial estimate of "$2.76 projected" only captured LLM generate_content calls. The `gemini-embedding-2` model at $0.20/1M tokens adds ~$4.16 across both the score_lobbying embedding pass and inline summary embedding. Thinking tokens (budget=0) confirmed zero in tests; tracking added to script to verify in production runs.
 
 ### 6. UMAP with summary embeddings
 

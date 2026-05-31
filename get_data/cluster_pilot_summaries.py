@@ -50,29 +50,41 @@ def _load_parquet() -> pd.DataFrame:
     return df
 
 
-def _embed_texts(client, texts: list[str]) -> np.ndarray:
+def _embed_one(client, text: str) -> np.ndarray:
+    """Embed a single text with exponential backoff; returns zero vector on failure."""
+    import random
     import google.genai.types as types
-    vecs = []
-    for i, text in enumerate(texts):
-        for attempt in range(5):
-            try:
-                resp = client.models.embed_content(
-                    model=EMBEDDING_MODEL,
-                    contents=text,
-                    config=types.EmbedContentConfig(output_dimensionality=EMBEDDING_DIM),
-                )
-                vecs.append(resp.embeddings[0].values)
-                time.sleep(REQUEST_DELAY)
-                break
-            except Exception as e:
-                wait = 2 ** attempt
-                print(f'  embed error ({e}), retry in {wait}s...')
-                time.sleep(wait)
-        else:
-            vecs.append([0.0] * EMBEDDING_DIM)
-        if (i + 1) % 50 == 0:
-            print(f'  {i+1}/{len(texts)} embeddings...', flush=True)
-    return np.array(vecs, dtype=np.float32)
+    for attempt in range(6):
+        try:
+            resp = client.models.embed_content(
+                model=EMBEDDING_MODEL,
+                contents=text,
+                config=types.EmbedContentConfig(output_dimensionality=EMBEDDING_DIM),
+            )
+            return np.array(resp.embeddings[0].values, dtype=np.float32)
+        except Exception as e:
+            if attempt == 5:
+                print(f'  embed failed: {e}')
+                return np.zeros(EMBEDDING_DIM, dtype=np.float32)
+            wait = (2 ** attempt) + random.uniform(0, 1)
+            time.sleep(wait)
+    return np.zeros(EMBEDDING_DIM, dtype=np.float32)
+
+
+def _embed_texts(client, texts: list[str], workers: int = 8) -> np.ndarray:
+    """Embed texts in parallel with a thread pool."""
+    from concurrent.futures import ThreadPoolExecutor, as_completed
+    results = [None] * len(texts)
+    done = 0
+    with ThreadPoolExecutor(max_workers=workers) as ex:
+        futures = {ex.submit(_embed_one, client, t): i for i, t in enumerate(texts)}
+        for fut in as_completed(futures):
+            i = futures[fut]
+            results[i] = fut.result()
+            done += 1
+            if done % 100 == 0:
+                print(f'  {done}/{len(texts)} embeddings...', flush=True)
+    return np.array(results, dtype=np.float32)
 
 
 def _label_cluster(client, titles: list[str], k: int) -> str:
@@ -228,15 +240,42 @@ def main():
     print(f'{len(df_pilot)} pilot bills with summaries')
 
     # ── 1. Embed summaries ─────────────────────────────────────────────────────
+    # Use stored summary_embedding where available; re-embed only the gaps.
     cache_path = Path('/tmp/pilot_summ_emb.npy')
-    if args.skip_embed and cache_path.exists():
-        summ_emb = np.load(cache_path)
-        print(f'Loaded cached embeddings from {cache_path}')
-    else:
-        print(f'\nEmbedding {len(df_pilot)} summaries...')
-        summ_emb = _embed_texts(client, df_pilot['summary'].tolist())
+    n_pilot = len(df_pilot)
+    summ_emb = np.zeros((n_pilot, EMBEDDING_DIM), dtype=np.float32)
+    needs_embed = np.ones(n_pilot, dtype=bool)
+
+    if 'summary_embedding' in df_pilot.columns:
+        for i, v in enumerate(df_pilot['summary_embedding']):
+            if v is not None:
+                try:
+                    arr = np.array(v, dtype=np.float32)
+                    if arr.shape == (EMBEDDING_DIM,):
+                        summ_emb[i] = arr
+                        needs_embed[i] = False
+                except Exception:
+                    pass
+        n_cached = (~needs_embed).sum()
+        print(f'  {n_cached}/{n_pilot} summary_embeddings loaded from parquet')
+
+    if args.skip_embed and cache_path.exists() and needs_embed.any():
+        cached = np.load(cache_path)
+        if cached.shape == (n_pilot, EMBEDDING_DIM):
+            summ_emb[needs_embed] = cached[needs_embed]
+            needs_embed[:] = False
+            print(f'Loaded remaining embeddings from {cache_path}')
+
+    if needs_embed.any():
+        n_todo = needs_embed.sum()
+        print(f'\nEmbedding {n_todo} summaries (parallel)...')
+        todo_texts = df_pilot['summary'].iloc[np.where(needs_embed)[0]].tolist()
+        new_embs = _embed_texts(client, todo_texts)
+        summ_emb[needs_embed] = new_embs
         np.save(cache_path, summ_emb)
         print(f'Saved embeddings to {cache_path}')
+    else:
+        print('All embeddings ready from parquet/cache.')
 
     emb_norm = normalize(summ_emb - summ_emb.mean(axis=0), norm='l2')
 

@@ -48,11 +48,14 @@ Run from the get_data/ directory:
 
 import argparse
 import json
+import threading
 import time
 from collections import Counter
+from concurrent.futures import ThreadPoolExecutor, as_completed
 from pathlib import Path
 from typing import List
 
+import numpy as np
 import pandas as pd
 from pydantic import BaseModel, field_validator
 
@@ -61,19 +64,31 @@ API_KEY_PATH  = Path('SECRET_GOOGLE_API_KEY')
 GCS_PARQUET   = 'gs://openamend-data/MA_bill_embeddings.parquet'
 LOCAL_PARQUET = DATA_DIR / 'MA_bill_embeddings.parquet'
 
-DEFAULT_MODEL = 'gemini-2.5-flash'
-REQUEST_DELAY = 1.1   # seconds; non-thinking Flash limit ~60 rpm
+DEFAULT_MODEL   = 'gemini-2.5-flash'
+DEFAULT_WORKERS = 8      # concurrent LLM+embed workers
+EMBED_WORKERS   = 8      # concurrent embedding workers (separate pool)
 
-# Pricing: Gemini 2.5 Flash non-thinking ($/1M tokens)
+# Rate-limit: non-thinking Flash is ~1000 RPM on paid tier.
+# With 8 workers each doing ~1s of work, that's ~480 RPM — safely under.
+# Embedding API is also ~1000 RPM.  No explicit sleep needed at 8 workers,
+# but backoff handles burst errors.
+
+# Pricing: Gemini 2.5 Flash ($/1M tokens)
 PRICE_INPUT          = 0.075   / 1_000_000
 PRICE_INPUT_CACHED   = 0.01875 / 1_000_000
 PRICE_OUTPUT         = 0.300   / 1_000_000
+PRICE_THINK          = 3.50    / 1_000_000   # thinking tokens (should be 0 with budget=0)
+PRICE_EMBED          = 0.20    / 1_000_000   # gemini-embedding-2
 
 # Truncate bill text to ~10k tokens (legal English ≈ 4 chars/token)
 MAX_TEXT_CHARS = 40_000
 
 # Minimum tokens for Gemini context cache
 CACHE_MIN_TOKENS = 1_024
+
+# Embedding model (same as score_lobbying_bills.py)
+EMBEDDING_MODEL = 'gemini-embedding-2'
+EMBEDDING_DIM   = 768
 
 
 # ─── MAPLE taxonomy ────────────────────────────────────────────────────────────
@@ -449,12 +464,14 @@ def _create_cache(client, model: str):
 
 def _call_gemini(
     client, model: str, dynamic_prompt: str, cache
-) -> tuple[BillAnalysis | None, int, int, int]:
-    """Single structured-output call.
+) -> tuple['BillAnalysis | None', int, int, int]:
+    """Single structured-output call with exponential backoff.
 
     Returns (result, input_tokens, cached_tokens, output_tokens).
-    Tokens are 0 on failure.
+    Tokens are 0 on failure.  Retries up to 6 times on transient errors
+    (429 rate-limit, 503 unavailable) with jitter.
     """
+    import random
     import google.genai.types as types
 
     gen_config = types.GenerateContentConfig(
@@ -466,36 +483,64 @@ def _call_gemini(
     if cache is not None:
         gen_config.cached_content = cache.name
 
-    # When using a cache the static prefix is already in the cache;
-    # send only the dynamic bill content. Without cache, prepend the full prefix.
-    if cache is not None:
-        contents = dynamic_prompt
-    else:
-        contents = STATIC_PROMPT_PREFIX + '\n\n' + dynamic_prompt
+    contents = dynamic_prompt if cache is not None else (
+        STATIC_PROMPT_PREFIX + '\n\n' + dynamic_prompt
+    )
 
-    try:
-        resp = client.models.generate_content(
-            model=model,
-            contents=contents,
-            config=gen_config,
-        )
-        usage      = resp.usage_metadata
-        in_tok     = getattr(usage, 'prompt_token_count', 0) or 0
-        cached_tok = getattr(usage, 'cached_content_token_count', 0) or 0
-        out_tok    = getattr(usage, 'candidates_token_count', 0) or 0
-        return resp.parsed, in_tok, cached_tok, out_tok
-    except (ValueError, AttributeError) as e:
-        print(f'    Gemini parse error: {e}')
-        return None, 0, 0, 0
-    except OSError as e:
-        print(f'    Gemini network error: {e}')
-        return None, 0, 0, 0
+    for attempt in range(6):
+        try:
+            resp = client.models.generate_content(
+                model=model, contents=contents, config=gen_config,
+            )
+            usage        = resp.usage_metadata
+            in_tok       = getattr(usage, 'prompt_token_count', 0) or 0
+            cached_tok   = getattr(usage, 'cached_content_token_count', 0) or 0
+            out_tok      = getattr(usage, 'candidates_token_count', 0) or 0
+            think_tok    = getattr(usage, 'thoughts_token_count', 0) or 0
+            if think_tok:
+                print(f'    ⚠️  thinking tokens: {think_tok}')
+            return resp.parsed, in_tok, cached_tok, out_tok, think_tok
+        except (ValueError, AttributeError) as e:
+            print(f'    Gemini parse error: {e}')
+            return None, 0, 0, 0
+        except Exception as e:
+            msg = str(e)
+            if attempt == 5:
+                print(f'    Gemini failed after 6 attempts: {e}')
+                return None, 0, 0, 0
+            # Exponential backoff with jitter for rate limits / transient errors
+            wait = (2 ** attempt) + random.uniform(0, 1)
+            print(f'    Gemini error (attempt {attempt+1}/6): {msg[:80]} — retry in {wait:.1f}s')
+            time.sleep(wait)
+    return None, 0, 0, 0, 0
+
+
+def _embed_summary(client, summary: str) -> 'np.ndarray | None':
+    """Embed a single summary string; returns (768,) float32 or None on failure."""
+    import random
+    import google.genai.types as types
+    for attempt in range(6):
+        try:
+            resp = client.models.embed_content(
+                model=EMBEDDING_MODEL,
+                contents=summary,
+                config=types.EmbedContentConfig(output_dimensionality=EMBEDDING_DIM),
+            )
+            return np.array(resp.embeddings[0].values, dtype=np.float32)
+        except Exception as e:
+            if attempt == 5:
+                print(f'    Embed failed after 6 attempts: {e}')
+                return None
+            wait = (2 ** attempt) + random.uniform(0, 1)
+            print(f'    Embed error (attempt {attempt+1}/6): {str(e)[:80]} — retry in {wait:.1f}s')
+            time.sleep(wait)
+    return None
 
 
 # ─── Sampling ──────────────────────────────────────────────────────────────────
 
 def _stratified_sample(df: pd.DataFrame, n: int) -> pd.DataFrame:
-    """Sample n bills spread proportionally across General Courts."""
+    """Sample n bills spread uniformly across General Courts."""
     gcs    = sorted(df['general_court'].dropna().unique())
     per_gc = max(1, n // len(gcs))
     parts  = [
@@ -507,16 +552,48 @@ def _stratified_sample(df: pd.DataFrame, n: int) -> pd.DataFrame:
     return pd.concat(parts).sample(frac=1, random_state=42).iloc[:n]
 
 
+# ─── Worker ────────────────────────────────────────────────────────────────────
+
+def _process_one(
+    client, model: str, cache,
+    idx, title: str, full_text: str, gc: int, bill_no: str,
+    embed_summaries: bool,
+) -> dict:
+    """Process a single bill: LLM call + optional summary embedding.
+
+    Returns a result dict with keys: idx, ok, result, in_tok, cached_tok,
+    out_tok, summ_emb, gc, bill_no, title.
+    """
+    dynamic = _build_dynamic_prompt(title, full_text)
+    result, in_tok, cached_tok, out_tok, think_tok = _call_gemini(client, model, dynamic, cache)
+
+    summ_emb = None
+    if result is not None and embed_summaries and result.summary:
+        summ_emb = _embed_summary(client, result.summary)
+
+    return dict(
+        idx=idx, ok=(result is not None), result=result,
+        in_tok=in_tok, cached_tok=cached_tok, out_tok=out_tok, think_tok=think_tok,
+        summ_emb=summ_emb, gc=gc, bill_no=bill_no, title=title,
+    )
+
+
 # ─── Entry point ───────────────────────────────────────────────────────────────
 
 def main():
-    """Parse args, build cache, process bills, print cost summary."""
     parser = argparse.ArgumentParser()
     parser.add_argument('--sample', type=int, default=None,
                         help='Process N bills stratified across General Courts')
     parser.add_argument('--model', default=DEFAULT_MODEL)
     parser.add_argument('--reprocess', action='store_true',
                         help='Re-run bills that already have summaries')
+    parser.add_argument('--workers', type=int, default=DEFAULT_WORKERS,
+                        help=f'Parallel worker threads (default {DEFAULT_WORKERS})')
+    parser.add_argument('--embed-summaries', action='store_true', default=True,
+                        help='Embed each summary inline and store as summary_embedding')
+    parser.add_argument('--no-embed-summaries', dest='embed_summaries',
+                        action='store_false',
+                        help='Skip summary embedding (faster, cheaper)')
     args = parser.parse_args()
 
     api_key = API_KEY_PATH.read_text(encoding='utf-8').strip()
@@ -525,7 +602,7 @@ def main():
 
     df = _load_parquet()
 
-    for col in ('summary', 'categories', 'tags', 'is_env_llm'):
+    for col in ('summary', 'categories', 'tags', 'is_env_llm', 'summary_embedding'):
         if col not in df.columns:
             df[col] = None
 
@@ -540,97 +617,140 @@ def main():
     print(f'Model:            {args.model}')
     print(f'Bills to process: {len(todo)}')
     print(f'Already done:     {df["summary"].notna().sum()}')
+    print(f'Workers:          {args.workers}')
+    print(f'Embed summaries:  {args.embed_summaries}')
     print(f'Taxonomy:         {len(TAXONOMY)} categories, {len(ALL_TAGS)} tags')
 
     cache = _create_cache(client, args.model)
     print()
 
-    total_in = total_cached = total_out = 0
-    n_ok = n_fail = 0
+    # Thread-safe counters and lock for df writes + console output
+    lock              = threading.Lock()
+    total_in          = 0
+    total_cached      = 0
+    total_out         = 0
+    total_think       = 0
+    total_embed_tok   = 0
+    n_ok              = 0
+    n_fail            = 0
+    completed         = 0
 
-    for i, (idx, row) in enumerate(todo.iterrows()):
-        title     = str(row.get('bill_title', '') or '')
-        full_text = str(row.get('full_text', '') or '')
-        gc        = int(row['general_court']) if pd.notna(row.get('general_court')) else 0
-        bill_no   = row.get('bill_number', '?')
+    rows = list(todo.iterrows())
+    n_total = len(rows)
 
-        dynamic = _build_dynamic_prompt(title, full_text)
-        result, in_tok, cached_tok, out_tok = _call_gemini(
-            client, args.model, dynamic, cache
-        )
-
-        total_in     += in_tok
-        total_cached += cached_tok
-        total_out    += out_tok
-        uncached_tok  = in_tok - cached_tok
-        running_cost  = (
-            uncached_tok * PRICE_INPUT
+    def _running_cost() -> float:
+        return (
+            (total_in - total_cached) * PRICE_INPUT
             + total_cached * PRICE_INPUT_CACHED
             + total_out * PRICE_OUTPUT
+            + total_think * PRICE_THINK
+            + total_embed_tok * PRICE_EMBED
         )
 
-        if result is None:
-            n_fail += 1
-            print(f'  [{i+1:>4}/{len(todo)}] FAIL  GC{gc} {bill_no} — {title[:55]}')
-        else:
-            df.at[idx, 'summary']    = result.summary
-            df.at[idx, 'categories'] = json.dumps(result.categories)
-            df.at[idx, 'tags']       = json.dumps(result.tags)
-            df.at[idx, 'is_env_llm'] = result.is_environmental
-            n_ok += 1
+    with ThreadPoolExecutor(max_workers=args.workers) as executor:
+        futures = {
+            executor.submit(
+                _process_one,
+                client, args.model, cache,
+                idx,
+                str(row.get('bill_title', '') or ''),
+                str(row.get('full_text', '') or ''),
+                int(row['general_court']) if pd.notna(row.get('general_court')) else 0,
+                str(row.get('bill_number', '?')),
+                args.embed_summaries,
+            ): idx
+            for idx, row in rows
+        }
 
-            env_flag = '🌿' if result.is_environmental else '  '
-            cats_str = ', '.join(result.categories)
-            tags_str = ', '.join(result.tags[:3]) + ('…' if len(result.tags) > 3 else '')
-            print(
-                f'  [{i+1:>4}/{len(todo)}] {env_flag} GC{gc} {bill_no} '
-                f'[{in_tok}in/{cached_tok}cached/{out_tok}out] '
-                f'${running_cost:.4f} | {cats_str}'
-            )
-            print(f'          tags: {tags_str}')
-            print(f'          "{title[:70]}"')
+        for future in as_completed(futures):
+            r = future.result()
+            with lock:
+                completed += 1
+                total_in     += r['in_tok']
+                total_cached += r['cached_tok']
+                total_out    += r['out_tok']
+                total_think  += r['think_tok']
+                if r['summ_emb'] is not None:
+                    total_embed_tok += len(r['result'].summary.split()) * 4 // 3 if r['result'] else 0
 
-        if (i + 1) % 50 == 0:
-            _print_checkpoint(i + 1, n_ok, n_fail, total_in, total_cached, total_out)
-            _save_parquet(df)
+                if not r['ok']:
+                    n_fail += 1
+                    print(f'  [{completed:>4}/{n_total}] FAIL  '
+                          f'GC{r["gc"]} {r["bill_no"]} — {r["title"][:55]}')
+                else:
+                    n_ok += 1
+                    result   = r['result']
+                    df.at[r['idx'], 'summary']    = result.summary
+                    df.at[r['idx'], 'categories'] = json.dumps(result.categories)
+                    df.at[r['idx'], 'tags']       = json.dumps(result.tags)
+                    df.at[r['idx'], 'is_env_llm'] = result.is_environmental
+                    if r['summ_emb'] is not None:
+                        df.at[r['idx'], 'summary_embedding'] = r['summ_emb'].tolist()
 
-        time.sleep(REQUEST_DELAY)
+                    env_flag = '🌿' if result.is_environmental else '  '
+                    cats_str = ', '.join(result.categories)
+                    tags_str = ', '.join(result.tags[:3]) + ('…' if len(result.tags) > 3 else '')
+                    print(
+                        f'  [{completed:>4}/{n_total}] {env_flag} GC{r["gc"]} {r["bill_no"]} '
+                        f'[{r["in_tok"]}in/{r["cached_tok"]}cached/{r["out_tok"]}out] '
+                        f'${_running_cost():.4f} | {cats_str}'
+                    )
+                    print(f'          tags: {tags_str}')
+                    print(f'          "{r["title"][:70]}"')
+
+                if completed % 50 == 0:
+                    _print_checkpoint(completed, n_ok, n_fail,
+                                      total_in, total_cached, total_out)
+                    _save_parquet(df)
 
     _save_parquet(df)
-    _print_final_summary(df, todo, n_ok, n_fail, total_in, total_cached, total_out)
+    _print_final_summary(df, todo, n_ok, n_fail,
+                         total_in, total_cached, total_out, total_think, total_embed_tok)
 
 
 def _print_checkpoint(i: int, n_ok: int, n_fail: int,
-                      total_in: int, total_cached: int, total_out: int) -> None:
+                      total_in: int, total_cached: int, total_out: int,
+                      total_think: int = 0, total_embed_tok: int = 0) -> None:
     """Print a mid-run progress line."""
     cost = (
         (total_in - total_cached) * PRICE_INPUT
         + total_cached * PRICE_INPUT_CACHED
         + total_out * PRICE_OUTPUT
+        + total_think * PRICE_THINK
+        + total_embed_tok * PRICE_EMBED
     )
+    think_note = f' | think={total_think:,}' if total_think else ''
     print(
         f'\n  ── checkpoint {i}: {n_ok} ok / {n_fail} fail | '
-        f'{total_in:,} in ({total_cached:,} cached) / {total_out:,} out | '
+        f'{total_in:,} in ({total_cached:,} cached) / {total_out:,} out{think_note} | '
         f'${cost:.4f} ──\n'
     )
 
 
 def _print_final_summary(df: pd.DataFrame, todo: pd.DataFrame,
                          n_ok: int, n_fail: int,
-                         total_in: int, total_cached: int, total_out: int) -> None:
+                         total_in: int, total_cached: int, total_out: int,
+                         total_think: int = 0, total_embed_tok: int = 0) -> None:
     """Print token counts, cost breakdown, and env classification comparison."""
-    uncached  = total_in - total_cached
-    cost      = uncached * PRICE_INPUT + total_cached * PRICE_INPUT_CACHED + total_out * PRICE_OUTPUT
-    cost_no_cache = total_in * PRICE_INPUT + total_out * PRICE_OUTPUT
-    avg_in    = total_in  / max(n_ok, 1)
-    avg_out   = total_out / max(n_ok, 1)
+    uncached      = total_in - total_cached
+    llm_cost      = (uncached * PRICE_INPUT + total_cached * PRICE_INPUT_CACHED
+                     + total_out * PRICE_OUTPUT)
+    think_cost    = total_think * PRICE_THINK
+    embed_cost    = total_embed_tok * PRICE_EMBED
+    cost          = llm_cost + think_cost + embed_cost
+    cost_no_cache = total_in * PRICE_INPUT + total_out * PRICE_OUTPUT + think_cost + embed_cost
+    avg_in        = total_in  / max(n_ok, 1)
+    avg_out       = total_out / max(n_ok, 1)
 
     print(f'\n{"─"*65}')
     print(f'Done: {n_ok} processed, {n_fail} failed')
     print(f'Tokens:  {total_in:,} input  ({total_cached:,} cached, {uncached:,} uncached)')
     print(f'         {avg_in:.0f} avg input / bill  |  {avg_out:.0f} avg output / bill')
-    print(f'Cost:    ${cost:.4f}  (vs ${cost_no_cache:.4f} without caching, '
-          f'saved ${cost_no_cache - cost:.4f})')
+    if total_think:
+        print(f'         {total_think:,} thinking tokens  ← ⚠️  budget=0 not respected!')
+    print(f'Cost:    ${llm_cost:.4f} LLM  +  ${think_cost:.4f} thinking  '
+          f'+  ${embed_cost:.4f} embed  =  ${cost:.4f} total')
+    print(f'         (vs ${cost_no_cache:.4f} without caching, saved ${cost_no_cache - cost:.4f})')
     print(f'         ${cost / max(n_ok, 1) * 1000:.4f} per 1,000 bills')
     print(f'         ${cost / max(n_ok, 1) * 26_000:.2f} projected for 26k full corpus')
     print(f'{"─"*65}')
