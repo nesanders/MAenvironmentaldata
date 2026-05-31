@@ -533,6 +533,11 @@ def generate_post_charts(engine, prefix=''):
         except Exception:
             cluster_labels = pd.DataFrame()
 
+        if not cluster_labels.empty and 'cluster_id' in cluster_labels.columns:
+            cluster_labels['cluster_id'] = pd.to_numeric(
+                cluster_labels['cluster_id'], errors='coerce'
+            ).astype('Int64')
+
         env_lb = _env_bills(lobby_bills, leg_bills)
         if not env_lb.empty and not cluster_labels.empty:
             # Attach cluster_id to each env lobby_bills row

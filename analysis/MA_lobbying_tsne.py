@@ -1,4 +1,4 @@
-"""Generate a t-SNE scatter plot of MA lobbying bill embeddings.
+"""Generate a UMAP scatter plot of MA lobbying bill embeddings.
 
 Visual design philosophy
 ─────────────────────────
@@ -8,18 +8,21 @@ intra-cluster spread of ~0.53. Running t-SNE on all 25k bills produces a
 featureless blob regardless of perplexity, because the structure simply doesn't
 separate in 2-D.
 
-Instead the chart shows TWO layers:
+UMAP is used instead of t-SNE because it better preserves global structure,
+pulling weakly-separated clusters apart more effectively than t-SNE's purely
+local optimisation. Parameters: n_neighbors=30, min_dist=0.1, metric='cosine'.
+
+The chart shows TWO layers:
 
   Background (grey)  — stratified sample of ~120 non-environmental bills per
                         cluster, rendered as tiny translucent grey dots. Provides
                         geographic context for the policy landscape.
 
-  Signal (coloured)  — all 329 env-relevant bills, one colour per cluster,
+  Signal (coloured)  — all env-relevant bills (~654), one colour per cluster,
                         large outlined dots. These are what the visitor cares about.
 
-t-SNE is computed on the combined ~3,300 point sample (all env + background),
-which runs in seconds and produces cleaner structure than the full 25k set.
-Perplexity is scaled to ~√N of the subsample.
+UMAP is computed on the combined ~3,650 point sample (all env + background),
+which runs in ~30s and produces cleaner structure than t-SNE on this corpus.
 
 Run from the analysis/ directory:
     /path/to/python -u MA_lobbying_tsne.py
@@ -33,7 +36,7 @@ from pathlib import Path
 
 import numpy as np
 import pandas as pd
-from sklearn.manifold import TSNE
+import umap
 from sklearn.preprocessing import normalize
 import plotly.graph_objects as go
 
@@ -47,8 +50,12 @@ OUT_HTML      = Path('../docs/_includes/charts/lobbying_bill_tsne.html')
 # Non-env bills sampled per cluster for background context.
 # 120 × 25 clusters ≈ 3 000 background points + ~329 env = ~3 300 total.
 BG_PER_CLUSTER  = 120
-TSNE_ITER       = 1000
 RANDOM_STATE    = 42
+
+# UMAP hyperparameters
+UMAP_N_NEIGHBORS = 30   # larger → more global structure
+UMAP_MIN_DIST    = 0.1  # smaller → tighter clusters
+UMAP_METRIC      = 'cosine'
 
 # 25-colour palette — qualitative, perceptually distinct, no cycling
 PALETTE_25 = [
@@ -91,7 +98,13 @@ def main():
         parquet_df['is_environmental'] = False
     parquet_df['is_environmental'] = parquet_df['is_environmental'].fillna(False).astype(bool)
 
-    labels_df = pd.read_csv(LABELS_CSV)
+    labels_df = pd.read_csv(LABELS_CSV, engine='python', on_bad_lines='skip')
+    # example_titles may contain unquoted commas that corrupt row parsing;
+    # keep only rows with a valid integer cluster_id.
+    labels_df = labels_df[
+        pd.to_numeric(labels_df['cluster_id'], errors='coerce').notna()
+    ].copy()
+    labels_df['cluster_id'] = labels_df['cluster_id'].astype(int)
     label_map = dict(zip(labels_df['cluster_id'].astype(int), labels_df['label']))
     nenv_map  = dict(zip(labels_df['cluster_id'].astype(int), labels_df['n_env_bills']))
 
@@ -117,19 +130,18 @@ def main():
     ).values)
     emb_norm = normalize(emb, norm='l2')
 
-    # ── t-SNE ────────────────────────────────────────────────────────────────
-    # Perplexity ≈ √N is a sensible heuristic for subsampled sets.
-    perplexity = max(20, min(80, int(np.sqrt(len(sample)))))
-    print(f'Running t-SNE (n={len(sample)}, perplexity={perplexity}, iter={TSNE_ITER})...')
-    tsne = TSNE(
+    # ── UMAP ─────────────────────────────────────────────────────────────────
+    print(f'Running UMAP (n={len(sample)}, n_neighbors={UMAP_N_NEIGHBORS}, '
+          f'min_dist={UMAP_MIN_DIST}, metric={UMAP_METRIC})...')
+    reducer = umap.UMAP(
         n_components=2,
-        perplexity=perplexity,
-        max_iter=TSNE_ITER,
+        n_neighbors=UMAP_N_NEIGHBORS,
+        min_dist=UMAP_MIN_DIST,
+        metric=UMAP_METRIC,
         random_state=RANDOM_STATE,
-        init='pca',
-        learning_rate='auto',
+        low_memory=False,
     )
-    coords  = tsne.fit_transform(emb_norm)
+    coords  = reducer.fit_transform(emb_norm)
     sample  = sample.copy()
     sample['x'] = coords[:, 0]
     sample['y'] = coords[:, 1]
@@ -190,9 +202,9 @@ def main():
         title=dict(
             text=(
                 'MA Lobbying Bills — Environmental Bills in the Policy Landscape'
-                '<br><sup>Coloured = environmentally-relevant bills (329) · '
-                'grey = background sample (~3 000 non-env) · '
-                'colour = topic cluster · hover for details</sup>'
+                f'<br><sup>Coloured = {len(envs)} environmentally-relevant bills · '
+                f'grey = background sample ({len(bg):,} non-env) · '
+                'colour = topic cluster · hover for details · UMAP projection</sup>'
             ),
             font=dict(size=13),
         ),

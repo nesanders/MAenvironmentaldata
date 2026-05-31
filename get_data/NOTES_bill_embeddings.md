@@ -78,7 +78,7 @@ Also update `CLAUDE.md`: the note "GC 183 = 2005–2006" is wrong; it should rea
 
 With wrong GC, the legislature body text belongs to a completely different bill ~98% of the time. The bill **title** (from the SoS portal, stored in `bill_title`) is always correct regardless of the GC bug.
 
-**This is why title-only embeddings significantly outperform title+body embeddings** (silhouette 0.043 vs 0.023 — see comparison below): the body text is nearly pure noise under the wrong-GC regime. After fixing the GC bug and re-embedding with correct body text, it would be worth re-running the embedding comparison to see if title+body closes the gap.
+**This is why title-only embeddings significantly outperform title+body embeddings** (silhouette 0.043 vs 0.023 — see comparison below): the body text is nearly pure noise under the wrong-GC regime. After fixing the GC bug and re-embedding with correct body text, the title+body method improved from 0.023 → 0.028 (+21%), but title-only remained best at 0.041 — a ~48% lead. Body text still dilutes topic signal even when it belongs to the correct bill, due to structural boilerplate in MA legislative language.
 
 ---
 
@@ -100,18 +100,29 @@ For comparison, a well-separated topic model typically has inter/intra ratios >0
 
 ## Embedding method comparison (2,000-bill sample, k=25)
 
-Tested four methods on the same 2,000-bill sample drawn from bills with non-empty `full_text`:
+Tested twice: once with **wrong GC** (body text is ~98% from unrelated bills) and again after the GC fix with **correct body text**. Same 2,000-bill sample each time.
+
+### Wrong GC (body = unrelated bills ~98% of the time)
 
 | Method | Silhouette↑ | DB↓ | Notes |
 |--------|-------------|-----|-------|
-| A. Original (SoS title + API body combined) | 0.023 | 4.76 | Current production method |
+| A. Original (SoS title + API body combined) | 0.023 | 4.76 | Current production method at time of test |
 | B. **Title only (SoS)** | **0.043** | **3.71** | Best; 2× silhouette improvement |
 | C. Body only (API) | 0.024 | 4.61 | Nearly as bad as combined |
 | D. Concat [L2(title) \| L2(body)] | 0.025 | 4.76 | No improvement over original |
 
-**Title-only is the best embedding strategy.** The improvement is explained by the bill number mismatch issue: the body text is largely from unrelated bills and adds noise. The title (from the SoS portal) is always accurate for the bill that was actually lobbied.
+### Correct GC (body text matches the actual lobbied bill — run May 2026 after fix)
 
-Switching to title-only embeddings would require a full re-embed of ~25,000 bills.
+| Method | Silhouette↑ | DB↓ | vs. wrong-GC |
+|--------|-------------|-----|--------------|
+| A. Original (SoS title + API body combined) | 0.0278 | 4.46 | +21% |
+| B. **Title only (SoS)** | **0.0412** | **3.83** | -4% (unchanged) |
+| C. Body only (API) | 0.0278 | 4.37 | +16% |
+| D. Concat [L2(title) \| L2(body)] | 0.0296 | 4.54 | +18% |
+
+**Title-only is still the best embedding strategy even with correct body text.** Fixing the GC improved A, C, D by 16–21%, but title-only (B) leads by ~48% silhouette over A and remained essentially unchanged. The body text appears to dilute topic signal even when it belongs to the correct bill — MA legislative body text is structurally noisy (boilerplate, amendments-to-existing-law syntax, cross-references) even after scaffold stripping.
+
+Switching to title-only embeddings would require a full re-embed of ~25,000 bills. The current parquet stores title+body (method A).
 
 ---
 
@@ -188,7 +199,60 @@ Mean-centering before L2 normalisation gives a small but consistent improvement 
 
 ---
 
-## t-SNE visualisation note
+## Diagnostic plots (May 2026, post-GC fix)
+
+![Embedding diagnostics](../docs/data/embedding_diagnostics.png)
+
+Four panels generated from the full 25,932-bill scored corpus and a 2,000-bill embedding sample after the GC formula fix.
+
+### Score distribution
+
+The distribution is sharply right-skewed around a mean of −0.011. Nearly all bills score below zero; the right tail is thin but real. Key counts at the current threshold (0.05):
+
+| Band | Bills | Notes |
+|------|-------|-------|
+| < 0 (clearly non-env) | 18,923 | 73% of corpus |
+| 0–0.02 (borderline negative) | 4,164 | Spot-check: ~80%+ non-env |
+| 0.02–0.05 (borderline positive) | 2,190 | Spot-check: ~75% env per LLM |
+| 0.05–0.08 (just above threshold) | 590 | Spot-check: ~88% env |
+| ≥ 0.08 (strong env) | 65 | High confidence |
+| **Total flagged (≥ 0.05)** | **654** | Up from 329 before GC fix |
+
+There is no natural density gap between 0.02 and 0.05, suggesting the threshold is somewhat arbitrary in this zone. The LLM spot-check found large false-negative rates in the 0.02–0.05 band.
+
+### Embedding method comparison
+
+Title-only embeddings lead in both the wrong-GC and correct-GC conditions:
+
+| Method | Wrong GC | Correct GC | Δ |
+|--------|----------|------------|---|
+| A. Title + body (production) | 0.023 | 0.028 | +21% |
+| **B. Title only** | **0.043** | **0.041** | −4% (stable) |
+| C. Body only | 0.024 | 0.028 | +16% |
+| D. Concat [L2(t)‖L2(b)] | 0.025 | 0.030 | +18% |
+
+Fixing the GC improved all body-containing methods but did not close the gap with title-only. Body text adds structural noise (boilerplate, amendment scaffolding, cross-references) even when it belongs to the correct bill.
+
+### Cluster env density
+
+Environmental bills concentrate strongly in two clusters:
+
+| Cluster | Label | Env bills | % env |
+|---------|-------|-----------|-------|
+| 14 | Massachusetts Clean Energy Transition | 238 | 30% |
+| 2 | Waste Reduction and Recycling | 181 | 39% |
+| 20 | Empowering Local Clean Energy | 54 | 5% |
+| 0 | Municipal Environmental Governance | 50 | 3% |
+
+The remaining 21 clusters each contain ≤29 env bills. This concentration is a positive signal: the k=25 topology is correctly separating the clean-energy and waste policy space from unrelated legislation.
+
+---
+
+## t-SNE visualisation
+
+**[→ Interactive t-SNE (Plotly)](../docs/_includes/charts/lobbying_bill_tsne.html)**
+
+## t-SNE design note
 
 Projecting all 25,000+ bills into 2D produces a featureless blob because the inter-cluster cosine distance (~0.006) is ~100× smaller than intra-cluster spread (~0.53).
 
@@ -198,11 +262,13 @@ Projecting all 25,000+ bills into 2D produces a featureless blob because the int
 
 ## Recommended next steps
 
-1. **Switch to title-only embeddings** for both classification and clustering. Requires a full re-embed (~$0.50 API cost). Update `score_lobbying_bills.py` to use `_build_embed_text(title, '')` (or just `title`).
+1. **Switch to title-only embeddings** for both classification and clustering. Confirmed best strategy after two rounds of testing — title-only wins even with correct body text. Requires a full re-embed (~25k bills). Update `score_lobbying_bills.py` to use `title` instead of the combined `full_text`. Current model files (committed and on GCS) are title+body; a full re-cluster would follow the re-embed.
 
-2. **Add LLM classification for borderline bills** (score 0.0–0.08, ~7,100 bills). One-time cost ~$0.27 with Gemini 2.5 Flash. Store `llm_is_environmental` and `llm_reason` as additional columns. Use as override when LLM confidence ≥ 0.80.
+2. **Add LLM classification for borderline bills** (score 0.0–0.08, ~7,100 bills). One-time cost ~$0.27 with Gemini 2.5 Flash. Store `llm_is_environmental` and `llm_reason` as additional columns. Use as override when LLM confidence ≥ 0.80. Particularly important given the env threshold review needed (see below).
 
-3. **Fix the Legislature API lookup** (lower priority given switch to title-only): match bills by title similarity rather than bill number, or investigate whether the SoS portal exposes docket numbers that map to the API's DocketNumber field.
+3. **Environmental threshold review**: After the GC fix, the env bill count jumped 329 → 654 at threshold=0.05. Needs calibration review — plot the score distribution, spot-check bills near the boundary, and decide whether 0.05 is still correct. Document in an analysis page or data note explaining the method, reference sets, and before/after counts.
+
+4. **Legislature API lookup quality** (lower priority): match bills by title similarity rather than bill number, or investigate whether the SoS portal exposes docket numbers that map to the API's DocketNumber field. Less urgent now that body text quality is confirmed as structurally noisy regardless.
 
 ---
 
@@ -214,3 +280,75 @@ cd get_data
 ```
 
 Then re-run `assemble_db.py` and `MA_lobbying_viz.py` to propagate new cluster labels.
+
+---
+
+## LLM summary + taxonomy pilot diagnostics (495-bill sample, gemini-2.5-flash)
+
+**Run date:** May 2026  **Cost:** $0.0525 for 495 bills  ($0.106/1k bills, $2.76 projected 26k corpus)
+
+### 1. Env classification — reference set precision/recall
+
+20 known-env titles and 36 known-non-env titles from the reference sets in `score_lobbying_bills.py` were classified by the LLM.
+
+| Metric | Value |
+|--------|-------|
+| Recall (20 known env titles) | **100%** (20/20) |
+| Specificity (36 known non-env) | **97%** (35/36) |
+| False negatives | 0 |
+| False positives | 1 — "An Act limiting autonomous driving capabilities to zero emission and electric vehicles" (borderline ZEV/EV policy) |
+
+### 2. LLM vs embedding disagreement (495-bill pilot)
+
+| | Count |
+|---|---|
+| Both env (agreement) | 18 |
+| LLM env only (embedding false negatives) | 63 |
+| Embedding env only (embedding false positives) | 0 |
+
+Bills LLM classifies env but embedding misses (10 examples):
+- An Act Relative to Pollution Health Effects Mitigation
+- An Act relative to the water resources funding act
+- An Act establishing a wildlife management commission
+- An Act Relative to the Reduction of Particulate Emissions From Diesel Engines
+- An Act further regulating the Pesticide Control Act
+- An Act relative to the moose population in the Commonwealth
+- An Act further regulating above ground tanks used for the storage of certain fluids
+- Prohibit Sale or Use of Polystyrene Packaging
+- Environmentally Preferable Cleaning Supplies
+- An Act promoting incremental hydropower improvements
+
+### 3. Structured output quality
+
+| Metric | Value |
+|--------|-------|
+| Avg tags per bill | 3.14 |
+| Bills with 0 valid tags | 1 |
+| Bills with 0 valid categories | 0 |
+
+### 4. Silhouette comparison (k=25 clustering)
+
+| Method | Silhouette↑ | Δ |
+|--------|-------------|---|
+| Original title+body | -0.0387 | — |
+| **Summary embed**   | **-0.0492** | −27% |
+
+Both scores are negative, indicating bills are on average closer to the nearest *other* cluster's centroid than to their own. The 27% degradation with summary embeddings is statistically real but both values are in the same "no useful cluster separation" regime — summaries do not improve clustering geometry. However, the **primary value of summaries is not clustering but classification**: LLM `is_environmental` shows 100% recall / 97% specificity on reference titles vs. ~4.5% env rate with the embedding classifier alone (large false-negative rate).
+
+**Implication for full run:** Proceed for taxonomy tags and `is_environmental` signal; do not expect summary embeddings to improve the UMAP/cluster visualisations.
+
+### 5. Cost actuals
+
+| Metric | Value |
+|--------|-------|
+| Input tokens (total) | 981,288 |
+| Cached tokens | 792,990 (80.8%) |
+| Avg input / bill | 1,982 tokens |
+| Avg output / bill | 152 tokens |
+| Actual cost (495 bills) | $0.0525 |
+| Projected cost (26k full corpus) | **$2.76** |
+| Savings from prompt caching | ~46% |
+
+### 6. UMAP with summary embeddings
+
+**[→ Interactive UMAP (summary embeddings)](../docs/_includes/charts/lobbying_bill_umap_summary.html)**

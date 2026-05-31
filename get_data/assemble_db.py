@@ -379,7 +379,10 @@ if __name__ == '__main__':
 		_scored = pd.read_csv(_scored_bills_path, index_col=0, engine='python')
 		_scored['bill_number'] = pd.to_numeric(_scored['bill_number'], errors='coerce').astype('Int64')
 		if 'general_court' in _scored.columns:
-			_scored['general_court'] = pd.to_numeric(_scored['general_court'], errors='coerce').astype('Int64')
+			_gc = pd.to_numeric(_scored['general_court'], errors='coerce')
+			# Clamp out-of-range values (e.g. similarity scores in malformed rows) to NaN
+			_gc = _gc.where((_gc >= 180) & (_gc <= 210))
+			_scored['general_court'] = _gc.astype('Int64')
 		if 'is_environmental' in _scored.columns:
 			_scored['is_environmental'] = pd.to_numeric(_scored['is_environmental'].map(
 			{'True': 1, 'False': 0, True: 1, False: 0}).fillna(_scored['is_environmental']),

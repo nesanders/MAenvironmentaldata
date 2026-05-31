@@ -1492,12 +1492,12 @@ Unnamed: 0	entity_name	client_name	year	general_court	chamber	bill_number	bill_t
 
 ---
 
-### MA_Lobbying_Bills_Scored (25,932 rows)
+### MA_Lobbying_Bills_Scored (26,245 rows)
 Environmental relevance scores for MA lobbying bills, derived from Gemini embeddings. One row per unique (bill_number, general_court). Key fields: bill_number, general_court, bill_title, bill_id (e.g. H1234), env_relevance_score (float; differential cosine similarity to env vs non-env example bills; higher = more environmentally relevant), is_environmental (1 if env_relevance_score >= 0.05), cluster_id (integer topic cluster 0–14; -1 = unassigned). Join to MA_Lobbying_Bills on (bill_number, general_court) to find which employers lobbied env bills. Join to MA_Bill_Cluster_Labels on cluster_id for human-readable cluster topic labels. IMPORTANT: is_environmental is per-bill; no cluster is purely environmental.
 
 ```sql
 CREATE TABLE "MA_Lobbying_Bills_Scored" (
-	"index" BIGINT, 
+	"index" TEXT, 
 	bill_number BIGINT, 
 	general_court BIGINT, 
 	bill_title TEXT, 
@@ -1513,8 +1513,8 @@ bill_number	general_court	bill_title	bill_id	env_relevance_score	is_environmenta
 537	186	An Act To Assure Equitable Heath Coverage For All Children	S537	-0.0040966272354125	0	18
 549	186	An Act Relative to Health Care Affordability	S549	-0.0452432036399841	0	18
 873	186	An Act Strengthening Health Reform	S873	-0.0194134712219238	0	1
-974	186	An Act to regulate health insurance contracts/policies.	H974	-0.0548492074012756	0	21
-1	186	A message from His Excellency the Governor submitting the annual budget of the Commonwealth for the fiscal year beginning July first, two thousand nine	H1	-0.0527363419532775	0	4
+974	186	An Act to regulate health insurance contracts/policies.	NULL	NULL	NULL	NULL
+NULL	NULL	0	21	NULL	NULL	NULL
 */
 
 **Column notes:**
