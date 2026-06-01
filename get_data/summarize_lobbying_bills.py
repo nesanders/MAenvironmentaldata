@@ -700,6 +700,9 @@ def main():
                     )
                     print(f'          tags: {tags_str}')
                     print(f'          "{r["title"][:70]}"')
+                    # Log full summary on a SUMMARY: line — parseable for crash recovery
+                    summary_oneline = (result.summary or '').replace('\n', ' ')
+                    print(f'          SUMMARY: {summary_oneline}', flush=True)
 
                 if completed % 200 == 0:
                     # Apply accumulated results to df, then checkpoint-save.
