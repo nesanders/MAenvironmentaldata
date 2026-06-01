@@ -702,20 +702,30 @@ def main():
                     print(f'          "{r["title"][:70]}"')
 
                 if completed % 200 == 0:
-                    # Apply accumulated results to df, then checkpoint-save
-                    for res in all_results:
-                        result = res['result']
-                        df.loc[res['idx'], 'summary']    = result.summary
-                        df.loc[res['idx'], 'categories'] = json.dumps(result.categories)
-                        df.loc[res['idx'], 'tags']       = json.dumps(result.tags)
-                        df.loc[res['idx'], 'is_env_llm'] = result.is_environmental
-                        if res['summ_emb'] is not None:
-                            df.loc[res['idx'], 'summary_embedding'] = [res['summ_emb'].tolist()]
-                    all_results.clear()
-                    _print_checkpoint(completed, n_ok, n_fail,
-                                      total_in, total_cached, total_out,
-                                      total_think, total_embed_tok)
-                    _save_parquet(df)
+                    # Apply accumulated results to df, then checkpoint-save.
+                    # Wrapped in try/except: a save error must NOT propagate —
+                    # propagation causes executor.shutdown(wait=True) to run all
+                    # remaining futures to completion (spending API budget) while
+                    # saving nothing.
+                    try:
+                        for res in all_results:
+                            result = res['result']
+                            df.loc[res['idx'], 'summary']    = result.summary
+                            df.loc[res['idx'], 'categories'] = json.dumps(result.categories)
+                            df.loc[res['idx'], 'tags']       = json.dumps(result.tags)
+                            df.loc[res['idx'], 'is_env_llm'] = result.is_environmental
+                            if res['summ_emb'] is not None:
+                                df.at[res['idx'], 'summary_embedding'] = res['summ_emb'].tolist()
+                        all_results.clear()
+                        _print_checkpoint(completed, n_ok, n_fail,
+                                          total_in, total_cached, total_out,
+                                          total_think, total_embed_tok)
+                        _save_parquet(df)
+                    except Exception as save_err:
+                        print(f'\n  ⚠️  Checkpoint save failed: {save_err}', flush=True)
+                        print('  Continuing without save — will retry at next checkpoint.',
+                              flush=True)
+                        # Do NOT clear all_results so they accumulate to next checkpoint
 
     # Final batch update for any remaining results
     for res in all_results:
@@ -725,7 +735,7 @@ def main():
         df.loc[res['idx'], 'tags']       = json.dumps(result.tags)
         df.loc[res['idx'], 'is_env_llm'] = result.is_environmental
         if res['summ_emb'] is not None:
-            df.loc[res['idx'], 'summary_embedding'] = [res['summ_emb'].tolist()]
+            df.at[res['idx'], 'summary_embedding'] = res['summ_emb'].tolist()
 
     _save_parquet(df)
     _print_final_summary(df, todo, n_ok, n_fail,
