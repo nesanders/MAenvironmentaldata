@@ -179,13 +179,24 @@ def _label_cluster(client, titles: list[str], cluster_id: int) -> str:
 
 def _build_emb_matrix(parquet_df, scored):
     """Return (emb array, aligned scored DataFrame, valid mask)."""
-    parquet_df['_key'] = list(zip(parquet_df['bill_number'].astype(int),
-                                   parquet_df['general_court'].astype(int)))
+    parquet_df = parquet_df.copy()
+    parquet_df['_gc'] = pd.to_numeric(parquet_df['general_court'], errors='coerce')
+    parquet_df['_gc'] = parquet_df['_gc'].where(
+        (parquet_df['_gc'] >= 180) & (parquet_df['_gc'] <= 210)
+    ).fillna(-1).astype(int)
+    parquet_df['_key'] = list(zip(
+        pd.to_numeric(parquet_df['bill_number'], errors='coerce').fillna(-1).astype(int),
+        parquet_df['_gc'],
+    ))
     emb_map = {row['_key']: np.array(row['embedding'], dtype=np.float32)
                for _, row in parquet_df.iterrows()}
     scored = scored.copy()
-    scored['_key'] = list(zip(scored['bill_number'].astype(int),
-                               scored['general_court'].astype(int)))
+    scored['_gc'] = pd.to_numeric(scored['general_court'], errors='coerce').fillna(-1).astype(int)
+    scored['_key'] = list(zip(
+        pd.to_numeric(scored['bill_number'], errors='coerce').fillna(-1).astype(int),
+        scored['_gc'],
+    ))
+    scored = scored.drop(columns=['_gc'], errors='ignore')
     in_map = scored['_key'].isin(emb_map)
     scored = scored[in_map].reset_index(drop=True)
     emb = np.vstack([emb_map[k] for k in scored['_key']])
@@ -238,13 +249,24 @@ def run_incremental(parquet_df, scored, scored_path):
     print(f'Assigning cluster labels to {n_new} unassigned bills...')
 
     # Build embedding matrix for unassigned bills only
-    parquet_df['_key'] = list(zip(parquet_df['bill_number'].astype(int),
-                                   parquet_df['general_court'].astype(int)))
+    parquet_df = parquet_df.copy()
+    parquet_df['_gc'] = pd.to_numeric(parquet_df['general_court'], errors='coerce')
+    parquet_df['_gc'] = parquet_df['_gc'].where(
+        (parquet_df['_gc'] >= 180) & (parquet_df['_gc'] <= 210)
+    ).fillna(-1).astype(int)
+    parquet_df['_key'] = list(zip(
+        pd.to_numeric(parquet_df['bill_number'], errors='coerce').fillna(-1).astype(int),
+        parquet_df['_gc'],
+    ))
     emb_map = {row['_key']: np.array(row['embedding'], dtype=np.float32)
                for _, row in parquet_df.iterrows()}
     scored_new = scored[unassigned_mask].copy()
-    scored_new['_key'] = list(zip(scored_new['bill_number'].astype(int),
-                                   scored_new['general_court'].astype(int)))
+    scored_new['_gc'] = pd.to_numeric(scored_new['general_court'], errors='coerce').fillna(-1).astype(int)
+    scored_new['_key'] = list(zip(
+        pd.to_numeric(scored_new['bill_number'], errors='coerce').fillna(-1).astype(int),
+        scored_new['_gc'],
+    ))
+    scored_new = scored_new.drop(columns=['_gc'], errors='ignore')
     in_map = scored_new['_key'].isin(emb_map)
     scored_new = scored_new[in_map]
     emb_new = np.vstack([emb_map[k] for k in scored_new['_key']])
@@ -383,7 +405,7 @@ def main():
         return
 
     parquet_df = _load_parquet()
-    scored = pd.read_csv(scored_path, index_col=0)
+    scored = pd.read_csv(scored_path, index_col=0, engine='python')  # C parser overflows on long text fields
 
     if args.incremental:
         run_incremental(parquet_df, scored, scored_path)
