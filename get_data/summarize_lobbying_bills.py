@@ -35,12 +35,16 @@ Outputs
 
 Cost (Gemini 2.5 Flash non-thinking, as of May 2026)
 ─────────────────────────────────────────────────────
-  Uncached input:  $0.075  / 1M tokens
-  Cached input:    $0.01875 / 1M tokens  (taxonomy prefix, ~1,300 tok)
-  Output:          $0.300  / 1M tokens
+  Uncached input:  $0.30   / 1M tokens   (GA tier, verified from billing)
+  Cached input:    $0.075  / 1M tokens   (GA tier, verified from billing)
+  Output:          $2.50   / 1M tokens   (verified from billing — NOT $0.30)
   Thinking is explicitly disabled (budget=0).
 
-  Estimated full run (26k bills):  ~$5–6 with caching  (~$7 without)
+  Estimated full run (26k bills):  ~$10–12 with caching
+
+  NOTE: Previous estimates used wrong output price ($0.30 instead of $2.50).
+  Output tokens dominate cost at ~$2.50/1M (vs $0.30 input). Verified May 2026
+  from GCP billing SKU "Gemini 2.5 Flash GA Text Output - Predictions".
 
 Run from the get_data/ directory:
     /path/to/python -u summarize_lobbying_bills.py --sample 200
@@ -74,9 +78,9 @@ EMBED_WORKERS   = 8      # concurrent embedding workers (separate pool)
 # but backoff handles burst errors.
 
 # Pricing: Gemini 2.5 Flash ($/1M tokens)
-PRICE_INPUT          = 0.075   / 1_000_000
-PRICE_INPUT_CACHED   = 0.01875 / 1_000_000
-PRICE_OUTPUT         = 0.300   / 1_000_000
+PRICE_INPUT          = 0.30    / 1_000_000   # verified from GCP billing May 2026
+PRICE_INPUT_CACHED   = 0.075   / 1_000_000   # verified from GCP billing May 2026
+PRICE_OUTPUT         = 2.50    / 1_000_000   # verified from GCP billing May 2026 (was wrong: $0.30)
 PRICE_THINK          = 3.50    / 1_000_000   # thinking tokens (should be 0 with budget=0)
 PRICE_EMBED          = 0.20    / 1_000_000   # gemini-embedding-2
 
@@ -424,12 +428,13 @@ def _load_parquet() -> pd.DataFrame:
 
 def _save_parquet(df: pd.DataFrame) -> None:
     """Write parquet to local path and GCS."""
+    n_summ = int(df['summary'].notna().sum())
     df.to_parquet(LOCAL_PARQUET, index=False)
     try:
         fs = _gcs_fs()
         with fs.open(GCS_PARQUET, 'wb') as f:
             df.to_parquet(f, index=False)
-        print(f'  → Saved to {GCS_PARQUET}')
+        print(f'  → Saved to {GCS_PARQUET} ({n_summ:,} summaries)')
     except OSError as e:
         print(f'  → GCS save failed: {e} — local copy at {LOCAL_PARQUET}')
 
@@ -647,6 +652,10 @@ def main():
             + total_embed_tok * PRICE_EMBED
         )
 
+    # Collect all results; batch-update df after executor finishes to avoid
+    # pandas CoW / threading issues with incremental df.at writes.
+    all_results: list[dict] = []
+
     with ThreadPoolExecutor(max_workers=args.workers) as executor:
         futures = {
             executor.submit(
@@ -670,8 +679,8 @@ def main():
                 total_cached += r['cached_tok']
                 total_out    += r['out_tok']
                 total_think  += r['think_tok']
-                if r['summ_emb'] is not None:
-                    total_embed_tok += len(r['result'].summary.split()) * 4 // 3 if r['result'] else 0
+                if r['ok'] and r['summ_emb'] is not None and r['result']:
+                    total_embed_tok += len(r['result'].summary.split()) * 4 // 3
 
                 if not r['ok']:
                     n_fail += 1
@@ -679,14 +688,8 @@ def main():
                           f'GC{r["gc"]} {r["bill_no"]} — {r["title"][:55]}')
                 else:
                     n_ok += 1
+                    all_results.append(r)
                     result   = r['result']
-                    df.at[r['idx'], 'summary']    = result.summary
-                    df.at[r['idx'], 'categories'] = json.dumps(result.categories)
-                    df.at[r['idx'], 'tags']       = json.dumps(result.tags)
-                    df.at[r['idx'], 'is_env_llm'] = result.is_environmental
-                    if r['summ_emb'] is not None:
-                        df.at[r['idx'], 'summary_embedding'] = r['summ_emb'].tolist()
-
                     env_flag = '🌿' if result.is_environmental else '  '
                     cats_str = ', '.join(result.categories)
                     tags_str = ', '.join(result.tags[:3]) + ('…' if len(result.tags) > 3 else '')
@@ -698,10 +701,31 @@ def main():
                     print(f'          tags: {tags_str}')
                     print(f'          "{r["title"][:70]}"')
 
-                if completed % 50 == 0:
+                if completed % 200 == 0:
+                    # Apply accumulated results to df, then checkpoint-save
+                    for res in all_results:
+                        result = res['result']
+                        df.loc[res['idx'], 'summary']    = result.summary
+                        df.loc[res['idx'], 'categories'] = json.dumps(result.categories)
+                        df.loc[res['idx'], 'tags']       = json.dumps(result.tags)
+                        df.loc[res['idx'], 'is_env_llm'] = result.is_environmental
+                        if res['summ_emb'] is not None:
+                            df.loc[res['idx'], 'summary_embedding'] = [res['summ_emb'].tolist()]
+                    all_results.clear()
                     _print_checkpoint(completed, n_ok, n_fail,
-                                      total_in, total_cached, total_out)
+                                      total_in, total_cached, total_out,
+                                      total_think, total_embed_tok)
                     _save_parquet(df)
+
+    # Final batch update for any remaining results
+    for res in all_results:
+        result = res['result']
+        df.loc[res['idx'], 'summary']    = result.summary
+        df.loc[res['idx'], 'categories'] = json.dumps(result.categories)
+        df.loc[res['idx'], 'tags']       = json.dumps(result.tags)
+        df.loc[res['idx'], 'is_env_llm'] = result.is_environmental
+        if res['summ_emb'] is not None:
+            df.loc[res['idx'], 'summary_embedding'] = [res['summ_emb'].tolist()]
 
     _save_parquet(df)
     _print_final_summary(df, todo, n_ok, n_fail,

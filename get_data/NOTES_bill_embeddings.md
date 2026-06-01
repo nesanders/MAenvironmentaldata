@@ -339,15 +339,19 @@ Both scores are negative, indicating bills are on average closer to the nearest 
 
 ### 5. Cost actuals
 
-**Pricing (as of May 2026):**
+**Pricing (verified from GCP billing SKUs, May 2026):**
 
-| Model | Operation | Price |
-|-------|-----------|-------|
-| gemini-2.5-flash | Input (uncached) | $0.075 / 1M tokens |
-| gemini-2.5-flash | Input (cached) | $0.01875 / 1M tokens |
-| gemini-2.5-flash | Output | $0.300 / 1M tokens |
-| gemini-2.5-flash | Thinking tokens | $3.50 / 1M tokens |
-| gemini-embedding-2 | Input | $0.20 / 1M tokens |
+| Model | Operation | Price | Notes |
+|-------|-----------|-------|-------|
+| gemini-2.5-flash | Input (uncached) | $0.30 / 1M tokens | GA tier |
+| gemini-2.5-flash | Input (cached) | $0.075 / 1M tokens | GA tier |
+| gemini-2.5-flash | Output | $2.50 / 1M tokens | ⚠️ was wrong: $0.30 |
+| gemini-2.5-flash | Thinking tokens | $3.50 / 1M tokens | confirmed 0 with budget=0 |
+| gemini-embedding-2 | Input | $0.20 / 1M tokens | |
+
+⚠️ **The previous output price ($0.30/1M) was wrong by ~8×.** The correct rate is $2.50/1M.
+This was verified from GCP billing on May 31, 2026: output tokens were the dominant cost
+($7.33 of ~$10.74 total on that day alone). Scripts have been updated with corrected constants.
 
 **Pilot run (495 bills, LLM only — embedding not tracked initially):**
 
@@ -357,19 +361,31 @@ Both scores are negative, indicating bills are on average closer to the nearest 
 | Cached tokens | 792,990 (80.8%) |
 | Avg input / bill | 1,982 tokens |
 | Avg output / bill | 152 tokens |
-| LLM cost (495 bills) | $0.0525 |
+| LLM cost (495 bills) | $0.0525 (logged; actual ~$0.40 with corrected output price) |
 | Savings from prompt caching | ~46% |
 
-**Full-corpus cost estimate (all 25,932 bills, corrected):**
+**Full-corpus actual cost (all 25,932 bills, verified from billing):**
+
+| Component | May 31 actual | Notes |
+|-----------|--------------|-------|
+| Output tokens (generate_content) | $7.33 | Dominant cost — ~3.4M tokens at $2.50/1M |
+| Input tokens (uncached) | $2.14 | ~8.3M tokens at $0.30/1M (approx) |
+| Input tokens (cached) | $0.94 | ~35.9M tokens at $0.075/1M (approx) |
+| Embed (gemini-embedding-2) | $0.33 | ~1.7M tokens at $0.20/1M |
+| **Total (May 31 two runs)** | **~$10.74** | + "4 below" items |
+
+**Revised full-corpus cost estimate:**
 
 | Component | Tokens | Cost |
 |-----------|--------|------|
-| LLM summarize (generate_content) | ~52M input, ~4M output | ~$2.77 |
-| Summary embed (gemini-embedding-2, ~100 tok/summary) | ~2.6M | ~$0.52 |
-| Bill embed in score_lobbying.py (~700 tok/bill) | ~18.2M | ~$3.64 |
-| **Total all-in** | | **~$6.93** |
+| LLM output (~154 tok/bill × 25,932 bills) | ~4M output | **~$10.00** |
+| LLM input (~1,950 tok/bill, 80% cached) | ~4M uncached + 20M cached input | ~$2.70 |
+| Summary embed (gemini-embedding-2) | ~2.6M | ~$0.52 |
+| Bill embed in score_lobbying.py | ~18.2M | ~$3.64 |
+| **Total all-in** | | **~$16–17** |
 
-Note: the initial estimate of "$2.76 projected" only captured LLM generate_content calls. The `gemini-embedding-2` model at $0.20/1M tokens adds ~$4.16 across both the score_lobbying embedding pass and inline summary embedding. Thinking tokens (budget=0) confirmed zero in tests; tracking added to script to verify in production runs.
+Note: earlier estimates of "$6.93" and "$2.76" were based on the wrong output token price.
+The correct all-in cost for the full 26k pipeline is approximately **$16–17**.
 
 ### 6. UMAP with summary embeddings
 
