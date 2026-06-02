@@ -362,6 +362,19 @@ if __name__ == '__main__':
 		_lb['bill_number'] = pd.to_numeric(_lb['bill_number'], errors='coerce').astype('Int64')
 		if 'general_court' in _lb.columns:
 			_lb['general_court'] = pd.to_numeric(_lb['general_court'], errors='coerce').astype('Int64')
+		# Deduplicate: null-bill rows ("no specific bills") are sometimes scraped
+		# multiple times from the SoS portal across filing periods.  Drop exact
+		# duplicates on the logical key; keep the row with the highest amount so
+		# no spend is lost when two copies carry different values.
+		_lb_key = ['entity_name', 'client_name', 'year', 'general_court',
+		           'bill_number', 'position']
+		_lb_before = len(_lb)
+		_lb = (_lb.sort_values('amount', ascending=False, na_position='last')
+		          .drop_duplicates(subset=_lb_key, keep='first')
+		          .reset_index(drop=True))
+		if len(_lb) < _lb_before:
+			print(f"  Deduplicated MA_Lobbying_Bills: {_lb_before} → {len(_lb)} rows "
+			      f"({_lb_before - len(_lb)} duplicates removed)")
 		data_csv['MA_Lobbying_Bills'] = _lb
 		print(f"MA_Lobbying_Bills: {len(data_csv['MA_Lobbying_Bills'])} rows")
 	if os.path.exists(_legislature_bills_path):
@@ -389,6 +402,22 @@ if __name__ == '__main__':
 			errors='coerce').astype('Int64')
 		if 'cluster_id' in _scored.columns:
 			_scored['cluster_id'] = pd.to_numeric(_scored['cluster_id'], errors='coerce').astype('Int64')
+		# Deduplicate: multiple filers sometimes reference the same bill_number with
+		# slightly different bill_title strings, producing duplicate scored rows.
+		# Keep the row with the highest env_relevance_score per (bill_number,
+		# general_court) so env-relevant bills are never suppressed by a lower-
+		# scoring duplicate; prefer rows with a valid bill_id as a secondary sort.
+		_scored_before = len(_scored)
+		_scored = (_scored
+		           .assign(_has_bill_id=_scored['bill_id'].notna().astype(int))
+		           .sort_values(['env_relevance_score', '_has_bill_id'],
+		                        ascending=[False, False], na_position='last')
+		           .drop_duplicates(subset=['bill_number', 'general_court'], keep='first')
+		           .drop(columns=['_has_bill_id'])
+		           .reset_index(drop=True))
+		if len(_scored) < _scored_before:
+			print(f"  Deduplicated MA_Lobbying_Bills_Scored: {_scored_before} → {len(_scored)} rows "
+			      f"({_scored_before - len(_scored)} duplicates removed)")
 		data_csv['MA_Lobbying_Bills_Scored'] = _scored
 		print(f"MA_Lobbying_Bills_Scored: {len(data_csv['MA_Lobbying_Bills_Scored'])} rows")
 
