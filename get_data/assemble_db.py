@@ -418,6 +418,24 @@ if __name__ == '__main__':
 		if len(_scored) < _scored_before:
 			print(f"  Deduplicated MA_Lobbying_Bills_Scored: {_scored_before} → {len(_scored)} rows "
 			      f"({_scored_before - len(_scored)} duplicates removed)")
+		# Replace concatenated multi-bill title blobs with the authoritative title
+		# from MA_Legislature_Bills wherever the join on (bill_id, general_court)
+		# succeeds.  The SoS portal sometimes stores all bills a filer registered
+		# in one text block; the Legislature API always has a clean single title.
+		if 'MA_Legislature_Bills' in data_csv and 'bill_id' in _scored.columns:
+			_leg_titles = (data_csv['MA_Legislature_Bills']
+			               [['bill_id', 'general_court', 'title']]
+			               .dropna(subset=['bill_id', 'title'])
+			               .drop_duplicates(subset=['bill_id', 'general_court']))
+			_leg_titles = _leg_titles.rename(columns={'title': '_leg_title'})
+			_scored = _scored.merge(_leg_titles, on=['bill_id', 'general_court'], how='left')
+			_long_mask = _scored['bill_title'].str.len().fillna(0) > 300
+			_fixed = (_long_mask & _scored['_leg_title'].notna()).sum()
+			_scored.loc[_long_mask & _scored['_leg_title'].notna(), 'bill_title'] = \
+				_scored.loc[_long_mask & _scored['_leg_title'].notna(), '_leg_title']
+			_scored = _scored.drop(columns=['_leg_title'])
+			if _fixed:
+				print(f"  Replaced {_fixed} concatenated bill titles with Legislature API titles")
 		data_csv['MA_Lobbying_Bills_Scored'] = _scored
 		print(f"MA_Lobbying_Bills_Scored: {len(data_csv['MA_Lobbying_Bills_Scored'])} rows")
 
