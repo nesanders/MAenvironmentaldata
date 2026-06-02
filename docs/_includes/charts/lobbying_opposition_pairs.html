@@ -1,0 +1,74 @@
+{% raw  %}
+<html>
+    <head>
+        <title>Top 15 Most-Opposed Employer Pairs on Environmental Bills</title>
+        <script src='https://cdn.jsdelivr.net/npm/chart.js@4.4.4/dist/chart.umd.min.js'></script>
+    </head>
+    <body>
+        <div style="width: 780px; height: 520px; max-width: 99%" class="chartjs">
+
+            <canvas id="Top 15 Most-Opposed Employer Pairs on Environmental Bills" height="520" width="780"></canvas>
+            <script>
+                Chart.defaults.font.size = 12;
+                var chart_data = {
+
+                    data: {
+                        labels: ["BCC Solar vs National Grid", "Associated Industries of Massachus\u2026 vs MASSPIRG", "Associated Industries of Massachus\u2026 vs Mass Audubon", "Environmental League of Massachuse\u2026 vs National Grid", "National Grid vs Vote Solar", "CLEAN WATER ACTION vs National Grid", "Environmental League of Massachuse\u2026 vs National Grid", "Massachusetts Association of Realt\u2026 vs Northeast Clean Energy Council, In\u2026", "National Grid vs Northeast Clean Energy Council", "Associated Industries of Massachus\u2026 vs National Grid", "American Chemistry Council vs CLEAN WATER ACTION", "Associated Industries of Massachus\u2026 vs Environmental League of Massachuse\u2026", "National Grid USA vs Northeast Clean Energy Council, In\u2026", "Associated Industries of Massachus\u2026 vs CLEAN WATER ACTION", "Associated Industries of Massachus\u2026 vs Environmental League of Massachuse\u2026"],
+                        datasets: [{'data': [14, 15, 15, 15, 15, 16, 17, 17, 17, 17, 19, 23, 23, 24, 28], 'label': 'Unique env bills where they opposed each other', 'backgroundColor': 'rgba(200, 60, 60, 0.85)'}]
+                    },
+                    type: 'bar',
+                    options: {
+                        indexAxis: 'y',
+                        scales: {
+                            y: {
+                                display: true,
+                                title: {
+                                    display: true,
+                                    text: ''
+                                },
+                                position: 'left',
+                                stacked: false
+                            },
+                            y1: {
+                                display: false,
+                                title: {
+                                    display: true,
+                                    text: ''
+                                },
+                                position: 'right'
+                            },
+                            x: {
+                                title: {
+                                    display: true,
+                                    text: 'Unique environmental bills (as opposing parties)'
+                                },
+                                stacked: false,
+                                ticks: {
+                                    autoSkip: true
+                                }
+                            }
+                        },
+                        plugins: {
+                            legend: {
+                                display: true
+                            },
+                            tooltip: {
+                                enabled: true
+                            }
+                        }
+                    }
+                }
+                
+                
+            </script>
+            <script>
+                {
+
+                    var ctx = document.getElementById("Top 15 Most-Opposed Employer Pairs on Environmental Bills").getContext("2d");
+                    var mychart = new Chart(ctx, chart_data);
+                }
+            </script>
+        </div>
+    </body>
+</html>
+{% endraw  %}

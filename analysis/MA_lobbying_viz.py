@@ -657,6 +657,14 @@ def generate_post_charts(engine, prefix=''):
     # ── Post chart 9: Env score vs. lobbying intensity scatter ───────────────
     _chart_env_score_vs_clients(engine, prefix)
 
+    # ── Post charts 11–15: LLM-based new analysis charts ─────────────────────
+    parquet_df = _load_parquet_llm()
+    _chart_env_categories_by_gc(parquet_df, prefix)
+    _chart_gc_trend(parquet_df, lobby_bills, prefix)
+    _chart_employer_env_scatter(parquet_df, lobby_bills, employers, prefix)
+    _chart_opposition_pairs(parquet_df, lobby_bills, prefix)
+    _chart_top_env_tags(parquet_df, prefix)
+
     # ── Post chart 10: Lobbying spend by known CSO operators + proxies ────────
     # Cross-references MA_Lobbying_Employers.client_name with MAEEADP_CSO.permiteeName.
     # Includes the Massachusetts Municipal Association as a proxy: it is the
@@ -1101,6 +1109,422 @@ def _write_facts(employers: pd.DataFrame, spend_trend: pd.DataFrame, most_recent
     with open(FACTS_YML, 'w') as f:
         for k, v in facts.items():
             f.write(f'{k}: {v}\n')
+
+
+def _load_parquet_llm() -> pd.DataFrame:
+    """Load bill parquet from local path (LLM columns: categories, tags, is_env_llm)."""
+    local = Path(CHART_DIR).parent / 'data' / 'MA_bill_embeddings.parquet'
+    if local.exists():
+        return pd.read_parquet(local)
+    # Fallback to GCS
+    try:
+        import gcsfs
+        fs = gcsfs.GCSFileSystem()
+        with fs.open('gs://openamend-data/MA_bill_embeddings.parquet', 'rb') as f:
+            return pd.read_parquet(f)
+    except Exception as e:
+        print(f'  Parquet load failed: {e}')
+        return pd.DataFrame()
+
+
+def _make_env_lobby_bills(parquet_df: pd.DataFrame, lobby_bills: pd.DataFrame) -> pd.DataFrame:
+    """Merge parquet LLM env flag (is_env_llm) onto lobby_bills rows."""
+    if parquet_df.empty or lobby_bills.empty:
+        return pd.DataFrame()
+    env_ids = parquet_df[parquet_df['is_env_llm'] == True][
+        ['bill_number', 'general_court']
+    ].copy()
+    env_ids['bill_number'] = pd.to_numeric(env_ids['bill_number'], errors='coerce').astype('Int64')
+    env_ids['general_court'] = pd.to_numeric(env_ids['general_court'], errors='coerce').astype('Int64')
+    lb = lobby_bills.copy()
+    lb['bill_number'] = pd.to_numeric(lb['bill_number'], errors='coerce').astype('Int64')
+    lb['general_court'] = pd.to_numeric(lb['general_court'], errors='coerce').astype('Int64')
+    return lb.merge(env_ids, on=['bill_number', 'general_court'], how='inner')
+
+
+def _chart_env_categories_by_gc(parquet_df: pd.DataFrame, prefix: str):
+    """Stacked bar: env bill count by LLM category, by general court.
+
+    Uses is_env_llm from parquet to select environmental bills.
+    Each bill may belong to multiple categories (JSON list); one count
+    per (bill, category) — bills counted once per unique category they appear in.
+    X-axis = General Court (session), stacked by top-5 categories + 'Other'.
+    """
+    import json as _json
+
+    if parquet_df.empty or 'is_env_llm' not in parquet_df.columns:
+        return
+
+    env = parquet_df[parquet_df['is_env_llm'] == True].copy()
+    if env.empty:
+        return
+
+    # Explode categories
+    rows = []
+    for _, row in env.iterrows():
+        gc = row.get('general_court')
+        cats_raw = row.get('categories')
+        if pd.isna(gc) or cats_raw is None:
+            continue
+        try:
+            cats = _json.loads(cats_raw) if isinstance(cats_raw, str) else cats_raw
+        except Exception:
+            cats = []
+        if not isinstance(cats, list) or not cats:
+            cats = ['Unknown']
+        gc_int = int(gc)
+        # Deduplicate categories per bill
+        for cat in set(cats):
+            rows.append({'general_court': gc_int, 'category': cat})
+
+    if not rows:
+        return
+
+    cat_df = pd.DataFrame(rows)
+
+    # Top 5 categories by total count
+    top_cats = (
+        cat_df['category'].value_counts()
+        .head(5)
+        .index.tolist()
+    )
+
+    cat_df['cat_label'] = cat_df['category'].apply(
+        lambda c: c if c in top_cats else 'Other'
+    )
+
+    pivot = (
+        cat_df.groupby(['general_court', 'cat_label'])
+        .size()
+        .unstack(fill_value=0)
+        .sort_index()
+    )
+
+    # Column order: top cats in size order, then Other
+    ordered = [c for c in top_cats if c in pivot.columns]
+    if 'Other' in pivot.columns:
+        ordered.append('Other')
+    pivot = pivot[ordered]
+
+    gcs = pivot.index.tolist()
+    cat_colors = [BLUE, ORANGE, GREEN, RED, PURPLE, TEAL, GREY]
+
+    c = chartjs.Chart(
+        'Environmental Bills by Topic Category and Legislative Session',
+        'Bar', width=720, height=400,
+    )
+    c.set_labels([f'GC{gc}' for gc in gcs])
+    for i, col in enumerate(pivot.columns):
+        c.add_dataset(
+            pivot[col].tolist(), col,
+            backgroundColor=f"'{cat_colors[i % len(cat_colors)]}'",
+            stack="'cat'",
+        )
+    c.set_params(
+        js_inline=False,
+        ylabel='Unique environmental bills',
+        xlabel='General Court (legislative session)',
+        stacked=True,
+    )
+    c.jekyll_write(f'{CHART_DIR}/{prefix}lobbying_env_categories_by_gc.html')
+    print(f'Wrote {prefix}lobbying_env_categories_by_gc.html')
+
+
+def _chart_gc_trend(parquet_df: pd.DataFrame, lobby_bills: pd.DataFrame, prefix: str):
+    """Dual-line: unique env bills and unique clients per General Court.
+
+    Uses LLM env flag from parquet for env bill identification.
+    """
+    env_lb = _make_env_lobby_bills(parquet_df, lobby_bills)
+    if env_lb.empty:
+        return
+
+    gc_bills = (
+        env_lb.groupby('general_court')['bill_number']
+        .nunique()
+        .reset_index(name='n_env_bills')
+        .sort_values('general_court')
+    )
+    gc_clients = (
+        env_lb.groupby('general_court')['client_name']
+        .nunique()
+        .reset_index(name='n_env_clients')
+    )
+    gc_trend = gc_bills.merge(gc_clients, on='general_court')
+    gc_trend = gc_trend[gc_trend['general_court'] > 180].sort_values('general_court')
+
+    if gc_trend.empty:
+        return
+
+    gcs = gc_trend['general_court'].astype(int).tolist()
+    n_bills = gc_trend['n_env_bills'].tolist()
+    n_clients = gc_trend['n_env_clients'].tolist()
+
+    c = chartjs.Chart(
+        'Environmental Lobbying Engagement by Legislative Session',
+        'Bar', width=720, height=380,
+    )
+    c.set_labels([f'GC{g}' for g in gcs])
+    c.add_dataset(n_bills, 'Unique env bills lobbied',
+                  backgroundColor=f"'{TEAL}'", yAxisID="'y'")
+    c.add_dataset(n_clients, 'Unique employer clients',
+                  backgroundColor=f"'{ORANGE}'", type="'line'", yAxisID="'y1'")
+    c.set_params(
+        js_inline=False,
+        ylabel='Unique environmental bills',
+        xlabel='General Court (legislative session)',
+        y2nd=1,
+        y2nd_title='Unique employer clients',
+    )
+    c.jekyll_write(f'{CHART_DIR}/{prefix}lobbying_gc_trend.html')
+    print(f'Wrote {prefix}lobbying_gc_trend.html')
+
+
+def _chart_employer_env_scatter(parquet_df: pd.DataFrame, lobby_bills: pd.DataFrame,
+                                  employers: pd.DataFrame, prefix: str,
+                                  min_bills: int = 10):
+    """Plotly scatter: total lobbying spend (x) vs env bill share (y) per client.
+
+    Each point is one lobbying client (employer). Clients with fewer than
+    `min_bills` total bills are excluded to remove noise from one-off filers.
+    Point size scales with total env bills. Hover shows client name, totals,
+    and average env fraction.
+    """
+    import plotly.express as px
+
+    env_lb = _make_env_lobby_bills(parquet_df, lobby_bills)
+    if env_lb.empty or employers.empty:
+        return
+
+    pair_keys = ['entity_name', 'client_name', 'year']
+    lb = lobby_bills.copy()
+    lb['bill_number'] = pd.to_numeric(lb['bill_number'], errors='coerce').astype('Int64')
+    lb['year'] = pd.to_numeric(lb['year'], errors='coerce').astype('Int64')
+    env_lb2 = env_lb.copy()
+    env_lb2['year'] = pd.to_numeric(env_lb2['year'], errors='coerce').astype('Int64')
+
+    all_counts = lb.groupby(pair_keys)['bill_number'].nunique().reset_index(name='n_all')
+    env_counts = env_lb2.groupby(pair_keys)['bill_number'].nunique().reset_index(name='n_env')
+    fracs = all_counts.merge(env_counts, on=pair_keys, how='left')
+    fracs['n_env'] = fracs['n_env'].fillna(0)
+    fracs['env_frac'] = fracs['n_env'] / fracs['n_all'].replace(0, np.nan)
+
+    emp = employers[employers['client_name'] != 'Total salaries received'].copy()
+    emp['year'] = pd.to_numeric(emp['year'], errors='coerce').astype('Int64')
+    emp['compensation'] = pd.to_numeric(emp['compensation'], errors='coerce').fillna(0)
+
+    merged = emp.merge(fracs, on=pair_keys, how='inner')
+    merged['env_spend'] = merged['compensation'] * merged['env_frac'].fillna(0)
+
+    client_stats = merged.groupby('client_name').agg(
+        total_spend=('compensation', 'sum'),
+        total_env_spend=('env_spend', 'sum'),
+        total_bills=('n_all', 'sum'),
+        total_env_bills=('n_env', 'sum'),
+    ).reset_index()
+    client_stats['avg_env_frac'] = (
+        client_stats['total_env_bills'] / client_stats['total_bills'].replace(0, np.nan)
+    )
+    client_stats = client_stats[client_stats['total_bills'] >= min_bills].copy()
+
+    if client_stats.empty:
+        return
+
+    # Classify by env fraction
+    def _sector(row):
+        f = row['avg_env_frac']
+        if f >= 0.8:
+            return 'Primarily env (≥80%)'
+        elif f >= 0.4:
+            return 'Mixed env (40–80%)'
+        elif f >= 0.1:
+            return 'Occasional env (10–40%)'
+        else:
+            return 'Rarely env (<10%)'
+
+    client_stats['sector'] = client_stats.apply(_sector, axis=1)
+    sector_order = [
+        'Primarily env (≥80%)',
+        'Mixed env (40–80%)',
+        'Occasional env (10–40%)',
+        'Rarely env (<10%)',
+    ]
+    color_map = {
+        'Primarily env (≥80%)':    '#2ca02c',
+        'Mixed env (40–80%)':      '#1f77b4',
+        'Occasional env (10–40%)': '#ff7f0e',
+        'Rarely env (<10%)':       '#aaaaaa',
+    }
+
+    client_stats['spend_k'] = (client_stats['total_spend'] / 1e3).round(1)
+    client_stats['env_pct'] = (client_stats['avg_env_frac'] * 100).round(1)
+    client_stats['env_bills_int'] = client_stats['total_env_bills'].astype(int)
+    # Bubble size: sqrt of total env bills (capped)
+    client_stats['bubble_size'] = np.sqrt(client_stats['total_env_bills'].clip(1, 200)) * 1.5
+
+    fig = px.scatter(
+        client_stats,
+        x='spend_k',
+        y='env_pct',
+        color='sector',
+        color_discrete_map=color_map,
+        category_orders={'sector': sector_order},
+        size='bubble_size',
+        size_max=22,
+        hover_name='client_name',
+        hover_data={
+            'client_name': False,
+            'bubble_size': False,
+            'sector': False,
+            'spend_k': ':.0f',
+            'env_pct': ':.1f',
+            'env_bills_int': True,
+            'total_bills': True,
+        },
+        labels={
+            'spend_k':       'Total lobbying spend ($K, all years)',
+            'env_pct':       'Share of bills that are environmental (%)',
+            'env_bills_int': 'Env bills lobbied',
+            'total_bills':   'Total bills lobbied',
+            'sector':        '',
+        },
+        title=(
+            'Lobbying Clients: Total Spend vs. Environmental Focus<br>'
+            f'<sup>{len(client_stats):,} clients with ≥{min_bills} bills · '
+            'bubble size ∝ √(env bills) · hover for details</sup>'
+        ),
+        opacity=0.75,
+        width=820,
+        height=560,
+    )
+    fig.update_layout(
+        legend=dict(orientation='h', yanchor='bottom', y=1.02, xanchor='left', x=0),
+        plot_bgcolor='#f8f8f8',
+        paper_bgcolor='white',
+        xaxis=dict(title='Total lobbying spend ($K, all years)'),
+        yaxis=dict(title='Share of bills that are environmental (%)', range=[-2, 102]),
+    )
+    out = Path(CHART_DIR) / f'{prefix}lobbying_employer_env_scatter.html'
+    html = fig.to_html(full_html=False, include_plotlyjs='cdn', config={'responsive': True})
+    out.write_text('{% raw  %}\n' + html + '\n{% endraw %}\n', encoding='utf-8')
+    print(f'Wrote {prefix}lobbying_employer_env_scatter.html')
+
+
+def _chart_opposition_pairs(parquet_df: pd.DataFrame, lobby_bills: pd.DataFrame, prefix: str,
+                              top_n: int = 15):
+    """Horizontal bar: employer pairs most frequently on opposite sides of env bills.
+
+    Self-joins lobby_bills on (bill_number, general_court) to find (supporter, opposer)
+    pairs for environmentally-relevant bills, then counts unique bills per pair.
+    """
+    env_lb = _make_env_lobby_bills(parquet_df, lobby_bills)
+    if env_lb.empty or 'position' not in env_lb.columns:
+        return
+
+    supporters = (
+        env_lb[env_lb['position'] == 'Support']
+        [['bill_number', 'general_court', 'client_name']]
+        .drop_duplicates()
+        .rename(columns={'client_name': 'supporter'})
+    )
+    opponents = (
+        env_lb[env_lb['position'] == 'Oppose']
+        [['bill_number', 'general_court', 'client_name']]
+        .drop_duplicates()
+        .rename(columns={'client_name': 'opposer'})
+    )
+
+    pairs = supporters.merge(opponents, on=['bill_number', 'general_court'])
+    pairs = pairs[pairs['supporter'] != pairs['opposer']].copy()
+
+    if pairs.empty:
+        return
+
+    # Canonical ordering: smaller string first
+    pairs['a'] = pairs[['supporter', 'opposer']].min(axis=1)
+    pairs['b'] = pairs[['supporter', 'opposer']].max(axis=1)
+
+    pair_counts = (
+        pairs.groupby(['a', 'b'])['bill_number']
+        .nunique()
+        .reset_index(name='n_bills')
+        .nlargest(top_n, 'n_bills')
+        .sort_values('n_bills')   # ascending for horizontal bar
+    )
+
+    if pair_counts.empty:
+        return
+
+    # Short labels: truncate to 35 chars each
+    def _short(s, n=35):
+        return s if len(s) <= n else s[:n - 1] + '…'
+
+    labels = [
+        f'{_short(r["a"])} vs {_short(r["b"])}'
+        for _, r in pair_counts.iterrows()
+    ]
+
+    c = chartjs.Chart(
+        f'Top {top_n} Most-Opposed Employer Pairs on Environmental Bills',
+        'HorizontalBar', width=780, height=520,
+    )
+    c.set_labels(labels)
+    c.add_dataset(
+        pair_counts['n_bills'].tolist(),
+        'Unique env bills where they opposed each other',
+        backgroundColor=f"'{RED}'",
+    )
+    c.set_params(
+        js_inline=False,
+        ylabel='',
+        xlabel='Unique environmental bills (as opposing parties)',
+    )
+    c.jekyll_write(f'{CHART_DIR}/{prefix}lobbying_opposition_pairs.html')
+    print(f'Wrote {prefix}lobbying_opposition_pairs.html')
+
+
+def _chart_top_env_tags(parquet_df: pd.DataFrame, prefix: str, top_n: int = 15):
+    """Horizontal bar: most common LLM-assigned tags for environmental bills."""
+    import json as _json
+    from collections import Counter
+
+    if parquet_df.empty or 'is_env_llm' not in parquet_df.columns:
+        return
+
+    env = parquet_df[parquet_df['is_env_llm'] == True]
+    all_tags: list = []
+    for t in env['tags'].dropna():
+        try:
+            tags = _json.loads(t) if isinstance(t, str) else t
+            if isinstance(tags, list):
+                all_tags.extend(tags)
+        except Exception:
+            pass
+
+    if not all_tags:
+        return
+
+    tag_counts = Counter(all_tags)
+    top_tags = tag_counts.most_common(top_n)
+    # Reverse for ascending horizontal bar
+    top_tags = list(reversed(top_tags))
+
+    labels = [t[0] for t in top_tags]
+    counts = [t[1] for t in top_tags]
+
+    c = chartjs.Chart(
+        f'Top {top_n} Tags on Environmental Bills (LLM-assigned)',
+        'HorizontalBar', width=720, height=480,
+    )
+    c.set_labels(labels)
+    c.add_dataset(counts, 'Bills with tag', backgroundColor=f"'{TEAL}'")
+    c.set_params(
+        js_inline=False,
+        ylabel='',
+        xlabel='Number of environmental bills',
+    )
+    c.jekyll_write(f'{CHART_DIR}/{prefix}lobbying_top_env_tags.html')
+    print(f'Wrote {prefix}lobbying_top_env_tags.html')
 
 
 if __name__ == '__main__':
