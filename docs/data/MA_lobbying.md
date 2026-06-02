@@ -5,6 +5,16 @@ layout: data_listing
 ancillary: 0
 ---
 
+## Explore the data
+
+The **[MA Lobbying Explorer](https://nsanders.me/ma_lobbying_explorer/)** is an interactive browser for this dataset. Search and filter bills, employers, and lobbying firms; click any entry to see its full disclosure history and links back to the Secretary of State portal and MA Legislature website.
+
+- [Browse bills](https://nsanders.me/ma_lobbying_explorer/bills.html) — search by bill ID, title, or environmental relevance
+- [Browse employers](https://nsanders.me/ma_lobbying_explorer/employers.html) — search by employer/client name; see all bills and spend history
+- [Browse lobbyists](https://nsanders.me/ma_lobbying_explorer/lobbyists.html) — search by lobbying firm name; see all clients and bills
+
+---
+
 ## Data source
 
 The [MA Secretary of State](https://www.sec.state.ma.us/LobbyistPublicSearch/) publishes semi-annual lobbying disclosure filings for all registered lobbyists and lobbying entities in Massachusetts. Filers report which clients hired them, how much each client paid, and which specific bills they lobbied on behalf of each client (with chamber, bill number, title, and position — Support, Oppose, or Neutral).
@@ -59,23 +69,23 @@ One row per (entity, client, year). Records how much each client paid each lobby
 
 | Entity Name | Client Name | Year | Reg Type | Compensation |
 | --- | --- | --- | --- | --- |{% for row in site.data.MA_lobbying_employers_sample limit:10 %}
-| {{ row.entity_name }} | {{ row.client_name }} | {{ row.year }} | {{ row.reg_type }} | {{ row.compensation }} |{% endfor %}
+| [{{ row.entity_name }}](https://nsanders.me/ma_lobbying_explorer/lobbyists.html?name={{ row.entity_name | slugify }}) | [{{ row.client_name }}](https://nsanders.me/ma_lobbying_explorer/employers.html?name={{ row.client_name | slugify }}) | {{ row.year }} | {{ row.reg_type }} | {{ row.compensation }} |{% endfor %}
 {: .sortable}
 
 ### Lobbying Bills
 
 One row per (entity, client, bill, session). Records which bills each entity lobbied on behalf of each client, with the lobbying position.
 
-| Entity Name | Client Name | Year | Chamber | Bill Number | Bill Title | Position |
+| Entity Name | Client Name | Year | Chamber | Bill | Bill Title | Position |
 | --- | --- | --- | --- | --- | --- | --- |{% for row in site.data.MA_lobbying_bills_sample limit:10 %}
-| {{ row.entity_name }} | {{ row.client_name }} | {{ row.year }} | {{ row.chamber }} | {{ row.bill_number }} | {{ row.bill_title }} | {{ row.position }} |{% endfor %}
+| [{{ row.entity_name }}](https://nsanders.me/ma_lobbying_explorer/lobbyists.html?name={{ row.entity_name | slugify }}) | [{{ row.client_name }}](https://nsanders.me/ma_lobbying_explorer/employers.html?name={{ row.client_name | slugify }}) | {{ row.year }} | {{ row.chamber }} | [{{ row.bill_id }}](https://nsanders.me/ma_lobbying_explorer/bills.html?id={{ row.bill_id }}&gc={{ row.general_court }}) | {{ row.bill_title | truncate: 60 }} | {{ row.position }} |{% endfor %}
 {: .sortable}
 
 ### Legislature Bills
 
 Bill metadata fetched from the [MA Legislature OpenAPI](https://malegislature.gov/api/swagger). Includes sponsor, final status, and derived `passed` boolean. Environmental relevance scores and cluster IDs are stored separately in `MA_lobbying_bills_scored.csv` (see above).
 
-| Bill Number | General Court | Title | Sponsor | Status | Passed |
+| Bill | General Court | Title | Sponsor | Status | Passed |
 | --- | --- | --- | --- | --- | --- |{% for row in site.data.MA_legislature_bills_sample limit:10 %}
-| {{ row.bill_number }} | {{ row.general_court }} | {{ row.title }} | {{ row.sponsor_name }} | {{ row.status }} | {{ row.passed }} |{% endfor %}
+| [{{ row.bill_id }}](https://nsanders.me/ma_lobbying_explorer/bills.html?id={{ row.bill_id }}&gc={{ row.general_court }}) | {{ row.general_court }} | {{ row.title | truncate: 60 }} | {{ row.sponsor_name }} | {{ row.status | truncate: 40 }} | {{ row.passed }} |{% endfor %}
 {: .sortable}

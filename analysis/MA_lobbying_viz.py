@@ -61,10 +61,17 @@ def _load_data(engine):
     # MA_Legislature_Bills: passed status
     scored = _safe_read('SELECT * FROM MA_Lobbying_Bills_Scored')
     leg_bills_raw = _safe_read(
-        'SELECT bill_number, general_court, passed FROM MA_Legislature_Bills'
+        'SELECT bill_id, bill_number, general_court, passed FROM MA_Legislature_Bills'
     )
     if not scored.empty and not leg_bills_raw.empty:
-        leg_bills = scored.merge(leg_bills_raw, on=['bill_number', 'general_court'], how='left')
+        # Join on bill_id (preferred) — avoids H/S cross-prefix contamination
+        # where H and S bills share the same integer bill_number in the same GC.
+        if 'bill_id' in scored.columns and 'bill_id' in leg_bills_raw.columns:
+            leg_bills = scored.merge(
+                leg_bills_raw[['bill_id', 'general_court', 'passed']].dropna(subset=['bill_id']),
+                on=['bill_id', 'general_court'], how='left')
+        else:
+            leg_bills = scored.merge(leg_bills_raw, on=['bill_number', 'general_court'], how='left')
     elif not scored.empty:
         leg_bills = scored
     else:
@@ -72,14 +79,54 @@ def _load_data(engine):
     return employers, lobby_bills, leg_bills
 
 
+def _bill_merge(left: pd.DataFrame, right: pd.DataFrame,
+                extra_right_cols: list | None = None,
+                how: str = 'inner') -> pd.DataFrame:
+    """Merge two DataFrames on (bill_id, general_court) when both have bill_id,
+    falling back to (bill_number, general_court) for rows without bill_id.
+
+    This avoids cross-prefix contamination: H and S bills share the same integer
+    bill_number within a General Court, so a (bill_number, gc) join incorrectly
+    merges their lobbying records.  bill_id (e.g. H1234, S5678) is unambiguous.
+
+    Parameters
+    ----------
+    left        : DataFrame that must have at least bill_number + general_court.
+    right       : DataFrame with bill_number + general_court and possibly bill_id.
+    extra_right_cols : additional columns to keep from right (default: all).
+    how         : join type passed to pd.merge (default 'inner').
+    """
+    has_bid = ('bill_id' in left.columns and 'bill_id' in right.columns)
+    right_cols = list(right.columns) if extra_right_cols is None else (
+        (['bill_id'] if has_bid else []) + ['bill_number', 'general_court'] + extra_right_cols
+    )
+    right_sub = right[right_cols] if extra_right_cols is not None else right
+    if not has_bid:
+        return left.merge(right_sub, on=['bill_number', 'general_court'], how=how)
+    # Rows with bill_id: join on (bill_id, general_court)
+    right_id = right_sub[right_sub['bill_id'].notna()]
+    right_num = right_sub[right_sub['bill_id'].isna()]
+    left_id = left[left['bill_id'].notna()]
+    left_num = left[left['bill_id'].isna()]
+    parts = []
+    if not left_id.empty and not right_id.empty:
+        parts.append(left_id.merge(right_id, on=['bill_id', 'general_court'], how=how))
+    if not left_num.empty and not right_num.empty:
+        parts.append(left_num.merge(right_num, on=['bill_number', 'general_court'], how=how))
+    if not parts:
+        # Return empty frame with the right shape
+        return left.merge(right_sub, on=['bill_number', 'general_court'], how='inner').iloc[0:0]
+    return pd.concat(parts, ignore_index=True)
+
+
 def _env_bills(lobby_bills: pd.DataFrame, leg_bills: pd.DataFrame) -> pd.DataFrame:
     """Return lobby_bills rows joined to environmentally relevant bills."""
     if leg_bills.empty or lobby_bills.empty or 'is_environmental' not in leg_bills.columns:
         return pd.DataFrame()
-    env = leg_bills[leg_bills['is_environmental'] == 1][
-        ['bill_number', 'general_court', 'passed']
-    ].copy()
-    return lobby_bills.merge(env, on=['bill_number', 'general_court'], how='inner')
+    env = leg_bills[leg_bills['is_environmental'] == 1].copy()
+    passed_col = ['passed'] if 'passed' in env.columns else []
+    extra = passed_col
+    return _bill_merge(lobby_bills, env, extra_right_cols=extra, how='inner')
 
 
 def _annual_env_spend(employers: pd.DataFrame, lobby_bills: pd.DataFrame,
@@ -115,14 +162,15 @@ def _annual_env_spend(employers: pd.DataFrame, lobby_bills: pd.DataFrame,
         )
 
     pair_keys = ['entity_name', 'client_name', 'year']
+    count_col = 'bill_id' if 'bill_id' in env_lb.columns else 'bill_number'
     # Count env bills per (firm, client, year)
     env_counts = (
-        env_lb.groupby(pair_keys)['bill_number'].nunique()
+        env_lb.groupby(pair_keys)[count_col].nunique()
         .reset_index(name='n_env')
     )
     # Count all bills per (firm, client, year)
     all_counts = (
-        lobby_bills.groupby(pair_keys)['bill_number'].nunique()
+        lobby_bills.groupby(pair_keys)[count_col].nunique()
         .reset_index(name='n_all')
     )
     fracs = env_counts.merge(all_counts, on=pair_keys, how='left')
@@ -310,7 +358,7 @@ def _chart_spend_by_cluster(engine, employers: pd.DataFrame, lobby_bills: pd.Dat
     """Stacked bar: annual employer spend broken down by bill topic cluster."""
     try:
         scored = pd.read_sql_query(
-            'SELECT bill_number, general_court, cluster_id FROM MA_Lobbying_Bills_Scored '
+            'SELECT bill_id, bill_number, general_court, cluster_id FROM MA_Lobbying_Bills_Scored '
             'WHERE cluster_id IS NOT NULL AND cluster_id != -1',
             engine,
         )
@@ -325,11 +373,21 @@ def _chart_spend_by_cluster(engine, employers: pd.DataFrame, lobby_bills: pd.Dat
         print('  Cluster IDs not yet assigned — skipping cluster spend chart.')
         return
 
-    # Join cluster_id onto lobby_bills via bill_number + general_court
-    lb = lobby_bills.merge(
-        scored[['bill_number', 'general_court', 'cluster_id']],
-        on=['bill_number', 'general_court'], how='left'
-    )
+    # Join cluster_id onto lobby_bills via bill_id (preferred) to avoid H/S cross-prefix
+    has_bid = 'bill_id' in scored.columns and 'bill_id' in lobby_bills.columns
+    if has_bid:
+        scored_id = scored[scored['bill_id'].notna()][['bill_id', 'general_court', 'cluster_id']]
+        scored_num = scored[scored['bill_id'].isna()][['bill_number', 'general_court', 'cluster_id']]
+        lb_with_id = lobby_bills[lobby_bills['bill_id'].notna()].merge(
+            scored_id, on=['bill_id', 'general_court'], how='left')
+        lb_no_id = lobby_bills[lobby_bills['bill_id'].isna()].merge(
+            scored_num, on=['bill_number', 'general_court'], how='left')
+        lb = pd.concat([lb_with_id, lb_no_id], ignore_index=True)
+    else:
+        lb = lobby_bills.merge(
+            scored[['bill_number', 'general_court', 'cluster_id']],
+            on=['bill_number', 'general_court'], how='left'
+        )
     lb = lb.dropna(subset=['cluster_id'])
     lb['cluster_id'] = lb['cluster_id'].astype(int)
 
@@ -447,13 +505,14 @@ def generate_post_charts(engine, prefix=''):
     if not lobby_bills.empty and not leg_bills.empty:
         env_lb = _env_bills(lobby_bills, leg_bills)
         if not env_lb.empty and 'passed' in env_lb.columns:
+            bill_key = ['bill_id', 'general_court'] if 'bill_id' in env_lb.columns else ['bill_number', 'general_court']
             employer_counts = (
-                env_lb.groupby(['bill_number', 'general_court'])['client_name']
+                env_lb.groupby(bill_key)['client_name']
                 .nunique()
                 .reset_index(name='employer_count')
             )
-            bill_info = leg_bills[['bill_number', 'general_court', 'passed']].drop_duplicates()
-            tc = employer_counts.merge(bill_info, on=['bill_number', 'general_court'], how='left')
+            bill_info = leg_bills[bill_key + ['passed']].drop_duplicates()
+            tc = employer_counts.merge(bill_info, on=bill_key, how='left')
 
             def _tier(n):
                 if n >= 10:
@@ -540,11 +599,14 @@ def generate_post_charts(engine, prefix=''):
 
         env_lb = _env_bills(lobby_bills, leg_bills)
         if not env_lb.empty and not cluster_labels.empty:
-            # Attach cluster_id to each env lobby_bills row
-            scored_cluster = leg_bills[['bill_number', 'general_court', 'cluster_id']]
-            env_lb_c = env_lb.merge(
-                scored_cluster, on=['bill_number', 'general_court'], how='left'
-            )
+            # Attach cluster_id to each env lobby_bills row via bill_id (preferred)
+            has_bid_leg = 'bill_id' in leg_bills.columns and 'bill_id' in env_lb.columns
+            if has_bid_leg:
+                scored_cluster = leg_bills[['bill_id', 'general_court', 'cluster_id']].dropna(subset=['bill_id'])
+                env_lb_c = env_lb.merge(scored_cluster, on=['bill_id', 'general_court'], how='left')
+            else:
+                scored_cluster = leg_bills[['bill_number', 'general_court', 'cluster_id']]
+                env_lb_c = env_lb.merge(scored_cluster, on=['bill_number', 'general_court'], how='left')
             # Allocate (firm, client) compensation equally across env bills they
             # lobbied that year, then sum by (year, cluster_id).
             pair_year_bills = (
@@ -756,10 +818,8 @@ def _chart_env_position_trend(lobby_bills: pd.DataFrame, leg_bills: pd.DataFrame
     if lobby_bills.empty or leg_bills.empty or 'is_environmental' not in leg_bills.columns:
         return
 
-    env_ids = leg_bills[leg_bills['is_environmental'] == 1][
-        ['bill_number', 'general_court']
-    ].copy()
-    env_lb = lobby_bills.merge(env_ids, on=['bill_number', 'general_court'], how='inner')
+    env_ids = leg_bills[leg_bills['is_environmental'] == 1].copy()
+    env_lb = _bill_merge(lobby_bills, env_ids, how='inner')
     if env_lb.empty:
         return
 
@@ -814,16 +874,15 @@ def _chart_top_env_opponents(lobby_bills: pd.DataFrame, leg_bills: pd.DataFrame,
     if lobby_bills.empty or leg_bills.empty or 'is_environmental' not in leg_bills.columns:
         return
 
-    env_ids = leg_bills[leg_bills['is_environmental'] == 1][
-        ['bill_number', 'general_court']
-    ].copy()
-    env_lb = lobby_bills.merge(env_ids, on=['bill_number', 'general_court'], how='inner')
+    env_ids = leg_bills[leg_bills['is_environmental'] == 1].copy()
+    env_lb = _bill_merge(lobby_bills, env_ids, how='inner')
     if env_lb.empty:
         return
 
+    bill_key = ['bill_id', 'general_court'] if 'bill_id' in env_lb.columns else ['bill_number', 'general_court']
     oppose = (
         env_lb[env_lb['position'] == 'Oppose']
-        .groupby('client_name')[['bill_number', 'general_court']]
+        .groupby('client_name')[bill_key]
         .apply(lambda g: g.drop_duplicates().shape[0])
         .reset_index(name='n_bills_opposed')
         .sort_values('n_bills_opposed', ascending=False)
@@ -865,19 +924,21 @@ def _chart_pass_rate_by_position(lobby_bills: pd.DataFrame, leg_bills: pd.DataFr
     if 'passed' not in leg_bills.columns:
         return
 
-    env_scored = leg_bills[leg_bills['is_environmental'] == 1][
-        ['bill_number', 'general_court', 'passed']
-    ].drop_duplicates()
+    has_bid = 'bill_id' in leg_bills.columns and 'bill_id' in lobby_bills.columns
+    bill_key = ['bill_id', 'general_court'] if has_bid else ['bill_number', 'general_court']
+    score_cols = bill_key + ['passed']
+    env_scored = leg_bills[leg_bills['is_environmental'] == 1][score_cols].drop_duplicates()
+    if has_bid:
+        env_scored = env_scored.dropna(subset=['bill_id'])
     if env_scored.empty:
         return
 
     env_lb = lobby_bills.merge(
-        env_scored[['bill_number', 'general_court']],
-        on=['bill_number', 'general_court'], how='inner'
+        env_scored[bill_key], on=bill_key, how='inner'
     )
     pos_counts = (
         env_lb[env_lb['position'].isin(['Support', 'Oppose'])]
-        .groupby(['bill_number', 'general_court', 'position'])['client_name']
+        .groupby(bill_key + ['position'])['client_name']
         .nunique()
         .unstack(fill_value=0)
         .reset_index()
@@ -894,7 +955,7 @@ def _chart_pass_rate_by_position(lobby_bills: pd.DataFrame, leg_bills: pd.DataFr
         return 'Contested / Neutral'
 
     pos_counts['category'] = pos_counts.apply(_category, axis=1)
-    tc = pos_counts.merge(env_scored, on=['bill_number', 'general_court'], how='left')
+    tc = pos_counts.merge(env_scored, on=bill_key, how='left')
 
     cat_order = ['Mostly supported', 'Mostly opposed', 'Contested / Neutral']
     summary = (
@@ -1128,18 +1189,38 @@ def _load_parquet_llm() -> pd.DataFrame:
 
 
 def _make_env_lobby_bills(parquet_df: pd.DataFrame, lobby_bills: pd.DataFrame) -> pd.DataFrame:
-    """Merge parquet LLM env flag (is_env_llm) onto lobby_bills rows."""
+    """Merge parquet LLM env flag (is_env_llm) onto lobby_bills rows.
+
+    Joins on (bill_id, general_court) when both sides have bill_id to avoid
+    cross-prefix contamination.  Falls back to (bill_number, general_court)
+    for rows without bill_id.
+    """
     if parquet_df.empty or lobby_bills.empty:
         return pd.DataFrame()
-    env_ids = parquet_df[parquet_df['is_env_llm'] == True][
-        ['bill_number', 'general_court']
-    ].copy()
-    env_ids['bill_number'] = pd.to_numeric(env_ids['bill_number'], errors='coerce').astype('Int64')
-    env_ids['general_court'] = pd.to_numeric(env_ids['general_court'], errors='coerce').astype('Int64')
+    env_pq = parquet_df[parquet_df['is_env_llm'] == True].copy()
     lb = lobby_bills.copy()
     lb['bill_number'] = pd.to_numeric(lb['bill_number'], errors='coerce').astype('Int64')
     lb['general_court'] = pd.to_numeric(lb['general_court'], errors='coerce').astype('Int64')
-    return lb.merge(env_ids, on=['bill_number', 'general_court'], how='inner')
+
+    has_bill_id = 'bill_id' in env_pq.columns and 'bill_id' in lb.columns
+    if has_bill_id:
+        env_pq['general_court'] = pd.to_numeric(env_pq['general_court'], errors='coerce').astype('Int64')
+        env_id = env_pq[['bill_id', 'general_court']].dropna(subset=['bill_id'])
+        env_num = env_pq[env_pq['bill_id'].isna()][['bill_number', 'general_court']]
+        env_num['bill_number'] = pd.to_numeric(env_num['bill_number'], errors='coerce').astype('Int64')
+        lb_with_id = lb[lb['bill_id'].notna()]
+        lb_no_id = lb[lb['bill_id'].isna()]
+        parts = []
+        if not lb_with_id.empty and not env_id.empty:
+            parts.append(lb_with_id.merge(env_id, on=['bill_id', 'general_court'], how='inner'))
+        if not lb_no_id.empty and not env_num.empty:
+            parts.append(lb_no_id.merge(env_num, on=['bill_number', 'general_court'], how='inner'))
+        return pd.concat(parts, ignore_index=True) if parts else pd.DataFrame()
+    else:
+        env_ids = env_pq[['bill_number', 'general_court']].copy()
+        env_ids['bill_number'] = pd.to_numeric(env_ids['bill_number'], errors='coerce').astype('Int64')
+        env_ids['general_court'] = pd.to_numeric(env_ids['general_court'], errors='coerce').astype('Int64')
+        return lb.merge(env_ids, on=['bill_number', 'general_court'], how='inner')
 
 
 def _chart_env_categories_by_gc(parquet_df: pd.DataFrame, prefix: str):
@@ -1239,8 +1320,9 @@ def _chart_gc_trend(parquet_df: pd.DataFrame, lobby_bills: pd.DataFrame, prefix:
     if env_lb.empty:
         return
 
+    count_col = 'bill_id' if 'bill_id' in env_lb.columns else 'bill_number'
     gc_bills = (
-        env_lb.groupby('general_court')['bill_number']
+        env_lb.groupby('general_court')[count_col]
         .nunique()
         .reset_index(name='n_env_bills')
         .sort_values('general_court')
@@ -1303,8 +1385,9 @@ def _chart_employer_env_scatter(parquet_df: pd.DataFrame, lobby_bills: pd.DataFr
     env_lb2 = env_lb.copy()
     env_lb2['year'] = pd.to_numeric(env_lb2['year'], errors='coerce').astype('Int64')
 
-    all_counts = lb.groupby(pair_keys)['bill_number'].nunique().reset_index(name='n_all')
-    env_counts = env_lb2.groupby(pair_keys)['bill_number'].nunique().reset_index(name='n_env')
+    count_col = 'bill_id' if 'bill_id' in lb.columns else 'bill_number'
+    all_counts = lb.groupby(pair_keys)[count_col].nunique().reset_index(name='n_all')
+    env_counts = env_lb2.groupby(pair_keys)[count_col].nunique().reset_index(name='n_env')
     fracs = all_counts.merge(env_counts, on=pair_keys, how='left')
     fracs['n_env'] = fracs['n_env'].fillna(0)
     fracs['env_frac'] = fracs['n_env'] / fracs['n_all'].replace(0, np.nan)
@@ -1421,20 +1504,21 @@ def _chart_opposition_pairs(parquet_df: pd.DataFrame, lobby_bills: pd.DataFrame,
     if env_lb.empty or 'position' not in env_lb.columns:
         return
 
+    bill_key = ['bill_id', 'general_court'] if 'bill_id' in env_lb.columns else ['bill_number', 'general_court']
     supporters = (
         env_lb[env_lb['position'] == 'Support']
-        [['bill_number', 'general_court', 'client_name']]
+        [bill_key + ['client_name']]
         .drop_duplicates()
         .rename(columns={'client_name': 'supporter'})
     )
     opponents = (
         env_lb[env_lb['position'] == 'Oppose']
-        [['bill_number', 'general_court', 'client_name']]
+        [bill_key + ['client_name']]
         .drop_duplicates()
         .rename(columns={'client_name': 'opposer'})
     )
 
-    pairs = supporters.merge(opponents, on=['bill_number', 'general_court'])
+    pairs = supporters.merge(opponents, on=bill_key)
     pairs = pairs[pairs['supporter'] != pairs['opposer']].copy()
 
     if pairs.empty:
@@ -1444,8 +1528,9 @@ def _chart_opposition_pairs(parquet_df: pd.DataFrame, lobby_bills: pd.DataFrame,
     pairs['a'] = pairs[['supporter', 'opposer']].min(axis=1)
     pairs['b'] = pairs[['supporter', 'opposer']].max(axis=1)
 
+    count_col = bill_key[0]  # bill_id if available, else bill_number
     pair_counts = (
-        pairs.groupby(['a', 'b'])['bill_number']
+        pairs.groupby(['a', 'b'])[count_col]
         .nunique()
         .reset_index(name='n_bills')
         .nlargest(top_n, 'n_bills')

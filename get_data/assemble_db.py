@@ -375,6 +375,23 @@ if __name__ == '__main__':
 		if len(_lb) < _lb_before:
 			print(f"  Deduplicated MA_Lobbying_Bills: {_lb_before} → {len(_lb)} rows "
 			      f"({_lb_before - len(_lb)} duplicates removed)")
+		# Derive bill_prefix and bill_id from chamber + bill_number so downstream
+		# SQL can join to MA_Lobbying_Bills_Scored on (bill_id, general_court)
+		# instead of the ambiguous (bill_number, general_court) which collapses
+		# distinct H and S bills that share the same integer.
+		_chamber_to_prefix = {
+			'House Bill': 'H', 'HB': 'H',
+			'Senate Bill': 'S', 'SB': 'S',
+			'House Docket': 'HD',
+			'Senate Docket': 'SD',
+		}
+		_lb['bill_prefix'] = _lb['chamber'].map(_chamber_to_prefix)
+		_lb['bill_id'] = _lb.apply(
+			lambda r: f"{r['bill_prefix']}{int(r['bill_number'])}"
+			          if pd.notna(r.get('bill_prefix')) and pd.notna(r.get('bill_number'))
+			          else None,
+			axis=1,
+		)
 		data_csv['MA_Lobbying_Bills'] = _lb
 		print(f"MA_Lobbying_Bills: {len(data_csv['MA_Lobbying_Bills'])} rows")
 	if os.path.exists(_legislature_bills_path):
@@ -402,19 +419,29 @@ if __name__ == '__main__':
 			errors='coerce').astype('Int64')
 		if 'cluster_id' in _scored.columns:
 			_scored['cluster_id'] = pd.to_numeric(_scored['cluster_id'], errors='coerce').astype('Int64')
-		# Deduplicate: multiple filers sometimes reference the same bill_number with
+		# Deduplicate: multiple filers sometimes reference the same bill with
 		# slightly different bill_title strings, producing duplicate scored rows.
-		# Keep the row with the highest env_relevance_score per (bill_number,
-		# general_court) so env-relevant bills are never suppressed by a lower-
-		# scoring duplicate; prefer rows with a valid bill_id as a secondary sort.
+		# Deduplicate on (bill_id, general_court) when bill_id is present — this
+		# preserves distinct H and S bills that share the same integer bill_number
+		# (e.g. H331 and S331 in GC188 are completely different bills).  For rows
+		# without a bill_id (legacy SoS data pre-~2013), fall back to deduplicating
+		# on (bill_number, general_court) within that subset only.
+		# Sort so the row with the highest env_relevance_score is kept; prefer rows
+		# with a valid bill_id as a secondary sort within each group.
 		_scored_before = len(_scored)
-		_scored = (_scored
-		           .assign(_has_bill_id=_scored['bill_id'].notna().astype(int))
-		           .sort_values(['env_relevance_score', '_has_bill_id'],
-		                        ascending=[False, False], na_position='last')
-		           .drop_duplicates(subset=['bill_number', 'general_court'], keep='first')
-		           .drop(columns=['_has_bill_id'])
-		           .reset_index(drop=True))
+		_scored = _scored.assign(_has_bill_id=_scored['bill_id'].notna().astype(int))
+		_scored = _scored.sort_values(['env_relevance_score', '_has_bill_id'],
+		                              ascending=[False, False], na_position='last')
+		# Rows that have a bill_id: deduplicate on (bill_id, general_court)
+		_has_id = _scored['bill_id'].notna()
+		_scored_with_id = (_scored[_has_id]
+		                   .drop_duplicates(subset=['bill_id', 'general_court'], keep='first'))
+		# Rows without a bill_id: deduplicate on (bill_number, general_court)
+		_scored_no_id = (_scored[~_has_id]
+		                 .drop_duplicates(subset=['bill_number', 'general_court'], keep='first'))
+		_scored = (pd.concat([_scored_with_id, _scored_no_id], ignore_index=True)
+		             .drop(columns=['_has_bill_id'])
+		             .reset_index(drop=True))
 		if len(_scored) < _scored_before:
 			print(f"  Deduplicated MA_Lobbying_Bills_Scored: {_scored_before} → {len(_scored)} rows "
 			      f"({_scored_before - len(_scored)} duplicates removed)")
