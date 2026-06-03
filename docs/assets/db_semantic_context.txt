@@ -1,5 +1,5 @@
 # AMEND Database Semantic Context
-Generated: 2026-06-02
+Generated: 2026-06-03
 
 ## Global Data Notes
 
@@ -1293,7 +1293,7 @@ Robert Alan Baker	Smaller Business Association of New England	2014	188	House Bil
 Law Office of Attorney James F McGrail	Outfront Media, LLC	2018	190	Executive	NULL	Matters in connection with Outfront Media Group LLC's participation in the request for proposals for advertising rights on the Massachusetts Bay Transportation Authority.	Support	90000.0	ATTORNEY JAMES F MCGRAIL	OUTFRONT MEDIA	NULL	NULL
 Northwind Strategies	New England Independent Transmission Company, LLC	2014	188	Executive	NULL	Advised regarding potential energy legislation and central procurement. Represented client and met with the Executive Office of Environment & Energy.	Support	90000.0	NORTHWIND STRATEGIES	NEW ENGLAND INDEPENDENT TRANSMISSION COMPANY	NULL	NULL
 Northwind Strategies	Boston Beer	2014	188	House Bill	267	Represented client before members of the Joint Committee on Consumer Protection and Professional Licensure and met with Representatives Peisch, Mariano, Moran, and Haddad.	Support	67500.0	NORTHWIND STRATEGIES	BOSTON BEER	H	H267
-Northwind Strategies	GTECH Corporation	2014	188	Executive	NULL	Represented client and advised relative to current and future activities with the Massachusetts Lottery and the State Treasury.	Support	66000.0	NORTHWIND STRATEGIES	GTECH CORPORATION	NULL	NULL
+Northwind Strategies	GTECH Corporation	2014	188	Executive	NULL	Represented client and advised relative to current and future activities with the Massachusetts Lottery and the State Treasury.	Support	66000.0	NORTHWIND STRATEGIES	GTECH	NULL	NULL
 */
 
 **Column notes:**
@@ -1363,7 +1363,7 @@ CREATE TABLE "MA_Lobbying_Employers" (
 
 /* 5 rows from MA_Lobbying_Employers:
 entity_name	client_name	year	reg_type	compensation	entity_name_norm	client_name_norm
-21c, LLC	EDUCATION TRUST, INC. (THE)	2024	Lobbyist Entity	7500.0	21C	EDUCATION TRUST (THE)
+21c, LLC	EDUCATION TRUST, INC. (THE)	2024	Lobbyist Entity	7500.0	21C	EDUCATION TRUST
 21c, LLC	Amplify Education, Inc.	2024	Lobbyist Entity	22500.0	21C	AMPLIFY EDUCATION
 21c, LLC	The Massachusetts Alliance for Early College, Inc.	2024	Lobbyist Entity	15000.0	21C	MASSACHUSETTS ALLIANCE FOR EARLY COLLEGE
 21c, LLC	Benjamin Franklin Cummings Institute of Technology	2024	Lobbyist Entity	12500.0	21C	BENJAMIN FRANKLIN CUMMINGS INSTITUTE OF TECHNOLOGY

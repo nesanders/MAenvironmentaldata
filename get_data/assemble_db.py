@@ -89,7 +89,7 @@ if __name__ == '__main__':
 		new_row.iloc[0, 2:] = 0  # Zero-fill growth columns
 		data_csv['SSAWages'] = pd.concat([data_csv['SSAWages'], new_row], ignore_index=True)
 
-	## Build waterBody → watershed lookup table for CSO choropleth mapping.
+	## Build waterBody -> watershed lookup table for CSO choropleth mapping.
 	## GeoJSON watershed polygon names (short, ALL CAPS) are from docs/assets/ma_watersheds.geojson.
 	## Mapping reviewed and approved 2026-04-10.
 	_CSO_WATERSHED_MAP = {
@@ -158,13 +158,13 @@ if __name__ == '__main__':
 	data_csv['EPA_303d_Impairments'] = pd.read_csv('../docs/data/EPA_303d_impairments.csv',
 	                                               low_memory=False)
 
-	## Build CSO waterBody → 303(d) waterbody name mapping.
+	## Build CSO waterBody -> 303(d) waterbody name mapping.
 	## Maps each CSO waterBody (ALL CAPS, from MAEEADP_CSO) to the corresponding
 	## waterbody name as it appears in EPA_303d_Impairments.
 	## Only manually verified, exact matches are included; ~30 of ~56 CSO waterbodies matched.
 	## Unmatched CSO waterbodies are simply absent from this table.
 	## Join path: MAEEADP_CSO.waterBody = CSO_303d_Mapping.csoWaterBody
-	##   → CSO_303d_Mapping.waterbody303d = EPA_303d_Impairments.waterbody
+	##   -> CSO_303d_Mapping.waterbody303d = EPA_303d_Impairments.waterbody
 	## Note: one 303d waterbody name may correspond to multiple assessment units (AUs).
 	## Reviewed and approved 2026-04-12.
 	_CSO_303d_MAP = {
@@ -217,7 +217,7 @@ if __name__ == '__main__':
 
 	_ms4_raw = pd.read_csv('../docs/data/MS4_extracted.csv')
 
-	# report_year: fill nulls from filename suffix (e.g. palmer-ma-ar20.pdf → 2020)
+	# report_year: fill nulls from filename suffix (e.g. palmer-ma-ar20.pdf -> 2020)
 	_YEAR_RE = _re.compile(r'ar(\d{2})\.pdf$', _re.IGNORECASE)
 	def _year_from_url(url, existing):
 		if pd.notna(existing):
@@ -231,7 +231,7 @@ if __name__ == '__main__':
 		lambda r: _year_from_url(r['source_url'], r['report_year']), axis=1
 	)
 
-	# permit_year imputation: report_year → permit year
+	# permit_year imputation: report_year -> permit year
 	# FY2019–2025 = permit years 1–7 of the original MA MS4 General Permit (first cycle).
 	# FY2026 = permit year 1 of the renewed permit (second cycle, effective 2023).
 	_REPORT_TO_PERMIT_YEAR = {2019: 1, 2020: 2, 2021: 3, 2022: 4, 2023: 5, 2024: 6, 2025: 7, 2026: 1}
@@ -319,27 +319,47 @@ if __name__ == '__main__':
 
 	# Entity name normalization — applied at DB assembly time so raw portal names
 	# are preserved in GCS CSVs while the DB exposes cleaned columns for analysis.
-	_ENTITY_SUPERFLUOUS = [
-		",", ".", "'", "’",
-		"LLC", " INC", "LLP", " PC", "P C",
-		"LAW OFFICE OF", "AND ASSOCIATES", "& ASSOCIATES", "AND ASSOC",
-		"ATTORNEY AT LAW", "ATTORNEY@LAW", "AND PARTNERS",
-		" PUBLIC POLICY GROUP", "LEGISLATIVE SERVICES", "POLICY GROUP",
-		"ASSOCIATES", "ATTORNET AT LAW", "COUNSELLORS AT LAW", "THE ",
+	#
+	# Design:
+	# 1. Strip d/b/a suffix first (before any other transforms) so the trade name
+	#    doesn't bleed into the canonical form.
+	# 2. Normalize hyphens -> spaces before punctuation removal, so "LAN-TEL" and
+	#    "LAN TEL" collapse to the same key.
+	# 3. Replace punctuation with a space (not '') so adjacent tokens don't
+	#    concatenate (e.g. ",INC" -> " INC" -> caught by whole-word removal).
+	# 4. Remove legal entity type words with whole-word regex so "INCORPORATED"
+	#    and "CORP" are caught in addition to "LLC"/"INC".
+	# 5. Remove "THE" as a whole word anywhere (leading or trailing) rather than
+	#    just the prefix "THE ".
+	import re as _re
+	_ENTITY_DBA_RE = _re.compile(
+		r'\s+D\s*/+B\s*/+A?\s+.*|\s+DBA\s+.*', _re.IGNORECASE)
+	_ENTITY_LEGAL_RE = _re.compile(
+		r'\b(LLC|LLP|INC|INCORPORATED|CORPORATION|CORP|LTD|LIMITED|PC|PLLC)\b')
+	_ENTITY_ARTICLE_RE = _re.compile(r'\bTHE\b')
+	_ENTITY_MISC = [
+		'LAW OFFICE OF', 'AND ASSOCIATES', '& ASSOCIATES', 'AND ASSOC',
+		'ATTORNEY AT LAW', 'ATTORNEY@LAW', 'ATTORNET AT LAW', 'AND PARTNERS',
+		'PUBLIC POLICY GROUP', 'LEGISLATIVE SERVICES', 'POLICY GROUP',
+		'ASSOCIATES', 'COUNSELLORS AT LAW',
 	]
-	_ENTITY_REPLACEMENTS = {"&": "AND", "ASSICIATES": "ASSOCIATES"}
 
 	def _normalize_entity(x):
 		if not isinstance(x, str):
 			return x
 		x = x.upper()
-		for token in _ENTITY_SUPERFLUOUS:
-			x = x.replace(token, "")
-		for token, replacement in _ENTITY_REPLACEMENTS.items():
-			x = x.replace(token, replacement)
-		for i in range(4, 0, -1):
-			x = x.replace(" " * i, " ")
-		return x.strip()
+		x = _ENTITY_DBA_RE.sub('', x)             # strip d/b/a trade-name suffix
+		x = x.replace('-', ' ')                    # hyphen -> space
+		for ch in (',', '.', "'", '\u2018', '\u2019', '(', ')'):
+			x = x.replace(ch, ' ')                # punctuation -> space (not '')
+		x = _ENTITY_LEGAL_RE.sub(' ', x)           # remove entity-type words
+		x = _ENTITY_ARTICLE_RE.sub(' ', x)         # remove THE (anywhere)
+		x = x.replace('&', 'AND')
+		x = x.replace('ASSICIATES', 'ASSOCIATES')  # legacy typo fix
+		for token in _ENTITY_MISC:
+			x = x.replace(token, ' ')
+		x = _re.sub(r'\s+', ' ', x).strip()
+		return x
 
 	_lobbying_employers_path = '../docs/data/MA_lobbying_employers.csv'
 	_lobbying_lobbyists_path = '../docs/data/MA_lobbying_lobbyists.csv'
@@ -373,7 +393,7 @@ if __name__ == '__main__':
 		          .drop_duplicates(subset=_lb_key, keep='first')
 		          .reset_index(drop=True))
 		if len(_lb) < _lb_before:
-			print(f"  Deduplicated MA_Lobbying_Bills: {_lb_before} → {len(_lb)} rows "
+			print(f"  Deduplicated MA_Lobbying_Bills: {_lb_before} -> {len(_lb)} rows "
 			      f"({_lb_before - len(_lb)} duplicates removed)")
 		# Derive bill_prefix and bill_id from chamber + bill_number so downstream
 		# SQL can join to MA_Lobbying_Bills_Scored on (bill_id, general_court)
@@ -443,7 +463,7 @@ if __name__ == '__main__':
 		             .drop(columns=['_has_bill_id'])
 		             .reset_index(drop=True))
 		if len(_scored) < _scored_before:
-			print(f"  Deduplicated MA_Lobbying_Bills_Scored: {_scored_before} → {len(_scored)} rows "
+			print(f"  Deduplicated MA_Lobbying_Bills_Scored: {_scored_before} -> {len(_scored)} rows "
 			      f"({_scored_before - len(_scored)} duplicates removed)")
 		# Replace concatenated multi-bill title blobs with the authoritative title
 		# from MA_Legislature_Bills wherever the join on (bill_id, general_court)
