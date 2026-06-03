@@ -1,13 +1,19 @@
-name: Update Data Only
+name: Weekly Update (Data + Charts)
 
 on:
-  workflow_dispatch:       # Manual trigger only
+  schedule:
+    - cron: '0 6 * * 1'  # Every Monday at 6am UTC
+  workflow_dispatch:       # Allow manual trigger from GitHub UI
+
+concurrency:
+  group: update-weekly
+  cancel-in-progress: false
 
 env:
   FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: 'true'
 
 jobs:
-  update-data:
+  update:
     runs-on: ubuntu-latest
     permissions:
       contents: write       # to push branch
@@ -65,24 +71,39 @@ jobs:
         working-directory: get_data
         run: python assemble_db.py
 
+      - name: Generate dashboard charts
+        working-directory: analysis
+        run: python dashboard_charts.py
+
+      - name: Write timestamps
+        run: |
+          echo "updated: $(date -u +'%Y-%m-%d %H:%M:%S')" > docs/data/ts_update_dashboard.yml
+
       - name: Commit and open PR
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
-          git add docs/data/
+          git add docs/data/ \
+                  docs/_includes/charts/dash_*.html \
+                  docs/data/facts_dash_*.yml \
+                  docs/data/facts_DEPstaff.yml \
+                  docs/data/facts_DEPenforce.yml \
+                  docs/data/facts_ECOSbudgets.yml \
+                  docs/data/facts_EPA303d.yml \
+                  docs/data/ts_update_dashboard.yml
           if git diff --staged --quiet; then
-            echo "No data changes — skipping PR."
+            echo "No changes — skipping PR."
             exit 0
           fi
-          BRANCH="auto/data-$(date -u +%Y-%m-%d)"
+          BRANCH="auto/weekly-$(date -u +%Y-%m-%d)"
           git checkout -b "$BRANCH"
-          git commit -m "Auto-update data $(date -u +%Y-%m-%d)"
+          git commit -m "Auto-update data + charts $(date -u +%Y-%m-%d)"
           git push origin "$BRANCH"
           gh pr create \
-            --title "Auto-update data $(date -u +%Y-%m-%d)" \
-            --body "Manual data-only refresh. Run 'Update Charts Only' separately to regenerate dashboard charts." \
+            --title "Auto-update data + charts $(date -u +%Y-%m-%d)" \
+            --body "Automated weekly data and chart refresh." \
             --base main \
             --head "$BRANCH"
           gh pr merge "$BRANCH" --squash
@@ -95,9 +116,9 @@ jobs:
             github.rest.issues.create({
               owner: context.repo.owner,
               repo: context.repo.repo,
-              title: `Data update failed: ${new Date().toISOString().split('T')[0]}`,
+              title: `Weekly update failed: ${new Date().toISOString().split('T')[0]}`,
               body: [
-                '## Manual data update failed',
+                '## Scheduled weekly update failed',
                 '',
                 `**Run:** ${context.serverUrl}/${context.repo.owner}/${context.repo.repo}/actions/runs/${context.runId}`,
                 '',
