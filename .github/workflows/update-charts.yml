@@ -1,15 +1,7 @@
-name: Update Charts
+name: Update Charts Only
 
 on:
-  # Primary trigger: explicitly dispatched by update-data.yml after its PR merges.
-  # (GitHub does not fire push events from GITHUB_TOKEN bot merges, so on:push
-  # alone is not reliable for bot-initiated data updates.)
-  # Fallback: push to main touching docs/data/** covers human-initiated merges.
-  push:
-    branches: [main]
-    paths:
-      - 'docs/data/**'
-  workflow_dispatch:       # Primary trigger from update-data.yml; also allows manual runs
+  workflow_dispatch:       # Manual trigger only
 
 concurrency:
   group: update-charts
@@ -71,10 +63,10 @@ jobs:
           git push origin "$BRANCH"
           gh pr create \
             --title "Auto-update dashboard charts $(date -u +%Y-%m-%d)" \
-            --body "Automated chart regeneration triggered by data update." \
+            --body "Manual chart regeneration against current GCS database." \
             --base main \
             --head "$BRANCH"
-          gh pr merge "$BRANCH" --auto --squash
+          gh pr merge "$BRANCH" --squash
 
       - name: Open issue on failure
         if: failure()
