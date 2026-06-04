@@ -319,22 +319,59 @@ def main():
         except Exception as e:
             print(f'  Warning: could not read {leg_path} ({e}) — skipping bill_id lookup')
 
-    # Unique bills from lobbying data
+    # Unique bills from lobbying data.
+    # H1234 and S1234 are DIFFERENT bills with independent numbering — they must
+    # be embedded separately.  Derive bill_id from the chamber column BEFORE
+    # deduplication and use (bill_id, gc) as the dedup key for bills with a
+    # mappable chamber.  Bills with unmapped chamber types (Joint, Executive,
+    # FY, etc.) fall back to (bill_number, gc) dedup as before — these chamber
+    # types don't have the H/S collision problem.
+    _CHAMBER_PREFIX = {
+        'House Bill': 'H', 'HB': 'H',
+        'Senate Bill': 'S', 'SB': 'S',
+        'House Docket': 'HD', 'Senate Docket': 'SD',
+    }
     lobby = pd.read_csv(lobby_path, index_col=0)
+    lobby['bill_number'] = pd.to_numeric(lobby['bill_number'], errors='coerce')
+    lobby['general_court'] = pd.to_numeric(lobby['general_court'], errors='coerce')
+    lobby = lobby.dropna(subset=['bill_number', 'general_court'])
+    lobby['bill_number'] = lobby['bill_number'].astype(int)
+    lobby['general_court'] = lobby['general_court'].astype(int)
+    # Derive bill_id from chamber
+    lobby['_prefix'] = lobby['chamber'].map(_CHAMBER_PREFIX)
+    lobby['_bill_id_derived'] = lobby.apply(
+        lambda r: f"{r['_prefix']}{r['bill_number']}" if pd.notna(r['_prefix']) else None,
+        axis=1,
+    )
+    # Split: bills with a known H/S/HD/SD prefix (dedup on bill_id+gc) vs others
+    _with_prefix  = lobby[lobby['_bill_id_derived'].notna()]
+    _without_prefix = lobby[lobby['_bill_id_derived'].isna()]
+    _deduped_with = (
+        _with_prefix[['bill_number','general_court','bill_title','_bill_id_derived']]
+        .drop_duplicates(subset=['_bill_id_derived','general_court'])
+    )
+    _deduped_without = (
+        _without_prefix[['bill_number','general_court','bill_title','_bill_id_derived']]
+        .drop_duplicates(subset=['bill_number','general_court'])
+    )
     unique = (
-        lobby[['bill_number', 'general_court', 'bill_title']]
-        .dropna(subset=['bill_number', 'general_court'])
-        .drop_duplicates(subset=['bill_number', 'general_court'])
-        .sort_values(['general_court', 'bill_number'])
+        pd.concat([_deduped_with, _deduped_without], ignore_index=True)
+        .sort_values(['general_court','bill_number'])
         .reset_index(drop=True)
     )
-    unique['bill_number'] = pd.to_numeric(unique['bill_number'], errors='coerce').dropna().astype(int)
-    unique = unique.dropna(subset=['bill_number', 'general_court'])
-    unique['bill_number'] = unique['bill_number'].astype(int)
-    unique['general_court'] = unique['general_court'].astype(int)
-    unique['bill_id'] = unique.apply(
+    # bill_id assignment:
+    # - For H/S/HD/SD bills (_bill_id_derived is set): always trust the chamber-derived
+    #   bill_id.  The Legislature API bill_id_map is keyed on (bill_number, gc) so it
+    #   can only return ONE of H1234 or S1234 — using it would silently assign the wrong
+    #   id to half the bills.
+    # - For unmapped chamber types (_bill_id_derived is null): try the Legislature API
+    #   lookup as a best-effort; leave null if not found.
+    unique['bill_id'] = unique['_bill_id_derived'].copy()
+    _no_id = unique['bill_id'].isna()
+    unique.loc[_no_id, 'bill_id'] = unique.loc[_no_id].apply(
         lambda r: bill_id_map.get((r['bill_number'], r['general_court'])), axis=1
     )
+    unique = unique.drop(columns=['_bill_id_derived'])
     # Fill missing portal titles from Legislature API titles
     missing_title = unique['bill_title'].isna() | (unique['bill_title'].str.strip() == '')
     unique.loc[missing_title, 'bill_title'] = unique[missing_title].apply(
@@ -348,20 +385,31 @@ def main():
 
     # Load existing Parquet
     existing = _load_parquet()
-    already_done: set = set()
+    already_done_by_id:  set = set()   # (bill_id, gc)  for rows that have a bill_id
+    already_done_by_num: set = set()   # (bill_number, gc) fallback for rows without bill_id
     if existing is not None and not args.reembed:
-        already_done = set(
-            zip(existing['bill_number'].astype(int),
-                existing['general_court'].astype(int))
-        )
-        print(f'  {len(already_done)} already embedded')
+        _has_id = existing['bill_id'].notna()
+        already_done_by_id  = set(zip(
+            existing.loc[ _has_id, 'bill_id'].astype(str),
+            existing.loc[ _has_id, 'general_court'].astype(int),
+        ))
+        already_done_by_num = set(zip(
+            existing.loc[~_has_id, 'bill_number'].astype(int),
+            existing.loc[~_has_id, 'general_court'].astype(int),
+        ))
+        print(f'  {len(already_done_by_id):,} already embedded (by bill_id), '
+              f'{len(already_done_by_num):,} (by bill_number fallback)')
     elif args.reembed:
         print(f'  --reembed: ignoring {len(existing) if existing is not None else 0} cached embeddings, re-embedding all bills')
-        existing = None  # discard; will be rebuilt from scratch
+        existing = None
 
-    unscored = unique[
-        ~unique.apply(lambda r: (r['bill_number'], r['general_court']) in already_done, axis=1)
-    ]
+    def _is_done(row) -> bool:
+        bid = row['bill_id']
+        if pd.notna(bid):
+            return (str(bid), int(row['general_court'])) in already_done_by_id
+        return (int(row['bill_number']), int(row['general_court'])) in already_done_by_num
+
+    unscored = unique[~unique.apply(_is_done, axis=1)]
     print(f'Embedding {len(unscored)} new bills...')
 
     api_key = _read_api_key()
