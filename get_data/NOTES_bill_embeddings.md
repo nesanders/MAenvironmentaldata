@@ -345,9 +345,31 @@ Both scores are negative, indicating bills are on average closer to the nearest 
 | Cached tokens | 792,990 (80.8%) |
 | Avg input / bill | 1,982 tokens |
 | Avg output / bill | 152 tokens |
-| Actual cost (495 bills) | $0.0525 |
-| Projected cost (26k full corpus) | **$2.76** |
-| Savings from prompt caching | ~46% |
+| Reported cost (495 bills) | $0.0525 ← **WRONG** — used bad output price |
+| Corrected cost at actual prices | ~$0.304 ($0.614/1k bills) |
+| Projected cost (26k full corpus) | **$15.96** (corrected), not $2.76 |
+| Savings from prompt caching | ~30–35% |
+
+> ⚠️ **The $0.0525 / $2.76 figures were computed with output price $0.30/1M instead of $2.50/1M (the correct GA rate). All downstream projections from this pilot were wrong by ~6×.** Verified from GCP billing SKU "Gemini 2.5 Flash GA Text Output - Predictions". See full-run actuals below.
+
+---
+
+### 6. Full-backfill cost actuals (June 2026, 7,211 bills)
+
+| Metric | Value |
+|--------|-------|
+| Bills processed | 7,211 (H/S collision backfill) |
+| Verified at checkpoint | 2,000 bills = $1.2537 |
+| **Actual rate** | **$0.627 / 1k bills** ($0.000627/bill) |
+| Avg input / bill | ~1,971 tokens |
+| Avg cached / bill | ~1,602 tokens (81% cache hit rate) |
+| Avg output / bill | ~151 tokens |
+| Output token share of cost | ~60% (at $2.50/1M vs $0.30/1M input) |
+| Projected total (7,211 bills) | **~$4.52** |
+| Projected 26k full corpus | **~$16.30** |
+| Weekly incremental (20–50 bills) | ~$0.013–$0.031 per run |
+
+**Root cause of all prior underestimates:** output tokens cost $2.50/1M — 8.3× the input price — yet every prior estimate applied the input/cached rate to all tokens. Even at only 151 output tokens/bill, output dominates the per-bill cost. Always use the correct output price when projecting LLM runs with structured JSON responses.
 
 ### 6. UMAP with summary embeddings
 

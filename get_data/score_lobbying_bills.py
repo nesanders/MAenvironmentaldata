@@ -30,6 +30,19 @@ Differential cosine similarity: for each bill, compute
 Positive scores indicate the bill looks more like environmental legislation
 than non-environmental legislation. Threshold: 0.05.
 
+Embedding cost (gemini-embedding-2, as of May 2026)
+────────────────────────────────────────────────────
+  $0.20 / 1M tokens.  Each bill uses ~750 input tokens (title + stripped body,
+  3,000-char budget ≈ 750 tokens), so ~$0.00015/bill.
+
+  One-time backfill (7,057 new bills, June 2026):  ~$1.06
+  Typical weekly incremental run (20–50 new bills): < $0.01
+
+  NOTE: These costs are negligible vs. the summarize_lobbying_bills.py run
+  ($0.627/1k bills, driven by output tokens at $2.50/1M).  Do NOT estimate
+  embedding cost from the summarization pricing — they use different models
+  and completely different token budgets.
+
 Run from the get_data/ directory after get_MA_legislature_bills.py:
     /path/to/python -u score_lobbying_bills.py
 

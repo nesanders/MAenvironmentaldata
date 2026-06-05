@@ -1,101 +1,101 @@
 ,bill_number,general_court,bill_title,bill_id,env_relevance_score,is_environmental,cluster_id
-0,4563,193,An Act relative to landfills and areas of critical environmental concern,H4563,0.1332123279571533,1,0
-1,894,191,An Act relative to landfills and areas of critical environmental concern,H894,0.1287276148796081,1,10
-2,2945,190,An Act relative to landfills and areas of critical environmental concern,H2945,0.1287275552749633,1,21
-3,3701,193,An Act relative to chemical recycling,H3701,0.1225529909133911,1,21
-4,861,193,An Act relative to maintaining adequate water supplies through effective drought management,H861,0.1155469417572021,1,4
-5,530,192,An Act relative to maintaining adequate water supplies through effective drought management,S530,0.1155468821525573,1,20
-6,101,193,An Act protecting our soil and farms from PFAS contamination,H101,0.1148219108581543,1,0
-7,662,194,An Act relative to maintaining adequate water supplies through effective drought management,S662,0.1139989495277404,1,5
-8,56,194,An Act protecting our soil and farms from PFAS contamination,S56,0.1135307550430297,1,18
-9,109,194,An Act protecting our soil and farms from PFAS contamination,H109,0.1135307550430297,1,6
-10,4288,193,An Act protecting our soil and farms from PFAS contamination,H4288,0.1130177974700927,1,8
-11,1003,194,An Act relative to maintaining adequate water supplies through effective drought management,H1003,0.1113339066505432,1,4
-12,2115,190,An Act relative to drought management,H2115,0.1107659339904785,1,22
-13,817,193,An Act providing access to higher education for high school graduates in the Commonwealth,H817,0.1103136539459228,1,3
-14,914,193,An Act relative to solid waste disposal facilities in environmental justice communities,H914,0.1098233461380004,1,21
-15,1060,194,An Act relative to solid waste disposal facilities in environmental justice communities,H1060,0.1098233461380004,1,6
-16,529,193,An Act relative to solid waste disposal facilities in environmental justice communities,S529,0.1098232865333557,1,2
-17,383,188,"SB383, An Act incorporating wetland stewardship and scenic resources into wetland protection. We tracked the status of this bill using Insta-Trac, a tracking service, but did not have any contact with legislators or government officials in regard to this bill.",S383,0.1079468727111816,1,0
-18,446,190,An Act to promote healthy communities and the environment,H446,0.1008339524269104,1,0
-19,829,191,An Act to promote healthy communities and the environment,H829,0.0931212902069091,1,20
-20,2146,190,An Act establishing tracking and reporting requirements for Massachusetts transportation fuels and associated greenhouse gas emissions,H2146,0.0929172039031982,1,15
-21,521,191,An Act establishing tracking and reporting requirements for Massachusetts transportation fuels and associated greenhouse gas emissions,S521,0.0929172039031982,1,4
-22,560,193,An Act establishing tracking and reporting requirements for Massachusetts transportation fuels and associated greenhouse gas emissions,S560,0.0929172039031982,1,14
-23,730,188,An Act providing for more efficient wetlands protection by avoiding unnecessary duplication in local wetlands ordinances or bylaws,H730,0.0907992124557495,1,9
-24,3836,192,An Act prohibiting disposal by incineration of certain aqueous film-forming foam,H3836,0.0905959606170654,1,20
-25,4820,192,An Act to ban the use of PFAS in food packaging,H4820,0.0876445770263671,1,14
-26,2893,192,An Act relative to chemicals in food packaging,S2893,0.0875599980354309,1,6
-27,2126,190,An Act relative to the Massachusetts Wetlands Protection Act,H2126,0.0875561237335205,1,24
-28,773,188,An Act allowing local wetlands bylaw decisions to be appealed to land court,S773,0.0875385999679565,1,13
-29,2723,193,Studying the effect of per- and polyfluoroalkyl substances in commercial products,S2723,0.0867761373519897,1,6
-30,1194,194,An Act relative to the cleanup of accidental home heating oil spills,H1194,0.0861396789550781,1,21
-31,4818,192,An Act restricting toxic PFAS chemicals in consumer products to protect our health,H4818,0.0860450863838195,1,7
-32,588,193,An Act studying the effect of per- and polyfluoroalkyl substances in commercial products,S588,0.085762619972229,1,3
-33,624,192,An Act studying the effect of per- and polyfluoroalkyl substances in commercial products,S624,0.0852963924407959,1,0
-34,985,192,An Act studying the effect of per- and polyfluoroalkyl substances in commercial products,H985,0.0852963328361511,1,4
-35,1046,193,An Act relative to the cleanup of accidental home heating oil spills,H1046,0.0852186679840087,1,15
-36,2149,190,An Act relating to the effective and efficient implementation of the Global Warming Solutions Act of 2008,H2149,0.0850124955177307,1,18
-37,457,193,An Act to accelerate and streamline wetlands restoration,S457,0.0845230817794799,1,8
-38,39,193,An Act protecting our soil and farms from PFAS contamination,H39,0.0840250849723815,1,6
-39,1052,194,An Act accelerating wetlands restoration,H1052,0.0838565826416015,1,1
-40,2500,191,An Act setting next-generation climate policy,S2500,0.0838357806205749,1,7
-41,1832,191,An Act further regulating siting of solid waste facilities,H1832,0.0835810303688049,1,16
-42,3219,190,An Act further regulating siting of solid waste facilities,H3219,0.0835807919502258,1,1
-43,1828,190,An Act to explore alternative funding sources to ensure safe and reliable transportation,S1828,0.0832948684692382,1,20
-44,440,190,An Act relative to landfills and Areas of Critical Environmental Concern,H440,0.0828680992126464,1,3
-45,2477,191,An Act setting next-generation climate policy,S2477,0.0824567079544067,1,1
-46,394,186,- Hazardous Waste Notification,S394,0.0822882652282714,1,7
-47,719,188,Resolve relative to establishing a comprehensive waste managment hierarchy in Massachusetts,H719,0.0822012424468994,1,9
-48,2348,192,An Act to ban the use of PFAS in food packaging,H2348,0.0821855068206787,1,1
-49,874,193,An Act regulating the application of fertilizer used in the town of Orleans,H874,0.0821208953857421,1,2
-50,9,192,An Act creating a next-generation roadmap for Massachusetts climate policy,S9,0.0820236802101135,1,5
-51,750,186,An Act providing for more efficient wetlands protection by avoiding unnecessary duplication in local wetlands ordinances or bylaws,H750,0.0819623470306396,1,13
-52,1765,191,An Act to prevent nonprofit institutions from avoiding wetlands or natural resource protections under the so-called Dover Amendment,H1765,0.0819566249847412,1,24
-53,2035,193,An Act to prevent nonprofit institutions from avoiding wetlands or natural resource protections under the so-called Dover Amendment,H2035,0.0819566249847412,1,23
-54,3661,191,An Act relative to the reduction of certain toxic chemicals in firefighter personal protective equipment,H3661,0.0817464590072631,1,22
-55,813,194,An Act relative to the remediation of home heating oil releases,S813,0.0815783739089965,1,1
-56,4256,191,An Act establishing an interagency PFAS task force,H4256,0.0814509987831115,1,19
-57,930,192,An Act relative to landfills and areas of critical environmental concern,S930,0.0813662409782409,1,9
-58,4187,188,An Act relative to clean energy resources,H4187,0.0806100368499755,1,6
-59,219,187,An Act requiring the timely adoption of greenhouse gas emission limits for the year 2030,H219,0.0803406238555908,1,20
-60,1302,194,An Act relative to the remediation of home heating oil releases,H1302,0.0799140334129333,1,18
-61,1129,193,An Act relative to the remediation of home heating oil releases,H1129,0.0799139142036438,1,15
-62,1387,192,An Act restricting toxic PFAS chemicals in consumer products to protect our health,S1387,0.0798709988594055,1,8
-63,957,192,An Act relative to clean lakes and waterways in the commonwealth,H957,0.0798701047897338,1,17
-64,1831,191,An Act relative to the closure of the Saugus ash landfill,H1831,0.0795003175735473,1,5
-65,3220,190,An Act relative to the closure of the Saugus ash landfill,H3220,0.0793455839157104,1,2
-66,2225,192,An Act relative to facilitating the utilization of psychologists on the health care team,S2225,0.0792813301086425,1,5
-67,2186,192,An Act ensuring a healthy future for environmental justice communities,S2186,0.0791409015655517,1,20
-68,3362,192,An Act ensuring a healthy future for environmental justice communities,H3362,0.0791409015655517,1,5
-69,3209,193,An Act ensuring a healthy future for environmental justice communities,H3209,0.0791409015655517,1,14
-70,4444,192,An Act relative to preventing the discharge of radioactive materials,H4444,0.079023003578186,1,24
-71,593,192,An Act to protect the Commonwealth from toxic chemicals,S593,0.0787117481231689,1,2
-72,782,186,An Act Relative to Solid Waste Disposal,H782,0.0787063241004943,1,11
-73,243,187,An Act relative to solid waste disposal facilities,H243,0.0786969065666198,1,12
-74,855,191,An Act relative to solid waste disposal facilities,H855,0.0786969065666198,1,0
-75,932,192,An Act relative to the closure of the Saugus ash landfill,H932,0.0786237716674804,1,11
-76,2336,188,An Act relative to recycling,S2336,0.0785828232765197,1,12
-77,2308,189,An Act relative to recycling,S2308,0.0785828232765197,1,22
-78,4780,189,An Act relative to recycling,H4780,0.0785828232765197,1,2
-79,2339,193,An Act relative to the reduction of certain toxic chemicals in firefighter personal protective equipment,H2339,0.0784701108932495,1,12
-80,1494,192,An Act relative to chemicals in food packaging,S1494,0.0783893465995788,1,1
-81,2081,193,An Act establishing a Climate Policy Commission,S2081,0.0783196687698364,1,20
-82,557,194,An Act accelerating wetlands restoration projects,S557,0.0781931281089782,1,3
-83,911,194,An Act relative to truth in labeling of recyclable and compostable goods,H911,0.078083336353302,1,3
-84,5060,192,An Act driving clean energy and offshore wind,H5060,0.0779787898063659,1,0
-85,683,189,An Act relative to the Massachusetts Wetlands Protection Act,H683,0.0776074528694152,1,8
-86,1748,189,Act to prevent wage theft and promote employer accountability,S1748,0.0775803327560424,1,20
-87,2024,187,An Act to repower Massachusetts,H2024,0.0774177908897399,1,21
-88,3837,192,An Act relative to liability for release of hazardous materials,H3837,0.0772904157638549,1,23
-89,1119,192,An Act relative to the cleanup of accidental home heating oil spills,H1119,0.0770888924598693,1,21
-90,832,191,An Act to create a 2050 roadmap to a clean and thriving commonwealth,H832,0.0765299201011657,1,0
-91,960,192,An Act relative to the use of administrative subpoenas to obtain telephone and internet records without judicial review,H960,0.0765158534049987,1,2
-92,875,191,An Act regarding soil reclamation safety oversight,H875,0.0761662125587463,1,8
-93,4898,192,An Act relative to liability for release of hazardous materials,H4898,0.0761659145355224,1,1
-94,511,193,An Act relative to liability for release of hazardous materials,S511,0.0761657357215881,1,19
-95,899,193,An Act relative to liability for release of hazardous materials,H899,0.0761657357215881,1,7
-96,3678,194,An Act relative to chemical recycling,H3678,0.0761395692825317,1,23
-97,594,191,An Act relative to the remediation of home heating oil releases,S594,0.0759533643722534,1,17
-98,723,188,An Act regarding underground storage tank remediation,H723,0.0757881999015808,1,6
-99,685,189,An Act regarding underground storage tank remediation,H685,0.0757881999015808,1,8
+0,3678,194,An Act relative to chemical recycling,HD3678,0.1475381851196289,1,-1
+1,4563,193,An Act relative to landfills and areas of critical environmental concern,H4563,0.1332122683525085,1,0
+2,2945,190,An Act relative to landfills and areas of critical environmental concern,H2945,0.1287276148796081,1,21
+3,894,191,An Act relative to landfills and areas of critical environmental concern,H894,0.1287276148796081,1,10
+4,930,192,An Act relative to landfills and areas of critical environmental concern,H930,0.1287275552749633,1,-1
+5,440,190,An Act relative to landfills and Areas of Critical Environmental Concern,S440,0.1273688673973083,1,-1
+6,3701,193,An Act relative to chemical recycling,H3701,0.1225529313087463,1,21
+7,863,193,An Act relative to proper disposal of products containing PFAS,H863,0.1221066713333129,1,-1
+8,530,192,An Act relative to maintaining adequate water supplies through effective drought management,S530,0.1155469417572021,1,20
+9,861,193,An Act relative to maintaining adequate water supplies through effective drought management,H861,0.1155468821525573,1,4
+10,39,193,An Act protecting our soil and farms from PFAS contamination,S39,0.1148219108581543,1,-1
+11,101,193,An Act protecting our soil and farms from PFAS contamination,H101,0.1148216724395752,1,0
+12,762,191,An Act relative to maintaining adequate water supplies through effective drought management,H762,0.1139989495277404,1,-1
+13,662,194,An Act relative to maintaining adequate water supplies through effective drought management,S662,0.1139988303184509,1,5
+14,56,194,An Act protecting our soil and farms from PFAS contamination,S56,0.1135307550430297,1,3
+15,109,194,An Act protecting our soil and farms from PFAS contamination,H109,0.1135307550430297,1,9
+16,4288,193,An Act protecting our soil and farms from PFAS contamination,H4288,0.1130175590515136,1,8
+17,1003,194,An Act relative to maintaining adequate water supplies through effective drought management,H1003,0.1113339066505432,1,4
+18,586,194,An Act relative to maintaining adequate water supplies through effective drought management,S586,0.1113339066505432,1,-1
+19,2115,190,An Act relative to drought management,H2115,0.1107659339904785,1,22
+20,817,193,An Act providing access to higher education for high school graduates in the Commonwealth,H817,0.1103136539459228,1,3
+21,1060,194,An Act relative to solid waste disposal facilities in environmental justice communities,H1060,0.1098233461380004,1,9
+22,529,193,An Act relative to solid waste disposal facilities in environmental justice communities,S529,0.1098232865333557,1,2
+23,914,193,An Act relative to solid waste disposal facilities in environmental justice communities,H914,0.1098232269287109,1,21
+24,383,188,"SB383, An Act incorporating wetland stewardship and scenic resources into wetland protection. We tracked the status of this bill using Insta-Trac, a tracking service, but did not have any contact with legislators or government officials in regard to this bill.",S383,0.1079468727111816,1,0
+25,735,186,An Act to reinstate the landfill moratorium.,H735,0.10762619972229,1,0
+26,425,190,An Act relative to drought management,S425,0.1064680218696594,1,-1
+27,446,190,An Act to promote healthy communities and the environment,H446,0.1008339524269104,1,0
+28,698,188,An Act relative to best management practices in water,H698,0.0944083333015441,1,-1
+29,829,191,An Act to promote healthy communities and the environment,H829,0.0931211709976196,1,20
+30,1315,191,An Act relative to chemicals in food packaging,S1315,0.0930818915367126,1,-1
+31,2146,190,An Act establishing tracking and reporting requirements for Massachusetts transportation fuels and associated greenhouse gas emissions,H2146,0.0929172039031982,1,15
+32,754,189,An Act establishing tracking and reporting requirements for Massachusetts transportation fuels and associated greenhouse gas emissions,H754,0.0929172039031982,1,-1
+33,604,192,An Act establishing tracking and reporting requirements for Massachusetts transportation fuels and associated greenhouse gas emissions,S604,0.0929172039031982,1,-1
+34,521,191,An Act establishing tracking and reporting requirements for Massachusetts transportation fuels and associated greenhouse gas emissions,S521,0.0929170846939086,1,4
+35,560,193,An Act establishing tracking and reporting requirements for Massachusetts transportation fuels and associated greenhouse gas emissions,S560,0.0929170846939086,1,14
+36,477,190,An Act establishing tracking and reporting requirements for Massachusetts transportation fuels and associated greenhouse gas emissions,S477,0.0929170846939086,1,-1
+37,2009,191,An Act to reduce greenhouse gas emissions,S2009,0.092070460319519,1,-1
+38,730,188,An Act providing for more efficient wetlands protection by avoiding unnecessary duplication in local wetlands ordinances or bylaws,H730,0.0907992124557495,1,9
+39,3836,192,An Act prohibiting disposal by incineration of certain aqueous film-forming foam,H3836,0.0905959010124206,1,20
+40,2085,188,"Joint Committee on Telecommunications, Utilities & Energy - An Act requiring the timely adoption of greenhouse gas emission limits for the year 2030",S2085,0.0900017023086547,1,-1
+41,410,189,"S. 410, resolve relative to establishing a comprehensive waste management hierarchy in Massachusetts",S410,0.0889670252799987,1,-1
+42,4820,192,An Act to ban the use of PFAS in food packaging,H4820,0.0876446366310119,1,14
+43,2893,192,An Act relative to chemicals in food packaging,S2893,0.0875599980354309,1,6
+44,2126,190,An Act relative to the Massachusetts Wetlands Protection Act,H2126,0.0875561237335205,1,24
+45,773,188,An Act allowing local wetlands bylaw decisions to be appealed to land court,S773,0.0875385999679565,1,13
+46,2723,193,Studying the effect of per- and polyfluoroalkyl substances in commercial products,S2723,0.0867761373519897,1,6
+47,1045,194,An Act relative to liability for release of hazardous materials,H1045,0.0862191319465637,1,-1
+48,441,190,An Act further regulating siting of solid waste facilities,S441,0.0862088203430175,1,-1
+49,1194,194,An Act relative to the cleanup of accidental home heating oil spills,H1194,0.0861396789550781,1,21
+50,4818,192,An Act restricting toxic PFAS chemicals in consumer products to protect our health,H4818,0.0860450863838195,1,7
+51,906,193,An Act to accelerate and streamline wetlands restoration,H906,0.0858179926872253,1,-1
+52,588,193,An Act studying the effect of per- and polyfluoroalkyl substances in commercial products,S588,0.085762619972229,1,3
+53,985,192,An Act studying the effect of per- and polyfluoroalkyl substances in commercial products,H985,0.0852963924407959,1,4
+54,624,192,An Act studying the effect of per- and polyfluoroalkyl substances in commercial products,S624,0.0852963328361511,1,0
+55,1046,193,An Act relative to the cleanup of accidental home heating oil spills,H1046,0.0852188467979431,1,15
+56,2149,190,An Act relating to the effective and efficient implementation of the Global Warming Solutions Act of 2008,H2149,0.0850124955177307,1,18
+57,457,193,An Act to accelerate and streamline wetlands restoration,S457,0.0845230817794799,1,8
+58,39,193,An Act protecting our soil and farms from PFAS contamination,H39,0.0840250253677368,1,6
+59,1431,193,An Act relative to chemicals in food packaging,S1431,0.0839515328407287,1,-1
+60,1052,194,An Act accelerating wetlands restoration,H1052,0.0838565826416015,1,1
+61,2500,191,An Act setting next-generation climate policy,S2500,0.0838357806205749,1,7
+62,456,189,An Act establishing tracking and reporting requirements for Massachusetts transportation fuels and associated greenhouse gas emissions,S456,0.0836589336395263,1,-1
+63,1832,191,An Act further regulating siting of solid waste facilities,H1832,0.0835810303688049,1,16
+64,2161,192,An Act further regulating siting of solid waste facilities,H2161,0.0835810303688049,1,-1
+65,3219,190,An Act further regulating siting of solid waste facilities,H3219,0.0835807919502258,1,1
+66,2056,193,An Act further regulating siting of solid waste facilities,H2056,0.0835807919502258,1,-1
+67,1929,191,An Act requiring the timely adoption of greenhouse gas emission limits for the year 2030,S1929,0.0833440423011779,1,-1
+68,1828,190,An Act to explore alternative funding sources to ensure safe and reliable transportation,S1828,0.0832948684692382,1,20
+69,479,190,An Act relative to 2030 and 2040 emissions benchmarks,S479,0.0831530690193176,1,-1
+70,607,192,An Act relative to stronger emissions limits,S607,0.0829653739929199,1,-1
+71,440,190,An Act relative to landfills and Areas of Critical Environmental Concern,H440,0.0828680992126464,1,3
+72,2224,192,An Act to reduce greenhouse gas emissions,S2224,0.0828336477279663,1,-1
+73,2477,191,An Act setting next-generation climate policy,S2477,0.0824567079544067,1,1
+74,394,186,- Hazardous Waste Notification,S394,0.0822882652282714,1,7
+75,719,188,Resolve relative to establishing a comprehensive waste managment hierarchy in Massachusetts,H719,0.0822012424468994,1,9
+76,2348,192,An Act to ban the use of PFAS in food packaging,H2348,0.0821852087974548,1,1
+77,994,194,An Act regulating the application of fertilizer used in the town of Orleans,H994,0.0821208953857421,1,-1
+78,874,193,An Act regulating the application of fertilizer used in the town of Orleans,H874,0.0821207761764526,1,2
+79,429,190,An Act relative to underground storage tank remediation,H429,0.0820258259773254,1,-1
+80,9,192,An Act creating a next-generation roadmap for Massachusetts climate policy,S9,0.0820236802101135,1,5
+81,750,186,An Act providing for more efficient wetlands protection by avoiding unnecessary duplication in local wetlands ordinances or bylaws,H750,0.0819623470306396,1,13
+82,1765,191,An Act to prevent nonprofit institutions from avoiding wetlands or natural resource protections under the so-called Dover Amendment,H1765,0.0819566249847412,1,24
+83,2035,193,An Act to prevent nonprofit institutions from avoiding wetlands or natural resource protections under the so-called Dover Amendment,H2035,0.0819566249847412,1,23
+84,1325,192,An Act to prevent nonprofit institutions from avoiding wetlands or natural resource protections under the so-called Dover Amendment,S1325,0.0819566249847412,1,-1
+85,2141,192,An Act to prevent nonprofit institutions from avoiding wetlands or natural resource protections under the so-called Dover Amendment,H2141,0.0819566249847412,1,-1
+86,3661,191,An Act relative to the reduction of certain toxic chemicals in firefighter personal protective equipment,H3661,0.0817464590072631,1,22
+87,2737,193,An Act relative to the remediation of home heating oil releases,S2737,0.0815783739089965,1,-1
+88,813,194,An Act relative to the remediation of home heating oil releases,S813,0.081578254699707,1,1
+89,4256,191,An Act establishing an interagency PFAS task force,H4256,0.0814509987831115,1,19
+90,930,192,An Act relative to landfills and areas of critical environmental concern,S930,0.0813663601875305,1,9
+91,1747,189,An Act combating climate change,S1747,0.0810697078704834,1,-1
+92,136,194,An Act prohibiting the use and sale of toxic sludge,H136,0.0807428359985351,1,-1
+93,1866,189,An Act relative to a clean fuel standard,S1866,0.0806789398193359,1,-1
+94,1974,190,An Act relative to a clean fuel standard,S1974,0.0806789398193359,1,-1
+95,2130,191,An Act relative to a clean fuel standard,S2130,0.0806789398193359,1,-1
+96,2370,192,An Act relative to a clean fuel standard,S2370,0.0806789398193359,1,-1
+97,2286,193,An Act relative to a clean fuel standard,S2286,0.0806789398193359,1,-1
+98,4187,188,An Act relative to clean energy resources,H4187,0.0806100368499755,1,6
+99,1213,193,An Act relative to clean energy resources,HD1213,0.0806098580360412,1,-1

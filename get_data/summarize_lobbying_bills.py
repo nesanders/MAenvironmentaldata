@@ -40,11 +40,26 @@ Cost (Gemini 2.5 Flash non-thinking, as of May 2026)
   Output:          $2.50   / 1M tokens   (verified from billing — NOT $0.30)
   Thinking is explicitly disabled (budget=0).
 
-  Estimated full run (26k bills):  ~$10–12 with caching
+  ACTUAL observed rate (June 2026 backfill, 7,211 bills):
+    $0.627 / 1k bills  ($0.000627/bill)
+    Token mix per bill: ~1,971 input, ~1,602 cached (81% cache hit), ~151 output
+    Output tokens ($2.50/1M) account for ~60% of total cost even at 151 tokens/bill.
+    Verified at checkpoint 2000: $1.2537 cumulative.
 
-  NOTE: Previous estimates used wrong output price ($0.30 instead of $2.50).
-  Output tokens dominate cost at ~$2.50/1M (vs $0.30 input). Verified May 2026
-  from GCP billing SKU "Gemini 2.5 Flash GA Text Output - Predictions".
+  Projected costs at this observed rate:
+    7,211-bill backfill (June 2026):  ~$4.52
+    26,000-bill full corpus:          ~$16.30
+    Weekly incremental (20–50 bills): ~$0.013–$0.031  (<< $1/week ✓)
+
+  HISTORY OF UNDERESTIMATES — do not repeat these mistakes:
+    Pilot (495 bills, May 2026): reported $0.0525 but used WRONG output price
+    ($0.30 instead of $2.50). Correct recalculation: $0.304.  Projected $2.76
+    for 26k was off by ~6×.  Root cause: output tokens are priced at $2.50/1M
+    (8.3× the input price), and prior estimates ignored this asymmetry entirely.
+
+  NOTE: The script docstring said "$10–12 with caching" — that was also too low.
+  Actual rate implies ~$16 for 26k bills. Always verify from GCP billing console,
+  not from the API docs pricing table (which may show pre-GA or non-thinking rates).
 
 Run from the get_data/ directory:
     /path/to/python -u summarize_lobbying_bills.py --sample 200
