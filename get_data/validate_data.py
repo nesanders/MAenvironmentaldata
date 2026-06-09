@@ -61,9 +61,9 @@ DATASETS = {
     ],
     # Lobbying tables — present only after get_MA_lobbying.py has run at least once.
     # validate_data.py skips missing files gracefully (file-not-found check below).
-    'MA_lobbying_employers.csv': ['employer_name', 'year'],
-    'MA_lobbying_lobbyists.csv': ['lobbyist_name', 'employer_name', 'year'],
-    'MA_lobbying_bills.csv': ['bill_number', 'general_court', 'employer_name', 'year'],
+    'MA_lobbying_employers.csv': ['entity_name', 'year'],
+    'MA_lobbying_lobbyists.csv': ['lobbyist_name', 'entity_name', 'year'],
+    'MA_lobbying_bills.csv': ['bill_number', 'general_court', 'entity_name', 'year'],
     'MA_legislature_bills.csv': ['bill_number', 'general_court', 'title'],
 }
 
