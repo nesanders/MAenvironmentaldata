@@ -40,6 +40,7 @@ Outputs:
 import argparse
 import csv
 import datetime
+import os
 import re
 import time
 from pathlib import Path
@@ -53,6 +54,15 @@ from bs4 import BeautifulSoup
 BASE_URL = 'https://www.sec.state.ma.us/LobbyistPublicSearch/'
 SEARCH_URL = BASE_URL + 'Default.aspx'
 DATA_DIR = Path('../docs/data')
+
+# GCS state files — the full CSVs are gitignored (too large); CI pulls them from
+# GCS at startup so every run is incremental rather than doing a full historical fetch.
+GCS_BUCKET        = 'gs://openamend-data'
+GCS_STATE_FILES   = [
+    'MA_lobbying_summary_links.csv',  # incremental state — must be synced
+    'MA_lobbying_bills.csv',           # uploaded by assemble_db.py but pulled here
+    'MA_lobbying_employers.csv',       # same
+]
 
 FIRST_YEAR = 2005
 REQUEST_DELAY = 1.0  # seconds between requests
@@ -373,6 +383,17 @@ def main():
     lobbyists_path = DATA_DIR / 'MA_lobbying_lobbyists.csv'
     bills_path     = DATA_DIR / 'MA_lobbying_bills.csv'
 
+    # Pull state files from GCS if not present locally (e.g. fresh CI checkout).
+    # Without this, every CI run starts from scratch and re-scrapes 22 years of history.
+    for fname in GCS_STATE_FILES:
+        local = DATA_DIR / fname
+        if not local.exists():
+            ret = os.system(f'gsutil -q cp {GCS_BUCKET}/{fname} {local} 2>/dev/null')
+            if ret == 0:
+                print(f'Restored {fname} from GCS ({local.stat().st_size // 1024:,} KB)')
+            else:
+                print(f'{fname} not in GCS yet — will do full fetch for missing years')
+
     # Load existing state — each file loaded independently so a missing optional
     # file (e.g. lobbyists, which isn't written until lobbyist data is scraped)
     # doesn't prevent resume from the others.
@@ -492,6 +513,15 @@ def main():
                 print(f'  [{i+1}/{len(summary_urls)}] {year_new} new disclosures so far this year')
 
         print(f'  {year} done: {year_new} new disclosures')
+
+    # Always push the links file back to GCS so the next CI run starts incremental.
+    # (MA_lobbying_bills.csv and MA_lobbying_employers.csv are uploaded by assemble_db.py.)
+    ret = os.system(f'gsutil -q cp {links_path} {GCS_BUCKET}/MA_lobbying_summary_links.csv')
+    if ret == 0:
+        print(f'Uploaded MA_lobbying_summary_links.csv to GCS '
+              f'({links_path.stat().st_size // 1024:,} KB, {len(links_df):,} links)')
+    else:
+        print('WARNING: failed to upload MA_lobbying_summary_links.csv to GCS')
 
     if total_new_disc == 0:
         print('\nNo new disclosures found — nothing to write.')
