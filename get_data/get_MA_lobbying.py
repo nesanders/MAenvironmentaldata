@@ -65,7 +65,7 @@ GCS_STATE_FILES   = [
 ]
 
 FIRST_YEAR = 2005
-REQUEST_DELAY = 1.0  # seconds between requests
+REQUEST_DELAY = 0.3  # seconds between requests (lowered from 1.0 — safe for this low-volume server)
 
 HEADERS = {
     'User-Agent': (
@@ -445,19 +445,38 @@ def main():
         print(f'    [flush] {len(links_df)} links, {len(employers_df)} employer rows, '
               f'{len(bills_df)} bill rows (+{n_new_disc} new disclosures this session)')
 
+    # Build a per-year index of summary_urls we've already processed so we can
+    # skip their summary-page fetches for closed (past) years.  Filing periods
+    # close ~6 months after year end, so by the time CI runs any given year's
+    # disclosures are frozen.  The current year always gets a full scan.
+    current_year = datetime.date.today().year
+    known_summary_per_year: dict[int, set] = {}
+    if existing_links is not None and not existing_links.empty:
+        for _yr, _grp in existing_links.groupby('year'):
+            known_summary_per_year[int(_yr)] = set(_grp['summary_url'].dropna())
+
     session = _make_session()
     total_new_disc = 0
 
     for year in years:
         print(f'\n--- {year} ---')
         summary_urls = fetch_summary_links(session, year)
-        print(f'  {len(summary_urls)} registrants on portal')
+        known_for_year = known_summary_per_year.get(year, set())
+        skipped = sum(1 for u in summary_urls if year < current_year and u in known_for_year)
+        print(f'  {len(summary_urls)} registrants on portal '
+              f'({skipped} already known, {len(summary_urls)-skipped} to check)')
 
         if args.limit:
             summary_urls = summary_urls[:args.limit]
 
         year_new = 0
         for i, summary_url in enumerate(summary_urls):
+            # For past (closed) years, skip registrants whose summary page we've
+            # already processed — their filings won't change after the period closes.
+            # Always scan every registrant for the current year (new H1/H2 filings).
+            if year < current_year and summary_url in known_for_year:
+                continue
+
             meta = fetch_disclosure_links(session, summary_url)
             entity_name = meta['entity_name']
             reg_type = meta['reg_type']
