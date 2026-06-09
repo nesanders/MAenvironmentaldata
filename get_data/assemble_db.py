@@ -89,7 +89,7 @@ if __name__ == '__main__':
 		new_row.iloc[0, 2:] = 0  # Zero-fill growth columns
 		data_csv['SSAWages'] = pd.concat([data_csv['SSAWages'], new_row], ignore_index=True)
 
-	## Build waterBody → watershed lookup table for CSO choropleth mapping.
+	## Build waterBody -> watershed lookup table for CSO choropleth mapping.
 	## GeoJSON watershed polygon names (short, ALL CAPS) are from docs/assets/ma_watersheds.geojson.
 	## Mapping reviewed and approved 2026-04-10.
 	_CSO_WATERSHED_MAP = {
@@ -158,13 +158,13 @@ if __name__ == '__main__':
 	data_csv['EPA_303d_Impairments'] = pd.read_csv('../docs/data/EPA_303d_impairments.csv',
 	                                               low_memory=False)
 
-	## Build CSO waterBody → 303(d) waterbody name mapping.
+	## Build CSO waterBody -> 303(d) waterbody name mapping.
 	## Maps each CSO waterBody (ALL CAPS, from MAEEADP_CSO) to the corresponding
 	## waterbody name as it appears in EPA_303d_Impairments.
 	## Only manually verified, exact matches are included; ~30 of ~56 CSO waterbodies matched.
 	## Unmatched CSO waterbodies are simply absent from this table.
 	## Join path: MAEEADP_CSO.waterBody = CSO_303d_Mapping.csoWaterBody
-	##   → CSO_303d_Mapping.waterbody303d = EPA_303d_Impairments.waterbody
+	##   -> CSO_303d_Mapping.waterbody303d = EPA_303d_Impairments.waterbody
 	## Note: one 303d waterbody name may correspond to multiple assessment units (AUs).
 	## Reviewed and approved 2026-04-12.
 	_CSO_303d_MAP = {
@@ -217,7 +217,7 @@ if __name__ == '__main__':
 
 	_ms4_raw = pd.read_csv('../docs/data/MS4_extracted.csv')
 
-	# report_year: fill nulls from filename suffix (e.g. palmer-ma-ar20.pdf → 2020)
+	# report_year: fill nulls from filename suffix (e.g. palmer-ma-ar20.pdf -> 2020)
 	_YEAR_RE = _re.compile(r'ar(\d{2})\.pdf$', _re.IGNORECASE)
 	def _year_from_url(url, existing):
 		if pd.notna(existing):
@@ -231,7 +231,7 @@ if __name__ == '__main__':
 		lambda r: _year_from_url(r['source_url'], r['report_year']), axis=1
 	)
 
-	# permit_year imputation: report_year → permit year
+	# permit_year imputation: report_year -> permit year
 	# FY2019–2025 = permit years 1–7 of the original MA MS4 General Permit (first cycle).
 	# FY2026 = permit year 1 of the renewed permit (second cycle, effective 2023).
 	_REPORT_TO_PERMIT_YEAR = {2019: 1, 2020: 2, 2021: 3, 2022: 4, 2023: 5, 2024: 6, 2025: 7, 2026: 1}
@@ -315,6 +315,182 @@ if __name__ == '__main__':
 	data_csv['MS4_TMDL'] = _ms4_tmdl
 	print(f'MS4: {len(data_csv["MS4_AnnualReports"])} reports, {len(data_csv["MS4_TMDL"])} TMDL entries')
 
+	## MA Lobbying and Legislature data (loaded only if available; not yet in CI)
+
+	# Entity name normalization — applied at DB assembly time so raw portal names
+	# are preserved in GCS CSVs while the DB exposes cleaned columns for analysis.
+	#
+	# Design:
+	# 1. Strip d/b/a suffix first (before any other transforms) so the trade name
+	#    doesn't bleed into the canonical form.
+	# 2. Normalize hyphens -> spaces before punctuation removal, so "LAN-TEL" and
+	#    "LAN TEL" collapse to the same key.
+	# 3. Replace punctuation with a space (not '') so adjacent tokens don't
+	#    concatenate (e.g. ",INC" -> " INC" -> caught by whole-word removal).
+	# 4. Remove legal entity type words with whole-word regex so "INCORPORATED"
+	#    and "CORP" are caught in addition to "LLC"/"INC".
+	# 5. Remove "THE" as a whole word anywhere (leading or trailing) rather than
+	#    just the prefix "THE ".
+	import re as _re
+	_ENTITY_DBA_RE = _re.compile(
+		r'\s+D\s*/+B\s*/+A?\s+.*|\s+DBA\s+.*', _re.IGNORECASE)
+	_ENTITY_LEGAL_RE = _re.compile(
+		r'\b(LLC|LLP|INC|INCORPORATED|CORPORATION|CORP|LTD|LIMITED|PC|PLLC)\b')
+	_ENTITY_ARTICLE_RE = _re.compile(r'\bTHE\b')
+	_ENTITY_MISC = [
+		'LAW OFFICE OF', 'AND ASSOCIATES', '& ASSOCIATES', 'AND ASSOC',
+		'ATTORNEY AT LAW', 'ATTORNEY@LAW', 'ATTORNET AT LAW', 'AND PARTNERS',
+		'PUBLIC POLICY GROUP', 'LEGISLATIVE SERVICES', 'POLICY GROUP',
+		'ASSOCIATES', 'COUNSELLORS AT LAW',
+	]
+
+	def _normalize_entity(x):
+		if not isinstance(x, str):
+			return x
+		x = x.upper()
+		x = _ENTITY_DBA_RE.sub('', x)             # strip d/b/a trade-name suffix
+		x = x.replace('-', ' ')                    # hyphen -> space
+		for ch in (',', '.', "'", '\u2018', '\u2019', '(', ')'):
+			x = x.replace(ch, ' ')                # punctuation -> space (not '')
+		x = _ENTITY_LEGAL_RE.sub(' ', x)           # remove entity-type words
+		x = _ENTITY_ARTICLE_RE.sub(' ', x)         # remove THE (anywhere)
+		x = x.replace('&', 'AND')
+		x = x.replace('ASSICIATES', 'ASSOCIATES')  # legacy typo fix
+		for token in _ENTITY_MISC:
+			x = x.replace(token, ' ')
+		x = _re.sub(r'\s+', ' ', x).strip()
+		return x
+
+	_lobbying_employers_path = '../docs/data/MA_lobbying_employers.csv'
+	_lobbying_lobbyists_path = '../docs/data/MA_lobbying_lobbyists.csv'
+	_lobbying_bills_path = '../docs/data/MA_lobbying_bills.csv'
+	_legislature_bills_path = '../docs/data/MA_legislature_bills.csv'
+
+	if os.path.exists(_lobbying_employers_path):
+		_emp = pd.read_csv(_lobbying_employers_path, index_col=0)
+		_emp['entity_name_norm'] = _emp['entity_name'].map(_normalize_entity)
+		_emp['client_name_norm'] = _emp['client_name'].map(_normalize_entity)
+		data_csv['MA_Lobbying_Employers'] = _emp
+		print(f"MA_Lobbying_Employers: {len(data_csv['MA_Lobbying_Employers'])} rows")
+	if os.path.exists(_lobbying_lobbyists_path):
+		data_csv['MA_Lobbying_Lobbyists'] = pd.read_csv(_lobbying_lobbyists_path, index_col=0)
+		print(f"MA_Lobbying_Lobbyists: {len(data_csv['MA_Lobbying_Lobbyists'])} rows")
+	if os.path.exists(_lobbying_bills_path):
+		_lb = pd.read_csv(_lobbying_bills_path, index_col=0, low_memory=False)
+		_lb['entity_name_norm'] = _lb['entity_name'].map(_normalize_entity)
+		_lb['client_name_norm'] = _lb['client_name'].map(_normalize_entity)
+		_lb['bill_number'] = pd.to_numeric(_lb['bill_number'], errors='coerce').astype('Int64')
+		if 'general_court' in _lb.columns:
+			_lb['general_court'] = pd.to_numeric(_lb['general_court'], errors='coerce').astype('Int64')
+		# Deduplicate: null-bill rows ("no specific bills") are sometimes scraped
+		# multiple times from the SoS portal across filing periods.  Drop exact
+		# duplicates on the logical key; keep the row with the highest amount so
+		# no spend is lost when two copies carry different values.
+		_lb_key = ['entity_name', 'client_name', 'year', 'general_court',
+		           'bill_number', 'position']
+		_lb_before = len(_lb)
+		_lb = (_lb.sort_values('amount', ascending=False, na_position='last')
+		          .drop_duplicates(subset=_lb_key, keep='first')
+		          .reset_index(drop=True))
+		if len(_lb) < _lb_before:
+			print(f"  Deduplicated MA_Lobbying_Bills: {_lb_before} -> {len(_lb)} rows "
+			      f"({_lb_before - len(_lb)} duplicates removed)")
+		# Derive bill_prefix and bill_id from chamber + bill_number so downstream
+		# SQL can join to MA_Lobbying_Bills_Scored on (bill_id, general_court)
+		# instead of the ambiguous (bill_number, general_court) which collapses
+		# distinct H and S bills that share the same integer.
+		_chamber_to_prefix = {
+			'House Bill': 'H', 'HB': 'H',
+			'Senate Bill': 'S', 'SB': 'S',
+			'House Docket': 'HD',
+			'Senate Docket': 'SD',
+		}
+		_lb['bill_prefix'] = _lb['chamber'].map(_chamber_to_prefix)
+		_lb['bill_id'] = _lb.apply(
+			lambda r: f"{r['bill_prefix']}{int(r['bill_number'])}"
+			          if pd.notna(r.get('bill_prefix')) and pd.notna(r.get('bill_number'))
+			          else None,
+			axis=1,
+		)
+		data_csv['MA_Lobbying_Bills'] = _lb
+		print(f"MA_Lobbying_Bills: {len(data_csv['MA_Lobbying_Bills'])} rows")
+	if os.path.exists(_legislature_bills_path):
+		_leg_bills = pd.read_csv(_legislature_bills_path, index_col=0)
+		_leg_bills['bill_number'] = pd.to_numeric(_leg_bills['bill_number'], errors='coerce').astype('Int64')
+		if 'general_court' in _leg_bills.columns:
+			_leg_bills['general_court'] = pd.to_numeric(_leg_bills['general_court'], errors='coerce').astype('Int64')
+		if 'passed' in _leg_bills.columns:
+			_leg_bills['passed'] = _leg_bills['passed'].astype('Int64')
+		data_csv['MA_Legislature_Bills'] = _leg_bills
+		print(f"MA_Legislature_Bills: {len(data_csv['MA_Legislature_Bills'])} rows")
+
+	_scored_bills_path = '../docs/data/MA_lobbying_bills_scored.csv'
+	if os.path.exists(_scored_bills_path):
+		_scored = pd.read_csv(_scored_bills_path, index_col=0, engine='python')
+		_scored['bill_number'] = pd.to_numeric(_scored['bill_number'], errors='coerce').astype('Int64')
+		if 'general_court' in _scored.columns:
+			_gc = pd.to_numeric(_scored['general_court'], errors='coerce')
+			# Clamp out-of-range values (e.g. similarity scores in malformed rows) to NaN
+			_gc = _gc.where((_gc >= 180) & (_gc <= 210))
+			_scored['general_court'] = _gc.astype('Int64')
+		if 'is_environmental' in _scored.columns:
+			_scored['is_environmental'] = pd.to_numeric(_scored['is_environmental'].map(
+			{'True': 1, 'False': 0, True: 1, False: 0}).fillna(_scored['is_environmental']),
+			errors='coerce').astype('Int64')
+		if 'cluster_id' in _scored.columns:
+			_scored['cluster_id'] = pd.to_numeric(_scored['cluster_id'], errors='coerce').astype('Int64')
+		# Deduplicate: multiple filers sometimes reference the same bill with
+		# slightly different bill_title strings, producing duplicate scored rows.
+		# Deduplicate on (bill_id, general_court) when bill_id is present — this
+		# preserves distinct H and S bills that share the same integer bill_number
+		# (e.g. H331 and S331 in GC188 are completely different bills).  For rows
+		# without a bill_id (legacy SoS data pre-~2013), fall back to deduplicating
+		# on (bill_number, general_court) within that subset only.
+		# Sort so the row with the highest env_relevance_score is kept; prefer rows
+		# with a valid bill_id as a secondary sort within each group.
+		_scored_before = len(_scored)
+		_scored = _scored.assign(_has_bill_id=_scored['bill_id'].notna().astype(int))
+		_scored = _scored.sort_values(['env_relevance_score', '_has_bill_id'],
+		                              ascending=[False, False], na_position='last')
+		# Rows that have a bill_id: deduplicate on (bill_id, general_court)
+		_has_id = _scored['bill_id'].notna()
+		_scored_with_id = (_scored[_has_id]
+		                   .drop_duplicates(subset=['bill_id', 'general_court'], keep='first'))
+		# Rows without a bill_id: deduplicate on (bill_number, general_court)
+		_scored_no_id = (_scored[~_has_id]
+		                 .drop_duplicates(subset=['bill_number', 'general_court'], keep='first'))
+		_scored = (pd.concat([_scored_with_id, _scored_no_id], ignore_index=True)
+		             .drop(columns=['_has_bill_id'])
+		             .reset_index(drop=True))
+		if len(_scored) < _scored_before:
+			print(f"  Deduplicated MA_Lobbying_Bills_Scored: {_scored_before} -> {len(_scored)} rows "
+			      f"({_scored_before - len(_scored)} duplicates removed)")
+		# Replace concatenated multi-bill title blobs with the authoritative title
+		# from MA_Legislature_Bills wherever the join on (bill_id, general_court)
+		# succeeds.  The SoS portal sometimes stores all bills a filer registered
+		# in one text block; the Legislature API always has a clean single title.
+		if 'MA_Legislature_Bills' in data_csv and 'bill_id' in _scored.columns:
+			_leg_titles = (data_csv['MA_Legislature_Bills']
+			               [['bill_id', 'general_court', 'title']]
+			               .dropna(subset=['bill_id', 'title'])
+			               .drop_duplicates(subset=['bill_id', 'general_court']))
+			_leg_titles = _leg_titles.rename(columns={'title': '_leg_title'})
+			_scored = _scored.merge(_leg_titles, on=['bill_id', 'general_court'], how='left')
+			_long_mask = _scored['bill_title'].str.len().fillna(0) > 300
+			_fixed = (_long_mask & _scored['_leg_title'].notna()).sum()
+			_scored.loc[_long_mask & _scored['_leg_title'].notna(), 'bill_title'] = \
+				_scored.loc[_long_mask & _scored['_leg_title'].notna(), '_leg_title']
+			_scored = _scored.drop(columns=['_leg_title'])
+			if _fixed:
+				print(f"  Replaced {_fixed} concatenated bill titles with Legislature API titles")
+		data_csv['MA_Lobbying_Bills_Scored'] = _scored
+		print(f"MA_Lobbying_Bills_Scored: {len(data_csv['MA_Lobbying_Bills_Scored'])} rows")
+
+	_cluster_labels_path = '../docs/data/MA_bill_cluster_labels.csv'
+	if os.path.exists(_cluster_labels_path):
+		data_csv['MA_Bill_Cluster_Labels'] = pd.read_csv(_cluster_labels_path, engine='python')
+		print(f"MA_Bill_Cluster_Labels: {len(data_csv['MA_Bill_Cluster_Labels'])} rows")
+
 	data_csv['AMEND_metadata'] = pd.Series({
 		'Website':'https://nesanders.github.io/MAenvironmentaldata/index.html',
 		'GitHub':'https://github.com/nesanders/MAenvironmentaldata',
@@ -343,6 +519,34 @@ if __name__ == '__main__':
 		)
 		os.system('rm amend.db.gz')
 		print('Compressed DB uploaded to gs://openamend-data/amend.db.gz')
+
+		# Upload large lobbying CSVs to GCS (excluded from git due to size)
+		_gcs_lobbying_files = [
+			'../docs/data/MA_lobbying_bills.csv',
+			'../docs/data/MA_lobbying_employers.csv',
+			'../docs/data/MA_lobbying_bills_scored.csv',
+			'../docs/data/MA_legislature_bills.csv',
+		]
+		for _f in _gcs_lobbying_files:
+			if os.path.exists(_f):
+				_gcs_name = os.path.basename(_f)
+				os.system(f'gsutil cp {_f} gs://openamend-data/{_gcs_name}')
+				print(f'Uploaded {_gcs_name} to GCS')
+
+	## Write sample CSVs for large lobbying files (full CSVs are in GCS, not git)
+	_lobbying_samples = {
+		'MA_lobbying_bills':        (data_csv['MA_Lobbying_Bills'],         True),
+		'MA_lobbying_employers':    (data_csv['MA_Lobbying_Employers'],      True),
+		'MA_lobbying_summary_links': (pd.read_csv('../docs/data/MA_lobbying_summary_links.csv') if os.path.exists('../docs/data/MA_lobbying_summary_links.csv') else pd.DataFrame(), False),
+		'MA_lobbying_bills_scored': (data_csv['MA_Lobbying_Bills_Scored'],   True),
+		'MA_legislature_bills':     (data_csv['MA_Legislature_Bills'],       True),
+	}
+	for fname, (df, has_index) in _lobbying_samples.items():
+		if df.empty:
+			continue
+		out = f'../docs/data/{fname}_sample.csv'
+		df.head(100).to_csv(out, index=has_index)
+		print(f'Wrote sample: {out}')
 
 	## Generate semantic context for AI Analysis page
 	print('Generating semantic context for AI Analysis...')

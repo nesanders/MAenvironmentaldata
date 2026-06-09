@@ -59,6 +59,12 @@ DATASETS = {
         'reportingCycle', 'auId', 'waterbody', 'watershed', 'waterType',
         'category', 'designatedUse', 'attainment',
     ],
+    # Lobbying tables — present only after get_MA_lobbying.py has run at least once.
+    # validate_data.py skips missing files gracefully (file-not-found check below).
+    'MA_lobbying_employers.csv': ['employer_name', 'year'],
+    'MA_lobbying_lobbyists.csv': ['lobbyist_name', 'employer_name', 'year'],
+    'MA_lobbying_bills.csv': ['bill_number', 'general_court', 'employer_name', 'year'],
+    'MA_legislature_bills.csv': ['bill_number', 'general_court', 'title'],
 }
 
 # Minimum absolute row counts as a hard floor (catches total fetch failures).
@@ -71,6 +77,20 @@ MIN_ROWS = {
     'EEADP_CSO.csv': 100,
     'MA_precipitation_daily.csv': 8000,  # ~25 years × 365 days
     'EPA_303d_impairments.csv': 80000,  # 6 cycles × ~14k+ rows each
+    # Lobbying tables — populated after first full fetch (~2007–present)
+    'MA_lobbying_employers.csv': 500,
+    'MA_lobbying_lobbyists.csv': 500,
+    'MA_lobbying_bills.csv': 1000,
+    'MA_legislature_bills.csv': 500,
+}
+
+# Files that are not yet present on first CI run (populated by optional/manual fetch steps).
+# Missing files in this set produce a warning rather than a validation failure.
+OPTIONAL_DATASETS = {
+    'MA_lobbying_employers.csv',
+    'MA_lobbying_lobbyists.csv',
+    'MA_lobbying_bills.csv',
+    'MA_legislature_bills.csv',
 }
 
 # Allow small row decreases (%) due to data source updates, API changes, etc.
@@ -113,6 +133,9 @@ def validate() -> bool:
     for filename, required_cols in DATASETS.items():
         path = DATA_DIR / filename
         if not path.exists():
+            if filename in OPTIONAL_DATASETS:
+                print(f'  SKIP {filename}: not yet fetched (optional dataset)')
+                continue
             failures.append(f'MISSING FILE: {filename}')
             continue
 
