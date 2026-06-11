@@ -55,7 +55,7 @@ jobs:
           python get_MS4_annual_reports.py --yes --skip-download
 
       - name: Fetch — MA lobbying disclosures (incremental)
-        timeout-minutes: 30
+        timeout-minutes: 45
         working-directory: get_data
         run: python get_MA_lobbying.py
 

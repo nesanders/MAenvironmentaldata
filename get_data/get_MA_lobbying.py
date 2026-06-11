@@ -445,11 +445,19 @@ def main():
         print(f'    [flush] {len(links_df)} links, {len(employers_df)} employer rows, '
               f'{len(bills_df)} bill rows (+{n_new_disc} new disclosures this session)')
 
-    # Build a per-year index of summary_urls we've already processed so we can
-    # skip their summary-page fetches for closed (past) years.  Filing periods
-    # close ~6 months after year end, so by the time CI runs any given year's
-    # disclosures are frozen.  The current year always gets a full scan.
+    # Build a per-year index of summary_urls we've already processed.
+    # MA lobbying has two semi-annual periods per year:
+    #   H1: Jan–Jun (disclosures due ~Jul 15)
+    #   H2: Jul–Dec (disclosures due ~Jan 15 of the following year)
+    # Filing windows:
+    #   month < 10  → only H1 filings possible for current year
+    #   month >= 10 → H2 filings for current year may start appearing
+    # Strategy: skip known registrants for past years (frozen) and for the
+    # current year outside the H2 window.  Only truly new/unknown registrants
+    # (first-time filers) are always checked regardless of window.
     current_year = datetime.date.today().year
+    current_month = datetime.date.today().month
+    in_h2_window = current_month >= 10  # October: H2 filings start appearing
     known_summary_per_year: dict[int, set] = {}
     if existing_links is not None and not existing_links.empty:
         for _yr, _grp in existing_links.groupby('year'):
@@ -462,19 +470,21 @@ def main():
         print(f'\n--- {year} ---')
         summary_urls = fetch_summary_links(session, year)
         known_for_year = known_summary_per_year.get(year, set())
-        skipped = sum(1 for u in summary_urls if year < current_year and u in known_for_year)
+        # Skip logic: past years always skip known; current year skips known
+        # outside the H2 window (Jan–Sep), full scan in Oct–Dec.
+        skip_known = (year < current_year) or (year == current_year and not in_h2_window)
+        skipped = sum(1 for u in summary_urls if skip_known and u in known_for_year)
         print(f'  {len(summary_urls)} registrants on portal '
-              f'({skipped} already known, {len(summary_urls)-skipped} to check)')
+              f'({skipped} already known, {len(summary_urls)-skipped} to check)'
+              + ('' if year < current_year else f'  [H2 window: {in_h2_window}]'))
 
         if args.limit:
             summary_urls = summary_urls[:args.limit]
 
         year_new = 0
         for i, summary_url in enumerate(summary_urls):
-            # For past (closed) years, skip registrants whose summary page we've
-            # already processed — their filings won't change after the period closes.
-            # Always scan every registrant for the current year (new H1/H2 filings).
-            if year < current_year and summary_url in known_for_year:
+            # Skip known registrants when filings for this period are frozen.
+            if skip_known and summary_url in known_for_year:
                 continue
 
             meta = fetch_disclosure_links(session, summary_url)
