@@ -49,14 +49,31 @@ Each run follows three page hops per registrant:
 3. **CompleteDisclosure page** → compensation paid by each client + list of bills
    lobbied per client.
 
-**Incremental strategy:**
+**Incremental strategy (filing-window aware):**
 
-The set of already-fetched `CompleteDisclosure` URLs is persisted in
-`MA_lobbying_summary_links.csv`. On each run:
-- All years with no cached links are fetched in full.
-- The current year and prior year are always re-searched (new filers arrive
-  semi-annually); only new disclosure URLs trigger a detail fetch.
-- If no new disclosure URLs are found, the script exits immediately without writing files.
+MA lobbying has two semi-annual disclosure periods per year — H1 (Jan–Jun, due
+~Jul 15) and H2 (Jul–Dec, due **~Jan 15 of the following year**) — and amendments
+cluster within ~60 days of those deadlines (~11% of registrant-years have more
+than 2 disclosure URLs).
+
+State is persisted in `MA_lobbying_summary_links.csv` (gitignored; the script
+syncs it to/from `gs://openamend-data` at startup and during the run):
+- Every visited summary page is stamped with a `last_checked` date. Pages with
+  no disclosures yet get a marker row with a null `disc_url`.
+- A page is re-checked only while a filing window for its year is open
+  (`deadline − 14d` → `deadline + 60d`), plus exactly one closing sweep after
+  the window ends. Once both windows have closed and been swept, the page is
+  never fetched again.
+- A year is skipped entirely before Jul 1 of that year — the H1 period has not
+  closed, so no disclosures can exist.
+- Already-fetched `disc_url`s are never re-downloaded; appends are deduplicated.
+
+Expected CI runtimes: ~1–2 min steady-state; ~40 min during the Jul 15 and
+Jan 15 filing windows (full ~1,700-page scans, weekly until the window closes).
+
+State is uploaded to GCS every 200 pages and at the end of the run — data files
+first, the links index last — so a timed-out run still makes durable progress
+and can never mark a disclosure "fetched" whose data didn't make it to GCS.
 
 **Resumability:**
 

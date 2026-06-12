@@ -445,48 +445,99 @@ def main():
         print(f'    [flush] {len(links_df)} links, {len(employers_df)} employer rows, '
               f'{len(bills_df)} bill rows (+{n_new_disc} new disclosures this session)')
 
-    # Build a per-year index of summary_urls we've already processed.
-    # MA lobbying has two semi-annual periods per year:
-    #   H1: Jan–Jun (disclosures due ~Jul 15)
-    #   H2: Jul–Dec (disclosures due ~Jan 15 of the following year)
-    # Filing windows:
-    #   month < 10  → only H1 filings possible for current year
-    #   month >= 10 → H2 filings for current year may start appearing
-    # Strategy: skip known registrants for past years (frozen) and for the
-    # current year outside the H2 window.  Only truly new/unknown registrants
-    # (first-time filers) are always checked regardless of window.
-    current_year = datetime.date.today().year
-    current_month = datetime.date.today().month
-    in_h2_window = current_month >= 10  # October: H2 filings start appearing
-    known_summary_per_year: dict[int, set] = {}
-    if existing_links is not None and not existing_links.empty:
-        for _yr, _grp in existing_links.groupby('year'):
-            known_summary_per_year[int(_yr)] = set(_grp['summary_url'].dropna())
+    def _upload_state() -> None:
+        # Upload order matters: data files first, links file LAST.  The links
+        # file is the skip-index — if a run dies between uploads, a stale links
+        # file only means some disclosures get re-fetched next run (appends are
+        # deduped).  Uploading links first could permanently lose bill/employer
+        # rows: the index would say "fetched" while the data never made it out.
+        for path, dest in ((bills_path, 'MA_lobbying_bills.csv'),
+                           (employers_path, 'MA_lobbying_employers.csv'),
+                           (links_path, 'MA_lobbying_summary_links.csv')):
+            if path.exists():
+                if os.system(f'gsutil -q cp {path} {GCS_BUCKET}/{dest}') != 0:
+                    print(f'    WARNING: failed to upload {dest} to GCS')
+
+    # ── Page-level skip logic ──────────────────────────────────────────────────
+    # MA lobbying has two semi-annual disclosure periods per year:
+    #   H1 (Jan–Jun): disclosures due ~Jul 15 of the same year
+    #   H2 (Jul–Dec): disclosures due ~Jan 15 of the FOLLOWING year
+    # Amendments are common (~11% of registrant-years have >2 disclosure URLs)
+    # and cluster around those deadlines, so a disclosure-count cutoff cannot
+    # work.  Instead, every summary page we visit is stamped with last_checked
+    # in the links CSV (pages with no disclosures yet get a marker row with a
+    # null disc_url).  A page is (re-)checked only while a filing window for
+    # its year is active:
+    #     window = [deadline - 14 days, deadline + GRACE_DAYS]
+    # The `last_checked < window close` condition also forces exactly one
+    # closing sweep after each window ends, then the page is skipped until the
+    # year's next window (or forever, once both windows have closed).
+    # Years are skipped wholesale before Jul 1 of that year — the H1 period
+    # has not closed, so no disclosures can exist yet.
+    GRACE_DAYS = 60
+    today = datetime.date.today()
+
+    if not links_df.empty and 'last_checked' not in links_df.columns:
+        links_df['last_checked'] = pd.NA
+
+    visited_summary: set[str] = set()
+    last_checked: dict[str, datetime.date] = {}
+    if not links_df.empty:
+        visited_summary = set(links_df['summary_url'].dropna())
+        _lc = pd.to_datetime(links_df['last_checked'], errors='coerce')
+        for _url, _ts in zip(links_df['summary_url'], _lc):
+            if pd.notna(_url) and pd.notna(_ts):
+                _d = _ts.date()
+                if _url not in last_checked or _d > last_checked[_url]:
+                    last_checked[_url] = _d
+
+    _EPOCH = datetime.date(1970, 1, 1)
+
+    def _needs_check(url: str, year: int) -> bool:
+        if url not in visited_summary:
+            return True  # never seen this registrant-year — check once
+        lc = last_checked.get(url, _EPOCH)
+        for deadline in (datetime.date(year, 7, 15), datetime.date(year + 1, 1, 15)):
+            window_open = deadline - datetime.timedelta(days=14)
+            window_close = deadline + datetime.timedelta(days=GRACE_DAYS)
+            if today >= window_open and lc < window_close:
+                return True
+        return False
+
+    def _mark_checked(url: str, entity_name: str, year: int) -> None:
+        nonlocal links_df
+        visited_summary.add(url)
+        last_checked[url] = today
+        if not links_df.empty and links_df['summary_url'].eq(url).any():
+            links_df.loc[links_df['summary_url'].eq(url), 'last_checked'] = today.isoformat()
+        else:
+            links_df = _append(links_df,
+                               [{'entity_name': entity_name, 'year': year,
+                                 'summary_url': url, 'disc_url': None,
+                                 'last_checked': today.isoformat()}],
+                               ['entity_name', 'year', 'summary_url', 'disc_url'])
 
     session = _make_session()
     total_new_disc = 0
+    pages_checked = 0
 
     for year in years:
         print(f'\n--- {year} ---')
+        if today < datetime.date(year, 7, 1):
+            print(f'  H1 {year} period has not closed (disclosures due ~Jul 15) — skipping year')
+            continue
+
         summary_urls = fetch_summary_links(session, year)
-        known_for_year = known_summary_per_year.get(year, set())
-        # Skip logic: past years always skip known; current year skips known
-        # outside the H2 window (Jan–Sep), full scan in Oct–Dec.
-        skip_known = (year < current_year) or (year == current_year and not in_h2_window)
-        skipped = sum(1 for u in summary_urls if skip_known and u in known_for_year)
-        print(f'  {len(summary_urls)} registrants on portal '
-              f'({skipped} already known, {len(summary_urls)-skipped} to check)'
-              + ('' if year < current_year else f'  [H2 window: {in_h2_window}]'))
+        to_check = [u for u in summary_urls if _needs_check(u, year)]
+        print(f'  {len(summary_urls)} registrants on portal; '
+              f'{len(summary_urls) - len(to_check)} skipped (no open filing window), '
+              f'{len(to_check)} to check')
 
         if args.limit:
-            summary_urls = summary_urls[:args.limit]
+            to_check = to_check[:args.limit]
 
         year_new = 0
-        for i, summary_url in enumerate(summary_urls):
-            # Skip known registrants when filings for this period are frozen.
-            if skip_known and summary_url in known_for_year:
-                continue
-
+        for i, summary_url in enumerate(to_check):
             meta = fetch_disclosure_links(session, summary_url)
             entity_name = meta['entity_name']
             reg_type = meta['reg_type']
@@ -526,10 +577,15 @@ def main():
                                        ['entity_name', 'client_name', 'year'])
                 bills_df     = _append(bills_df, new_bill_rows,
                                        ['entity_name', 'client_name', 'bill_number', 'general_court'])
+                # Drop any visited-marker row for this page before adding the real link
+                if not links_df.empty:
+                    links_df = links_df[~(links_df['summary_url'].eq(summary_url)
+                                          & links_df['disc_url'].isna())]
                 links_df     = _append(links_df,
                                        [{'entity_name': entity_name, 'year': year,
-                                         'summary_url': summary_url, 'disc_url': disc_url}],
-                                       ['entity_name', 'year', 'disc_url'])
+                                         'summary_url': summary_url, 'disc_url': disc_url,
+                                         'last_checked': today.isoformat()}],
+                                       ['entity_name', 'year', 'summary_url', 'disc_url'])
 
                 existing_disc_urls.add(disc_url)
                 total_new_disc += 1
@@ -538,22 +594,28 @@ def main():
                 # Flush to disk after every disclosure — fully resumable on interrupt
                 _flush(total_new_disc)
 
-            if (i + 1) % 50 == 0 or (i + 1) == len(summary_urls):
-                print(f'  [{i+1}/{len(summary_urls)}] {year_new} new disclosures so far this year')
+            _mark_checked(summary_url, entity_name, year)
+            pages_checked += 1
+            # Periodic state sync so a timed-out CI run still makes durable
+            # progress — the next run resumes where this one died.
+            if pages_checked % 200 == 0:
+                _flush(total_new_disc)
+                _upload_state()
+
+            if (i + 1) % 50 == 0 or (i + 1) == len(to_check):
+                print(f'  [{i+1}/{len(to_check)}] {year_new} new disclosures so far this year')
 
         print(f'  {year} done: {year_new} new disclosures')
 
-    # Always push the links file back to GCS so the next CI run starts incremental.
-    # (MA_lobbying_bills.csv and MA_lobbying_employers.csv are uploaded by assemble_db.py.)
-    ret = os.system(f'gsutil -q cp {links_path} {GCS_BUCKET}/MA_lobbying_summary_links.csv')
-    if ret == 0:
-        print(f'Uploaded MA_lobbying_summary_links.csv to GCS '
-              f'({links_path.stat().st_size // 1024:,} KB, {len(links_df):,} links)')
-    else:
-        print('WARNING: failed to upload MA_lobbying_summary_links.csv to GCS')
+    # Final state sync — also persists last_checked stamps and visited markers
+    # from runs that found no new disclosures.
+    if pages_checked or total_new_disc:
+        _flush(total_new_disc)
+        _upload_state()
+        print(f'State synced to GCS ({pages_checked} pages checked this run)')
 
     if total_new_disc == 0:
-        print('\nNo new disclosures found — nothing to write.')
+        print('\nNo new disclosures found.')
         return
 
     print(f'\nFinal totals: {len(links_df)} links, {len(employers_df)} employer rows, '

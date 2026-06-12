@@ -30,6 +30,7 @@ Outputs:
 import csv
 import datetime
 import json
+import os
 import time
 from pathlib import Path
 
@@ -213,8 +214,19 @@ def main():
     unique_bills = unique_bills[['bill_id', 'general_court']].drop_duplicates()
     print(f'Found {len(unique_bills)} unique (bill_id, session) pairs to look up')
 
-    # Load existing cache to skip already-fetched bills
+    # Restore state from GCS if not present locally (e.g. fresh CI checkout).
+    # Without this, every CI run re-fetches all 33k bills from the Legislature API.
     legislature_path = DATA_DIR / 'MA_legislature_bills.csv'
+    GCS_BUCKET = 'gs://openamend-data'
+    if not legislature_path.exists():
+        ret = os.system(f'gsutil -q cp {GCS_BUCKET}/MA_legislature_bills.csv {legislature_path} 2>/dev/null')
+        if ret == 0:
+            print(f'Restored MA_legislature_bills.csv from GCS '
+                  f'({legislature_path.stat().st_size // 1024:,} KB)')
+        else:
+            print('MA_legislature_bills.csv not in GCS yet — will fetch all bills')
+
+    # Load existing cache to skip already-fetched bills
     existing: pd.DataFrame | None = None
     already_fetched: set = set()
     try:
@@ -236,10 +248,20 @@ def main():
     # Work against the combined DataFrame so flushes are always complete snapshots
     combined = existing.copy() if existing is not None and not existing.empty else pd.DataFrame()
     FLUSH_EVERY = 50
+    UPLOAD_EVERY = 10  # GCS sync every 10 flushes (500 bills) — a timed-out CI
+    _flush_count = 0   # run still makes durable progress for the next run
 
     def _flush(n_done: int) -> None:
+        nonlocal _flush_count
         combined.to_csv(legislature_path, quoting=csv.QUOTE_NONNUMERIC)
         print(f'  [{n_done}/{len(to_fetch)}] flushed {len(combined)} bill records')
+        _flush_count += 1
+        if _flush_count % UPLOAD_EVERY == 0:
+            _upload()
+
+    def _upload() -> None:
+        if os.system(f'gsutil -q cp {legislature_path} {GCS_BUCKET}/MA_legislature_bills.csv') != 0:
+            print('    WARNING: failed to upload MA_legislature_bills.csv to GCS')
 
     for i, row in enumerate(to_fetch):
         bid = str(row['bill_id'])
@@ -270,6 +292,8 @@ def main():
         print('No new bills to write.')
         return
 
+    if to_fetch:
+        _upload()
     print(f'Wrote {len(combined)} bill records to {legislature_path}')
 
     with open(DATA_DIR / 'ts_update_MA_legislature.yml', 'w') as f:
