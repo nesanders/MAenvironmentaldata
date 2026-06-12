@@ -161,9 +161,12 @@ Regulated sewer operators report CSO and SSO discharge events to the EEA Data Po
 waterbody, and operator identity. Rainfall data comes from NOAA ACIS, averaging daily
 precipitation across Massachusetts GHCN and NWS COOP weather stations.
 
-Discharge counts and volumes are tabulated by month and year. The rainfall chart uses a
-48-hour lookback window for precipitation totals, following
-<a href="https://iwaponline.com/wst/article/86/11/2848/91816/">Bizer & Kirchhoff (2022)</a>.
+Discharge counts and volumes are tabulated by month and year, with monthly precipitation
+totals overlaid. Rainfall–discharge comparisons in the full analysis use a 48-hour lookback
+window, following
+<a href="https://iwaponline.com/wst/article/86/11/2848/91816/">Bizer & Kirchhoff (2022)</a>,
+shifted one day to account for station observation-day reporting (most stations attribute
+rain to the morning observation following the day it falls).
 Operator volumes are shown as annual trends for the top 10 operators, illustrating how each operator's 
 discharge volumes change year-to-year. Note that 2022 data covers only the second half of the calendar year; 
 the first full calendar year of data is 2023.
