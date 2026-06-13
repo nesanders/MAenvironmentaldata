@@ -204,14 +204,28 @@ def _parse_amount(text: str) -> float | None:
 def fetch_disclosure_detail(session, disc_url: str, year: int) -> dict:
     """Parse a CompleteDisclosure page.
 
-    Two HTML formats exist depending on the filing year:
+    Four HTML format eras exist; per-client compensation lives in a different
+    place in each. Detection is by table id (verified across 2007/2011/2016/2024):
 
-    Modern (≥~2013): per-client compensation in grdvClientPaidToEntity;
-      per-client bill tables as grdvActivitiesNew{year}_{n}.
+    Modern (2019+): `grdvClientPaidToEntity` holds per-client compensation;
+      bills in `grdvActivitiesNew{year}_{n}` (one table per client).
 
-    Legacy (<~2013): total salary paid in grdvSalaryPaid (no client breakdown);
-      all bill activity in a single grdvActivities table with columns:
-      Date | Bill No+Title | Lobbyist name | Client represented.
+    Hybrid (2014–2018): NO grdvClientPaidToEntity. Bills in `grdvActivitiesNew_{n}`
+      (no year suffix). Per-client compensation is in id-less Panel1 divs
+      ("Total amount paid by client…: $X") indexed by the same {n} as the
+      client-name span (`lblClientName_{n}`). A client either reports a Panel1
+      total OR reports at activity level (amount column of its bill table) —
+      so per-client comp = panel_total + activity_sum (one is always 0).
+      Missing this path silently dropped ~99% of 2014–2018 compensation.
+
+    Legacy (2009–2013): single `grdvActivities` table whose "Compensation
+      received" column carries a PER-CLIENT total repeated on every bill row
+      for that client (verified: identical value across a client's rows) —
+      so dedupe distinct (client, amount) before summing, never sum raw rows.
+
+    Legacy (2005–2008): `grdvActivities` has only 4 columns (Date | Bill+Title |
+      Lobbyist | Client) with NO compensation column; fall back to the entity
+      total in `grdvSalaryPaid` under the placeholder client `_total_salary_`.
 
     Returns dict with:
       compensation: list of {client_name, amount}
@@ -223,12 +237,15 @@ def fetch_disclosure_detail(session, disc_url: str, year: int) -> dict:
     bills = []
     gc = _year_to_general_court(year)
 
-    # ── Modern format ─────────────────────────────────────────────────────────
+    # ── Modern / Hybrid: per-client bill activity tables ───────────────────────
+    # ID patterns: 2014–2018 → grdvActivitiesNew_{n} (no year);
+    #              2019+      → grdvActivitiesNew{year}_{n}.
     comp_table = soup.find(
         'table',
         id=lambda x: x and 'grdvClientPaidToEntity' in (x or '')
     )
     if comp_table:
+        # Modern: authoritative per-client compensation table.
         for row in comp_table.find_all('tr', class_=lambda c: c and 'Grid' in c and 'Header' not in c):
             cells = [td.get_text(strip=True) for td in row.find_all('td')]
             if len(cells) >= 2:
@@ -237,10 +254,7 @@ def fetch_disclosure_detail(session, disc_url: str, year: int) -> dict:
                     'amount': _parse_amount(cells[1]),
                 })
 
-    # Bill activity tables — one per client per reporting period.
-    # Two ID patterns exist depending on portal version:
-    #   2014–2018: …rptActivityNew_grdvActivitiesNew_0       (no year suffix)
-    #   2019+:     …rptActivityNew2020_grdvActivitiesNew2020_0 (year suffix)
+    activity_by_client = {}  # client_name -> summed activity-level amount (hybrid)
     for act_table in soup.find_all(
         'table',
         id=lambda x: x and re.search(r'grdvActivitiesNew(\d{4})?_\d+', x or '')
@@ -258,47 +272,59 @@ def fetch_disclosure_detail(session, disc_url: str, year: int) -> dict:
             cells = [td.get_text(strip=True) for td in row.find_all('td')]
             # Columns: House/Senate, Bill Number, Bill title, Position, Amount, Direct business
             if len(cells) >= 4:
+                amt = _parse_amount(cells[4]) if len(cells) > 4 else None
                 bills.append({
                     'client_name': client_name,
                     'chamber': cells[0],
                     'bill_number': cells[1],
                     'bill_title': cells[2] if len(cells) > 2 else '',
                     'position': cells[3] if len(cells) > 3 else '',
-                    'amount': _parse_amount(cells[4]) if len(cells) > 4 else None,
+                    'amount': amt,
                     'general_court': gc,
                 })
+                if amt:
+                    activity_by_client[client_name] = activity_by_client.get(client_name, 0.0) + amt
+
+    # Hybrid (2014–2018): no modern comp table — reconstruct per-client comp from
+    # the Panel1 "Total amount paid by client" divs, indexed by client-name span.
+    if not comp_table and bills:
+        client_by_idx = {
+            sp.get('id').split('_')[-1]: sp.get_text(strip=True)
+            for sp in soup.find_all('span', id=lambda x: x and 'lblClientName_' in (x or ''))
+        }
+        panel_by_client = {}
+        for div in soup.find_all('div', id=lambda x: x and 'Panel1_' in (x or '')):
+            idx = div.get('id').split('_')[-1]
+            client_name = client_by_idx.get(idx)
+            if not client_name:
+                continue
+            m = re.search(r'\$([\d,]+\.\d\d)', div.get_text(' ', strip=True))
+            panel_by_client[client_name] = float(m.group(1).replace(',', '')) if m else 0.0
+        # A client reports EITHER a Panel1 total OR activity-level amounts; summing
+        # is safe because the unused source is 0.
+        for client_name in set(panel_by_client) | set(activity_by_client):
+            amt = panel_by_client.get(client_name, 0.0) + activity_by_client.get(client_name, 0.0)
+            if amt:
+                compensation.append({'client_name': client_name, 'amount': amt})
 
     if comp_table or bills:
         return {'compensation': compensation, 'bills': bills}
 
-    # ── Legacy format ─────────────────────────────────────────────────────────
-    # Compensation: grdvSalaryPaid has total salary paid to lobbyists, not per
-    # client. Sum to a single entity-level row using a placeholder client name.
-    salary_table = soup.find(
-        'table',
-        id=lambda x: x and 'grdvSalaryPaid' in (x or '')
-    )
-    if salary_table:
-        total = 0.0
-        for row in salary_table.find_all('tr'):
-            cells = [td.get_text(strip=True) for td in row.find_all('td')]
-            if len(cells) >= 2:
-                amt = _parse_amount(cells[1])
-                if amt and 'Total' not in cells[0]:
-                    total += amt
-        if total:
-            compensation.append({'client_name': '_total_salary_', 'amount': total})
-
-    # Bills: single grdvActivities table. Three known legacy column layouts.
-    # Registrant type (individual lobbyist vs. lobbying entity) — not year —
-    # determines whether the 2010+ table includes a "Lobbyist name" column.
-    #   2009 4-col:               Date | Bill+Title | Lobbyist | Client
-    #   2010+ individual 5-col:   Activity | Position | DirectBiz | Client | Compensation
-    #   2010+ entity 6-col:       Activity | Lobbyist | Position | DirectBiz | Client | Compensation
+    # ── Legacy format (2005–2013): single grdvActivities table ─────────────────
+    # Three known column layouts; registrant type (individual vs. entity), not
+    # year, determines whether a "Lobbyist name" column is present:
+    #   2005–2009 4-col:        Date | Bill+Title | Lobbyist | Client        (no comp)
+    #   2010+ individual 5-col: Activity | Position | DirectBiz | Client | Compensation
+    #   2010+ entity 6-col:     Activity | Lobbyist | Position | DirectBiz | Client | Compensation
+    # The "Compensation received" column (2009–2013) is a PER-CLIENT total
+    # repeated on every bill row for that client, so we dedupe distinct
+    # (client, amount) pairs before summing — never sum the raw rows.
     act_table = soup.find(
         'table',
         id=lambda x: x and x.endswith('grdvActivities')
     )
+    comp_col = None
+    legacy_comp_pairs = set()  # distinct (client_name, amount) to avoid row multiplication
     if act_table:
         all_rows = act_table.find_all('tr')
         header_cells = [
@@ -314,6 +340,9 @@ def fetch_disclosure_detail(session, disc_url: str, year: int) -> dict:
                 bill_col, position_col, client_col = 0, 1, 3
         else:
             bill_col, position_col, client_col = 1, None, 3
+        # "Compensation received" is the last column when present (2009–2013).
+        if any('Compensation' in h for h in header_cells):
+            comp_col = len(header_cells) - 1
 
         chamber_map = {'H': 'House Bill', 'S': 'Senate Bill',
                        'HD': 'House Docket', 'SD': 'Senate Docket'}
@@ -324,13 +353,19 @@ def fetch_disclosure_detail(session, disc_url: str, year: int) -> dict:
             bill_cell = cells[bill_col]
             client_name = cells[client_col]
             position = cells[position_col] if position_col is not None else ''
+            amt = (_parse_amount(cells[comp_col])
+                   if comp_col is not None and len(cells) > comp_col else None)
+            if amt is not None:
+                legacy_comp_pairs.add((client_name, amt))
             if not bill_cell or bill_cell in (
                 'Activity or Bill No and Title', 'N/A', 'None', '', 'Total amount'
             ):
                 continue
-            parts = bill_cell.split(None, 1)
-            bill_no = parts[0]
-            bill_title = parts[1] if len(parts) > 1 else ''
+            # Bill token may be separated from its title by a space ("H73 Title")
+            # or a semicolon ("H73; Title"); strip trailing punctuation before matching.
+            parts = re.split(r'[;\s]', bill_cell, maxsplit=1)
+            bill_no = parts[0].rstrip(';')
+            bill_title = parts[1].strip() if len(parts) > 1 else ''
             m = re.match(r'^([A-Z]+)(\d+)$', bill_no)
             if not m:
                 continue
@@ -342,9 +377,35 @@ def fetch_disclosure_detail(session, disc_url: str, year: int) -> dict:
                 'bill_number': number,
                 'bill_title': bill_title,
                 'position': position,
-                'amount': None,
+                'amount': amt,
                 'general_court': gc,
             })
+
+    # Compensation: prefer per-client totals from the activity table (2009–2013).
+    # Fall back to grdvSalaryPaid (entity total under placeholder client) only
+    # when no per-client compensation column exists (2005–2008).
+    if comp_col is not None:
+        per_client = {}
+        for client_name, amt in legacy_comp_pairs:
+            per_client[client_name] = per_client.get(client_name, 0.0) + amt
+        for client_name, amt in per_client.items():
+            if amt:
+                compensation.append({'client_name': client_name, 'amount': amt})
+    else:
+        salary_table = soup.find(
+            'table',
+            id=lambda x: x and 'grdvSalaryPaid' in (x or '')
+        )
+        if salary_table:
+            total = 0.0
+            for row in salary_table.find_all('tr'):
+                cells = [td.get_text(strip=True) for td in row.find_all('td')]
+                if len(cells) >= 2:
+                    amt = _parse_amount(cells[1])
+                    if amt and 'Total' not in cells[0]:
+                        total += amt
+            if total:
+                compensation.append({'client_name': '_total_salary_', 'amount': total})
 
     return {'compensation': compensation, 'bills': bills}
 
