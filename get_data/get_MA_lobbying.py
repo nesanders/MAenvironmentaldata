@@ -40,6 +40,7 @@ Outputs:
 import argparse
 import csv
 import datetime
+import hashlib
 import os
 import re
 import time
@@ -84,6 +85,67 @@ def _year_to_general_court(year: int) -> int:
     return FIRST_GENERAL_COURT + ((year - FIRST_GC_START_YEAR) // 2)
 
 
+# ─── Raw HTML archival (streamed in batches to keep local disk bounded) ────────
+# When enabled (--archive-raw), every fetched Summary/CompleteDisclosure page is
+# saved to MA_lobbying_raw_html/{sha1(url)}.html.  To avoid accumulating ~2 GB
+# locally, pages are flushed in batches: once the local buffer exceeds
+# RAW_BATCH_MAX_BYTES it is tarred, uploaded to GCS Archive as a numbered batch,
+# and deleted locally.  Local usage therefore stays under ~RAW_BATCH_MAX_BYTES.
+# The links CSV stores every summary_url/disc_url and doubles as the archive
+# manifest: to reparse offline, download all raw_html/*.tar.gz, extract, then
+# look up sha1(url).html.  Lets us extract new fields later without re-scraping.
+
+RAW_HTML_DIR = Path('MA_lobbying_raw_html')
+ARCHIVE_RAW = False                  # set by --archive-raw in main()
+RAW_BATCH_MAX_BYTES = 150 * 1024 * 1024  # flush+upload batch at ~150 MB local
+_raw_buffer_bytes = 0
+_raw_batch_seq = 0
+_raw_run_tag = datetime.datetime.now().strftime('%Y%m%dT%H%M%S')
+
+
+def _raw_path(url: str) -> Path:
+    return RAW_HTML_DIR / (hashlib.sha1(url.encode('utf-8')).hexdigest() + '.html')
+
+
+def _flush_raw_batch() -> None:
+    """Tar the local raw-HTML buffer, upload to GCS Archive, delete locally."""
+    global _raw_buffer_bytes, _raw_batch_seq
+    files = list(RAW_HTML_DIR.glob('*.html')) if RAW_HTML_DIR.exists() else []
+    if not files:
+        return
+    _raw_batch_seq += 1
+    tarball = f'raw_html_batch_{_raw_run_tag}_{_raw_batch_seq:04d}.tar.gz'
+    if os.system(f'tar czf {tarball} -C {RAW_HTML_DIR.parent} {RAW_HTML_DIR.name}') == 0:
+        dest = f'{GCS_BUCKET}/raw_html/{tarball}'
+        if os.system(f'gsutil -q cp -s archive {tarball} {dest}') == 0:
+            sz = Path(tarball).stat().st_size / 1e6
+            print(f'    [raw archive] uploaded {tarball} ({len(files):,} pages, {sz:.0f} MB) -> Archive')
+            for f in files:
+                f.unlink()
+        else:
+            print(f'    WARNING: failed to upload {tarball}; keeping local pages')
+    else:
+        print('    WARNING: failed to tar raw HTML batch')
+    if Path(tarball).exists():
+        Path(tarball).unlink()
+    _raw_buffer_bytes = 0
+
+
+def _save_raw(url: str, html: str) -> None:
+    global _raw_buffer_bytes
+    if not ARCHIVE_RAW:
+        return
+    p = _raw_path(url)
+    if p.exists():
+        return  # already buffered this URL (pre-flush)
+    RAW_HTML_DIR.mkdir(exist_ok=True)
+    data = html.encode('utf-8')
+    p.write_bytes(data)
+    _raw_buffer_bytes += len(data)
+    if _raw_buffer_bytes >= RAW_BATCH_MAX_BYTES:
+        _flush_raw_batch()
+
+
 # ─── HTTP ──────────────────────────────────────────────────────────────────────
 
 def _make_session() -> requests.Session:
@@ -98,6 +160,10 @@ def _get(session, url, retries=5, **kwargs) -> BeautifulSoup:
         try:
             r = session.get(url, timeout=60, **kwargs)
             r.raise_for_status()
+            # Archive only content pages (Summary/CompleteDisclosure), not the
+            # regenerable search page (which shares one URL across all years).
+            if 'Summary.aspx' in url or 'CompleteDisclosure' in url:
+                _save_raw(url, r.text)
             return BeautifulSoup(r.text, 'html.parser')
         except (requests.exceptions.Timeout, requests.exceptions.ConnectionError) as e:
             print(f'  GET timeout/connection error (attempt {attempt+1}/{retries}): {e}')
@@ -160,12 +226,15 @@ def fetch_summary_links(session, year: int) -> list[str]:
 # ─── Summary page ──────────────────────────────────────────────────────────────
 
 def fetch_disclosure_links(session, summary_url: str) -> dict:
-    """Fetch a Summary page and return registrant metadata + disclosure URLs.
+    """Fetch a Summary page and return registrant metadata + disclosure URLs."""
+    return parse_summary(_get(session, summary_url))
+
+
+def parse_summary(soup: BeautifulSoup) -> dict:
+    """Parse a Summary page (pure; no I/O — also used for offline archive reparse).
 
     Returns dict with keys: entity_name, year, reg_type, disclosure_urls (list).
     """
-    soup = _get(session, summary_url)
-
     def _text(sid):
         tag = soup.find(id=sid)
         return tag.get_text(strip=True) if tag else ''
@@ -202,7 +271,12 @@ def _parse_amount(text: str) -> float | None:
 
 
 def fetch_disclosure_detail(session, disc_url: str, year: int) -> dict:
-    """Parse a CompleteDisclosure page.
+    """Fetch + parse a CompleteDisclosure page."""
+    return parse_disclosure_detail(_get(session, disc_url), year)
+
+
+def parse_disclosure_detail(soup: BeautifulSoup, year: int) -> dict:
+    """Parse a CompleteDisclosure page (pure; no I/O — also used for offline reparse).
 
     Four HTML format eras exist; per-client compensation lives in a different
     place in each. Detection is by table id (verified across 2007/2011/2016/2024):
@@ -232,7 +306,6 @@ def fetch_disclosure_detail(session, disc_url: str, year: int) -> dict:
       bills:        list of {client_name, chamber, bill_number, bill_title,
                               position, amount, general_court}
     """
-    soup = _get(session, disc_url)
     compensation = []
     bills = []
     gc = _year_to_general_court(year)
@@ -355,7 +428,10 @@ def fetch_disclosure_detail(session, disc_url: str, year: int) -> dict:
             position = cells[position_col] if position_col is not None else ''
             amt = (_parse_amount(cells[comp_col])
                    if comp_col is not None and len(cells) > comp_col else None)
-            if amt is not None:
+            # Skip summary rows: legacy individual disclosures append a
+            # "Total amount" row that repeats the per-client total — it is not a
+            # real client and must not become a compensation pair or a fake row.
+            if amt is not None and client_name not in ('Total amount', 'Total', ''):
                 legacy_comp_pairs.add((client_name, amt))
             if not bill_cell or bill_cell in (
                 'Activity or Bill No and Title', 'N/A', 'None', '', 'Total amount'
@@ -437,7 +513,15 @@ def main():
                         help='Fetch a single year only (for testing)')
     parser.add_argument('--limit', type=int, default=None,
                         help='Max registrants to fetch per year (for testing)')
+    parser.add_argument('--archive-raw', action='store_true',
+                        help='Save every fetched page HTML to MA_lobbying_raw_html/ '
+                             'and upload a tarball to GCS Archive at end of run')
     args = parser.parse_args()
+
+    global ARCHIVE_RAW
+    ARCHIVE_RAW = args.archive_raw
+    if ARCHIVE_RAW:
+        print(f'Raw-HTML archival ENABLED -> {RAW_HTML_DIR}/')
 
     links_path     = DATA_DIR / 'MA_lobbying_summary_links.csv'
     employers_path = DATA_DIR / 'MA_lobbying_employers.csv'
@@ -674,6 +758,10 @@ def main():
         _flush(total_new_disc)
         _upload_state()
         print(f'State synced to GCS ({pages_checked} pages checked this run)')
+
+    # Flush the final partial raw-HTML batch (uploads + deletes local pages).
+    if ARCHIVE_RAW:
+        _flush_raw_batch()
 
     if total_new_disc == 0:
         print('\nNo new disclosures found.')
