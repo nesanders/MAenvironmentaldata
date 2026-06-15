@@ -126,3 +126,73 @@ def test_year_to_general_court():
     assert g._year_to_general_court(2005) == 184
     assert g._year_to_general_court(2023) == 193
     assert g._year_to_general_court(2025) == 194
+
+
+# ── Offline-parsed fields (campaign contributions, salaries, mapping, purpose) ──
+
+# (fixture, n_contributions, total_amount) — Date|Lobbyist|Recipient|Office|Amount
+CAMPAIGN_CASES = [
+    ('2007e_disc', 14, 2_630.0),
+    ('2011e_disc', 93, 13_225.0),
+    ('2016e_disc', 160, 28_825.0),
+    ('2024e_disc', 6, 1_200.0),
+    ('2024i_disc', 14, 2_800.0),
+]
+
+
+@pytest.mark.parametrize('fix,n,total', CAMPAIGN_CASES)
+def test_campaign_contributions(fix, n, total):
+    cc = g.parse_campaign_contributions(_soup(fix))
+    assert len(cc) == n, f'{fix} contribution count'
+    assert sum(c['amount'] for c in cc if c['amount']) == pytest.approx(total, abs=1.0)
+    # required fields present and no header/placeholder rows leaked
+    for c in cc:
+        assert c['recipient_name'] and 'No campaign' not in c['date']
+
+
+def test_salaries():
+    sal = g.parse_salaries(_soup('2011e_disc'))
+    assert len(sal) == 10
+    assert sum(s['salary'] for s in sal if s['salary']) == pytest.approx(663_175.0, abs=1.0)
+    assert all('Total' not in s['lobbyist_name'] for s in sal)
+
+
+def test_employment_edges_individual_page():
+    """Individual summary lists employing entities (RptEntity)."""
+    edges = g.parse_employment_edges(_soup('2024i_summ'))
+    assert len(edges) == 1
+    assert edges[0]['entity_name'] == 'Ventry Associates, LLP'
+    assert edges[0]['lobbyist_name'] is None  # registrant side filled by driver
+    assert edges[0]['salary'] == pytest.approx(167_348.50, abs=1.0)
+
+
+def test_employment_edges_entity_page():
+    """Entity summary lists employed lobbyists (RptLobbyistInfo)."""
+    edges = g.parse_employment_edges(_soup('2011e_summ'))
+    assert len(edges) == 10
+    assert all(e['entity_name'] is None and e['lobbyist_name'] for e in edges)
+
+
+def test_client_purposes():
+    cp = g.parse_client_purposes(_soup('2024e_summ'))
+    assert len(cp) == 5
+    assert sum(c['amount'] for c in cp if c['amount']) == pytest.approx(132_500.0, abs=1.0)
+    by_name = {c['client_name']: c for c in cp}
+    assert 'Amplify Education, Inc.' in by_name
+    assert 'K-12 education' in by_name['Amplify Education, Inc.']['purpose']
+
+
+def test_expenses_all_three_types():
+    ex = g.parse_expenses(_soup('2024i_disc'))
+    types = {e['expense_type'] for e in ex}
+    assert types == {'operating', 'meals_entertainment_travel', 'additional'}
+    assert all(e['amount'] > 0 for e in ex), 'blank $0 template rows must be filtered'
+    assert sum(e['amount'] for e in ex) == pytest.approx(127_923.0, abs=5.0)
+
+
+def test_expenses_filters_zero_template_rows():
+    """The standard blank category template ('Advertising $0.00', etc.) must not
+    appear; only actual reported expenses with amount > 0."""
+    ex = g.parse_expenses(_soup('2011e_disc'))
+    assert len(ex) == 2
+    assert sum(e['amount'] for e in ex) == pytest.approx(414_750.0, abs=1.0)

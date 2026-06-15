@@ -486,6 +486,172 @@ def parse_disclosure_detail(soup: BeautifulSoup, year: int) -> dict:
     return {'compensation': compensation, 'bills': bills}
 
 
+# ─── Additional disclosure-page fields (parsed offline from the raw archive) ────
+# These pure parsers are validated against tests/fixtures and run over the
+# archived HTML by the offline driver; they make no network calls.
+
+def parse_campaign_contributions(soup: BeautifulSoup) -> list[dict]:
+    """Campaign contributions reported on a CompleteDisclosure page.
+
+    Columns are consistent across all eras: Date | Lobbyist | Recipient |
+    Office sought | Amount.  Modern pages split contributions across an
+    entity-level table and per-activity tables, so rows are deduplicated.
+    Returns list of {date, lobbyist_name, recipient_name, office_sought, amount}.
+    """
+    seen = set()
+    out = []
+    for table in soup.find_all('table', id=lambda x: x and 'CampaignContribution' in (x or '')):
+        for row in table.find_all('tr'):
+            cells = [td.get_text(strip=True) for td in row.find_all('td')]
+            if len(cells) < 5:
+                continue
+            date, lobbyist, recipient, office, amount = cells[:5]
+            # Skip header/placeholder rows
+            if 'No campaign' in date or date.lower() in ('date', '') or not recipient:
+                continue
+            amt = _parse_amount(amount)
+            key = (date, lobbyist, recipient, office, amt)
+            if key in seen:
+                continue
+            seen.add(key)
+            out.append({
+                'date': date,
+                'lobbyist_name': lobbyist,
+                'recipient_name': recipient,
+                'office_sought': office,
+                'amount': amt,
+            })
+    return out
+
+
+_EXPENSE_TYPES = {
+    'OperatingExpenses': 'operating',
+    'METExpenses': 'meals_entertainment_travel',
+    'AdditionalExpenses': 'additional',
+}
+
+
+def parse_expenses(soup: BeautifulSoup) -> list[dict]:
+    """Itemized expenses (operating / meals-entertainment-travel / additional).
+
+    The three expense tables have different column counts but a common shape:
+    the first cell is a date and the last cell is the dollar amount.  We capture
+    {expense_type, date, payee, description, amount} where payee is the second
+    cell and description joins the remaining middle cells.
+    Returns rows only for entries with a parseable positive amount.
+    """
+    out = []
+    for id_frag, etype in _EXPENSE_TYPES.items():
+        for table in soup.find_all('table', id=lambda x, f=id_frag: x and f in (x or '')):
+            for row in table.find_all('tr'):
+                cells = [td.get_text(strip=True) for td in row.find_all('td')]
+                if len(cells) < 3:
+                    continue
+                amount = _parse_amount(cells[-1])
+                if not amount or amount <= 0:
+                    continue  # header/placeholder, or blank $0 category template row
+                out.append({
+                    'expense_type': etype,
+                    'date': cells[0],
+                    'payee': cells[1] if len(cells) > 1 else '',
+                    'description': ' '.join(c for c in cells[2:-1] if c),
+                    'amount': amount,
+                })
+    return out
+
+
+def parse_salaries(soup: BeautifulSoup) -> list[dict]:
+    """Salaries paid to individual lobbyists, from grdvSalaryPaid.
+
+    Columns: Lobbyist/Entity name | Salary.  The 'Total salaries paid' summary
+    row is skipped.  Returns list of {lobbyist_name, salary}.
+    """
+    out = []
+    table = soup.find('table', id=lambda x: x and 'grdvSalaryPaid' in (x or ''))
+    if not table:
+        return out
+    for row in table.find_all('tr'):
+        cells = [td.get_text(strip=True) for td in row.find_all('td')]
+        if len(cells) < 2 or not cells[0] or 'Total' in cells[0] or cells[0] == 'Lobbyist or Entity name':
+            continue
+        out.append({'lobbyist_name': cells[0], 'salary': _parse_amount(cells[1])})
+    return out
+
+
+# ─── Summary-page relationships (employer mapping + per-client purpose) ──────────
+
+def _repeater_rows(soup: BeautifulSoup, amount_id_substr: str) -> list[tuple]:
+    """Yield (name, amount) for each ASP.NET repeater data row whose amount span
+    id contains `amount_id_substr` and ends with _<n>.  The row's name is the
+    first hyperlink (client / lobbyist / entity name)."""
+    out = []
+    for span in soup.find_all('span', id=lambda x: x and amount_id_substr in (x or '')
+                              and re.search(r'_\d+$', x or '')):
+        tr = span.find_parent('tr')
+        if not tr:
+            continue
+        link = tr.find('a')
+        name = link.get_text(strip=True) if link else ''
+        if name:
+            out.append((name, _parse_amount(span.get_text(strip=True))))
+    return out
+
+
+def parse_employment_edges(soup: BeautifulSoup) -> list[dict]:
+    """Lobbyist↔entity employment edges from a Summary page.
+
+    Entity (Lobbyist Entity) pages list the lobbyists they employ in the
+    `RptLobbyistInfo` repeater; individual (Lobbyist) pages list their employing
+    entities in `RptEntity`.  Both yield the same edge type, so the offline
+    driver collects edges from every summary page and deduplicates.
+
+    Returns list of {lobbyist_name, entity_name, salary} where exactly one of
+    the names is the page's registrant (filled in by the driver, which knows it).
+    Here the registrant side is left as None and the counterparty is the row name.
+    """
+    edges = []
+    # Entity page: rows are the employed lobbyists (counterparty = lobbyist).
+    for name, salary in _repeater_rows(soup, 'RptLobbyistInfo_lblAmount'):
+        edges.append({'lobbyist_name': name, 'entity_name': None, 'salary': salary})
+    # Individual page: rows are the employing entities (counterparty = entity).
+    for name, salary in _repeater_rows(soup, 'RptEntity_lblEAmount'):
+        edges.append({'lobbyist_name': None, 'entity_name': name, 'salary': salary})
+    return edges
+
+
+def parse_client_purposes(soup: BeautifulSoup) -> list[dict]:
+    """Per-client annual amount + purpose-of-employment text from a Summary page.
+
+    The `RptClient` repeater lists each client with its annual amount; the nested
+    `RptClientEmploymentInfo` repeater holds the purpose text.  Client name and
+    purpose are matched by the shared outer repeater index.
+    Returns list of {client_name, amount, purpose}.
+    """
+    # client name + amount by outer index
+    clients = {}
+    for span in soup.find_all('span', id=lambda x: x and 'RptClient_lblAmount_' in (x or '')
+                              and re.search(r'_\d+$', x or '')):
+        idx = span.get('id').rsplit('_', 1)[1]
+        tr = span.find_parent('tr')
+        link = tr.find('a') if tr else None
+        if link:
+            clients[idx] = {'client_name': link.get_text(strip=True),
+                            'amount': _parse_amount(span.get_text(strip=True)),
+                            'purpose': ''}
+    # purpose text by matching outer index (…RptClient_…_<outer>…lblPurposeOfEmp_<inner>)
+    for span in soup.find_all('span', id=lambda x: x and 'lblPurposeOfEmp_' in (x or '')
+                              and 'RptClient' in (x or '')):
+        m = re.search(r'RptClientEmploymentInfo_(\d+)_', span.get('id'))
+        if not m:
+            continue
+        idx = m.group(1)
+        if idx in clients:
+            txt = span.get_text(strip=True)
+            if txt:
+                clients[idx]['purpose'] = (clients[idx]['purpose'] + ' ' + txt).strip()
+    return list(clients.values())
+
+
 # ─── Incremental year selection ────────────────────────────────────────────────
 
 def _years_to_check(existing_links: pd.DataFrame | None) -> list[int]:
