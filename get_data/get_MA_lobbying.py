@@ -154,34 +154,53 @@ def _make_session() -> requests.Session:
     return s
 
 
-def _get(session, url, retries=5, **kwargs) -> BeautifulSoup:
+# Retry on transient network errors AND transient HTTP statuses. The SoS portal
+# intermittently returns 503 Service Unavailable (and occasionally 429); a single
+# such response must not kill a multi-hour scrape or a weekly CI run. 4xx (other
+# than 429) are treated as permanent and raised immediately.
+_RETRY_STATUS = {429, 500, 502, 503, 504}
+
+
+def _get(session, url, retries=6, **kwargs) -> BeautifulSoup:
     for attempt in range(retries):
         time.sleep(REQUEST_DELAY * (2 ** attempt) if attempt else REQUEST_DELAY)
         try:
             r = session.get(url, timeout=60, **kwargs)
-            r.raise_for_status()
-            # Archive only content pages (Summary/CompleteDisclosure), not the
-            # regenerable search page (which shares one URL across all years).
-            if 'Summary.aspx' in url or 'CompleteDisclosure' in url:
-                _save_raw(url, r.text)
-            return BeautifulSoup(r.text, 'html.parser')
         except (requests.exceptions.Timeout, requests.exceptions.ConnectionError) as e:
-            print(f'  GET timeout/connection error (attempt {attempt+1}/{retries}): {e}')
+            print(f'  GET network error (attempt {attempt+1}/{retries}): {e}')
             if attempt == retries - 1:
                 raise
+            continue
+        if r.status_code in _RETRY_STATUS:
+            print(f'  GET HTTP {r.status_code} (attempt {attempt+1}/{retries}) — retrying')
+            if attempt == retries - 1:
+                r.raise_for_status()
+            continue
+        r.raise_for_status()  # permanent 4xx -> raise
+        # Archive only content pages (Summary/CompleteDisclosure), not the
+        # regenerable search page (which shares one URL across all years).
+        if 'Summary.aspx' in url or 'CompleteDisclosure' in url:
+            _save_raw(url, r.text)
+        return BeautifulSoup(r.text, 'html.parser')
 
 
-def _post(session, url, data, timeout=180, retries=5) -> BeautifulSoup:
+def _post(session, url, data, timeout=180, retries=6) -> BeautifulSoup:
     for attempt in range(retries):
         time.sleep(REQUEST_DELAY * (2 ** attempt) if attempt else REQUEST_DELAY)
         try:
             r = session.post(url, data=data, timeout=timeout)
-            r.raise_for_status()
-            return BeautifulSoup(r.text, 'html.parser')
         except (requests.exceptions.Timeout, requests.exceptions.ConnectionError) as e:
-            print(f'  POST timeout/connection error (attempt {attempt+1}/{retries}): {e}')
+            print(f'  POST network error (attempt {attempt+1}/{retries}): {e}')
             if attempt == retries - 1:
                 raise
+            continue
+        if r.status_code in _RETRY_STATUS:
+            print(f'  POST HTTP {r.status_code} (attempt {attempt+1}/{retries}) — retrying')
+            if attempt == retries - 1:
+                r.raise_for_status()
+            continue
+        r.raise_for_status()
+        return BeautifulSoup(r.text, 'html.parser')
 
 
 # ─── Search page ───────────────────────────────────────────────────────────────

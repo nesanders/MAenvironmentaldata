@@ -69,11 +69,44 @@ def _list_batches() -> list[str]:
     return sorted(line.strip() for line in out.splitlines() if line.strip().endswith('.tar.gz'))
 
 
+MARKER_URI = f'{GCS_BUCKET}/raw_html/processed_batches.txt'
+
+
+def _load_processed() -> set:
+    """Set of batch basenames already folded into the CSVs (incremental marker)."""
+    out = subprocess.run(['gsutil', 'cat', MARKER_URI], capture_output=True, text=True)
+    if out.returncode != 0:
+        return set()
+    return {ln.strip() for ln in out.stdout.splitlines() if ln.strip()}
+
+
+def _save_processed(names: set) -> None:
+    with tempfile.NamedTemporaryFile('w', suffix='.txt', delete=False) as fh:
+        fh.write('\n'.join(sorted(names)) + '\n')
+        tmp = fh.name
+    os.system(f'gsutil -q cp {tmp} {MARKER_URI}')
+    os.unlink(tmp)
+
+
+def _restore_existing(name: str) -> pd.DataFrame:
+    """Download an existing output CSV from GCS (empty df if absent)."""
+    dest = DATA_DIR / name
+    if os.system(f'gsutil -q cp {GCS_BUCKET}/{name} {dest} 2>/dev/null') == 0:
+        try:
+            return pd.read_csv(dest, index_col=0, low_memory=False)
+        except Exception:
+            return pd.DataFrame()
+    return pd.DataFrame()
+
+
 def main():
     ap = argparse.ArgumentParser()
     ap.add_argument('--limit-batches', type=int, default=None,
                     help='Process only the first N batches (for testing)')
     ap.add_argument('--no-upload', action='store_true', help='Skip GCS upload of CSVs')
+    ap.add_argument('--incremental', action='store_true',
+                    help='Process only batches not in the GCS marker and merge into '
+                         'existing CSVs (for weekly CI). Full mode rebuilds from scratch.')
     args = ap.parse_args()
 
     links = pd.read_csv(LINKS_PATH)
@@ -81,10 +114,17 @@ def main():
     print(f'Manifest: {len(manifest):,} archived pages expected '
           f'(from {len(links):,} links rows)')
 
-    batches = _list_batches()
+    all_batches = _list_batches()
+    processed = _load_processed() if args.incremental else set()
+    batches = [b for b in all_batches if b.rsplit('/', 1)[-1] not in processed]
     if args.limit_batches:
         batches = batches[:args.limit_batches]
-    print(f'Processing {len(batches)} archive batch(es)')
+    mode = 'incremental' if args.incremental else 'full'
+    print(f'Mode: {mode} | {len(all_batches)} total batches, '
+          f'{len(processed)} already processed, {len(batches)} to process')
+    if args.incremental and not batches:
+        print('No new batches — nothing to do.')
+        return
 
     employers, bills, campaigns, edges, expenses, purposes = [], [], [], [], [], []
     seen_disc, seen_summ = set(), set()  # avoid double-processing duplicate pages
@@ -152,10 +192,16 @@ def main():
               '(stale links or search pages) — skipped')
 
     # ── Write CSVs (dedup where a natural key exists) ───────────────────────────
+    # In incremental mode, merge new rows into the existing CSV restored from GCS;
+    # dedup keeps the LAST occurrence so a reparse of an amended page wins.
     def _write(rows, name, dedup=None, quote_all=False):
         df = pd.DataFrame(rows)
+        if args.incremental:
+            existing = _restore_existing(name)
+            if not existing.empty:
+                df = pd.concat([existing, df], ignore_index=True)
         if dedup and not df.empty:
-            df = df.drop_duplicates(subset=dedup)
+            df = df.drop_duplicates(subset=dedup, keep='last')
         df = df.reset_index(drop=True)
         path = DATA_DIR / name
         quoting = csv.QUOTE_NONNUMERIC if quote_all else csv.QUOTE_MINIMAL
@@ -184,6 +230,13 @@ def main():
                 print(f'  uploaded {p.name}')
             else:
                 print(f'  WARNING: failed to upload {p.name}')
+        # Record processed batches so the next incremental run skips them.
+        # Full mode (re)writes the marker with every batch; incremental appends.
+        names = {b.rsplit('/', 1)[-1] for b in batches}
+        marker = (processed | names) if args.incremental else \
+                 {b.rsplit('/', 1)[-1] for b in all_batches}
+        _save_processed(marker)
+        print(f'  updated processed-batches marker ({len(marker)} batches)')
 
 
 if __name__ == '__main__':
