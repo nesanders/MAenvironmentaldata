@@ -127,6 +127,7 @@ def main():
         return
 
     employers, bills, campaigns, edges, expenses, purposes = [], [], [], [], [], []
+    reg_by = {}  # (entity_name, year) -> reg_type, from summary pages
     seen_disc, seen_summ = set(), set()  # avoid double-processing duplicate pages
     n_pages = n_unmatched = 0
 
@@ -172,6 +173,8 @@ def main():
                     seen_summ.add(hf.name)
                     meta_s = g.parse_summary(soup)
                     reg_type = meta_s.get('reg_type')
+                    if reg_type:
+                        reg_by[(entity, year)] = reg_type
                     for e in g.parse_employment_edges(soup):
                         # Fill the registrant side: entity pages list lobbyists,
                         # individual pages list employing entities.
@@ -190,6 +193,11 @@ def main():
     if n_unmatched:
         print(f'NOTE: {n_unmatched:,} archived pages had no manifest match '
               '(stale links or search pages) — skipped')
+
+    # reg_type lives on the summary page, not the disclosure page; attach it to
+    # employer rows (needed for the compensation dedup and the site memo).
+    for row in employers:
+        row['reg_type'] = reg_by.get((row['entity_name'], row['year']))
 
     # ── Write CSVs (dedup where a natural key exists) ───────────────────────────
     # In incremental mode, merge new rows into the existing CSV restored from GCS;

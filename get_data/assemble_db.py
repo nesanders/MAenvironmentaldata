@@ -367,6 +367,34 @@ if __name__ == '__main__':
 	_legislature_bills_path = '../docs/data/MA_legislature_bills.csv'
 
 	if os.path.exists(_lobbying_employers_path):
+		# Compensation metric (how to total "lobbying spend"):
+		# Total spend = SUM of `compensation` across ALL rows (both reg_types,
+		# 'Lobbyist Entity' and 'Lobbyist'). Do NOT deduplicate and do NOT drop
+		# either reg_type. Per the MA Secretary of the Commonwealth's filing rule,
+		# each client payment is reported exactly once — by the entity OR by the
+		# individual lobbyist, never both:
+		#
+		#   "Compensation paid by the client should be reported either as an amount
+		#    received by the lobbyist entity, or as an amount received by the
+		#    individual lobbyist. The same payment should not be reported in both
+		#    sections."
+		#   — MA SoC, Lobbyist Registration & Reporting System, Entity Disclosure
+		#     Reporting User Guide, Form 2 (Activities and Bill Numbers), p.8, Dec 2021:
+		#     https://www.sec.state.ma.us/lobbyistweb/readme/OnlineHelp/2010/08_DiscEntityDec2020.pdf
+		#     (overview: https://www.sec.state.ma.us/divisions/lobbyist/lobbyist.htm ;
+		#      statute M.G.L. c.3 ss.39-50: https://www.sec.state.ma.us/lobbyistweb/ReadMe/MALobbyingLaw.pdf )
+		#
+		# So the data is already deduplicated by filers; summing all rows is correct.
+		# We verified empirically (June 2026, full 2005-2025 corpus): of the rare
+		# cases where an entity AND one of its own lobbyists report the same client
+		# in the same year, only 15 rows / ~$0.3M (0.03%) have MATCHING amounts (a
+		# possible same-payment double-report); 61 rows / ~$9.0M have DIFFERENT
+		# amounts, i.e. legitimately distinct payments for the same client (which the
+		# rule explicitly permits). Subtracting them would erase real money, so we do
+		# not. The reg_type column is retained for breakdowns, not for filtering totals.
+		# NOTE: chamber='Executive' / agency-name rows in MA_Lobbying_Bills are
+		# executive/regulatory lobbying, not legislative bills — count distinct bill_id
+		# for "bills lobbied", not raw activity rows.
 		_emp = pd.read_csv(_lobbying_employers_path, index_col=0)
 		_emp['entity_name_norm'] = _emp['entity_name'].map(_normalize_entity)
 		_emp['client_name_norm'] = _emp['client_name'].map(_normalize_entity)
