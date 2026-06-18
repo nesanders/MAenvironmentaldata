@@ -244,6 +244,32 @@ TABLE_DESCRIPTIONS = {
         'IMPORTANT: this table has NO bill_number or general_court column — it is a lookup table only. '
         'To get bills by topic, join MA_Lobbying_Bills_Scored on cluster_id, then join MA_Lobbying_Bills.'
     ),
+    'MA_Lobbying_Lobbyists': (
+        'Maps individual lobbyists to the entity (firm) that employs them, per year, with the salary '
+        'the entity paid that lobbyist. One row per (lobbyist_name, entity_name, year). '
+        'Use to see who works for which firm. NOTE: salary here is the entity-to-lobbyist payment '
+        '(internal cost), which is SEPARATE from client compensation in MA_Lobbying_Employers — do not '
+        'add salaries to client compensation when totaling lobbying spend.'
+    ),
+    'MA_Lobbying_CampaignContributions': (
+        'Political campaign contributions made by lobbyists, disclosed in their lobbying reports. '
+        'One row per contribution: date, lobbyist_name (the donor), recipient_name (candidate/committee), '
+        'office_sought, amount, plus the reporting entity_name and year. '
+        'Use to analyze lobbyist donations to legislators/candidates. Independent of bills and compensation.'
+    ),
+    'MA_Lobbying_Expenses': (
+        'Itemized lobbying expenses reported by entities. One row per expense: expense_type '
+        "(one of 'operating', 'meals_entertainment_travel', 'additional'), date, payee, description, amount, "
+        'plus reporting entity_name and year. Blank $0 template rows are excluded. '
+        'Separate from client compensation (MA_Lobbying_Employers) and salaries (MA_Lobbying_Lobbyists).'
+    ),
+    'MA_Lobbying_ClientPurposes': (
+        'Per-client annual summary from the registrant summary page: the annual amount a client paid and '
+        'a free-text purpose-of-employment description of what was lobbied for. '
+        'One row per (entity_name, client_name, year). The purpose text is richer than bill titles and good '
+        'for topic search. The amount is the summary-page annual per-client total (often a cleaner single '
+        'figure than summing per-period rows in MA_Lobbying_Bills).'
+    ),
 }
 
 # ─── Column-level notes for key tables ────────────────────────────────────────

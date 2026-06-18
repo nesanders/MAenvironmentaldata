@@ -1,5 +1,5 @@
 # AMEND Database Semantic Context
-Generated: 2026-06-05
+Generated: 2026-06-18
 
 ## Global Data Notes
 
@@ -1265,21 +1265,21 @@ H1069	1069	H	193	An Act to increase access to nurse-midwifery services	Kay Khan	
 
 ---
 
-### MA_Lobbying_Bills (225,178 rows)
+### MA_Lobbying_Bills (344,948 rows)
 MA SoS lobbying disclosures: fact table linking employers to bills they lobbied. One row per (entity_name, client_name, general_court, bill_number, year). CRITICAL DISTINCTION: entity_name = lobbying firm; client_name = paying employer. Key fields: entity_name, client_name, year, general_court, bill_number, bill_id, bill_prefix, bill_title, position ("Support", "Oppose", "Neutral", or empty), chamber, amount (per-bill spend if reported). bill_id is a derived column combining bill_prefix + bill_number (e.g. H1234, S5678). bill_prefix is derived from chamber: "House Bill"/"HB" → "H"; "Senate Bill"/"SB" → "S"; "House Docket"/"HD" → "HD"; "Senate Docket"/"SD" → "SD". PREFERRED join to MA_Lobbying_Bills_Scored: use (bill_id, general_court) — do NOT use (bill_number, general_court) alone as H and S bills can share the same integer bill_number. Join to MA_Legislature_Bills on (bill_id, general_court) for passed status. Join to MA_Lobbying_Employers on (entity_name, client_name, year) for total compensation. IMPORTANT: this table has NO single spending column — compensation lives in MA_Lobbying_Employers.
 
 ```sql
 CREATE TABLE "MA_Lobbying_Bills" (
 	"index" BIGINT, 
 	entity_name TEXT, 
-	client_name TEXT, 
 	year BIGINT, 
-	general_court BIGINT, 
+	client_name TEXT, 
 	chamber TEXT, 
 	bill_number BIGINT, 
 	bill_title TEXT, 
 	position TEXT, 
 	amount FLOAT, 
+	general_court BIGINT, 
 	entity_name_norm TEXT, 
 	client_name_norm TEXT, 
 	bill_prefix TEXT, 
@@ -1288,12 +1288,12 @@ CREATE TABLE "MA_Lobbying_Bills" (
 ```
 
 /* 5 rows from MA_Lobbying_Bills:
-entity_name	client_name	year	general_court	chamber	bill_number	bill_title	position	amount	entity_name_norm	client_name_norm	bill_prefix	bill_id
-Robert Alan Baker	Smaller Business Association of New England	2014	188	House Bill	4165	An Act Promoting Economic Growth Across the Commonwealth. Sought funding for manufacturing grant and layoff aversion program. met with key legislators from Economic Development committee and Ways and Means.	Support	170000.0	ROBERT ALAN BAKER	SMALLER BUSINESS ASSOCIATION OF NEW ENGLAND	H	H4165
-Law Office of Attorney James F McGrail	Outfront Media, LLC	2018	190	Executive	NULL	Matters in connection with Outfront Media Group LLC's participation in the request for proposals for advertising rights on the Massachusetts Bay Transportation Authority.	Support	90000.0	ATTORNEY JAMES F MCGRAIL	OUTFRONT MEDIA	NULL	NULL
-Northwind Strategies	New England Independent Transmission Company, LLC	2014	188	Executive	NULL	Advised regarding potential energy legislation and central procurement. Represented client and met with the Executive Office of Environment & Energy.	Support	90000.0	NORTHWIND STRATEGIES	NEW ENGLAND INDEPENDENT TRANSMISSION COMPANY	NULL	NULL
-Northwind Strategies	Boston Beer	2014	188	House Bill	267	Represented client before members of the Joint Committee on Consumer Protection and Professional Licensure and met with Representatives Peisch, Mariano, Moran, and Haddad.	Support	67500.0	NORTHWIND STRATEGIES	BOSTON BEER	H	H267
-Northwind Strategies	GTECH Corporation	2014	188	Executive	NULL	Represented client and advised relative to current and future activities with the Massachusetts Lottery and the State Treasury.	Support	66000.0	NORTHWIND STRATEGIES	GTECH	NULL	NULL
+entity_name	year	client_name	chamber	bill_number	bill_title	position	amount	general_court	entity_name_norm	client_name_norm	bill_prefix	bill_id
+Robert Alan Baker	2014	Smaller Business Association of New England	House Bill	4165	An Act Promoting Economic Growth Across the Commonwealth. Sought funding for manufacturing grant and layoff aversion program. met with key legislators from Economic Development committee and Ways and Means.	Support	170000.0	188	ROBERT ALAN BAKER	SMALLER BUSINESS ASSOCIATION OF NEW ENGLAND	H	H4165
+Joseph M Corazzini	2025	Clark University	Executive	NULL	Review and assess Higher education related issues that may have an impact on the institution and relay the information to the President. If necessary, lobby on an issue on behalf of the institution.	Support	118000.0	194	JOSEPH M CORAZZINI	CLARK UNIVERSITY	NULL	NULL
+Edwards Wildman Palmer LLP	2013	Steward Health Care LLC	SB	3	Text of the recommended amendment to the House Bill making appropriations for the fiscal year 2014 for the maintenance of the departments, boards, commissions, institutions and certain activities of the Commonwealth, for interest, sinking fund and serial bond requirements and for certain permanent improvements; SB1800 Text of the Senate amendments to the House Bill making appropriations for the fiscal year 2014 for the maintenance of the departments, boards, commissions, institutions and certain activities of the Commonwealth, for interest, sinking fund and serial bond requirements and for certain permanent improvements; HB3538 An Act making appropriations for the Fiscal Year 2014 for the maintenance of the departments, boards, commissions, institutions and certain activities of the commonwealth, for interest, sinking fund and serial bond requirements and for certain permanent improvements.	Support	96555.0	188	EDWARDS WILDMAN PALMER	STEWARD HEALTH CARE	S	S3
+Law Office of Attorney James F McGrail	2018	Outfront Media, LLC	Executive	NULL	Matters in connection with Outfront Media Group LLC's participation in the request for proposals for advertising rights on the Massachusetts Bay Transportation Authority.	Support	90000.0	190	ATTORNEY JAMES F MCGRAIL	OUTFRONT MEDIA	NULL	NULL
+Edwards Wildman Palmer LLP	2012	Steward Health Care LLC	HB	4070	An Act relative to Health Care Quality Improvement and Cost Reduction Act of 2012 HB4127 An Act improving the quality of health care and reducing costs through increased transparency, efficiency and innovation HB4128 Order relative to special procedures for consideration of the House Bill improving the quality of health care and reducing costs through increased transparency, efficiency and innovation HB4155 Printed as amended version of the engrossed Bill improving the quality of health care and reducing costs through increased transparency, efficiency and innovation HB4561 An Act relative to the medical loss ratio SB2260 An Act improving the quality of health care and reducing costs through increased transparency, efficiency and innovation SB2270 Printed as amended version of the engrossed Bill relative to improving the quality of health care and reducing costs through increased transparency, efficiency and innovation SB2400 An Act improving the quality of health care and reducing costs through increased transparency, efficiency and innovation.	Support	83784.92	187	EDWARDS WILDMAN PALMER	STEWARD HEALTH CARE	H	H4070
 */
 
 **Column notes:**
@@ -1345,7 +1345,62 @@ bill_number	general_court	bill_title	bill_id	env_relevance_score	is_environmenta
 
 ---
 
-### MA_Lobbying_Employers (12,244 rows)
+### MA_Lobbying_CampaignContributions (124,536 rows)
+Political campaign contributions made by lobbyists, disclosed in their lobbying reports. One row per contribution: date, lobbyist_name (the donor), recipient_name (candidate/committee), office_sought, amount, plus the reporting entity_name and year. Use to analyze lobbyist donations to legislators/candidates. Independent of bills and compensation.
+
+```sql
+CREATE TABLE "MA_Lobbying_CampaignContributions" (
+	"index" BIGINT, 
+	entity_name TEXT, 
+	year BIGINT, 
+	date TEXT, 
+	lobbyist_name TEXT, 
+	recipient_name TEXT, 
+	office_sought TEXT, 
+	amount FLOAT, 
+	entity_name_norm TEXT
+)
+```
+
+/* 5 rows from MA_Lobbying_CampaignContributions:
+entity_name	year	date	lobbyist_name	recipient_name	office_sought	amount	entity_name_norm
+Grant Associates	2005	2/15/2005	Joseph M Grant	Sal Dimasi	Representative	200.0	GRANT
+Grant Associates	2005	2/15/2005	Joseph M Grant	Mark Montigney	Senate	200.0	GRANT
+Grant Associates	2005	2/15/2005	Joseph M Grant	Michael Morrisey	Senate	200.0	GRANT
+Grant Associates	2005	3/22/2005	Joseph M Grant	Robert  Antonioni	Senate	200.0	GRANT
+Grant Associates	2005	4/22/2005	Joseph M Grant	Joseph Wagner	Representative	200.0	GRANT
+*/
+
+---
+
+### MA_Lobbying_ClientPurposes (49,759 rows)
+Per-client annual summary from the registrant summary page: the annual amount a client paid and a free-text purpose-of-employment description of what was lobbied for. One row per (entity_name, client_name, year). The purpose text is richer than bill titles and good for topic search. The amount is the summary-page annual per-client total (often a cleaner single figure than summing per-period rows in MA_Lobbying_Bills).
+
+```sql
+CREATE TABLE "MA_Lobbying_ClientPurposes" (
+	"index" BIGINT, 
+	entity_name TEXT, 
+	year BIGINT, 
+	client_name TEXT, 
+	amount FLOAT, 
+	purpose TEXT, 
+	entity_name_norm TEXT, 
+	client_name_norm TEXT
+)
+```
+
+/* 5 rows from MA_Lobbying_ClientPurposes:
+entity_name	year	client_name	amount	purpose	entity_name_norm	client_name_norm
+Monica Lawton	2005	Associated Subcontractors of Massachusetts, Inc	15500.0	NULL	MONICA LAWTON	ASSOCIATED SUBCONTRACTORS OF MASSACHUSETTS
+James D Shaer	2005	Boston University	25704.0	NULL	JAMES D SHAER	BOSTON UNIVERSITY
+Jo Ann Fitzgerald	2005	Mass. Teachers Association	2778.7	NULL	JO ANN FITZGERALD	MASS TEACHERS ASSOCIATION
+Stephen J. D'Amato	2005	Center for Insurance Research, Inc.	3662.0	NULL	STEPHEN J D AMATO	CENTER FOR INSURANCE RESEARCH
+Margaret G Grant	2005	Mass. Assoc. of Realtors	10000.0	NULL	MARGARET G GRANT	MASS ASSOC OF REALTORS
+*/
+
+---
+
+### MA_Lobbying_Employers (36,583 rows)
 MA Secretary of State lobbying disclosures: one row per (lobbying firm, client/employer, year). CRITICAL DISTINCTION: entity_name = the lobbying firm (e.g. "Smith & Jones Lobbying LLC"); client_name = the actual employer paying for lobbying (e.g. "National Grid USA"). Always use client_name for employer-level analysis. Key fields: entity_name, client_name, year, compensation (total dollars paid by client to firm that year), reg_type (registration type). Data covers 2009–present; older years have sparse compensation data. Join to MA_Lobbying_Bills on (entity_name, client_name, year) to see which bills a client lobbied. IMPORTANT: this table has NO spending column called total_expenditure — the column is compensation.
 
 ```sql
@@ -1354,20 +1409,20 @@ CREATE TABLE "MA_Lobbying_Employers" (
 	entity_name TEXT, 
 	client_name TEXT, 
 	year BIGINT, 
-	reg_type TEXT, 
 	compensation FLOAT, 
+	reg_type TEXT, 
 	entity_name_norm TEXT, 
 	client_name_norm TEXT
 )
 ```
 
 /* 5 rows from MA_Lobbying_Employers:
-entity_name	client_name	year	reg_type	compensation	entity_name_norm	client_name_norm
-21c, LLC	EDUCATION TRUST, INC. (THE)	2024	Lobbyist Entity	7500.0	21C	EDUCATION TRUST
-21c, LLC	Amplify Education, Inc.	2024	Lobbyist Entity	22500.0	21C	AMPLIFY EDUCATION
-21c, LLC	The Massachusetts Alliance for Early College, Inc.	2024	Lobbyist Entity	15000.0	21C	MASSACHUSETTS ALLIANCE FOR EARLY COLLEGE
-21c, LLC	Benjamin Franklin Cummings Institute of Technology	2024	Lobbyist Entity	12500.0	21C	BENJAMIN FRANKLIN CUMMINGS INSTITUTE OF TECHNOLOGY
-21c, LLC	Total salaries received	2024	Lobbyist Entity	57500.0	21C	TOTAL SALARIES RECEIVED
+entity_name	client_name	year	compensation	reg_type	entity_name_norm	client_name_norm
+Minahan Companies, The	_total_salary_	2005	75000.0	Lobbyist Entity	MINAHAN COMPANIES	_TOTAL_SALARY_
+Capital Associates Inc.	_total_salary_	2005	60000.0	Lobbyist Entity	CAPITAL	_TOTAL_SALARY_
+Burke & Mawn Consultants	_total_salary_	2005	39000.0	Lobbyist Entity	BURKE AND MAWN CONSULTANTS	_TOTAL_SALARY_
+Brown Rudnick Berlack Israels LLP	_total_salary_	2005	12500.0	Lobbyist Entity	BROWN RUDNICK BERLACK ISRAELS	_TOTAL_SALARY_
+Ventry Associates, LLP	_total_salary_	2005	30499.97	Lobbyist Entity	VENTRY	_TOTAL_SALARY_
 */
 
 **Column notes:**
@@ -1376,6 +1431,62 @@ entity_name	client_name	year	reg_type	compensation	entity_name_norm	client_name_
 - `year`: Calendar year of the filing. Compensation data is sparse before 2019; 2019–present is complete.
 - `compensation`: Total dollars paid by client_name to entity_name for lobbying that year. IMPORTANT: the column is "compensation", NOT "total_expenditure".
 - `reg_type`: Registration type (e.g. "Lobbying Entity"). Use to filter out non-employer rows if needed.
+
+---
+
+### MA_Lobbying_Expenses (74,838 rows)
+Itemized lobbying expenses reported by entities. One row per expense: expense_type (one of 'operating', 'meals_entertainment_travel', 'additional'), date, payee, description, amount, plus reporting entity_name and year. Blank $0 template rows are excluded. Separate from client compensation (MA_Lobbying_Employers) and salaries (MA_Lobbying_Lobbyists).
+
+```sql
+CREATE TABLE "MA_Lobbying_Expenses" (
+	"index" BIGINT, 
+	entity_name TEXT, 
+	year BIGINT, 
+	expense_type TEXT, 
+	date TEXT, 
+	payee TEXT, 
+	description TEXT, 
+	amount FLOAT, 
+	entity_name_norm TEXT
+)
+```
+
+/* 5 rows from MA_Lobbying_Expenses:
+entity_name	year	expense_type	date	payee	description	amount	entity_name_norm
+Grant Associates	2005	additional	1/1 to 6/30	1/1 to 6/30	Boston View Corporation Office and parking	5175.0	GRANT
+Grant Associates	2005	additional	1/1 to 6/30	1/1 to 6/30	Verizon NSTAR utilites	590.0	GRANT
+Grant Associates	2005	additional	NULL	NULL	Total amount	5765.0	GRANT
+Eric Bourassa	2005	operating	7/1/2005-12/31/2005	Verizon	Telephone, cell phone, handheld	30.0	ERIC BOURASSA
+Eric Bourassa	2005	operating	7/1/2005-12/31/2005	US Postal SErvice	Postage, shipping, delivery	15.0	ERIC BOURASSA
+*/
+
+**Column notes:**
+- `expense_type`: operating, meals_entertainment_travel, additional
+
+---
+
+### MA_Lobbying_Lobbyists (7,443 rows)
+Maps individual lobbyists to the entity (firm) that employs them, per year, with the salary the entity paid that lobbyist. One row per (lobbyist_name, entity_name, year). Use to see who works for which firm. NOTE: salary here is the entity-to-lobbyist payment (internal cost), which is SEPARATE from client compensation in MA_Lobbying_Employers — do not add salaries to client compensation when totaling lobbying spend.
+
+```sql
+CREATE TABLE "MA_Lobbying_Lobbyists" (
+	"index" BIGINT, 
+	year BIGINT, 
+	lobbyist_name TEXT, 
+	entity_name TEXT, 
+	salary FLOAT, 
+	entity_name_norm TEXT
+)
+```
+
+/* 5 rows from MA_Lobbying_Lobbyists:
+year	lobbyist_name	entity_name	salary	entity_name_norm
+2005	Robert M. Platt	National Consulting,LLC	240500.0	NATIONAL CONSULTING
+2005	Alfred A Minahan	Minahan Companies, The	79000.0	MINAHAN COMPANIES
+2005	John F Hahesy	Minahan Companies, The	71000.0	MINAHAN COMPANIES
+2005	John R Sasso	Advanced Strategies	109200.0	ADVANCED STRATEGIES
+2005	Henry S Gillet	HSG & Associates	25000.0	HSG
+*/
 
 ---
 

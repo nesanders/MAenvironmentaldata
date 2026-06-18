@@ -57,12 +57,17 @@ jobs:
       - name: Fetch — MA lobbying disclosures (incremental)
         timeout-minutes: 45
         working-directory: get_data
-        run: python get_MA_lobbying.py
+        run: python get_MA_lobbying.py --archive-raw
 
       - name: Fetch — MA legislature bills (incremental)
         timeout-minutes: 20
         working-directory: get_data
         run: python get_MA_legislature_bills.py
+
+      - name: Reparse lobbying archive (incremental → all field CSVs)
+        timeout-minutes: 20
+        working-directory: get_data
+        run: python reparse_lobbying_archive.py --incremental
 
       - name: Score and cluster lobbying bills
         timeout-minutes: 30

@@ -365,6 +365,10 @@ if __name__ == '__main__':
 	_lobbying_lobbyists_path = '../docs/data/MA_lobbying_lobbyists.csv'
 	_lobbying_bills_path = '../docs/data/MA_lobbying_bills.csv'
 	_legislature_bills_path = '../docs/data/MA_legislature_bills.csv'
+	# New fields from the raw-HTML archive (reparse_lobbying_archive.py)
+	_lobbying_campaign_path = '../docs/data/MA_lobbying_campaign_contributions.csv'
+	_lobbying_expenses_path = '../docs/data/MA_lobbying_expenses.csv'
+	_lobbying_purposes_path = '../docs/data/MA_lobbying_client_purposes.csv'
 
 	if os.path.exists(_lobbying_employers_path):
 		# Compensation metric (how to total "lobbying spend"):
@@ -401,8 +405,34 @@ if __name__ == '__main__':
 		data_csv['MA_Lobbying_Employers'] = _emp
 		print(f"MA_Lobbying_Employers: {len(data_csv['MA_Lobbying_Employers'])} rows")
 	if os.path.exists(_lobbying_lobbyists_path):
-		data_csv['MA_Lobbying_Lobbyists'] = pd.read_csv(_lobbying_lobbyists_path, index_col=0)
+		# Lobbyist <-> employing-entity mapping + salary (from summary pages).
+		_lobby = pd.read_csv(_lobbying_lobbyists_path, index_col=0)
+		if 'entity_name' in _lobby.columns:
+			_lobby['entity_name_norm'] = _lobby['entity_name'].map(_normalize_entity)
+		data_csv['MA_Lobbying_Lobbyists'] = _lobby
 		print(f"MA_Lobbying_Lobbyists: {len(data_csv['MA_Lobbying_Lobbyists'])} rows")
+	if os.path.exists(_lobbying_campaign_path):
+		# Lobbyist -> political recipient contributions (date, recipient, office, amount).
+		_cc = pd.read_csv(_lobbying_campaign_path, index_col=0)
+		if 'entity_name' in _cc.columns:
+			_cc['entity_name_norm'] = _cc['entity_name'].map(_normalize_entity)
+		data_csv['MA_Lobbying_CampaignContributions'] = _cc
+		print(f"MA_Lobbying_CampaignContributions: {len(data_csv['MA_Lobbying_CampaignContributions'])} rows")
+	if os.path.exists(_lobbying_expenses_path):
+		# Itemized operating / meals-entertainment-travel / additional expenses.
+		_ex = pd.read_csv(_lobbying_expenses_path, index_col=0)
+		if 'entity_name' in _ex.columns:
+			_ex['entity_name_norm'] = _ex['entity_name'].map(_normalize_entity)
+		data_csv['MA_Lobbying_Expenses'] = _ex
+		print(f"MA_Lobbying_Expenses: {len(data_csv['MA_Lobbying_Expenses'])} rows")
+	if os.path.exists(_lobbying_purposes_path):
+		# Per-client annual amount + free-text purpose-of-employment description.
+		_cp = pd.read_csv(_lobbying_purposes_path, index_col=0, engine='python')
+		for _c in ('entity_name', 'client_name'):
+			if _c in _cp.columns:
+				_cp[f'{_c}_norm'] = _cp[_c].map(_normalize_entity)
+		data_csv['MA_Lobbying_ClientPurposes'] = _cp
+		print(f"MA_Lobbying_ClientPurposes: {len(data_csv['MA_Lobbying_ClientPurposes'])} rows")
 	if os.path.exists(_lobbying_bills_path):
 		_lb = pd.read_csv(_lobbying_bills_path, index_col=0, low_memory=False)
 		_lb['entity_name_norm'] = _lb['entity_name'].map(_normalize_entity)
@@ -569,6 +599,15 @@ if __name__ == '__main__':
 		'MA_lobbying_bills_scored': (data_csv['MA_Lobbying_Bills_Scored'],   True),
 		'MA_legislature_bills':     (data_csv['MA_Legislature_Bills'],       True),
 	}
+	# New archive-derived tables (full CSVs gitignored; commit samples for schema/preview)
+	for _key, _tbl in (
+		('MA_lobbying_lobbyists',              'MA_Lobbying_Lobbyists'),
+		('MA_lobbying_campaign_contributions', 'MA_Lobbying_CampaignContributions'),
+		('MA_lobbying_expenses',               'MA_Lobbying_Expenses'),
+		('MA_lobbying_client_purposes',        'MA_Lobbying_ClientPurposes'),
+	):
+		if _tbl in data_csv:
+			_lobbying_samples[_key] = (data_csv[_tbl], True)
 	for fname, (df, has_index) in _lobbying_samples.items():
 		if df.empty:
 			continue
