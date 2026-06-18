@@ -22,6 +22,12 @@ docs/assets/     Maps, figures, PDFs
 analysis/        Visualization and statistical analysis scripts
 ```
 
+**Data-source description pages** (the human-facing "what is this dataset" write-ups,
+`layout: data_listing`) live in `docs/data/*.md` — one per dataset, e.g.
+`docs/data/MA_lobbying.md`, `docs/data/EEADP_all.md`, `docs/data/MADEP_staff.md`.
+Update the relevant `docs/data/<dataset>.md` whenever a dataset's schema, coverage,
+or methodology changes so the published description stays accurate.
+
 ## Data pipeline (in order)
 
 All fetch scripts are run from `get_data/`:
