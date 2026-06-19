@@ -541,6 +541,39 @@ if __name__ == '__main__':
 			_scored = _scored.drop(columns=['_leg_title'])
 			if _fixed:
 				print(f"  Replaced {_fixed} concatenated bill titles with Legislature API titles")
+		# Merge the LLM taxonomy (summary, category, tags) and the authoritative
+		# LLM environmental flag from the embeddings parquet. The LLM classifier
+		# (is_env_llm) is far more accurate than the embedding differential-cosine
+		# is_environmental (100% recall / 97% specificity vs. high false negatives in
+		# spot-checks), so it is the authoritative `is_environmental` for the DB/site;
+		# the embedding score is retained as the secondary numeric `env_relevance_score`.
+		_parquet_path = '../docs/data/MA_bill_embeddings.parquet'
+		if os.path.exists(_parquet_path):
+			_tax = pd.read_parquet(_parquet_path,
+			                       columns=['bill_id', 'general_court', 'bill_number',
+			                                'summary', 'categories', 'tags', 'is_env_llm'])
+			# Build a join key: prefer bill_id, else 'num:<bill_number>'
+			def _key(df):
+				bid = df['bill_id'].astype('string')
+				num = 'num:' + df['bill_number'].astype('Int64').astype('string')
+				k = bid.where(bid.notna(), num)
+				return k + '|' + df['general_court'].astype('Int64').astype('string')
+			_tax = _tax.dropna(subset=['general_court'])
+			_tax['_jk'] = _key(_tax)
+			_tax = _tax.drop_duplicates(subset=['_jk'], keep='last')
+			_scored['_jk'] = _key(_scored)
+			_scored = _scored.merge(
+				_tax[['_jk', 'summary', 'categories', 'tags', 'is_env_llm']],
+				on='_jk', how='left').drop(columns=['_jk'])
+			# LLM flag becomes authoritative is_environmental (keep embedding score separately).
+			_scored['is_environmental_embedding'] = _scored['is_environmental']
+			_scored['is_environmental'] = pd.to_numeric(
+				_scored['is_env_llm'].map({True: 1, False: 0, 'True': 1, 'False': 0}),
+				errors='coerce').astype('Int64')
+			_n_llm = int(_scored['is_environmental'].sum())
+			_n_tax = int(_scored['tags'].notna().sum())
+			print(f"  Merged LLM taxonomy: {_n_tax} bills with tags; "
+			      f"{_n_llm} flagged environmental (LLM, authoritative)")
 		data_csv['MA_Lobbying_Bills_Scored'] = _scored
 		print(f"MA_Lobbying_Bills_Scored: {len(data_csv['MA_Lobbying_Bills_Scored'])} rows")
 
@@ -548,6 +581,49 @@ if __name__ == '__main__':
 	if os.path.exists(_cluster_labels_path):
 		data_csv['MA_Bill_Cluster_Labels'] = pd.read_csv(_cluster_labels_path, engine='python')
 		print(f"MA_Bill_Cluster_Labels: {len(data_csv['MA_Bill_Cluster_Labels'])} rows")
+
+	## Auto-generate facts_lobbying.yml — figures referenced by docs/data/MA_lobbying.md.
+	## Always derived from the data here so the published numbers can never drift.
+	if 'MA_Lobbying_Employers' in data_csv:
+		_facts = {}
+		_emp_f = data_csv['MA_Lobbying_Employers'].copy()
+		_emp_f['year'] = pd.to_numeric(_emp_f['year'], errors='coerce')
+		_emp_f['compensation'] = pd.to_numeric(_emp_f['compensation'], errors='coerce').fillna(0)
+		_yrs = _emp_f['year'].dropna().astype(int)
+		_first_y, _last_y = int(_yrs.min()), int(_yrs.max())
+		_latest = _emp_f[_emp_f['year'] == _last_y]
+		_facts['lobbying_first_year'] = _first_y
+		_facts['lobbying_most_recent_year'] = _last_y
+		_facts['lobbying_n_employers'] = int(_latest['entity_name'].nunique())
+		if 'reg_type' in _latest.columns:
+			_facts['lobbying_n_firms'] = int(
+				_latest[_latest['reg_type'] == 'Lobbyist Entity']['entity_name'].nunique())
+		# Spend = sum of compensation across ALL rows (entity OR individual; reported
+		# once per the MA SoC filing rule — see MA_Lobbying_Employers note above).
+		_facts['lobbying_total_spend_latest'] = int(_latest['compensation'].sum())
+		_facts['lobbying_total_spend_first'] = int(
+			_emp_f[_emp_f['year'] == _first_y]['compensation'].sum())
+		_facts['lobbying_total_spend_cumulative'] = int(_emp_f['compensation'].sum())
+		if 'MA_Lobbying_Bills_Scored' in data_csv:
+			_sc = data_csv['MA_Lobbying_Bills_Scored']
+			_facts['lobbying_n_bills_total'] = int(len(_sc))
+			_n_env = int(pd.to_numeric(_sc.get('is_environmental'), errors='coerce').fillna(0).sum())
+			_facts['lobbying_n_env_bills'] = _n_env
+			_facts['lobbying_env_pct'] = round(100 * _n_env / max(len(_sc), 1), 1)
+			if 'cluster_id' in _sc.columns:
+				_facts['lobbying_n_clustered'] = int(
+					(pd.to_numeric(_sc['cluster_id'], errors='coerce') >= 0).sum())
+		if 'MA_Lobbying_CampaignContributions' in data_csv:
+			_cc_f = data_csv['MA_Lobbying_CampaignContributions']
+			_facts['lobbying_n_campaign_contributions'] = int(len(_cc_f))
+			_facts['lobbying_campaign_total'] = int(
+				pd.to_numeric(_cc_f.get('amount'), errors='coerce').fillna(0).sum())
+		if 'MA_Lobbying_Expenses' in data_csv:
+			_facts['lobbying_n_expenses'] = int(len(data_csv['MA_Lobbying_Expenses']))
+		with open('../docs/data/facts_lobbying.yml', 'w') as _fh:
+			for _k in sorted(_facts):
+				_fh.write(f'{_k}: {_facts[_k]}\n')
+		print(f"Wrote facts_lobbying.yml ({len(_facts)} facts)")
 
 	data_csv['AMEND_metadata'] = pd.Series({
 		'Website':'https://nesanders.github.io/MAenvironmentaldata/index.html',

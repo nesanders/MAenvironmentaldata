@@ -1310,7 +1310,7 @@ Edwards Wildman Palmer LLP	2012	Steward Health Care LLC	HB	4070	An Act relative 
 
 ---
 
-### MA_Lobbying_Bills_Scored (31,702 rows)
+### MA_Lobbying_Bills_Scored (37,301 rows)
 Environmental relevance scores for MA lobbying bills, derived from Gemini embeddings. One row per unique (bill_number, general_court). Key fields: bill_number, general_court, bill_title, bill_id (e.g. H1234), env_relevance_score (float; differential cosine similarity to env vs non-env example bills; higher = more environmentally relevant), is_environmental (1 if env_relevance_score >= 0.05), cluster_id (integer topic cluster 0–24; -1 = unassigned; 25 clusters total). Join to MA_Lobbying_Bills on (bill_number, general_court) to find which clients lobbied env bills. Join to MA_Bill_Cluster_Labels on cluster_id for human-readable cluster topic labels. IMPORTANT: is_environmental is per-bill; no cluster is purely environmental.
 
 ```sql
@@ -1322,17 +1322,22 @@ CREATE TABLE "MA_Lobbying_Bills_Scored" (
 	bill_id TEXT, 
 	env_relevance_score FLOAT, 
 	is_environmental BIGINT, 
-	cluster_id BIGINT
+	cluster_id BIGINT, 
+	summary TEXT, 
+	categories TEXT, 
+	tags TEXT, 
+	is_env_llm BOOLEAN, 
+	is_environmental_embedding BIGINT
 )
 ```
 
 /* 5 rows from MA_Lobbying_Bills_Scored:
-bill_number	general_court	bill_title	bill_id	env_relevance_score	is_environmental	cluster_id
-3678	194	An Act relative to chemical recycling	HD3678	0.1475381851196289	1	-1
-4563	193	An Act relative to landfills and areas of critical environmental concern	H4563	0.1332122683525085	1	0
-2945	190	An Act relative to landfills and areas of critical environmental concern	H2945	0.1287276148796081	1	21
-894	191	An Act relative to landfills and areas of critical environmental concern	H894	0.1287276148796081	1	10
-930	192	An Act relative to landfills and areas of critical environmental concern	H930	0.1287275552749633	1	-1
+bill_number	general_court	bill_title	bill_id	env_relevance_score	is_environmental	cluster_id	summary	categories	tags	is_env_llm	is_environmental_embedding
+4853	194	An act protecting our soil, farms and food from PFAS contamination	H4853	0.1758822798728943	1	19	This bill would protect agricultural land, farms, and the food supply from contamination by PFAS chemicals. If passed, it would likely establish regulations or programs aimed at preventing the presence of these harmful substances in soil and food products, thereby safeguarding public health and supporting the agricultural industry.	["Environmental Protection", "Food, Drugs and Alcohol"]	["Soil pollution", "Hazardous wastes and toxic substances", "Food supply, safety, and labeling", "Environmental health"]	1	1
+2802	194	An Act protecting our soil and farms from PFAS contamination	S2802	0.1644791960716247	1	12	This bill would protect agricultural land and farms from contamination by PFAS, often called "forever chemicals." If passed, it would likely establish regulations or programs aimed at preventing these harmful substances from entering the soil and water used for farming. The policy intent is to safeguard the food supply and the economic viability of farms by addressing a significant environmental health concern.	["Environmental Protection", "Food, Drugs and Alcohol"]	["Soil pollution", "Hazardous wastes and toxic substances", "Food supply, safety, and labeling", "Environmental health"]	1	1
+3678	194	An Act relative to chemical recycling	HD3678	0.1475380659103393	1	22	This bill would define "chemical recycling" as a manufacturing process for plastics, rather than a waste management process. If passed, this reclassification could alter how facilities using this process are regulated, potentially impacting environmental oversight and permitting requirements for such operations in Massachusetts.	["Environmental Protection"]	["Solid waste and recycling", "Environmental regulatory procedures", "Pollution control and abatement"]	1	1
+664	194	An Act relative to liability for release of hazardous materials	S664	0.1361947059631347	1	22	This bill would establish clear rules for who is responsible when hazardous materials are released into the environment. If passed, it would help ensure that the parties responsible for pollution are held accountable for cleanup costs and damages. This could lead to faster remediation of contaminated sites and provide a legal framework for victims to seek compensation.	["Environmental Protection"]	["Hazardous wastes and toxic substances", "Pollution control and abatement", "Environmental regulatory procedures", "Environmental health"]	1	1
+4563	193	An Act relative to landfills and areas of critical environmental concern	H4563	0.1332122683525085	1	0	This bill would prohibit the creation of new landfills, monofills, or ash landfills in or next to areas officially designated by the state as "areas of critical environmental concern." If passed, this would protect environmentally sensitive regions from the potential negative impacts associated with waste disposal facilities, such as pollution and habitat destruction. The policy intent is to safeguard specific natural areas that are deemed vital for environmental protection.	["Environmental Protection"]	["Hazardous wastes and toxic substances", "Solid waste and recycling", "Environmental regulatory procedures", "Pollution control and abatement"]	1	1
 */
 
 **Column notes:**
