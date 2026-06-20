@@ -2,6 +2,11 @@ name: Update Data Only
 
 on:
   workflow_dispatch:       # Manual trigger only
+    inputs:
+      dry_run:
+        description: 'Run the full pipeline but skip the commit/PR/merge step (for testing)'
+        type: boolean
+        default: false
 
 env:
   FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: 'true'
@@ -85,6 +90,7 @@ jobs:
         run: python assemble_db.py
 
       - name: Commit and open PR
+        if: ${{ inputs.dry_run != true }}
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
