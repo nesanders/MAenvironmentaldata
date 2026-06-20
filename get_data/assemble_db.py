@@ -667,16 +667,16 @@ if __name__ == '__main__':
 				os.system(f'gsutil cp {_f} gs://openamend-data/{_gcs_name}')
 				print(f'Uploaded {_gcs_name} to GCS')
 
-	## Write sample CSVs for large lobbying files (full CSVs are in GCS, not git)
-	_lobbying_samples = {
-		'MA_lobbying_bills':        (data_csv['MA_Lobbying_Bills'],         True),
-		'MA_lobbying_employers':    (data_csv['MA_Lobbying_Employers'],      True),
-		'MA_lobbying_summary_links': (pd.read_csv('../docs/data/MA_lobbying_summary_links.csv') if os.path.exists('../docs/data/MA_lobbying_summary_links.csv') else pd.DataFrame(), False),
-		'MA_lobbying_bills_scored': (data_csv['MA_Lobbying_Bills_Scored'],   True),
-		'MA_legislature_bills':     (data_csv['MA_Legislature_Bills'],       True),
-	}
-	# New archive-derived tables (full CSVs gitignored; commit samples for schema/preview)
+	## Write sample CSVs for large lobbying files (full CSVs are in GCS, not git).
+	## All entries are guarded: on a fresh checkout (e.g. CI) the gitignored
+	## lobbying CSVs are absent, so the corresponding tables are not in data_csv —
+	## include a sample only when its table was actually loaded.
+	_lobbying_samples = {}
 	for _key, _tbl in (
+		('MA_lobbying_bills',                  'MA_Lobbying_Bills'),
+		('MA_lobbying_employers',              'MA_Lobbying_Employers'),
+		('MA_lobbying_bills_scored',           'MA_Lobbying_Bills_Scored'),
+		('MA_legislature_bills',               'MA_Legislature_Bills'),
 		('MA_lobbying_lobbyists',              'MA_Lobbying_Lobbyists'),
 		('MA_lobbying_campaign_contributions', 'MA_Lobbying_CampaignContributions'),
 		('MA_lobbying_expenses',               'MA_Lobbying_Expenses'),
@@ -684,6 +684,10 @@ if __name__ == '__main__':
 	):
 		if _tbl in data_csv:
 			_lobbying_samples[_key] = (data_csv[_tbl], True)
+	# Summary-links sample comes straight from the CSV (no DB table), if present.
+	if os.path.exists('../docs/data/MA_lobbying_summary_links.csv'):
+		_lobbying_samples['MA_lobbying_summary_links'] = (
+			pd.read_csv('../docs/data/MA_lobbying_summary_links.csv'), False)
 	for fname, (df, has_index) in _lobbying_samples.items():
 		if df.empty:
 			continue

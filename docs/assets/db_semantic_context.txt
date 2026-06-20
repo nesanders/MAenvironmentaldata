@@ -1,5 +1,5 @@
 # AMEND Database Semantic Context
-Generated: 2026-06-18
+Generated: 2026-06-20
 
 ## Global Data Notes
 
