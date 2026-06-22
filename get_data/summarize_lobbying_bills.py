@@ -641,6 +641,13 @@ def main():
     print(f'Embed summaries:  {args.embed_summaries}')
     print(f'Taxonomy:         {len(TAXONOMY)} categories, {len(ALL_TAGS)} tags')
 
+    # Steady state (the normal weekly case): every bill already has a summary, so
+    # there is nothing to do. Exit before creating a context cache or making any
+    # API calls — keeps incremental CI runs at $0.
+    if todo.empty:
+        print('No bills to summarize — up to date.')
+        return
+
     cache = _create_cache(client, args.model)
     print()
 
@@ -754,6 +761,22 @@ def main():
         df.loc[res['idx'], 'is_env_llm'] = result.is_environmental
         if res['summ_emb'] is not None:
             df.at[res['idx'], 'summary_embedding'] = res['summ_emb'].tolist()
+
+    # Title fallback for bills the model could not summarize. A small number of
+    # bills are deterministically blocked by Gemini's safety filters despite being
+    # legitimate legislation (e.g. anti-CSAM bills). Without this, they stay in
+    # `todo` forever — every weekly run would re-create a context cache, re-attempt
+    # them, and re-upload the parquet for no change. Mark them done by using the
+    # bill title as the summary (their titles are descriptive) so they are not
+    # retried. categories/tags stay empty and is_env_llm stays unset (NULL).
+    _stuck = df['summary'].isna() & df['bill_title'].notna()
+    n_stuck = int(_stuck.sum())
+    if n_stuck:
+        df.loc[_stuck, 'summary']    = df.loc[_stuck, 'bill_title']
+        df.loc[_stuck, 'categories'] = df.loc[_stuck, 'categories'].where(df.loc[_stuck, 'categories'].notna(), '[]')
+        df.loc[_stuck, 'tags']       = df.loc[_stuck, 'tags'].where(df.loc[_stuck, 'tags'].notna(), '[]')
+        print(f'Title fallback applied to {n_stuck} bill(s) the model could not '
+              f'summarize (e.g. safety-blocked); marked done to avoid re-attempts.')
 
     _save_parquet(df)
     _print_final_summary(df, todo, n_ok, n_fail,

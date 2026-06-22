@@ -74,11 +74,12 @@ jobs:
         working-directory: get_data
         run: python reparse_lobbying_archive.py --incremental
 
-      - name: Score and cluster lobbying bills
+      - name: Score, summarize, and cluster lobbying bills
         timeout-minutes: 30
         working-directory: get_data
         run: |
           python score_lobbying_bills.py
+          python summarize_lobbying_bills.py
           python cluster_lobbying_bills.py --incremental
 
       - name: Validate data
