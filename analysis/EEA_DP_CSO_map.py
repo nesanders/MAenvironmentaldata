@@ -189,7 +189,7 @@ class CSOAnalysisEEADP(CSOAnalysis):
             precip_monthly = df_rain[
                 (df_rain['date'] >= pd.to_datetime(self.cso_data_start)) &
                 (df_rain['date'] <= pd.to_datetime(self.cso_data_end))
-            ].resample('MS', on='date')['precip_in_avg'].sum()
+            ].resample('MS', on='date')['precip_in_avg'].sum(min_count=1)
             precip_monthly = precip_monthly.reindex(all_months, fill_value=0)
             mychart.add_dataset(
                 precip_monthly.values.tolist(),
@@ -961,7 +961,7 @@ class CSOAnalysisEEADP(CSOAnalysis):
             precip_monthly = df_rain[
                 (df_rain['date'] >= pd.to_datetime(self.cso_data_start)) &
                 (df_rain['date'] <= pd.to_datetime(self.cso_data_end))
-            ].resample('MS', on='date')['precip_in_avg'].sum()
+            ].resample('MS', on='date')['precip_in_avg'].sum(min_count=1)
         else:
             precip_monthly = pd.Series(0, index=pd.date_range(start=pd.to_datetime(self.cso_data_start), end=pd.to_datetime(self.cso_data_end), freq='MS'))
 
