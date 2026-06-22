@@ -1,0 +1,101 @@
+,entity_name,year,expense_type,date,payee,description,amount,entity_name_norm
+0,Grant Associates,2005,additional,1/1 to 6/30,1/1 to 6/30,Boston View Corporation Office and parking,5175.0,GRANT
+1,Grant Associates,2005,additional,1/1 to 6/30,1/1 to 6/30,Verizon NSTAR utilites,590.0,GRANT
+2,Grant Associates,2005,additional,,,Total amount,5765.0,GRANT
+3,Eric Bourassa,2005,operating,7/1/2005-12/31/2005,Verizon,"Telephone, cell phone, handheld",30.0,ERIC BOURASSA
+4,Eric Bourassa,2005,operating,7/1/2005-12/31/2005,US Postal SErvice,"Postage, shipping, delivery",15.0,ERIC BOURASSA
+5,Eric Bourassa,2005,operating,,,Total operating expenses,45.0,ERIC BOURASSA
+6,Evan Feinman,2005,operating,7/1/2005-12/31/2005,copies and copy service,Printing expenses,30.0,EVAN FEINMAN
+7,Evan Feinman,2005,operating,7/1/2005-12/31/2005,us postal service,"Postage, shipping, delivery",5.0,EVAN FEINMAN
+8,Evan Feinman,2005,operating,7/1/2005-12/31/2005,verizon and covad,"Telephone, cell phone, handheld",20.0,EVAN FEINMAN
+9,Evan Feinman,2005,operating,,,Total operating expenses,55.0,EVAN FEINMAN
+10,Fort Hill Advisors,2005,operating,12/31/2005,Cingular,"Telephone, cell phone, handheld",210.0,FORT HILL ADVISORS
+11,Fort Hill Advisors,2005,operating,12/31/2005,Cingular,"Telephone, cell phone, handheld",275.0,FORT HILL ADVISORS
+12,Fort Hill Advisors,2005,operating,,,Total operating expenses,485.0,FORT HILL ADVISORS
+13,Fort Hill Advisors,2005,additional,12/31/2005,12/31/2005,AT&T Internet,360.0,FORT HILL ADVISORS
+14,Robert A Rio,2005,meals_entertainment_travel,2/16/05,Travel,Robert A. Rio (A.I.M.),271.25,ROBERT A RIO
+15,Robert A Rio,2005,meals_entertainment_travel,,,,271.25,ROBERT A RIO
+16,Katherine Barry Maselli,2005,operating,1/1/2005-6/30/2005,Verizon,"Telephone, cell phone, handheld",250.0,KATHERINE BARRY MASELLI
+17,Katherine Barry Maselli,2005,operating,1/1/2005-6/30/2005,FedEx,"Postage, shipping, delivery",50.0,KATHERINE BARRY MASELLI
+18,Katherine Barry Maselli,2005,operating,1/1/2005-6/30/2005,AT&T/Verizon,"Telephone, cell phone, handheld",600.0,KATHERINE BARRY MASELLI
+19,Katherine Barry Maselli,2005,operating,,,Total operating expenses,900.0,KATHERINE BARRY MASELLI
+20,Katherine Barry Maselli,2005,meals_entertainment_travel,1/1/2005-6/30/2005,Travel,Boston Common Garage and Others,1200.0,KATHERINE BARRY MASELLI
+21,Katherine Barry Maselli,2005,additional,1/1/2005,6/30/2005,RCN Cable High Speed Cable/High Speed Internet,100.0,KATHERINE BARRY MASELLI
+22,Katherine Barry Maselli,2005,additional,1/1/2005,6/30/2005,Martin Reilly Office Space Rental,5000.0,KATHERINE BARRY MASELLI
+23,Katherine Barry Maselli,2005,additional,1/1/2005,6/30/2005,Kinkos Copies,50.0,KATHERINE BARRY MASELLI
+24,Katherine Barry Maselli,2005,additional,,,Total amount,5150.0,KATHERINE BARRY MASELLI
+25,Katherine D. Keough,2005,additional,7/1/05,12/31/05,Katherine Keough parking,150.0,KATHERINE D KEOUGH
+26,Katherine D. Keough,2005,additional,,,Total amount,150.0,KATHERINE D KEOUGH
+27,Steven F Bradley,2005,meals_entertainment_travel,7/1/05 - 12/31/05,Meal,Steven F. Bradley,555.19,STEVEN F BRADLEY
+28,Steven F Bradley,2005,meals_entertainment_travel,7/1/05 - 12/31/05,Travel,Steven F. Bradley,7059.57,STEVEN F BRADLEY
+29,Steven F Bradley,2005,meals_entertainment_travel,,,,7614.76,STEVEN F BRADLEY
+30,Steven F Bradley,2005,additional,7/1/05,12/31/05,Steven F. Bradley Lodging,3300.0,STEVEN F BRADLEY
+31,Steven F Bradley,2005,additional,,,Total amount,3300.0,STEVEN F BRADLEY
+32,William L Barkas,2005,additional,07/01/05,12/31/05,Oxford Property Management Rent,336.51,WILLIAM L BARKAS
+33,William L Barkas,2005,additional,07/01/05,12/31/05,"Assorted Vendors Cell phones, phones, fax",398.03,WILLIAM L BARKAS
+34,William L Barkas,2005,additional,07/01/05,12/31/05,Mimi Watt Administrative Assistant,264.99,WILLIAM L BARKAS
+35,William L Barkas,2005,additional,,,Total amount,999.53,WILLIAM L BARKAS
+36,Robert C Finneran,2005,additional,3/3/2005,3/3/2005,MA Sec. of  State Lobbyist Registration Fee,109.0,ROBERT C FINNERAN
+37,Robert C Finneran,2005,additional,,,Total amount,109.0,ROBERT C FINNERAN
+38,Eric Bourassa,2005,operating,1/1/05-7/1/05,Verizon,"Telephone, cell phone, handheld",300.0,ERIC BOURASSA
+39,Eric Bourassa,2005,operating,1/1/05-7/1/05,Postmaster,"Postage, shipping, delivery",250.0,ERIC BOURASSA
+40,Eric Bourassa,2005,operating,,,Total operating expenses,550.0,ERIC BOURASSA
+41,Eric Bourassa,2005,additional,1/1/05,7/1/05,State House News Service New Publicatoin,1860.0,ERIC BOURASSA
+42,Eric Bourassa,2005,additional,7/1/2005,12/30/2005,insta trac internet service,315.0,ERIC BOURASSA
+43,Eric Bourassa,2005,additional,,,Total amount,2175.0,ERIC BOURASSA
+44,Tevnan & Tevnan LLP,2005,operating,1/1/05 - 6/30/05,"Various telecom suppliers (Verizon, Conversent Communications, etc.)","Telephone, cell phone, handheld",8511.0,TEVNAN AND TEVNAN
+45,Tevnan & Tevnan LLP,2005,operating,,,Total operating expenses,8511.0,TEVNAN AND TEVNAN
+46,Tevnan & Tevnan LLP,2005,additional,1/1/05,6/30/05,Support staff Staff,39382.0,TEVNAN AND TEVNAN
+47,Tevnan & Tevnan LLP,2005,additional,3/16/05,6/30/05,InstaTrac Research,2050.0,TEVNAN AND TEVNAN
+48,Tevnan & Tevnan LLP,2005,additional,1/1/05,6/30/05,NSTAR Utilities,1080.0,TEVNAN AND TEVNAN
+49,Tevnan & Tevnan LLP,2005,additional,1/1/05,6/30/05,DirecTV Television,391.0,TEVNAN AND TEVNAN
+50,Tevnan & Tevnan LLP,2005,additional,1/1/05,6/30/05,Commonwealth of Mass. Lobbyist registration fees,3800.0,TEVNAN AND TEVNAN
+51,Tevnan & Tevnan LLP,2005,additional,1/1/05,6/30/05,Wainwright Bank Rent,22049.0,TEVNAN AND TEVNAN
+52,Tevnan & Tevnan LLP,2005,additional,1/1/05,6/30/05,State House News Service Research,714.0,TEVNAN AND TEVNAN
+53,Tevnan & Tevnan LLP,2005,additional,1/1/05,6/30/05,Cynthia A. Eid Consulting services,30000.0,TEVNAN AND TEVNAN
+54,Tevnan & Tevnan LLP,2005,additional,,,Total amount,99466.0,TEVNAN AND TEVNAN
+55,Capital Associates Inc.,2005,operating,7-1-05 to 12-31-05,Verizon Wireless,"Telephone, cell phone, handheld",750.0,CAPITAL
+56,Capital Associates Inc.,2005,operating,7-1--05 to 12-31-05,Veriizon,"Telephone, cell phone, handheld",600.0,CAPITAL
+57,Capital Associates Inc.,2005,operating,7-1-05 to 12-31-05,Avaya,"Telephone, cell phone, handheld",150.0,CAPITAL
+58,Capital Associates Inc.,2005,operating,,,Total operating expenses,1500.0,CAPITAL
+59,Capital Associates Inc.,2005,additional,7,1,44 School St. LLC office rent,1500.0,CAPITAL
+60,Capital Associates Inc.,2005,additional,7,1,N Star electric bill,150.0,CAPITAL
+61,Capital Associates Inc.,2005,additional,7,1,Province St. Garage parking,600.0,CAPITAL
+62,Capital Associates Inc.,2005,additional,,,Total amount,2250.0,CAPITAL
+63,Hub Strategies,2005,operating,3/13/05,us postmaster,"Postage, shipping, delivery",74.0,HUB STRATEGIES
+64,Hub Strategies,2005,operating,,,Total operating expenses,74.0,HUB STRATEGIES
+65,Deborah E Banda,2005,operating,7/27/05,Mass General Court & Secy of EOEA,"Postage, shipping, delivery",120.6,DEBORAH E BANDA
+66,Deborah E Banda,2005,operating,9/20/05,Mass General Court,"Postage, shipping, delivery",74.0,DEBORAH E BANDA
+67,Deborah E Banda,2005,operating,12/15/05,Mass General Court,"Postage, shipping, delivery",74.0,DEBORAH E BANDA
+68,Deborah E Banda,2005,operating,,,Total operating expenses,268.6,DEBORAH E BANDA
+69,Brian S. Hickey Associates,2005,additional,1/1/2005,6/30/2005,Park Realty Rent,27000.0,BRIAN S HICKEY
+70,Brian S. Hickey Associates,2005,additional,1/1/2005,6/30/2005,Verizon and Nextel Utilities,4200.0,BRIAN S HICKEY
+71,Brian S. Hickey Associates,2005,additional,1/1/2005,6/30/2005,ADP Payroll Payroll Expenses,600.0,BRIAN S HICKEY
+72,Brian S. Hickey Associates,2005,additional,1/1/2005,6/30/2005,Shanahan Associates Salary,7000.0,BRIAN S HICKEY
+73,Brian S. Hickey Associates,2005,additional,1/1/2005,6/30/2005,Various Office Expenditures/Supplies,12000.0,BRIAN S HICKEY
+74,Brian S. Hickey Associates,2005,additional,1/1/2005,6/30/2005,Northeast Business Trust Health,11400.0,BRIAN S HICKEY
+75,Brian S. Hickey Associates,2005,additional,1/1/2005,6/30/2005,Kate Piccolo Secretarial,18000.0,BRIAN S HICKEY
+76,Brian S. Hickey Associates,2005,additional,,,Total amount,80200.0,BRIAN S HICKEY
+77,Capital Associates Inc.,2005,operating,1/1/05-6/30/05,Verizon Wireless,"Telephone, cell phone, handheld",400.0,CAPITAL
+78,Capital Associates Inc.,2005,operating,1/1/05-6/30/05,Verizon,"Telephone, cell phone, handheld",360.0,CAPITAL
+79,Capital Associates Inc.,2005,operating,,,Total operating expenses,760.0,CAPITAL
+80,Capital Associates Inc.,2005,additional,1/1/05,6/30/05,"44 School St., LLC rent",1200.0,CAPITAL
+81,Capital Associates Inc.,2005,additional,1/1/05,6/30/05,NStar electricity,90.0,CAPITAL
+82,Capital Associates Inc.,2005,additional,1/1/05,6/30/05,Avaya telephone lease,60.0,CAPITAL
+83,Capital Associates Inc.,2005,additional,,,Total amount,1350.0,CAPITAL
+84,Quinn & Morris,2005,operating,1/1/05-6/30/05,US Postal Service,"Postage, shipping, delivery",1125.0,QUINN AND MORRIS
+85,Quinn & Morris,2005,operating,1/1/05-6/30/05,Broadview Network,"Telephone, cell phone, handheld",2340.0,QUINN AND MORRIS
+86,Quinn & Morris,2005,operating,1/1/05-6/30/05,Cingular,"Telephone, cell phone, handheld",1291.0,QUINN AND MORRIS
+87,Quinn & Morris,2005,operating,1/1/05-6/30/05,UPS,"Postage, shipping, delivery",130.0,QUINN AND MORRIS
+88,Quinn & Morris,2005,operating,,,Total operating expenses,4886.0,QUINN AND MORRIS
+89,Quinn & Morris,2005,additional,1/1/05,6/30/05,Flatly Company Rent,32650.0,QUINN AND MORRIS
+90,Quinn & Morris,2005,additional,1/1/05,6/30/05,NSTAR utilities,4200.0,QUINN AND MORRIS
+91,Quinn & Morris,2005,additional,,,Total amount,36850.0,QUINN AND MORRIS
+92,Deborah E Banda,2005,operating,5/6/05,Mass General Court members,"Postage, shipping, delivery",1158.0,DEBORAH E BANDA
+93,Deborah E Banda,2005,operating,4/20/05,Mass.General Court members,"Postage, shipping, delivery",59.2,DEBORAH E BANDA
+94,Deborah E Banda,2005,operating,4/20/2005,Mass.General Court members,Printing expenses,9.6,DEBORAH E BANDA
+95,Deborah E Banda,2005,operating,,,Total operating expenses,1226.8,DEBORAH E BANDA
+96,Dewey Square Group,2005,operating,7/1/2005-12/31/2005,Client- for copying/reproduction (apportioned),Printing expenses,200.0,DEWEY SQUARE GROUP
+97,Dewey Square Group,2005,operating,7/1/2005-12/31/2005,Client- for communication purposes (apportioned),"Telephone, cell phone, handheld",800.0,DEWEY SQUARE GROUP
+98,Dewey Square Group,2005,operating,7/1/2005-12/31/2005,Client- for delivery/courier services (apportioned),"Postage, shipping, delivery",180.0,DEWEY SQUARE GROUP
+99,Dewey Square Group,2005,operating,,,Total operating expenses,1180.0,DEWEY SQUARE GROUP

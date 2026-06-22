@@ -189,11 +189,11 @@ class CSOAnalysisEEADP(CSOAnalysis):
             precip_monthly = df_rain[
                 (df_rain['date'] >= pd.to_datetime(self.cso_data_start)) &
                 (df_rain['date'] <= pd.to_datetime(self.cso_data_end))
-            ].resample('MS', on='date')['precip_in_avg'].sum()
+            ].resample('MS', on='date')['precip_in_avg'].sum(min_count=1)
             precip_monthly = precip_monthly.reindex(all_months, fill_value=0)
             mychart.add_dataset(
                 precip_monthly.values.tolist(),
-                'Precipitation (48-hr lookback)',
+                'Precipitation (monthly total)',
                 borderColor="'rgba(100,150,255,1)'",
                 type="'line'",
                 fill="false",
@@ -582,11 +582,17 @@ class CSOAnalysisEEADP(CSOAnalysis):
             return None, None
         df_rain['date'] = pd.to_datetime(df_rain['date'])
         df_rain = df_rain.sort_values('date').set_index('date')
+        # ACIS daily precipitation is observation-day dated: most COOP stations
+        # observe in the morning and attribute the preceding ~24 hours of rain to
+        # the observation day, so rain that falls on day d is predominantly
+        # recorded on day d+1.  Shift the series back one day to approximate
+        # physical-day alignment, then window over the event day and the
+        # day(s) before it.
+        precip_physical = df_rain['precip_in_avg'].shift(-1)
         prior_rain = (
-            df_rain['precip_in_avg']
+            precip_physical
             .rolling(window=window_days, min_periods=1)
             .sum()
-            .shift(1)
             .rename('prior_rain_in')
         )
 
@@ -961,7 +967,7 @@ class CSOAnalysisEEADP(CSOAnalysis):
             precip_monthly = df_rain[
                 (df_rain['date'] >= pd.to_datetime(self.cso_data_start)) &
                 (df_rain['date'] <= pd.to_datetime(self.cso_data_end))
-            ].resample('MS', on='date')['precip_in_avg'].sum()
+            ].resample('MS', on='date')['precip_in_avg'].sum(min_count=1)
         else:
             precip_monthly = pd.Series(0, index=pd.date_range(start=pd.to_datetime(self.cso_data_start), end=pd.to_datetime(self.cso_data_end), freq='MS'))
 
@@ -989,7 +995,7 @@ class CSOAnalysisEEADP(CSOAnalysis):
         # Add rainfall as line on secondary axis
         mychart.add_dataset(
             precip_monthly.values.tolist(),
-            "Precipitation (48-hr lookback)",
+            "Precipitation (monthly total)",
             borderColor="'rgba(100,150,255,1)'",
             type="'line'",
             fill="false",

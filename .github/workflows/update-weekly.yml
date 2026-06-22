@@ -61,20 +61,26 @@ jobs:
           python get_MS4_annual_reports.py --yes --skip-download
 
       - name: Fetch — MA lobbying disclosures (incremental)
-        timeout-minutes: 30
+        timeout-minutes: 45
         working-directory: get_data
-        run: python get_MA_lobbying.py
+        run: python get_MA_lobbying.py --archive-raw
 
       - name: Fetch — MA legislature bills (incremental)
         timeout-minutes: 20
         working-directory: get_data
         run: python get_MA_legislature_bills.py
 
-      - name: Score and cluster lobbying bills
+      - name: Reparse lobbying archive (incremental → all field CSVs)
+        timeout-minutes: 20
+        working-directory: get_data
+        run: python reparse_lobbying_archive.py --incremental
+
+      - name: Score, summarize, and cluster lobbying bills
         timeout-minutes: 30
         working-directory: get_data
         run: |
           python score_lobbying_bills.py
+          python summarize_lobbying_bills.py
           python cluster_lobbying_bills.py --incremental
 
       - name: Validate data

@@ -1,0 +1,101 @@
+,entity_name,year,date,lobbyist_name,recipient_name,office_sought,amount,entity_name_norm
+0,Grant Associates,2005,2/15/2005,Joseph M Grant,Sal Dimasi,Representative,200.0,GRANT
+1,Grant Associates,2005,2/15/2005,Joseph M Grant,Mark Montigney,Senate,200.0,GRANT
+2,Grant Associates,2005,2/15/2005,Joseph M Grant,Michael Morrisey,Senate,200.0,GRANT
+3,Grant Associates,2005,3/22/2005,Joseph M Grant,Robert  Antonioni,Senate,200.0,GRANT
+4,Grant Associates,2005,4/22/2005,Joseph M Grant,Joseph Wagner,Representative,200.0,GRANT
+5,Grant Associates,2005,4/22/2005,Joseph M Grant,Thomas  Kennedy,Representative,200.0,GRANT
+6,Grant Associates,2005,5/25/2005,Joseph M Grant,Richard Moore,Senate,200.0,GRANT
+7,Grant Associates,2005,5/4/2005,Joseph M Grant,Andrea Nuciforo,Senate,200.0,GRANT
+8,Grant Associates,2005,6/20/2005,Joseph M Grant,Robert Deleo,Representative,200.0,GRANT
+9,Grant Associates,2005,6/22/2005,Joseph M Grant,William Galvin,Representative,200.0,GRANT
+10,Grant Associates,2005,6/24/2005,Joseph M Grant,John Bienda,Representative,200.0,GRANT
+11,Grant Associates,2005,6/6/2005,Joseph M Grant,James Timilty,Senate,200.0,GRANT
+12,Fort Hill Advisors,2005,11/16/2005,Scott H. Bosworth,Edward Augustus,Senator,200.0,FORT HILL ADVISORS
+13,Fort Hill Advisors,2005,9/30/2005,Scott H. Bosworth,Michael F. Flaherty Jr.,"City Wide, Boston",200.0,FORT HILL ADVISORS
+14,Fort Hill Advisors,2005,06/09/2005,Joseph A. Giannino,James Valee,State Representative,100.0,FORT HILL ADVISORS
+15,Fort Hill Advisors,2005,09/13/2005,Joseph A. Giannino,Michael F. Flaherty Jr,"City Wide, Boston",200.0,FORT HILL ADVISORS
+16,Fort Hill Advisors,2005,09/20/2005,Joseph A. Giannino,Robert Travaligini,State Senate,200.0,FORT HILL ADVISORS
+17,Fort Hill Advisors,2005,10/16/2005,Joseph A. Giannino,Thomas Ambrosino,"City Wide, Revere",100.0,FORT HILL ADVISORS
+18,Fort Hill Advisors,2005,11/10/2005,Joseph A. Giannino,Jack Hart,State Senate,200.0,FORT HILL ADVISORS
+19,Fort Hill Advisors,2005,9/30/2005,Joseph A. Giannino,Michael F. Flaherty Jr.,"City Wide, Boston",200.0,FORT HILL ADVISORS
+20,Fort Hill Advisors,2005,09/05/2005,Kevin F Mulvey,Robert Travaglini,Senator,100.0,FORT HILL ADVISORS
+21,Fort Hill Advisors,2005,11/05/2005,Kevin F Mulvey,Martin Walsh,Representative,50.0,FORT HILL ADVISORS
+22,Fort Hill Advisors,2005,11/05/2005,Kevin F Mulvey,Jack Hart,Senator,100.0,FORT HILL ADVISORS
+23,Fort Hill Advisors,2005,12/12/2005,Kevin F Mulvey,Timothy P. Murray,Lieutenant Governor,100.0,FORT HILL ADVISORS
+24,Brown Rudnick Berlack Israels LLP,2005,11/30/2005,Jennifer M. Kiely,Andrea Nuciforo,"Senate, Berkshire, Hampshire, Franklin",125.0,BROWN RUDNICK BERLACK ISRAELS
+25,Burke & Mawn Consultants,2005,10/10/2005,Kevin M Burke,Timothy Flaherty,City Council Beverly,100.0,BURKE AND MAWN CONSULTANTS
+26,Burke & Mawn Consultants,2005,8/15/2005,Kevin M Burke,Frank G. Cousins Jr.,"Sheriff, Essex County",200.0,BURKE AND MAWN CONSULTANTS
+27,Burke & Mawn Consultants,2005,8/9/2005,Kevin M Burke,James DiPaola,"Sheriff, Middlesex County",200.0,BURKE AND MAWN CONSULTANTS
+28,"Minahan Companies, The",2005,09/14/2005,John F Hahesy,The O'Flaherty Committee,"2nd Suffolk, House",125.0,MINAHAN COMPANIES
+29,"Minahan Companies, The",2005,12/15/2005,John F Hahesy,The Robert Fennell Committee,"10th Essex, House",100.0,MINAHAN COMPANIES
+30,"Minahan Companies, The",2005,8/15/2005,Alfred A Minahan,Frank G. Cousins Jr.,"Sheriff, Essex County",200.0,MINAHAN COMPANIES
+31,Tevnan & Tevnan LLP,2005,2/15/05,Gerard F. Burke,Sen. Marian Walsh,"Senate, Suffolk & Norfolk",100.0,TEVNAN AND TEVNAN
+32,Tevnan & Tevnan LLP,2005,2/9/05,Gerard F. Burke,Sen. Therese Murray,"Senate, Plymouth & Barnstable",100.0,TEVNAN AND TEVNAN
+33,Tevnan & Tevnan LLP,2005,2/9/2005,Gerard F. Burke,Stacey Monahan,"House, 12th Suffolk",100.0,TEVNAN AND TEVNAN
+34,Tevnan & Tevnan LLP,2005,3/1/05,Gerard F. Burke,Sen. Frederick E. Berry,"Senate, 2nd Essex",100.0,TEVNAN AND TEVNAN
+35,Tevnan & Tevnan LLP,2005,4/12/05,Gerard F. Burke,Sen. Steven A. Baddour,"Senate, 1st Essex",100.0,TEVNAN AND TEVNAN
+36,Tevnan & Tevnan LLP,2005,4/25/05,Gerard F. Burke,Sen. John A. Hart,"Senate, 1st Suffolk",100.0,TEVNAN AND TEVNAN
+37,Tevnan & Tevnan LLP,2005,4/7/2005,Gerard F. Burke,Michael F. Flaherty Jr.,"Boston City Council, At Large",100.0,TEVNAN AND TEVNAN
+38,Tevnan & Tevnan LLP,2005,5/12/2005,Gerard F. Burke,Rep. Peter  J. Koutoujian,"House, 10th Middlesex",200.0,TEVNAN AND TEVNAN
+39,Tevnan & Tevnan LLP,2005,5/15/05,Gerard F. Burke,Sen. Susan C. Tucker,"Senate, 2nd Essex & Middlesex",100.0,TEVNAN AND TEVNAN
+40,Tevnan & Tevnan LLP,2005,5/18/05,Gerard F. Burke,Sen. Richard T. Moore,"Senate, Worcester & Norfolk",100.0,TEVNAN AND TEVNAN
+41,Tevnan & Tevnan LLP,2005,5/20/05,Gerard F. Burke,Edward Clancy,"Mayor, City of Lynn",100.0,TEVNAN AND TEVNAN
+42,Tevnan & Tevnan LLP,2005,5/24/05,Gerard F. Burke,Rep. Stephen Myles Walsh,"House, 11th Essex",100.0,TEVNAN AND TEVNAN
+43,Tevnan & Tevnan LLP,2005,5/5/05,Gerard F. Burke,Sen. Brian P. Lees,"Senate, 1st Hampden & Hampshire",100.0,TEVNAN AND TEVNAN
+44,Tevnan & Tevnan LLP,2005,5/5/05,Gerard F. Burke,Sen. Stanley C. Rosenberg,"Senate, Hampshire & Franklin",100.0,TEVNAN AND TEVNAN
+45,Tevnan & Tevnan LLP,2005,6/1/05,Gerard F. Burke,Rep. Michael J. Rodrigues,"House, 8th Bristol",100.0,TEVNAN AND TEVNAN
+46,Tevnan & Tevnan LLP,2005,6/27/05,Gerard F. Burke,Committee to Elect a Democratic House,,125.0,TEVNAN AND TEVNAN
+47,Tevnan & Tevnan LLP,2005,1/25/05,Martin W Fisher,Kristine Glynn,"House, 8th Suffolk",100.0,TEVNAN AND TEVNAN
+48,Tevnan & Tevnan LLP,2005,1/25/2005,Martin W Fisher,Rep. Linda Dorcena Forry,"House, 12th Suffolk",100.0,TEVNAN AND TEVNAN
+49,Tevnan & Tevnan LLP,2005,1/7/05,Martin W Fisher,Sen. Brian A. Joyce,"Senate, Norfolk, Bristol & Plymouth",100.0,TEVNAN AND TEVNAN
+50,Tevnan & Tevnan LLP,2005,2/1/05,Martin W Fisher,Rep. Michael F. Rush,"House, 10th Suffolk",100.0,TEVNAN AND TEVNAN
+51,Tevnan & Tevnan LLP,2005,2/14/05,Martin W Fisher,Sen. Marian Walsh,"Senate, Suffolk & Norfolk",100.0,TEVNAN AND TEVNAN
+52,Tevnan & Tevnan LLP,2005,2/16/05,Martin W Fisher,John Tobin,"Boston City Council, District 6",100.0,TEVNAN AND TEVNAN
+53,Tevnan & Tevnan LLP,2005,2/16/05,Martin W Fisher,Sen. Michael W. Morrissey,"Senate, Norfolk & Plymouth",100.0,TEVNAN AND TEVNAN
+54,Tevnan & Tevnan LLP,2005,3/1/05,Martin W Fisher,Sen. Frederick E. Berry,"Senate, 2nd Essex",100.0,TEVNAN AND TEVNAN
+55,Tevnan & Tevnan LLP,2005,3/10/2005,Martin W Fisher,Daniel F. Conley,"District Attorney, Suffolk District - Suffolk Coun",100.0,TEVNAN AND TEVNAN
+56,Tevnan & Tevnan LLP,2005,3/14/05,Martin W Fisher,Rep. Lida E. Harkins,"House, 13th Norfolk",100.0,TEVNAN AND TEVNAN
+57,Tevnan & Tevnan LLP,2005,3/16/05,Martin W Fisher,"Sen. Edward M. Augustus, Jr.","Senate, 2nd Worcester",100.0,TEVNAN AND TEVNAN
+58,Tevnan & Tevnan LLP,2005,3/22/05,Martin W Fisher,Sen. Robert A. Antonioni,"Senate, Worcester & Middlesex",100.0,TEVNAN AND TEVNAN
+59,Tevnan & Tevnan LLP,2005,3/22/05,Martin W Fisher,Sen. Jarrett T. Barrios,"Senate, Middlesex, Suffolk & Essex",100.0,TEVNAN AND TEVNAN
+60,Tevnan & Tevnan LLP,2005,3/22/05,Martin W Fisher,Rep. Brian S. Dempsey,"House, 3rd Essex",100.0,TEVNAN AND TEVNAN
+61,Tevnan & Tevnan LLP,2005,3/23/05,Martin W Fisher,Rep. James E. Vallee,"House, 10th Norfolk",100.0,TEVNAN AND TEVNAN
+62,Tevnan & Tevnan LLP,2005,3/24/05,Martin W Fisher,Rep. Stephen P. LeDuc,"House, 4th Middlesex",100.0,TEVNAN AND TEVNAN
+63,Tevnan & Tevnan LLP,2005,3/24/05,Martin W Fisher,Sen. Joan M. Menard,"Senate, 1st Bristol & Plymouth",100.0,TEVNAN AND TEVNAN
+64,Tevnan & Tevnan LLP,2005,3/24/2005,Martin W Fisher,Timothy P. Cahill,Treasurer,100.0,TEVNAN AND TEVNAN
+65,Tevnan & Tevnan LLP,2005,3/28/05,Martin W Fisher,John R. Connolly,"Boston City Council, At Large",100.0,TEVNAN AND TEVNAN
+66,Tevnan & Tevnan LLP,2005,3/29/2005,Martin W Fisher,Timothy P. Cahill,Treasurer,100.0,TEVNAN AND TEVNAN
+67,Tevnan & Tevnan LLP,2005,3/3/05,Martin W Fisher,Maureen Feeney,"Boston City Council, District 3",100.0,TEVNAN AND TEVNAN
+68,Tevnan & Tevnan LLP,2005,3/3/05,Martin W Fisher,Rep. Mark V. Falzone,"House, 9th Essex",100.0,TEVNAN AND TEVNAN
+69,Tevnan & Tevnan LLP,2005,3/30/05,Martin W Fisher,Rep. Bradley H. Jones,"House, 20th Middlesex",100.0,TEVNAN AND TEVNAN
+70,Tevnan & Tevnan LLP,2005,3/5/05,Martin W Fisher,Rep. Anthony Petruccelli,"House, 1st Suffolk",100.0,TEVNAN AND TEVNAN
+71,Tevnan & Tevnan LLP,2005,3/5/05,Martin W Fisher,Sen. Karen E. Spilka,"Senate, 2nd Middlesex & Norfolk",100.0,TEVNAN AND TEVNAN
+72,Tevnan & Tevnan LLP,2005,3/9/05,Martin W Fisher,James Klocke,"Senate, Norfolk, Bristol & Middlesex",100.0,TEVNAN AND TEVNAN
+73,Tevnan & Tevnan LLP,2005,3/9/05,Martin W Fisher,Rep. Salvatore F. DiMasi,"House, 3rd Suffolk",200.0,TEVNAN AND TEVNAN
+74,Tevnan & Tevnan LLP,2005,4/12/05,Martin W Fisher,Rep. Robert A. DeLeo,"House, 19th Suffolk",100.0,TEVNAN AND TEVNAN
+75,Tevnan & Tevnan LLP,2005,4/12/05,Martin W Fisher,Rep. Joseph F. Wagner,"House, 8th Hampden",100.0,TEVNAN AND TEVNAN
+76,Tevnan & Tevnan LLP,2005,4/12/05,Martin W Fisher,Rep. Daniel E. Bosley,"House, 1st Berkshire",100.0,TEVNAN AND TEVNAN
+77,Tevnan & Tevnan LLP,2005,4/12/2005,Martin W Fisher,Rep. Michael E. Festa,"House, 32nd Middlesex",100.0,TEVNAN AND TEVNAN
+78,Tevnan & Tevnan LLP,2005,4/13/05,Martin W Fisher,Rep. Harold P. Naughton,"House, 12th Worcester",100.0,TEVNAN AND TEVNAN
+79,Tevnan & Tevnan LLP,2005,4/13/05,Martin W Fisher,Sen. Robert E. Travaglini,"Senate, 1st Suffolk & Middlesex",100.0,TEVNAN AND TEVNAN
+80,Tevnan & Tevnan LLP,2005,4/14/2005,Martin W Fisher,Felix D. Arroyo,"Boston City Council, At Large",100.0,TEVNAN AND TEVNAN
+81,Tevnan & Tevnan LLP,2005,4/27/05,Martin W Fisher,Sen. Harriette L. Chandler,"Senate, 1st Worcester",100.0,TEVNAN AND TEVNAN
+82,Tevnan & Tevnan LLP,2005,4/27/2005,Martin W Fisher,Stephen Murphy,"Sheriff, Suffolk County",200.0,TEVNAN AND TEVNAN
+83,Tevnan & Tevnan LLP,2005,4/28/2005,Martin W Fisher,Edward M. Flynn,"Boston City Council, At Large",100.0,TEVNAN AND TEVNAN
+84,Tevnan & Tevnan LLP,2005,4/7/2005,Martin W Fisher,Michael F. Flaherty Jr.,"Boston City Council, At Large",200.0,TEVNAN AND TEVNAN
+85,Tevnan & Tevnan LLP,2005,5/10/05,Martin W Fisher,Rep. James Brendan Leary,"House, 14th Worcester",100.0,TEVNAN AND TEVNAN
+86,Tevnan & Tevnan LLP,2005,5/12/05,Martin W Fisher,Sen. Stephen M. Brewer,"Senate, Worcester, Hampden, Hampshire & Franklin",100.0,TEVNAN AND TEVNAN
+87,Tevnan & Tevnan LLP,2005,5/12/05,Martin W Fisher,Robert Consalvo,"Boston City Council, District 5",100.0,TEVNAN AND TEVNAN
+88,Tevnan & Tevnan LLP,2005,5/17/05,Martin W Fisher,Rep. Robert P. Spellane,"House, 13th Worcester",100.0,TEVNAN AND TEVNAN
+89,Tevnan & Tevnan LLP,2005,5/17/08,Martin W Fisher,Sen. Susan C. Tucker,"Senate, 2nd Essex & Middlesex",100.0,TEVNAN AND TEVNAN
+90,Tevnan & Tevnan LLP,2005,5/19/05,Martin W Fisher,Sen. Pamela P. Resor,"Senate, Middlesex & Worcester",100.0,TEVNAN AND TEVNAN
+91,Tevnan & Tevnan LLP,2005,5/19/05,Martin W Fisher,Sen. Richard T. Moore,"Senate, Worcester & Norfolk",100.0,TEVNAN AND TEVNAN
+92,Tevnan & Tevnan LLP,2005,5/23/05,Martin W Fisher,Rep. David M. Torrisi,"House, 14th Essex",100.0,TEVNAN AND TEVNAN
+93,Tevnan & Tevnan LLP,2005,5/24/05,Martin W Fisher,Sen. Andrea F. Nuciforo,"Senate, Berkshire, Hampshire & Franklin",100.0,TEVNAN AND TEVNAN
+94,Tevnan & Tevnan LLP,2005,5/24/05,Martin W Fisher,Sen. Steven A. Tolman,"Senate, 2nd Suffolk & Middlesex",100.0,TEVNAN AND TEVNAN
+95,Tevnan & Tevnan LLP,2005,5/24/05,Martin W Fisher,Sen. James E. Timilty,"Senate, Bristol & Norfolk",100.0,TEVNAN AND TEVNAN
+96,Tevnan & Tevnan LLP,2005,5/24/05,Martin W Fisher,Rep. Christine E. Canavan,"House, 10th Plymouth",100.0,TEVNAN AND TEVNAN
+97,Tevnan & Tevnan LLP,2005,5/24/05,Martin W Fisher,Rep. Geoffrey D. Hall,"House, 2nd Middlesex",100.0,TEVNAN AND TEVNAN
+98,Tevnan & Tevnan LLP,2005,5/26/05,Martin W Fisher,Rep. Rachel Kaprielian,"House, 29th Middlesex",100.0,TEVNAN AND TEVNAN
+99,Tevnan & Tevnan LLP,2005,5/26/05,Martin W Fisher,Rep. Garrett J. Bradley,"House, 3rd Plymouth",100.0,TEVNAN AND TEVNAN

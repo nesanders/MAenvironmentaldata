@@ -61,10 +61,14 @@ DATASETS = {
     ],
     # Lobbying tables — present only after get_MA_lobbying.py has run at least once.
     # validate_data.py skips missing files gracefully (file-not-found check below).
-    'MA_lobbying_employers.csv': ['employer_name', 'year'],
-    'MA_lobbying_lobbyists.csv': ['lobbyist_name', 'employer_name', 'year'],
-    'MA_lobbying_bills.csv': ['bill_number', 'general_court', 'employer_name', 'year'],
+    'MA_lobbying_employers.csv': ['entity_name', 'year'],
+    'MA_lobbying_lobbyists.csv': ['lobbyist_name', 'entity_name', 'year'],
+    'MA_lobbying_bills.csv': ['bill_number', 'general_court', 'entity_name', 'year'],
     'MA_legislature_bills.csv': ['bill_number', 'general_court', 'title'],
+    # Archive-derived fields (reparse_lobbying_archive.py)
+    'MA_lobbying_campaign_contributions.csv': ['entity_name', 'year', 'recipient_name', 'amount'],
+    'MA_lobbying_expenses.csv': ['entity_name', 'year', 'expense_type', 'amount'],
+    'MA_lobbying_client_purposes.csv': ['entity_name', 'client_name', 'year'],
 }
 
 # Minimum absolute row counts as a hard floor (catches total fetch failures).
@@ -91,6 +95,9 @@ OPTIONAL_DATASETS = {
     'MA_lobbying_lobbyists.csv',
     'MA_lobbying_bills.csv',
     'MA_legislature_bills.csv',
+    'MA_lobbying_campaign_contributions.csv',
+    'MA_lobbying_expenses.csv',
+    'MA_lobbying_client_purposes.csv',
 }
 
 # Allow small row decreases (%) due to data source updates, API changes, etc.

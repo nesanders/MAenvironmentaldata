@@ -486,6 +486,59 @@ def main():
             return
         combined = existing
 
+    # ── Reconcile the embedding store to the CURRENT lobbying data ──────────────
+    # The parquet is a persistent cache that is only ever appended to. Without
+    # reconciliation, an embedding for a bill that is no longer present in the
+    # lobbying data rides forward forever — into the scored CSV and the DB — as a
+    # "phantom" row with no real lobbying activity. The main source of these is
+    # the General Court off-by-one fix: bills embedded at a wrong (too-low) GC
+    # before the fix are orphaned once the corrected lobbying data uses the right
+    # GC. Filer amendments that drop a bill reference do the same. Here we keep
+    # only store rows whose key is still in `unique` (the current lobbied bills):
+    # by (bill_id, general_court), or (bill_number, general_court) for the
+    # legacy bills that have no chamber-derived bill_id.
+    _valid_by_id = set(zip(
+        unique.loc[unique['bill_id'].notna(), 'bill_id'].astype(str),
+        unique.loc[unique['bill_id'].notna(), 'general_court'].astype(int),
+    ))
+    _valid_by_num = set(zip(
+        unique.loc[unique['bill_id'].isna(), 'bill_number'].astype(int),
+        unique.loc[unique['bill_id'].isna(), 'general_court'].astype(int),
+    ))
+
+    def _in_lobbying(row) -> bool:
+        try:
+            gc = int(row['general_court'])
+        except (ValueError, TypeError):
+            return False
+        bid = row['bill_id']
+        if pd.notna(bid):
+            return (str(bid), gc) in _valid_by_id
+        try:
+            return (int(row['bill_number']), gc) in _valid_by_num
+        except (ValueError, TypeError):
+            return False
+
+    _before = len(combined)
+    combined = combined[combined.apply(_in_lobbying, axis=1)].reset_index(drop=True)
+    _dropped = _before - len(combined)
+    if _dropped:
+        print(f'Reconciled embedding store: dropped {_dropped} stale bills no '
+              f'longer present in the lobbying data ({len(combined)} remain)')
+
+    # Deduplicate the store: keep exactly one row per bill key (the latest, so a
+    # re-embedded bill wins). Repeated runs / re-parses can otherwise leave several
+    # embedding rows for the same (bill_id, general_court).
+    _dedup_key = combined['bill_id'].astype('string').where(
+        combined['bill_id'].notna(),
+        'num:' + pd.to_numeric(combined['bill_number'], errors='coerce').astype('Int64').astype('string'),
+    ) + '|' + pd.to_numeric(combined['general_court'], errors='coerce').astype('Int64').astype('string')
+    _pre_dedup = len(combined)
+    combined = combined[~_dedup_key.duplicated(keep='last')].reset_index(drop=True)
+    if len(combined) < _pre_dedup:
+        print(f'Deduplicated embedding store: removed {_pre_dedup - len(combined)} '
+              f'duplicate bill rows ({len(combined)} unique remain)')
+
     # --rescore: re-score ALL rows in combined using current example embeddings.
     # This is fast (pure numpy) — no API calls for bill embeddings.
     if args.rescore or not unscored.empty:

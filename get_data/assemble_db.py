@@ -365,16 +365,74 @@ if __name__ == '__main__':
 	_lobbying_lobbyists_path = '../docs/data/MA_lobbying_lobbyists.csv'
 	_lobbying_bills_path = '../docs/data/MA_lobbying_bills.csv'
 	_legislature_bills_path = '../docs/data/MA_legislature_bills.csv'
+	# New fields from the raw-HTML archive (reparse_lobbying_archive.py)
+	_lobbying_campaign_path = '../docs/data/MA_lobbying_campaign_contributions.csv'
+	_lobbying_expenses_path = '../docs/data/MA_lobbying_expenses.csv'
+	_lobbying_purposes_path = '../docs/data/MA_lobbying_client_purposes.csv'
 
 	if os.path.exists(_lobbying_employers_path):
+		# Compensation metric (how to total "lobbying spend"):
+		# Total spend = SUM of `compensation` across ALL rows (both reg_types,
+		# 'Lobbyist Entity' and 'Lobbyist'). Do NOT deduplicate and do NOT drop
+		# either reg_type. Per the MA Secretary of the Commonwealth's filing rule,
+		# each client payment is reported exactly once — by the entity OR by the
+		# individual lobbyist, never both:
+		#
+		#   "Compensation paid by the client should be reported either as an amount
+		#    received by the lobbyist entity, or as an amount received by the
+		#    individual lobbyist. The same payment should not be reported in both
+		#    sections."
+		#   — MA SoC, Lobbyist Registration & Reporting System, Entity Disclosure
+		#     Reporting User Guide, Form 2 (Activities and Bill Numbers), p.8, Dec 2021:
+		#     https://www.sec.state.ma.us/lobbyistweb/readme/OnlineHelp/2010/08_DiscEntityDec2020.pdf
+		#     (overview: https://www.sec.state.ma.us/divisions/lobbyist/lobbyist.htm ;
+		#      statute M.G.L. c.3 ss.39-50: https://www.sec.state.ma.us/lobbyistweb/ReadMe/MALobbyingLaw.pdf )
+		#
+		# So the data is already deduplicated by filers; summing all rows is correct.
+		# We verified empirically (June 2026, full 2005-2025 corpus): of the rare
+		# cases where an entity AND one of its own lobbyists report the same client
+		# in the same year, only 15 rows / ~$0.3M (0.03%) have MATCHING amounts (a
+		# possible same-payment double-report); 61 rows / ~$9.0M have DIFFERENT
+		# amounts, i.e. legitimately distinct payments for the same client (which the
+		# rule explicitly permits). Subtracting them would erase real money, so we do
+		# not. The reg_type column is retained for breakdowns, not for filtering totals.
+		# NOTE: chamber='Executive' / agency-name rows in MA_Lobbying_Bills are
+		# executive/regulatory lobbying, not legislative bills — count distinct bill_id
+		# for "bills lobbied", not raw activity rows.
 		_emp = pd.read_csv(_lobbying_employers_path, index_col=0)
 		_emp['entity_name_norm'] = _emp['entity_name'].map(_normalize_entity)
 		_emp['client_name_norm'] = _emp['client_name'].map(_normalize_entity)
 		data_csv['MA_Lobbying_Employers'] = _emp
 		print(f"MA_Lobbying_Employers: {len(data_csv['MA_Lobbying_Employers'])} rows")
 	if os.path.exists(_lobbying_lobbyists_path):
-		data_csv['MA_Lobbying_Lobbyists'] = pd.read_csv(_lobbying_lobbyists_path, index_col=0)
+		# Lobbyist <-> employing-entity mapping + salary (from summary pages).
+		_lobby = pd.read_csv(_lobbying_lobbyists_path, index_col=0)
+		if 'entity_name' in _lobby.columns:
+			_lobby['entity_name_norm'] = _lobby['entity_name'].map(_normalize_entity)
+		data_csv['MA_Lobbying_Lobbyists'] = _lobby
 		print(f"MA_Lobbying_Lobbyists: {len(data_csv['MA_Lobbying_Lobbyists'])} rows")
+	if os.path.exists(_lobbying_campaign_path):
+		# Lobbyist -> political recipient contributions (date, recipient, office, amount).
+		_cc = pd.read_csv(_lobbying_campaign_path, index_col=0)
+		if 'entity_name' in _cc.columns:
+			_cc['entity_name_norm'] = _cc['entity_name'].map(_normalize_entity)
+		data_csv['MA_Lobbying_CampaignContributions'] = _cc
+		print(f"MA_Lobbying_CampaignContributions: {len(data_csv['MA_Lobbying_CampaignContributions'])} rows")
+	if os.path.exists(_lobbying_expenses_path):
+		# Itemized operating / meals-entertainment-travel / additional expenses.
+		_ex = pd.read_csv(_lobbying_expenses_path, index_col=0)
+		if 'entity_name' in _ex.columns:
+			_ex['entity_name_norm'] = _ex['entity_name'].map(_normalize_entity)
+		data_csv['MA_Lobbying_Expenses'] = _ex
+		print(f"MA_Lobbying_Expenses: {len(data_csv['MA_Lobbying_Expenses'])} rows")
+	if os.path.exists(_lobbying_purposes_path):
+		# Per-client annual amount + free-text purpose-of-employment description.
+		_cp = pd.read_csv(_lobbying_purposes_path, index_col=0, engine='python')
+		for _c in ('entity_name', 'client_name'):
+			if _c in _cp.columns:
+				_cp[f'{_c}_norm'] = _cp[_c].map(_normalize_entity)
+		data_csv['MA_Lobbying_ClientPurposes'] = _cp
+		print(f"MA_Lobbying_ClientPurposes: {len(data_csv['MA_Lobbying_ClientPurposes'])} rows")
 	if os.path.exists(_lobbying_bills_path):
 		_lb = pd.read_csv(_lobbying_bills_path, index_col=0, low_memory=False)
 		_lb['entity_name_norm'] = _lb['entity_name'].map(_normalize_entity)
@@ -483,6 +541,39 @@ if __name__ == '__main__':
 			_scored = _scored.drop(columns=['_leg_title'])
 			if _fixed:
 				print(f"  Replaced {_fixed} concatenated bill titles with Legislature API titles")
+		# Merge the LLM taxonomy (summary, category, tags) and the authoritative
+		# LLM environmental flag from the embeddings parquet. The LLM classifier
+		# (is_env_llm) is far more accurate than the embedding differential-cosine
+		# is_environmental (100% recall / 97% specificity vs. high false negatives in
+		# spot-checks), so it is the authoritative `is_environmental` for the DB/site;
+		# the embedding score is retained as the secondary numeric `env_relevance_score`.
+		_parquet_path = '../docs/data/MA_bill_embeddings.parquet'
+		if os.path.exists(_parquet_path):
+			_tax = pd.read_parquet(_parquet_path,
+			                       columns=['bill_id', 'general_court', 'bill_number',
+			                                'summary', 'categories', 'tags', 'is_env_llm'])
+			# Build a join key: prefer bill_id, else 'num:<bill_number>'
+			def _key(df):
+				bid = df['bill_id'].astype('string')
+				num = 'num:' + df['bill_number'].astype('Int64').astype('string')
+				k = bid.where(bid.notna(), num)
+				return k + '|' + df['general_court'].astype('Int64').astype('string')
+			_tax = _tax.dropna(subset=['general_court'])
+			_tax['_jk'] = _key(_tax)
+			_tax = _tax.drop_duplicates(subset=['_jk'], keep='last')
+			_scored['_jk'] = _key(_scored)
+			_scored = _scored.merge(
+				_tax[['_jk', 'summary', 'categories', 'tags', 'is_env_llm']],
+				on='_jk', how='left').drop(columns=['_jk'])
+			# LLM flag becomes authoritative is_environmental (keep embedding score separately).
+			_scored['is_environmental_embedding'] = _scored['is_environmental']
+			_scored['is_environmental'] = pd.to_numeric(
+				_scored['is_env_llm'].map({True: 1, False: 0, 'True': 1, 'False': 0}),
+				errors='coerce').astype('Int64')
+			_n_llm = int(_scored['is_environmental'].sum())
+			_n_tax = int(_scored['tags'].notna().sum())
+			print(f"  Merged LLM taxonomy: {_n_tax} bills with tags; "
+			      f"{_n_llm} flagged environmental (LLM, authoritative)")
 		data_csv['MA_Lobbying_Bills_Scored'] = _scored
 		print(f"MA_Lobbying_Bills_Scored: {len(data_csv['MA_Lobbying_Bills_Scored'])} rows")
 
@@ -490,6 +581,49 @@ if __name__ == '__main__':
 	if os.path.exists(_cluster_labels_path):
 		data_csv['MA_Bill_Cluster_Labels'] = pd.read_csv(_cluster_labels_path, engine='python')
 		print(f"MA_Bill_Cluster_Labels: {len(data_csv['MA_Bill_Cluster_Labels'])} rows")
+
+	## Auto-generate facts_lobbying.yml — figures referenced by docs/data/MA_lobbying.md.
+	## Always derived from the data here so the published numbers can never drift.
+	if 'MA_Lobbying_Employers' in data_csv:
+		_facts = {}
+		_emp_f = data_csv['MA_Lobbying_Employers'].copy()
+		_emp_f['year'] = pd.to_numeric(_emp_f['year'], errors='coerce')
+		_emp_f['compensation'] = pd.to_numeric(_emp_f['compensation'], errors='coerce').fillna(0)
+		_yrs = _emp_f['year'].dropna().astype(int)
+		_first_y, _last_y = int(_yrs.min()), int(_yrs.max())
+		_latest = _emp_f[_emp_f['year'] == _last_y]
+		_facts['lobbying_first_year'] = _first_y
+		_facts['lobbying_most_recent_year'] = _last_y
+		_facts['lobbying_n_employers'] = int(_latest['entity_name'].nunique())
+		if 'reg_type' in _latest.columns:
+			_facts['lobbying_n_firms'] = int(
+				_latest[_latest['reg_type'] == 'Lobbyist Entity']['entity_name'].nunique())
+		# Spend = sum of compensation across ALL rows (entity OR individual; reported
+		# once per the MA SoC filing rule — see MA_Lobbying_Employers note above).
+		_facts['lobbying_total_spend_latest'] = int(_latest['compensation'].sum())
+		_facts['lobbying_total_spend_first'] = int(
+			_emp_f[_emp_f['year'] == _first_y]['compensation'].sum())
+		_facts['lobbying_total_spend_cumulative'] = int(_emp_f['compensation'].sum())
+		if 'MA_Lobbying_Bills_Scored' in data_csv:
+			_sc = data_csv['MA_Lobbying_Bills_Scored']
+			_facts['lobbying_n_bills_total'] = int(len(_sc))
+			_n_env = int(pd.to_numeric(_sc.get('is_environmental'), errors='coerce').fillna(0).sum())
+			_facts['lobbying_n_env_bills'] = _n_env
+			_facts['lobbying_env_pct'] = round(100 * _n_env / max(len(_sc), 1), 1)
+			if 'cluster_id' in _sc.columns:
+				_facts['lobbying_n_clustered'] = int(
+					(pd.to_numeric(_sc['cluster_id'], errors='coerce') >= 0).sum())
+		if 'MA_Lobbying_CampaignContributions' in data_csv:
+			_cc_f = data_csv['MA_Lobbying_CampaignContributions']
+			_facts['lobbying_n_campaign_contributions'] = int(len(_cc_f))
+			_facts['lobbying_campaign_total'] = int(
+				pd.to_numeric(_cc_f.get('amount'), errors='coerce').fillna(0).sum())
+		if 'MA_Lobbying_Expenses' in data_csv:
+			_facts['lobbying_n_expenses'] = int(len(data_csv['MA_Lobbying_Expenses']))
+		with open('../docs/data/facts_lobbying.yml', 'w') as _fh:
+			for _k in sorted(_facts):
+				_fh.write(f'{_k}: {_facts[_k]}\n')
+		print(f"Wrote facts_lobbying.yml ({len(_facts)} facts)")
 
 	data_csv['AMEND_metadata'] = pd.Series({
 		'Website':'https://nesanders.github.io/MAenvironmentaldata/index.html',
@@ -533,14 +667,27 @@ if __name__ == '__main__':
 				os.system(f'gsutil cp {_f} gs://openamend-data/{_gcs_name}')
 				print(f'Uploaded {_gcs_name} to GCS')
 
-	## Write sample CSVs for large lobbying files (full CSVs are in GCS, not git)
-	_lobbying_samples = {
-		'MA_lobbying_bills':        (data_csv['MA_Lobbying_Bills'],         True),
-		'MA_lobbying_employers':    (data_csv['MA_Lobbying_Employers'],      True),
-		'MA_lobbying_summary_links': (pd.read_csv('../docs/data/MA_lobbying_summary_links.csv') if os.path.exists('../docs/data/MA_lobbying_summary_links.csv') else pd.DataFrame(), False),
-		'MA_lobbying_bills_scored': (data_csv['MA_Lobbying_Bills_Scored'],   True),
-		'MA_legislature_bills':     (data_csv['MA_Legislature_Bills'],       True),
-	}
+	## Write sample CSVs for large lobbying files (full CSVs are in GCS, not git).
+	## All entries are guarded: on a fresh checkout (e.g. CI) the gitignored
+	## lobbying CSVs are absent, so the corresponding tables are not in data_csv —
+	## include a sample only when its table was actually loaded.
+	_lobbying_samples = {}
+	for _key, _tbl in (
+		('MA_lobbying_bills',                  'MA_Lobbying_Bills'),
+		('MA_lobbying_employers',              'MA_Lobbying_Employers'),
+		('MA_lobbying_bills_scored',           'MA_Lobbying_Bills_Scored'),
+		('MA_legislature_bills',               'MA_Legislature_Bills'),
+		('MA_lobbying_lobbyists',              'MA_Lobbying_Lobbyists'),
+		('MA_lobbying_campaign_contributions', 'MA_Lobbying_CampaignContributions'),
+		('MA_lobbying_expenses',               'MA_Lobbying_Expenses'),
+		('MA_lobbying_client_purposes',        'MA_Lobbying_ClientPurposes'),
+	):
+		if _tbl in data_csv:
+			_lobbying_samples[_key] = (data_csv[_tbl], True)
+	# Summary-links sample comes straight from the CSV (no DB table), if present.
+	if os.path.exists('../docs/data/MA_lobbying_summary_links.csv'):
+		_lobbying_samples['MA_lobbying_summary_links'] = (
+			pd.read_csv('../docs/data/MA_lobbying_summary_links.csv'), False)
 	for fname, (df, has_index) in _lobbying_samples.items():
 		if df.empty:
 			continue

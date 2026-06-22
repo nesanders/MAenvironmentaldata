@@ -33,7 +33,10 @@ def fetch_daily_precip_year(year: int) -> pd.DataFrame:
     n_stations (number of stations reporting that day).
     """
     sdate = f'{year}-01-01'
-    edate = f'{year}-12-31'
+    edate = min(
+        datetime.date(year, 12, 31),
+        datetime.date.today(),
+    ).strftime('%Y-%m-%d')
     resp = requests.post(ACIS_URL, json={
         'state': 'MA',
         'sdate': sdate,
@@ -50,8 +53,6 @@ def fetch_daily_precip_year(year: int) -> pd.DataFrame:
     for stn in stations:
         name = stn['meta']['name']
         rows = stn['data']
-        if len(rows) != len(dates):
-            continue
         vals = []
         for v in rows:
             raw = v[0]
@@ -62,7 +63,12 @@ def fetch_daily_precip_year(year: int) -> pd.DataFrame:
                     vals.append(float(raw))
                 except ValueError:
                     vals.append(np.nan)
-        columns[name] = vals
+        # Align to the full date range regardless of how many rows ACIS returned.
+        # A station with a partial response (e.g. 364 of 365 days) contributes its
+        # valid days rather than being dropped entirely.
+        stn_index = pd.date_range(sdate, periods=len(vals), freq='D')
+        stn_series = pd.Series(vals, index=stn_index).reindex(dates)
+        columns[name] = stn_series.values
 
     matrix = pd.DataFrame(columns, index=dates, dtype=float)
 

@@ -129,3 +129,10 @@ docs/assets/debug_screenshot.png
 
 docs/data/MA_legislature_bills.csv.bak_wrong_gc
 docs/data/MA_lobbying_static_site_proposal.md
+get_data/MA_lobbying_raw_html/
+get_data/MA_lobbying_raw_html.tar.gz
+docs/data/MA_lobbying_campaign_contributions.csv
+docs/data/MA_lobbying_lobbyists.csv
+docs/data/MA_lobbying_expenses.csv
+docs/data/MA_lobbying_client_purposes.csv
+get_data/MEMO_lobbying_rescrape_for_site.md

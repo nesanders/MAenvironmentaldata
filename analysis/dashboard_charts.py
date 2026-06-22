@@ -12,7 +12,11 @@ import MADEP_enforcements_viz
 import ECOS_budgets_viz
 import EPA_303d_viz
 import MS4_compliance_viz
-import MA_lobbying_viz
+try:
+    import MA_lobbying_viz
+    _LOBBYING_VIZ_AVAILABLE = True
+except ImportError:
+    _LOBBYING_VIZ_AVAILABLE = False
 from EEA_DP_CSO_map import CSOAnalysisEEADP
 
 PREFIX = 'dash_'
@@ -58,5 +62,6 @@ EPA_303d_viz.generate_charts(engine, prefix=PREFIX)
 # --- MS4 stormwater compliance charts (3 charts) ---
 MS4_compliance_viz.generate_charts(engine, prefix=PREFIX)
 
-# --- Lobbying charts (4 charts; gracefully skipped if data not yet fetched) ---
-MA_lobbying_viz.generate_charts(engine, prefix=PREFIX)
+# --- Lobbying charts (gracefully skipped if the viz module is unavailable) ---
+if _LOBBYING_VIZ_AVAILABLE:
+    MA_lobbying_viz.generate_charts(engine, prefix=PREFIX)

@@ -269,6 +269,12 @@ def run_incremental(parquet_df, scored, scored_path):
     scored_new = scored_new.drop(columns=['_gc'], errors='ignore')
     in_map = scored_new['_key'].isin(emb_map)
     scored_new = scored_new[in_map]
+    # Steady state: when every bill already has a cluster_id (the normal weekly
+    # case with no new bills), there is nothing to assign. Exit cleanly instead
+    # of feeding an empty (0, 768) array to normalize()/predict(), which raises.
+    if scored_new.empty:
+        print('No unassigned bills with embeddings — nothing to cluster.')
+        return
     emb_new = np.vstack([emb_map[k] for k in scored_new['_key']])
     scored_new = scored_new.drop(columns=['_key'])
 
@@ -281,6 +287,14 @@ def run_incremental(parquet_df, scored, scored_path):
 
     emb_v = emb_new[valid]
     scored_vv = scored_new[valid]
+
+    # The ~85 oldest bills (2005–2008) embed as zero vectors and are permanently
+    # unassigned (cluster_id=-1), so `scored_new` is never empty — but once every
+    # real bill is clustered, `emb_v` (non-zero-vector unassigned bills) is empty.
+    # Exit cleanly rather than feeding a (0, 768) array to normalize()/predict().
+    if len(emb_v) == 0:
+        print('No unassigned non-zero-vector bills — nothing to cluster.')
+        return
 
     # Apply same preprocessing as training
     emb_norm = _preprocess(emb_v, mean_vec)
