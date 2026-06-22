@@ -44,7 +44,10 @@ YELLOW = 'rgba(220, 180, 0, 0.85)'
 SECTOR_COLORS = [BLUE, ORANGE, GREEN, RED, PURPLE, TEAL, YELLOW, GREY]
 
 CHART_DIR = '../docs/_includes/charts'
-FACTS_YML = '../docs/data/facts_lobbying.yml'
+# Pipeline (assemble_db.py) owns docs/data/facts_lobbying.yml with the headline
+# figures (total spend, env count, etc.). This viz writes a SEPARATE file with the
+# analysis-post-specific facts so the two never clobber each other.
+FACTS_YML = '../docs/data/facts_lobbying_post.yml'
 
 
 def _load_data(engine):
@@ -351,7 +354,7 @@ def generate_charts(engine, prefix=''):
     # ── Chart 5: Lobbying spend by topic cluster (stacked bar by year) ───────────
     _chart_spend_by_cluster(engine, employers, lobby_bills, prefix)
 
-    _write_facts(employers, spend_trend, most_recent_year)
+    _write_post_facts(engine, lobby_bills, leg_bills)
 
 
 def _chart_spend_by_cluster(engine, employers: pd.DataFrame, lobby_bills: pd.DataFrame, prefix: str):
@@ -1152,24 +1155,104 @@ def _chart_env_score_vs_clients(engine, prefix: str, top_n_nonenv: int = 500):
     print(f'Wrote {prefix}lobbying_env_score_vs_clients.html')
 
 
-def _write_facts(employers: pd.DataFrame, spend_trend: pd.DataFrame, most_recent_year: int):
-    facts = {}
-    if not employers.empty:
-        emp_year = employers[
-            (employers['year'] == most_recent_year)
-            & (employers['client_name'] != 'Total salaries received')
-        ]
-        facts['lobbying_most_recent_year'] = most_recent_year
-        facts['lobbying_n_employers'] = int(emp_year['client_name'].nunique())
-        facts['lobbying_n_firms'] = int(emp_year['entity_name'].nunique())
-    if not spend_trend.empty:
-        latest_spend = spend_trend[spend_trend['year'] == most_recent_year]['compensation']
-        if not latest_spend.empty:
-            facts['lobbying_total_spend_latest'] = int(latest_spend.iloc[0])
+def _ordinal(n: int) -> str:
+    """1 -> '1st', 2 -> '2nd', 186 -> '186th'."""
+    if 10 <= n % 100 <= 20:
+        suf = 'th'
+    else:
+        suf = {1: 'st', 2: 'nd', 3: 'rd'}.get(n % 10, 'th')
+    return f'{n}{suf}'
+
+
+def _write_post_facts(engine, lobby_bills: pd.DataFrame, leg_bills: pd.DataFrame):
+    """Write analysis-post-specific facts to facts_lobbying_post.yml so the blog
+    post never hardcodes numbers. Any figure cited in the post is generated here.
+
+    The pipeline's facts_lobbying.yml already holds the headline figures
+    (total spend, env count, env %, employer counts); this file adds the
+    session-growth and opposition facts the narrative relies on.
+    """
+    facts: dict = {}
+
+    # Number of distinct permitted CSO operators in the EEA portal (cited in the
+    # CSO-operators section of the post). Mirrors the lobbying_cso_operators chart's
+    # source query.
+    try:
+        n_ops = pd.read_sql_query(
+            'SELECT COUNT(DISTINCT permiteeName) AS n FROM MAEEADP_CSO '
+            'WHERE permiteeName IS NOT NULL', engine,
+        )['n'].iloc[0]
+        facts['post_cso_n_operators'] = int(n_ops)
+    except Exception as e:
+        print(f'  CSO operator count query failed: {e}')
+
+    # GC -> calendar years (GC183 = 2003-2004; each spans two years)
+    def _gc_years(gc: int) -> str:
+        start = 2003 + (gc - 183) * 2
+        return f'{start}–{start + 1}'
+
+    if (not leg_bills.empty and 'is_environmental' in leg_bills.columns
+            and not lobby_bills.empty):
+        env = leg_bills[leg_bills['is_environmental'] == 1][['bill_number', 'general_court']]
+        m = lobby_bills.merge(env, on=['bill_number', 'general_court'])
+        if not m.empty:
+            per_gc = (
+                m.groupby('general_court')
+                .agg(env_bills=('bill_number', 'nunique'),
+                     employers=('entity_name', 'nunique'))
+                .reset_index()
+            )
+            # Floor at GC186 (2009-2010): the 184th-185th (2005-2008) sessions
+            # only have entity-level salary totals (no per-client breakdown), so
+            # their bill/employer counts are sparse and not comparable for a
+            # growth narrative. GC186 is the first session with per-client data.
+            per_gc = per_gc[per_gc['general_court'].between(186, 210)]
+            # First session with data, and the most recent COMPLETE session
+            # (drop the current in-progress one if a later partial exists).
+            first = per_gc.sort_values('general_court').iloc[0]
+            complete = per_gc[per_gc['general_court'] < per_gc['general_court'].max()]
+            recent = (complete if not complete.empty else per_gc).sort_values('general_court').iloc[-1]
+            fg, rg = int(first['general_court']), int(recent['general_court'])
+            facts['post_first_session_gc'] = _ordinal(fg)
+            facts['post_first_session_years'] = _gc_years(fg)
+            facts['post_first_session_env_bills'] = int(first['env_bills'])
+            facts['post_first_session_employers'] = int(first['employers'])
+            facts['post_recent_session_gc'] = _ordinal(rg)
+            facts['post_recent_session_years'] = _gc_years(rg)
+            facts['post_recent_session_env_bills'] = int(recent['env_bills'])
+            facts['post_recent_session_employers'] = int(recent['employers'])
+            if first['env_bills']:
+                facts['post_env_bills_growth_x'] = round(recent['env_bills'] / first['env_bills'], 1)
+            if first['employers']:
+                facts['post_employers_growth_x'] = round(recent['employers'] / first['employers'], 1)
+
+            # Top opposition pair: clients on opposite Support/Oppose sides of the
+            # same environmental bill, by number of distinct bills (matches the
+            # lobbying_opposition_pairs chart logic).
+            if 'position' in m.columns:
+                sup = (m[m['position'] == 'Support'][['bill_number', 'general_court', 'client_name']]
+                       .drop_duplicates().rename(columns={'client_name': 'a'}))
+                opp = (m[m['position'] == 'Oppose'][['bill_number', 'general_court', 'client_name']]
+                       .drop_duplicates().rename(columns={'client_name': 'b'}))
+                pairs = sup.merge(opp, on=['bill_number', 'general_court'])
+                pairs = pairs[pairs['a'] != pairs['b']].copy()
+                if not pairs.empty:
+                    lo = pairs[['a', 'b']].min(axis=1)
+                    hi = pairs[['a', 'b']].max(axis=1)
+                    pairs['lo'], pairs['hi'] = lo, hi
+                    top = (pairs.groupby(['lo', 'hi'])['bill_number'].nunique()
+                           .reset_index(name='n').nlargest(1, 'n').iloc[0])
+                    facts['post_top_opposition_a'] = top['lo']
+                    facts['post_top_opposition_b'] = top['hi']
+                    facts['post_top_opposition_bills'] = int(top['n'])
 
     with open(FACTS_YML, 'w') as f:
         for k, v in facts.items():
-            f.write(f'{k}: {v}\n')
+            if isinstance(v, str):
+                f.write(f'{k}: "{v}"\n')
+            else:
+                f.write(f'{k}: {v}\n')
+    print(f'Wrote {FACTS_YML} ({len(facts)} post facts)')
 
 
 def _load_parquet_llm() -> pd.DataFrame:

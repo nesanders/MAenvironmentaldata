@@ -1,178 +1,164 @@
 ---
 layout: post
-title: "(DRAFT) Who lobbies the Massachusetts Legislature on environmental policy?"
+title: "Who lobbies the Massachusetts Legislature on environmental policy?"
 ancillary: 0
 ---
 
-*This post is in DRAFT status. Numbers and narrative claims will be filled in once the full historical lobbying dataset (2005–present) finishes scraping. Charts currently render against the partial dataset and will update automatically.*
+*The [lobbying disclosure data used in this analysis]({{ site.url }}{{ site.baseurl }}/data/MA_lobbying.html) comes from the [Massachusetts Secretary of the Commonwealth's Lobbyist Public Search portal](https://www.sec.state.ma.us/LobbyistPublicSearch/), and is joined here against the [DEP staffing]({{ site.url }}{{ site.baseurl }}/data/MADEP_staff.html), [agency budget]({{ site.url }}{{ site.baseurl }}/data/ECOS_budget_history.html), and [sewage discharge]({{ site.url }}{{ site.baseurl }}/data/EEADP_all.html) datasets already archived in the [{{ site.data.site_config.site_abbrev }} database]({{ site.url }}{{ site.baseurl }}/data/index.html).*
 
-Every employer that hires a lobbyist in Massachusetts is required to file public disclosures with the Secretary of State: who they retained, how much they paid, and which bills they tried to influence. The Secretary of State publishes these filings on the [Lobbyist Public Search portal](https://www.sec.state.ma.us/LobbyistPublicSearch/) going back to 2005. Across {{ site.data.facts_lobbying.lobbying_most_recent_year }}, **{{ site.data.facts_lobbying.lobbying_n_employers }} employers** disclosed lobbying activity totalling roughly **${{ site.data.facts_lobbying.lobbying_total_spend_latest | divided_by: 1000000 }}M**.
+*[The code needed to reproduce this analysis using {{ site.data.site_config.site_abbrev }} data can be viewed and downloaded here](https://github.com/nesanders/MAenvironmentaldata/blob/master/analysis/MA_lobbying_viz.py).*
 
-But what fraction of that money is spent on environmental policy? Which bills are environmentally relevant in the first place? And does lobbying intensity correlate with regulatory capacity — DEP staffing, enforcement actions, agency budget?
+Every employer that hires a lobbyist in Massachusetts is required to file public disclosures with the Secretary of the Commonwealth: who they retained, how much they paid, and which bills they tried to influence. The Secretary publishes these filings on the [Lobbyist Public Search portal](https://www.sec.state.ma.us/LobbyistPublicSearch/) going back to 2005. In {{ site.data.facts_lobbying.lobbying_most_recent_year }} alone, registered lobbyists and lobbying entities disclosed roughly **${{ site.data.facts_lobbying.lobbying_total_spend_latest | divided_by: 1000000 }} million** in client compensation; across the full {{ site.data.facts_lobbying.lobbying_first_year }}–{{ site.data.facts_lobbying.lobbying_most_recent_year }} period the total approaches **\${{ site.data.facts_lobbying.lobbying_total_spend_cumulative | divided_by: 1000000 }} million**.
 
-This post is the first systematic analysis of the MA environmental lobbying landscape. The underlying dataset is documented on the [MA lobbying data page]({{ site.baseurl }}/data/MA_lobbying.html); the [analysis code](https://github.com/nesanders/MAenvironmentaldata/blob/master/analysis/MA_lobbying_viz.py) and [scraping pipeline](https://github.com/nesanders/MAenvironmentaldata/blob/master/get_data/README_lobbying.md) are on GitHub. An interactive **[MA Lobbying Explorer](https://nsanders.me/ma_lobbying_explorer/)** lets you browse individual bills, employers, and lobbying firms with direct links to the Secretary of State filings.
+In this post we ask a narrower question: how much of that activity concerns environmental policy? We first have to decide which bills are environmentally relevant in the first place, and then we can look at who lobbies them, how the landscape has changed over nearly two decades, and whether lobbying intensity moves together with the regulatory capacity — staffing and budget — of the agency that environmental law actually empowers, the [Department of Environmental Protection (DEP)]({{ site.url }}{{ site.baseurl }}/data/MADEP_staff.html).
+
+The underlying dataset, including the full scraping and scoring methodology, is documented on the [MA lobbying data page]({{ site.url }}{{ site.baseurl }}/data/MA_lobbying.html).
 
 ---
 
 ## What counts as an "environmental" bill?
 
-Filer-reported subject tags (e.g. "Energy & Environment") are unreliable: a utility lobbying a wastewater bill may tag it "Utilities & Energy"; a developer opposing wetlands reform may tag it "Land Use." Rather than trust the tags, we classify bills in two complementary ways:
+The subject tags that filers attach to their disclosures are unreliable for this purpose: a utility lobbying a wastewater bill may file it under "Utilities & Energy," while a developer opposing wetlands reform may file the same bill under "Land Use." Rather than trust those tags, we classify each lobbied bill directly from its text.
 
-1. **Embedding similarity score** — every bill's full text is embedded using Google's `gemini-embedding-2` model and scored by differential cosine similarity against reference sets of known environmental and non-environmental bills. A bill is flagged `is_environmental = True` when its similarity to env examples exceeds its similarity to non-env examples by at least 0.05.
+We do this with a large language model. A `gemini-2.5-flash` model reads each bill's title and full text (retrieved from the [MA Legislature OpenAPI](https://malegislature.gov/api/swagger)), writes a plain-English summary, assigns it to a fixed taxonomy of policy categories and tags, and judges whether the bill is environmentally relevant. We treat this LLM judgment as the classification of record: in spot-checks it identified clearly environmental bills — the bottle bill, net metering, renewable portfolio standards — that a purely embedding-based similarity score missed. Of the **{{ site.data.facts_lobbying.lobbying_n_bills_total }}** distinct bills lobbied across the period, **{{ site.data.facts_lobbying.lobbying_n_env_bills }}** (about {{ site.data.facts_lobbying.lobbying_env_pct }}%) are flagged environmental.
 
-2. **LLM classification** — a `gemini-2.5-flash` model summarizes each bill, assigns it to policy categories, and flags `is_env_llm = True` for bills it classifies as environmental. This approach captures more bills (3,521 vs ~700 at the embedding threshold) and provides structured tags (e.g. "Pollution control and abatement", "Renewable energy sources") that enable the category analysis below.
+We also retain a secondary, embedding-based score for each bill — its differential cosine similarity to reference sets of known environmental and non-environmental bills — so that an analyst who prefers a continuous measure, or a different threshold, can use it. The full methodology, including the clustering pipeline, is documented on the [data page]({{ site.url }}{{ site.baseurl }}/data/MA_lobbying.html#environmental-relevance--taxonomy).
 
-Methodology details and the cluster labelling pipeline are documented on the [data page]({{ site.baseurl }}/data/MA_lobbying.html#environmental-relevance-scoring).
+### The policy landscape
 
-### The policy landscape: env bills in context
-
-The chart below projects every lobbied bill into 2-D using UMAP on bill embeddings. Environmental bills (LLM-identified) are shown as large outlined dots coloured by topic cluster; non-environmental bills are tiny grey background points that provide geographic context. Hover for bill titles.
+The chart below projects every lobbied bill into two dimensions using [t-SNE](https://en.wikipedia.org/wiki/T-distributed_stochastic_neighbor_embedding) on the bill embeddings. The environmental bills are drawn as large outlined dots coloured by topic cluster; the remaining bills are tiny grey background points that provide context. Hover over any point for the bill title.
 
 {% include charts/lobbying_bill_tsne.html %}
 
-*Caveat:* topic clusters reflect the dominant topic across all bills in the cluster. No cluster is purely environmental — environmentally-relevant bills are scattered across multiple topic clusters, with heavy concentrations in "Solid Waste Reduction and Recycling," "Massachusetts Clean Energy Transition," and "Local Clean Energy Transition."
+We should be cautious in reading too much into the cluster geometry. Topic clusters reflect the dominant subject across all bills in the cluster, and no cluster is purely environmental — environmentally-relevant bills are scattered across several clusters, with the heaviest concentrations in the clean-energy and waste/recycling topic groups. MA legislative text is also unusually dense (bills share a great deal of boilerplate amendment language), so the two-dimensional projection compresses real structure; it is best read as a rough map rather than a precise one.
 
 ---
 
 ## Environmental lobbying through the legislative sessions
 
-The 9 legislative sessions in the dataset (the 186th through 194th General Courts, covering 2009–2026) show a dramatic upswing in both the number of environmental bills attracting lobbyist attention and the number of distinct employers engaging.
+The number of environmental bills attracting lobbyist attention, and the number of distinct employers engaging on them, have both risen substantially over the period for which per-client data is available.
 
 {% include charts/lobbying_gc_trend.html %}
 
-The 186th General Court (2009–2010) saw just 134 unique environmental bills lobbied by 77 distinct employers. By the 192nd (2021–2022), those numbers had grown to 493 bills and 624 employers — roughly 4× more bills and 8× more employers. This expansion tracks the passage of major clean energy legislation (the 2021 Climate Act, the 2022 Climate Act II) and the broader mainstreaming of climate policy on Beacon Hill.
+In the {{ site.data.facts_lobbying_post.post_first_session_gc }} General Court ({{ site.data.facts_lobbying_post.post_first_session_years }}), **{{ site.data.facts_lobbying_post.post_first_session_env_bills }}** environmental bills were lobbied by **{{ site.data.facts_lobbying_post.post_first_session_employers }}** distinct employers. By the {{ site.data.facts_lobbying_post.post_recent_session_gc }} ({{ site.data.facts_lobbying_post.post_recent_session_years }}) — the most recent completed session — those figures had grown to **{{ site.data.facts_lobbying_post.post_recent_session_env_bills }}** bills and **{{ site.data.facts_lobbying_post.post_recent_session_employers }}** employers, roughly {{ site.data.facts_lobbying_post.post_env_bills_growth_x }}× and {{ site.data.facts_lobbying_post.post_employers_growth_x }}× their earlier levels. The trend tracks the arrival of major clean-energy and climate legislation on Beacon Hill over the 2010s and early 2020s, and the broader mainstreaming of climate policy as a subject of organized lobbying.
 
-*Note: The employer count measures unique lobbying clients per session, not individuals. One trade association that lobbies 50 bills counts as one employer.*
+*Note: the employer count measures unique lobbying clients per session, not individual lobbyists. A trade association that lobbies fifty bills counts once. Compensation is reported per registrant per six-month period rather than per bill, so all spend figures below that are attributed to individual bills rest on a proportional allocation, described in the caveats.*
 
-### What types of environmental legislation attract lobbying?
+### What kinds of environmental legislation attract lobbying?
 
-The stacked bar below breaks the same sessions down by LLM-assigned policy category. Each bill may span multiple categories; a bill tagged both "Environmental Protection" and "Energy" is counted once per category.
+The stacked bar below breaks the same sessions down by LLM-assigned policy category. A bill may span more than one category, and is counted once in each it is assigned.
 
 {% include charts/lobbying_env_categories_by_gc.html %}
 
-"Environmental Protection" dominates throughout, but the share of bills tagged "Energy" has grown substantially since GC190 (2017–2018), reflecting the increasing volume of clean energy legislation. "Public and Natural Resources" (land, water, fishing rights) contributes a steady third category.
+"Environmental Protection" is the largest category throughout. The share tagged "Energy" has grown noticeably over the more recent sessions, consistent with the increasing volume of clean-energy legislation, and a steady third share concerns "Public and Natural Resources" — land, water, and fishing-rights bills.
 
 ---
 
-## Who lobbies environmental bills — and how focused are they?
+## Who lobbies environmental bills, and how focused are they?
 
-### The spectrum of environmental engagement
-
-Not all lobbyists who touch environmental bills are primarily environmental advocates. Some file thousands of bills a year across every policy domain; a single environmental bill in their portfolio contributes only 0.04% of their activity. Others are single-issue advocates for whom every bill they file is environmental.
+Not every employer that touches an environmental bill is primarily an environmental actor. Some file hundreds of bills a year across every policy domain, of which a single environmental bill is a small fraction; others are single-issue advocates for whom nearly every bill is environmental.
 
 {% include charts/lobbying_employer_env_scatter.html %}
 
-The scatter above plots each employer (with ≥10 total bills) by their total lobbying spend (x-axis) and the fraction of their bills that are environmental (y-axis). Bubble size scales with the number of environmental bills lobbied. A few observations:
-
-- **High-spend, high-focus clients** (upper right) include renewable energy developers ([Orsted](https://nsanders.me/ma_lobbying_explorer/employers.html?name=orsted-wind-power-north-america-inc), [NextEra](https://nsanders.me/ma_lobbying_explorer/employers.html?name=nextera-energy-resources-llc), [Bloom Energy](https://nsanders.me/ma_lobbying_explorer/employers.html?name=bloom-energy)), transmission companies ([National Grid](https://nsanders.me/ma_lobbying_explorer/employers.html?name=national-grid), [Eversource](https://nsanders.me/ma_lobbying_explorer/employers.html?name=eversource)), and environmental advocates ([Conservation Law Foundation](https://nsanders.me/ma_lobbying_explorer/employers.html?name=conservation-law-foundation-inc), [Environmental League of Massachusetts](https://nsanders.me/ma_lobbying_explorer/employers.html?name=environmental-league-of-massachusetts)). These are the dominant players in environmental policy.
-- **High-spend, low-focus clients** (lower right) include trade associations ([Associated Industries of Massachusetts](https://nsanders.me/ma_lobbying_explorer/employers.html?name=associated-industries-of-massachusetts-aim), [Massachusetts Chamber of Commerce](https://nsanders.me/ma_lobbying_explorer/employers.html?name=massachusetts-chamber-of-commerce)) that lobby comprehensively but spend a small fraction of their effort on environmental issues.
-- **Low-spend, high-focus clients** (upper left) are often newer clean energy entrants and niche environmental advocacy groups — small shops with a specific environmental mandate.
+The scatter above plots each employer with at least ten total lobbied bills by their total lobbying spend (horizontal axis) and the fraction of their bills that are environmental (vertical axis); the size of each point scales with the number of environmental bills lobbied. Three groups stand out. In the upper right are high-spending, highly-focused clients — renewable-energy developers, the large electric and gas distribution utilities, and the major environmental advocacy organizations — the dominant repeat players in environmental policy. In the lower right are high-spending but low-focus clients, chiefly the broad business trade associations that lobby comprehensively and devote only a small share of their effort to environmental bills. In the upper left are lower-spending, highly-focused clients: newer clean-energy entrants and niche advocacy groups with a specific environmental mandate.
 
 ### Top environmental lobbying spenders
 
-Looking at cumulative allocated spend across all years: an employer's environmental lobbying budget is estimated as `total compensation × (env bills / all bills)`.
+The chart below ranks employers by cumulative environmental lobbying spend, where an employer's environmental budget is estimated as their total compensation scaled by the fraction of their bills that are environmental.
 
 {% include charts/lobbying_top_env_employers.html %}
 
-*[Once full historical data lands: are these primarily utilities, industry trade groups, environmental NGOs, or municipalities? What share of the top 20 are regulated entities vs. public-interest advocates?]*
+The leaders are a mix of regulated entities — distribution utilities and energy developers with a direct financial stake in energy legislation — and public-interest advocates. That both appear near the top is itself the central feature of environmental lobbying: it is a contested arena, not a one-sided one.
 
 ---
 
-## What gets lobbied — and how is it categorized?
+## What gets lobbied, and how is it categorized?
 
-### Top tags on environmental bills
-
-The LLM assigns structured tags to each bill based on its content. Among the 3,521 environmental bills in the dataset, the most common tags are:
+The LLM assigns structured tags to each bill from a fixed taxonomy. Across the environmental bills, the most common tags concern pollution control and environmental regulatory procedure — reflecting the large volume of bills that touch DEP's regulatory authority — followed by renewable energy and energy efficiency, the clean-energy cluster.
 
 {% include charts/lobbying_top_env_tags.html %}
-
-"Pollution control and abatement" (1,819 bills) and "Environmental regulatory procedures" (1,264 bills) together represent about half the corpus, reflecting the large volume of bills touching DEP's regulatory authority. "Renewable energy sources" (1,053) and "Energy efficiency and conservation" (979) together dominate a second major category — clean energy legislation.
 
 ---
 
 ## Who opposes whom?
 
-Not all lobbying on environmental bills runs in the same direction. The position field in the SoS disclosures records whether each client disclosed "Support," "Oppose," or "Neutral." The chart below shows the 15 employer pairs most frequently found on opposite sides of the same environmental bill.
+Lobbying on environmental bills does not all run in the same direction. The position field in the disclosures records whether each client registered "Support," "Oppose," or "Neutral" on a given bill. By taking each environmental bill on which one client registered support and another registered opposition, we can count how often any two clients land on opposite sides. The chart below shows the fifteen employer pairs most frequently in direct opposition.
 
 {% include charts/lobbying_opposition_pairs.html %}
 
-The top opposition pairing — **[Associated Industries of Massachusetts (AIM)](https://nsanders.me/ma_lobbying_explorer/employers.html?name=associated-industries-of-massachusetts-aim) vs. [Environmental League of Massachusetts](https://nsanders.me/ma_lobbying_explorer/employers.html?name=environmental-league-of-massachusetts)** — appeared on opposite sides of 28 distinct environmental bills. AIM, as the major statewide business lobbying association, consistently opposes clean energy and environmental regulations it views as burdensome to industry. ELM is the state's largest environmental advocacy coalition. Their opposition is the defining fault line in MA environmental politics.
+The most frequent opposing pair is **{{ site.data.facts_lobbying_post.post_top_opposition_a }}** and **{{ site.data.facts_lobbying_post.post_top_opposition_b }}**, on opposite sides of **{{ site.data.facts_lobbying_post.post_top_opposition_bills }}** distinct environmental bills — an industry trade group and a public-interest advocacy organization recurring across the toxics, packaging, and consumer-protection bills where chemical and product regulation is at stake. More generally, the recurring pattern in these pairings is the large distribution utilities and statewide business associations on one side and clean-energy and environmental advocacy coalitions on the other.
 
-**[National Grid](https://nsanders.me/ma_lobbying_explorer/employers.html?name=national-grid)** appears repeatedly on the right side of these pairings — opposing clean energy advocates ([Northeast Clean Energy Council](https://nsanders.me/ma_lobbying_explorer/employers.html?name=northeast-clean-energy-council), [Vote Solar](https://nsanders.me/ma_lobbying_explorer/employers.html?name=vote-solar), [BCC Solar](https://nsanders.me/ma_lobbying_explorer/employers.html?name=bcc-solar)) and environmental groups. As a regulated distribution utility, National Grid has opposed some clean energy procurement requirements that would shift costs to ratepayers; it has also been a supporter of some climate legislation.
+It is worth stressing what this chart does and does not show. "Opposing an environmental bill" is not the same as opposing environmental protection: a utility may oppose a clean-energy bill it considers technically flawed or cost-shifting, and an environmental group may oppose a bill it considers too weak. The pairs reflect patterns of organized engagement, not a pro- or anti-environment score.
 
-*Note: "opposing an environmental bill" does not always mean opposing environmental protection. A utility might oppose a clean energy bill it considers technically flawed; an environmental group might oppose a bill it considers inadequate. The chart reflects industry engagement patterns, not a simple pro/anti-environment score.*
-
-### Unique clients by position on environmental bills
+### Unique clients by position
 
 {% include charts/lobbying_env_positions.html %}
 
 ---
 
-## Lobbying spend vs. DEP capacity over time
+## Lobbying spend and DEP capacity over time
 
-The strongest cross-dataset comparison this dataset enables is between **industry lobbying spend on environmental bills** and the **regulatory capacity of the Department of Environmental Protection (DEP)** — both its budget and its staffing levels — over time.
+The comparison this combined dataset most naturally enables is between lobbying activity on environmental bills and the regulatory capacity of DEP — both its budget and its staffing — over the same years. We make no causal claim here; the question is simply whether the two move together.
 
 ### Lobbying spend vs. DEP administrative budget
 
 {% include charts/lobbying_spend_vs_budget.html %}
 
-The DEP administrative budget is inflation-adjusted (2024 dollars) and sourced from the MA Comptroller's CTHRU system back to FY2005, with earlier years from MassBudget's historical archive. See the [DEP budget data page]({{ site.baseurl }}/data/EEA_budget.html) for methodology.
+The DEP administrative budget is inflation-adjusted to recent dollars and is drawn from the MA Comptroller's [CTHRU]({{ site.url }}{{ site.baseurl }}/data/ECOS_budget_history.html) system back to FY2005, with earlier years from MassBudget's historical archive.
 
 ### Lobbying spend vs. DEP staffing
 
 {% include charts/lobbying_spend_vs_staff.html %}
 
-DEP headcount is the annual count of unique employees with non-zero payroll in the MA Comptroller's payroll dataset (CTHRU-based). The y-axis is a raw FTE count; the lobbying spend axis is in millions of dollars.
-
-*[Once full historical data lands: do these series correlate? Does lobbying ramp up in years when DEP staffing is cut? Or is there a lag — does lobbying intensity precede or follow regulatory rollbacks?]*
+[DEP headcount]({{ site.url }}{{ site.baseurl }}/data/MADEP_staff.html) is the annual count of unique employees with non-zero payroll in the MA Comptroller's payroll dataset. The vertical axis is a raw count of employees; the lobbying-spend axis is in millions of dollars. The two series do not track each other in any simple way — lobbying activity has risen fairly steadily, while DEP staffing has been comparatively flat — which is itself consistent with our earlier finding that [DEP enforcement activity has not kept pace]({% post_url 2017-04-02-dep-enforcements %}) with the regulatory demands placed on the agency.
 
 ---
 
-## Environmental bill lobbying spend by topic cluster
+## Environmental lobbying spend by topic
 
-The next chart shows total annual lobbying spend allocated to environmental bills, stacked by topic cluster. Spend is allocated proportionally — if a client lobbied 10 bills in two different clusters, each cluster receives half the client's annual compensation.
+The chart below shows total annual lobbying spend allocated to environmental bills, stacked by topic cluster. As above, spend is allocated proportionally: a client that lobbied bills in two clusters has its annual compensation split between them.
 
 {% include charts/lobbying_env_cluster_share.html %}
+
+The clean-energy and waste/recycling clusters account for a growing share of allocated environmental spend over time, mirroring the shift in the categories chart above.
 
 ---
 
 ## Does lobbying intensity predict bill passage?
 
-For each environmental bill, we count the number of distinct employers who lobbied it. Bills with more lobbyers tend to be higher-stakes — but is heavily-lobbied legislation more or less likely to pass?
+For each environmental bill we can count the number of distinct employers who lobbied it. Bills that attract many lobbyers tend to be higher-stakes — but it is not obvious whether heavily-lobbied legislation is more or less likely to become law.
 
 {% include charts/lobbying_bill_pass_by_spend_tier.html %}
 
 {% include charts/lobbying_pass_by_position.html %}
 
-*[Once full historical data lands: interpret the tier and position comparisons. A higher pass rate among heavily-lobbied bills could indicate either successful industry influence or simply that important/well-supported bills attract more attention from all sides.]*
+The relationship is weak and should be read cautiously. A higher pass rate among heavily-lobbied bills, where it appears, is as consistent with the mundane explanation — important, broadly-supported bills draw attention from every side — as with any story about the effectiveness of industry influence. Passage in the Massachusetts Legislature is determined by many factors the disclosure data does not capture.
 
 ---
 
 ## CSO operators and lobbying
 
-The Combined Sewer Overflow (CSO) dataset identifies {{ site.data.facts_EEA_CSO.n_operators }} permitted operators discharging untreated sewage into MA waterways. Some are municipalities (cities and towns); some are regional authorities (MWRA, Springfield Water and Sewer Commission). When CSO-related bills come before the Legislature, do these operators lobby — and how aggressively?
+One of the environmental datasets already on this site is the record of [Combined Sewer Overflow (CSO) discharges]({{ site.url }}{{ site.baseurl }}/data/EEADP_all.html) — untreated and partially-treated sewage released into Massachusetts waterways, the subject of [earlier]({% post_url 2018-04-25-necir-cso-ej %}) [AMEND analyses]({% post_url 2023-10-20-eea-dp-cso-ej %}). The portal identifies {{ site.data.facts_lobbying_post.post_cso_n_operators }} permitted operators. When CSO-related bills come before the Legislature, do these operators lobby, and how aggressively?
 
-In practice, **most municipal CSO operators do not lobby directly** — they lobby through the [Massachusetts Municipal Association (MMA)](https://www.mma.org/) ([explorer](https://nsanders.me/ma_lobbying_explorer/employers.html?name=massachusetts-municipal-association)), which represents nearly all 351 MA cities and towns on Beacon Hill. The chart below shows direct lobbying spend by known CSO permittees alongside MMA as a proxy for the municipal sector. MMA totals reflect *all* of its lobbying activity (not only CSO-related bills), so it is best read as a ceiling on potential municipal-sector engagement on CSO policy rather than a measure of CSO-specific lobbying intensity.
+In practice, most municipal CSO operators do not lobby in their own name. They lobby through the [Massachusetts Municipal Association (MMA)](https://www.mma.org/), which represents nearly all 351 cities and towns on Beacon Hill. The chart below shows direct lobbying spend by known CSO permittees alongside the MMA as a proxy for the municipal sector. The MMA totals reflect *all* of its lobbying activity, not only CSO-related bills, so they are best read as a ceiling on potential municipal engagement on CSO policy rather than a measure of CSO-specific intensity.
 
 {% include charts/lobbying_cso_operators.html %}
 
-*[Once full historical data lands: which operators show consistent lobbying activity year over year? Do spend trends correlate with CSO enforcement events at the operator's facilities?]*
+The operators that do appear directly tend to be the larger regional authorities that retain their own lobbying capacity, rather than individual cities and towns.
 
 ---
 
 ## Caveats and limitations
 
-- **Spend allocation is approximate.** The SoS portal reports a single per-employer-per-period compensation figure, not per-bill spend. We allocate proportionally across the bills the employer disclosed lobbying. An employer who spends most of their effort on one priority bill but mentions ten others will have spend over-distributed to the secondary bills.
-- **Environmental scoring (LLM) is a classification, not ground truth.** `is_env_llm = True` reflects a Gemini 2.5 Flash assessment of the bill summary — it is not a domain-expert label. The model may over-classify bills that use environmental language incidentally (e.g. a transportation bill that mentions air quality) and under-classify bills that affect the environment indirectly (e.g. a zoning reform). The dataset exposes both `env_relevance_score` (embedding similarity) and `is_env_llm` (LLM) so analysts can choose their own threshold or approach.
-- **Legacy filings (pre-~2013) are coarser.** The pre-2013 portal format reports total compensation across all clients in one figure (no per-client breakdown) and sometimes omits bill titles. Bills with empty titles are present in the dataset but have zero embeddings (and thus `is_environmental = False`).
-- **CSO operator matching is fuzzy.** Direct substring matching captures operators that lobby in their own name (e.g. MWRA, large independent water districts). MMA is included as an explicit proxy for the municipal sector, but its totals reflect *all* of its lobbying — not only CSO-related work. Operators that retain commercial lobbying firms cannot be attributed back to their underlying client from the SoS disclosure data alone.
-- **The Legislature API does not serve pre-2009 bills.** For lobbying activity 2005–2008, bill titles come only from the SoS portal (often blank in the legacy format), so environmental scoring quality is reduced for those years.
-- **General Court mapping has a known off-by-one bug.** The bill-fetching pipeline used `FIRST_GC_START_YEAR = 2005` (the correct value is 2003), which shifts every `general_court` assignment one session too low. The charts that use `general_court` from the parquet (which was fetched directly from the Legislature API) are unaffected. Charts that join lobbying disclosure years to legislature sessions via the year→GC formula may show session labels one off for pre-GC188 data.
+- **Spend allocation is approximate.** The disclosures report a single compensation figure per registrant per six-month period, not per-bill spend. Where we attribute spend to individual bills we allocate it proportionally across the bills the registrant disclosed lobbying. A client who spent most of their effort on one priority bill but listed ten others will have spend over-distributed to the secondary bills. The aggregate spend totals are not affected by this — only the per-bill and per-cluster allocations are.
+- **Environmental classification is a model judgment, not ground truth.** The `is_environmental` flag reflects a Gemini 2.5 Flash assessment of each bill, not a domain-expert label. The model can over-classify bills that use environmental language incidentally, and under-classify bills that affect the environment indirectly. We expose both the LLM flag and the embedding similarity score so that analysts can apply their own threshold.
+- **The earliest years are coarser.** The 2005–2008 disclosure format reports a single salary total per registrant with no per-client breakdown, and frequently omits bill titles; the per-client analyses in this post therefore begin with the 2009–2010 session. The MA Legislature API likewise does not serve bills before 2009, so environmental classification for the earliest years relies on disclosure titles alone, which are often blank in the legacy format. Some lobbied bills appear with no resolvable title from either source; these remain in the dataset as real lobbying activity but cannot be summarized or classified.
+- **CSO-operator matching is fuzzy.** Substring matching captures operators that lobby under their own name; the MMA is included as an explicit proxy for the municipal sector, but its totals cover all of its work. Operators that retain commercial lobbying firms cannot be traced back to their underlying client from the disclosure data alone.
 
 ---
 
 ## Reproducibility
 
-All charts on this page are generated by [`analysis/MA_lobbying_viz.py`](https://github.com/nesanders/MAenvironmentaldata/blob/master/analysis/MA_lobbying_viz.py), which reads from the assembled SQLite database (`AMEND.db`) and the bill embeddings parquet. The embedding and LLM scoring pipeline is in [`get_data/score_lobbying_bills.py`](https://github.com/nesanders/MAenvironmentaldata/blob/master/get_data/score_lobbying_bills.py) and [`get_data/summarize_lobbying_bills.py`](https://github.com/nesanders/MAenvironmentaldata/blob/master/get_data/summarize_lobbying_bills.py); the clustering pipeline is in [`get_data/cluster_lobbying_bills.py`](https://github.com/nesanders/MAenvironmentaldata/blob/master/get_data/cluster_lobbying_bills.py). See [`get_data/README_lobbying.md`](https://github.com/nesanders/MAenvironmentaldata/blob/master/get_data/README_lobbying.md) for the full pipeline.
+All charts on this page are generated by [`analysis/MA_lobbying_viz.py`](https://github.com/nesanders/MAenvironmentaldata/blob/master/analysis/MA_lobbying_viz.py), which reads the assembled SQLite database (`AMEND.db`) and the bill embeddings parquet. The scraping pipeline, the embedding and LLM scoring in [`get_data/score_lobbying_bills.py`](https://github.com/nesanders/MAenvironmentaldata/blob/master/get_data/score_lobbying_bills.py) and [`get_data/summarize_lobbying_bills.py`](https://github.com/nesanders/MAenvironmentaldata/blob/master/get_data/summarize_lobbying_bills.py), and the clustering in [`get_data/cluster_lobbying_bills.py`](https://github.com/nesanders/MAenvironmentaldata/blob/master/get_data/cluster_lobbying_bills.py) are all documented in [`get_data/README_lobbying.md`](https://github.com/nesanders/MAenvironmentaldata/blob/master/get_data/README_lobbying.md).
 
-The complete bill embeddings (768-dimensional vectors plus full text) are persisted to `gs://openamend-data/MA_bill_embeddings.parquet` (~100 MB; not committed to the repo). A lightweight scored CSV without embeddings is committed at [`docs/data/MA_lobbying_bills_scored.csv`]({{ site.baseurl }}/data/MA_lobbying_bills_scored.csv).
+The complete bill embeddings (768-dimensional vectors and full text) are persisted to `gs://openamend-data/MA_bill_embeddings.parquet` and are not committed to the repository; a lightweight scored CSV without embeddings is committed at [`docs/data/MA_lobbying_bills_scored.csv`]({{ site.url }}{{ site.baseurl }}/data/MA_lobbying_bills_scored.csv).
