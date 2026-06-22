@@ -2,6 +2,11 @@ name: Update Data Only
 
 on:
   workflow_dispatch:       # Manual trigger only
+    inputs:
+      dry_run:
+        description: 'Run the full pipeline but skip the commit/PR/merge step (for testing)'
+        type: boolean
+        default: false
 
 env:
   FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: 'true'
@@ -41,7 +46,8 @@ jobs:
       - name: Write Google API key
         run: echo "${{ secrets.GOOGLE_API_KEY }}" > get_data/SECRET_GOOGLE_API_KEY
 
-      - name: Fetch data
+      - name: Fetch — EPA/budget/staff/EEA/CSO/precipitation/303d/MS4
+        timeout-minutes: 45
         working-directory: get_data
         run: |
           python get_EPARegion1_NPDES_permits.py
@@ -53,6 +59,29 @@ jobs:
           python get_ATTAINS_303d.py
           python get_MS4_annual_reports.py --yes --skip-download
 
+      - name: Fetch — MA lobbying disclosures (incremental)
+        timeout-minutes: 45
+        working-directory: get_data
+        run: python get_MA_lobbying.py --archive-raw
+
+      - name: Fetch — MA legislature bills (incremental)
+        timeout-minutes: 20
+        working-directory: get_data
+        run: python get_MA_legislature_bills.py
+
+      - name: Reparse lobbying archive (incremental → all field CSVs)
+        timeout-minutes: 20
+        working-directory: get_data
+        run: python reparse_lobbying_archive.py --incremental
+
+      - name: Score, summarize, and cluster lobbying bills
+        timeout-minutes: 30
+        working-directory: get_data
+        run: |
+          python score_lobbying_bills.py
+          python summarize_lobbying_bills.py
+          python cluster_lobbying_bills.py --incremental
+
       - name: Validate data
         working-directory: get_data
         run: python validate_data.py
@@ -62,6 +91,7 @@ jobs:
         run: python assemble_db.py
 
       - name: Commit and open PR
+        if: ${{ inputs.dry_run != true }}
         env:
           GH_TOKEN: ${{ github.token }}
         run: |

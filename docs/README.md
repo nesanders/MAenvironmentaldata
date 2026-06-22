@@ -16,15 +16,20 @@ All data, code for data gathering and cleaning, code for analysis, and web devel
 ## Datasets
 
 {{ site.data.site_config.site_abbrev }} includes a [constantly-growing list of datasets]({{ site.url }}{{ site.baseurl }}/data/index.html) such as:
-	
-* MA state budget information
-* MA Department of Environmental Protection (DEP) staffing records
-* MA DEP regulatory enforcement actions
-* MA 2011 combined sewer overflow (CSO) discharge data
-* US Environmental Protection Agency (EPA) Environmental Justice (EJ) community data
-* US Environmental Protection Agency (EPA) Region 1 NPDES permits
-* US Census and Social Security Administration population and wage data
-* EPA 303(d) Integrated List of MA Impaired Waters — waterbodies failing water quality standards (MassGIS, biennial 2010–2022)
+
+* MA environmental agency budgets (DEP, DCR, EEA; FY2001–present)
+* MA DEP staffing records
+* MA DEP/EEA enforcement actions (1996–present)
+* MA combined sewer overflow (CSO) discharge incidents (2022–present)
+* MA municipal stormwater (MS4) annual compliance reports (FY2019–present)
+* MA lobbying disclosures — bills, employers, spending (2005–present)
+* MA Legislature bill text and passage status (GC183–194)
+* EPA 303(d) impaired waters (MassGIS, biennial 2010–2022)
+* EPA Region 1 NPDES permits
+* EPA EJScreen environmental justice indicators (2017, 2023)
+* US Census population and income estimates
+* NOAA daily precipitation (Massachusetts)
+* ECOS state environmental agency budget survey (FY2009–2023)
 
 ## Analysis
 

@@ -1,5 +1,5 @@
 # AMEND Database Semantic Context
-Generated: 2026-04-29
+Generated: 2026-06-21
 
 ## Global Data Notes
 
@@ -80,6 +80,90 @@ Generated: 2026-04-29
   Example: SELECT m.municipality_normalized, AVG(m.mcm3_illicit_found) as avg_illicit, SUM(c.volumnOfEvent) as total_cso
   FROM MS4_AnnualReports m JOIN MAEEADP_CSO c ON m.municipality_normalized = c.municipality
   WHERE m.extraction_confidence != 'low' AND c.eventType LIKE 'CSO%' GROUP BY 1
+
+- **Lobbying spend on environmental bills by year** (proportional allocation):
+  -- For each (entity, client, year): env_fraction = env_bills / total_bills; env_spend = compensation × env_fraction
+  -- Use (bill_id, general_court) to join MA_Lobbying_Bills → MA_Lobbying_Bills_Scored (avoids H/S collision)
+  WITH bill_counts AS (
+    SELECT entity_name, client_name, year, COUNT(DISTINCT bill_id) AS n_all
+    FROM MA_Lobbying_Bills WHERE bill_id IS NOT NULL GROUP BY entity_name, client_name, year
+  ), env_counts AS (
+    SELECT l.entity_name, l.client_name, l.year, COUNT(DISTINCT l.bill_id) AS n_env
+    FROM MA_Lobbying_Bills l
+    JOIN MA_Lobbying_Bills_Scored s ON l.bill_id = s.bill_id AND l.general_court = s.general_court
+    WHERE s.is_environmental = 1
+    GROUP BY l.entity_name, l.client_name, l.year
+  )
+  SELECT e.year, SUM(e.compensation * CAST(ec.n_env AS FLOAT) / bc.n_all) AS env_spend
+  FROM MA_Lobbying_Employers e
+  JOIN bill_counts bc ON e.entity_name = bc.entity_name AND e.client_name = bc.client_name AND e.year = bc.year
+  JOIN env_counts ec ON e.entity_name = ec.entity_name AND e.client_name = ec.client_name AND e.year = ec.year
+  GROUP BY e.year ORDER BY e.year
+  NOTE: compensation is in MA_Lobbying_Employers (column name is "compensation", NOT "total_expenditure").
+  NOTE: is_environmental is in MA_Lobbying_Bills_Scored, NOT in MA_Legislature_Bills.
+  NOTE: Join key between MA_Lobbying_Bills and MA_Lobbying_Employers is (entity_name, client_name, year) — three columns.
+  NOTE: ALWAYS join MA_Lobbying_Bills to MA_Lobbying_Bills_Scored via (bill_id, general_court) not (bill_number, general_court).
+
+- **Top clients (employers) by total lobbying spend** (most recent year):
+  SELECT e.client_name, SUM(e.compensation) AS total_spend
+  FROM MA_Lobbying_Employers e
+  WHERE e.year = (SELECT MAX(year) FROM MA_Lobbying_Employers)
+    AND e.client_name != 'Total salaries received'
+  GROUP BY e.client_name
+  ORDER BY total_spend DESC LIMIT 15
+  NOTE: use client_name (paying employer), NOT entity_name (lobbying firm).
+
+- **Top clients on environmental bills** (most recent year):
+  SELECT e.client_name, SUM(e.compensation) AS total_spend
+  FROM MA_Lobbying_Employers e
+  WHERE e.year = (SELECT MAX(year) FROM MA_Lobbying_Employers)
+  AND EXISTS (
+    SELECT 1 FROM MA_Lobbying_Bills l
+    JOIN MA_Lobbying_Bills_Scored s ON l.bill_id = s.bill_id AND l.general_court = s.general_court
+    WHERE l.entity_name = e.entity_name AND l.client_name = e.client_name
+      AND l.year = e.year AND s.is_environmental = 1
+  )
+  GROUP BY e.client_name ORDER BY total_spend DESC LIMIT 15
+
+- **Lobbying activity by topic cluster** (how many clients per cluster):
+  SELECT c.label, COUNT(DISTINCT l.client_name) AS n_clients, COUNT(DISTINCT l.bill_id) AS n_bills
+  FROM MA_Lobbying_Bills l
+  JOIN MA_Lobbying_Bills_Scored s ON l.bill_id = s.bill_id AND l.general_court = s.general_court
+  JOIN MA_Bill_Cluster_Labels c ON s.cluster_id = c.cluster_id
+  GROUP BY c.label ORDER BY n_clients DESC
+
+- **Lobbying spend vs. enforcement count by year** (dual-axis):
+  WITH spend AS (
+    SELECT year, SUM(compensation) AS lobbying_spend FROM MA_Lobbying_Employers
+    WHERE client_name != 'Total salaries received' GROUP BY year
+  ), enforcement AS (
+    SELECT strftime('%Y', EnforcementDate) AS year, COUNT(*) AS n_actions FROM MAEEADP_Enforcement GROUP BY 1
+  )
+  SELECT s.year, s.lobbying_spend, e.n_actions FROM spend s LEFT JOIN enforcement e ON s.year = e.year ORDER BY s.year
+
+- **Support vs. oppose positions on environmental bills by year**:
+  SELECT l.year, l.position, COUNT(DISTINCT l.client_name) AS n_clients
+  FROM MA_Lobbying_Bills l
+  JOIN MA_Lobbying_Bills_Scored s ON l.bill_id = s.bill_id AND l.general_court = s.general_court
+  WHERE s.is_environmental = 1 AND l.position IN ('Support', 'Oppose', 'Neutral')
+  GROUP BY l.year, l.position ORDER BY l.year, l.position
+  NOTE: position column is on MA_Lobbying_Bills, not MA_Lobbying_Employers.
+
+- **Bill passage rate by lobbying intensity**:
+  SELECT
+    CASE WHEN client_count >= 10 THEN 'Heavily lobbied (10+ clients)'
+         WHEN client_count >= 3  THEN 'Moderately lobbied (3–9 clients)'
+         ELSE 'Lightly lobbied (1–2 clients)' END AS lobby_tier,
+    AVG(CAST(b.passed AS FLOAT)) AS pass_rate,
+    COUNT(*) AS n_bills
+  FROM (
+    SELECT l.bill_id, l.general_court, COUNT(DISTINCT l.client_name) AS client_count
+    FROM MA_Lobbying_Bills l WHERE l.bill_id IS NOT NULL GROUP BY l.bill_id, l.general_court
+  ) counts
+  JOIN MA_Lobbying_Bills_Scored s ON counts.bill_id = s.bill_id AND counts.general_court = s.general_court
+  JOIN MA_Legislature_Bills b ON counts.bill_id = b.bill_id AND counts.general_court = b.general_court
+  WHERE s.is_environmental = 1
+  GROUP BY lobby_tier
 
 - **CSO discharges to 303(d) impaired waters** (two-step join):
   MAEEADP_CSO JOIN CSO_303d_Mapping ON MAEEADP_CSO.waterBody = CSO_303d_Mapping.csoWaterBody
@@ -1113,6 +1197,301 @@ EEA00PES00000000L8	KENNETH   FIALKOSKY	AL-0028553	AL	PESTICIDE CREDENTIAL	PESTIC
 - `FacilityId`: Joins to MAEEADP_Facility.Id.
 - `Status`: e.g. Active, Expired, Terminated.
 - `Program`: ALL CAPS. PESTICIDE, WATER POLLUTION CONTROL, WETLANDS & WATERWAYS, WATER SUPPLY/DRINKING WATER, SOLID WASTE MGMT, HAZARDOUS WASTE, WATERSHED MANAGEMENT, AIR QUALITY CONTROL, TOXIC USE REDUCTION, WASTE SITE CLEANUP, PLANT INDUSTRIES, INDUSTRIAL WASTEWATER, LAWRENCE/WALL EXPERIMENT STA, FEED PROGRAM
+
+---
+
+### MA_Bill_Cluster_Labels (25 rows)
+Topic cluster labels for MA lobbying bill clusters derived from k-means on Gemini embeddings. One row per cluster_id (0–24); 25 clusters total. Key fields: cluster_id (join key to MA_Lobbying_Bills_Scored.cluster_id), label (3–5 word topic description, e.g. "Massachusetts Clean Energy Transition"), n_bills (total bills in cluster), n_env_bills (environmental bills in cluster). IMPORTANT: this table has NO bill_number or general_court column — it is a lookup table only. To get bills by topic, join MA_Lobbying_Bills_Scored on cluster_id, then join MA_Lobbying_Bills.
+
+```sql
+CREATE TABLE "MA_Bill_Cluster_Labels" (
+	"index" BIGINT, 
+	cluster_id BIGINT, 
+	label TEXT, 
+	n_bills BIGINT, 
+	n_env_bills BIGINT
+)
+```
+
+/* 5 rows from MA_Bill_Cluster_Labels:
+cluster_id	label	n_bills	n_env_bills
+0	Community and Environmental Policy	1983	49
+1	Patient Safety, Staff Autonomy, Transparency	1289	1
+2	Solid Waste Reduction and Recycling	463	178
+3	Student Education and Well-being	1572	7
+4	Infrastructure Investment and Economic Growth	1124	8
+*/
+
+**Column notes:**
+- `cluster_id`: Integer cluster ID (0–24). Join key to MA_Lobbying_Bills_Scored.cluster_id.
+- `label`: 3–5 word topic label generated by Gemini 2.5 Flash (e.g. "Clean Energy Policy").
+- `n_bills`: Total number of bills assigned to this cluster.
+- `n_env_bills`: Number of bills in this cluster flagged is_environmental=1.
+
+---
+
+### MA_Legislature_Bills (37,087 rows)
+MA Legislature OpenAPI: one row per bill. Key fields: bill_id (full prefixed ID, e.g. H1234, S5678), bill_number (integer), bill_prefix (H/S/HD/SD), general_court (session number), title (bill title), sponsor_name, status (final status text), passed (1 if signed/enacted, 0 otherwise). PREFERRED join to MA_Lobbying_Bills: JOIN ON (bill_id, general_court) — do NOT use (bill_number, general_court) as H and S bills can share the same integer. NOTE: environmental relevance scoring lives in MA_Lobbying_Bills_Scored, not here.
+
+```sql
+CREATE TABLE "MA_Legislature_Bills" (
+	"index" BIGINT, 
+	bill_id TEXT, 
+	bill_number BIGINT, 
+	bill_prefix TEXT, 
+	general_court BIGINT, 
+	title TEXT, 
+	sponsor_name TEXT, 
+	status TEXT, 
+	passed BIGINT
+)
+```
+
+/* 5 rows from MA_Legislature_Bills:
+bill_id	bill_number	bill_prefix	general_court	title	sponsor_name	status	passed
+H4999	4999	H	193	An Act promoting access to midwifery care and out-of-hospital birth options	Midwifery Care and Out-of-Hospital options	Signed by the Governor, Chapter 186 of the Acts of 2024	1
+H4773	4773	H	193	An Act promoting access to midwifery care and out-of-hospital birth options	House Committee on Ways and Means	Published as amended, see H4785	0
+S1405	1405	S	193	An Act relative to newborn screenings for congenital cytomegalovirus	Joan B. Lovely	No further action taken	0
+S607	607	S	193	An Act to increase access to nurse-midwifery services	Brendan P. Crighton	No further action taken	0
+H1069	1069	H	193	An Act to increase access to nurse-midwifery services	Kay Khan	Senate concurred	0
+*/
+
+**Column notes:**
+- `bill_id`: Full chamber-prefixed bill ID (e.g. H1234, S5678). PREFERRED join key — use (bill_id, general_court) to join to MA_Lobbying_Bills and MA_Lobbying_Bills_Scored.
+- `bill_number`: Integer bill number. WARNING: H and S bills can share the same integer — always use bill_id for joins, not bill_number alone.
+- `bill_prefix`: Chamber prefix: H, S, HD, or SD.
+- `general_court`: Session number. 185=2009-10, 186=2011-12, ..., 192=2021-22, 193=2023-24, 194=2025-26.
+- `passed`: 1 if the bill was signed into law or enacted; 0 if it died or is still pending.
+
+---
+
+### MA_Lobbying_Bills (344,948 rows)
+MA SoS lobbying disclosures: fact table linking employers to bills they lobbied. One row per (entity_name, client_name, general_court, bill_number, year). CRITICAL DISTINCTION: entity_name = lobbying firm; client_name = paying employer. Key fields: entity_name, client_name, year, general_court, bill_number, bill_id, bill_prefix, bill_title, position ("Support", "Oppose", "Neutral", or empty), chamber, amount (per-bill spend if reported). bill_id is a derived column combining bill_prefix + bill_number (e.g. H1234, S5678). bill_prefix is derived from chamber: "House Bill"/"HB" → "H"; "Senate Bill"/"SB" → "S"; "House Docket"/"HD" → "HD"; "Senate Docket"/"SD" → "SD". PREFERRED join to MA_Lobbying_Bills_Scored: use (bill_id, general_court) — do NOT use (bill_number, general_court) alone as H and S bills can share the same integer bill_number. Join to MA_Legislature_Bills on (bill_id, general_court) for passed status. Join to MA_Lobbying_Employers on (entity_name, client_name, year) for total compensation. IMPORTANT: this table has NO single spending column — compensation lives in MA_Lobbying_Employers.
+
+```sql
+CREATE TABLE "MA_Lobbying_Bills" (
+	"index" BIGINT, 
+	entity_name TEXT, 
+	year BIGINT, 
+	client_name TEXT, 
+	chamber TEXT, 
+	bill_number BIGINT, 
+	bill_title TEXT, 
+	position TEXT, 
+	amount FLOAT, 
+	general_court BIGINT, 
+	entity_name_norm TEXT, 
+	client_name_norm TEXT, 
+	bill_prefix TEXT, 
+	bill_id TEXT
+)
+```
+
+/* 5 rows from MA_Lobbying_Bills:
+entity_name	year	client_name	chamber	bill_number	bill_title	position	amount	general_court	entity_name_norm	client_name_norm	bill_prefix	bill_id
+Robert Alan Baker	2014	Smaller Business Association of New England	House Bill	4165	An Act Promoting Economic Growth Across the Commonwealth. Sought funding for manufacturing grant and layoff aversion program. met with key legislators from Economic Development committee and Ways and Means.	Support	170000.0	188	ROBERT ALAN BAKER	SMALLER BUSINESS ASSOCIATION OF NEW ENGLAND	H	H4165
+Joseph M Corazzini	2025	Clark University	Executive	NULL	Review and assess Higher education related issues that may have an impact on the institution and relay the information to the President. If necessary, lobby on an issue on behalf of the institution.	Support	118000.0	194	JOSEPH M CORAZZINI	CLARK UNIVERSITY	NULL	NULL
+Edwards Wildman Palmer LLP	2013	Steward Health Care LLC	SB	3	Text of the recommended amendment to the House Bill making appropriations for the fiscal year 2014 for the maintenance of the departments, boards, commissions, institutions and certain activities of the Commonwealth, for interest, sinking fund and serial bond requirements and for certain permanent improvements; SB1800 Text of the Senate amendments to the House Bill making appropriations for the fiscal year 2014 for the maintenance of the departments, boards, commissions, institutions and certain activities of the Commonwealth, for interest, sinking fund and serial bond requirements and for certain permanent improvements; HB3538 An Act making appropriations for the Fiscal Year 2014 for the maintenance of the departments, boards, commissions, institutions and certain activities of the commonwealth, for interest, sinking fund and serial bond requirements and for certain permanent improvements.	Support	96555.0	188	EDWARDS WILDMAN PALMER	STEWARD HEALTH CARE	S	S3
+Law Office of Attorney James F McGrail	2018	Outfront Media, LLC	Executive	NULL	Matters in connection with Outfront Media Group LLC's participation in the request for proposals for advertising rights on the Massachusetts Bay Transportation Authority.	Support	90000.0	190	ATTORNEY JAMES F MCGRAIL	OUTFRONT MEDIA	NULL	NULL
+Edwards Wildman Palmer LLP	2012	Steward Health Care LLC	HB	4070	An Act relative to Health Care Quality Improvement and Cost Reduction Act of 2012 HB4127 An Act improving the quality of health care and reducing costs through increased transparency, efficiency and innovation HB4128 Order relative to special procedures for consideration of the House Bill improving the quality of health care and reducing costs through increased transparency, efficiency and innovation HB4155 Printed as amended version of the engrossed Bill improving the quality of health care and reducing costs through increased transparency, efficiency and innovation HB4561 An Act relative to the medical loss ratio SB2260 An Act improving the quality of health care and reducing costs through increased transparency, efficiency and innovation SB2270 Printed as amended version of the engrossed Bill relative to improving the quality of health care and reducing costs through increased transparency, efficiency and innovation SB2400 An Act improving the quality of health care and reducing costs through increased transparency, efficiency and innovation.	Support	83784.92	187	EDWARDS WILDMAN PALMER	STEWARD HEALTH CARE	H	H4070
+*/
+
+**Column notes:**
+- `entity_name`: Lobbying firm. IMPORTANT: use client_name (not entity_name) to identify the paying employer.
+- `client_name`: Paying employer. Join key to MA_Lobbying_Employers.client_name. Use this for all employer-level analysis.
+- `bill_number`: Integer bill number (e.g. 1234). WARNING: H and S bills can share the same integer — always combine with bill_id (or bill_prefix) to distinguish them.
+- `bill_id`: Derived chamber-prefixed bill ID (e.g. H1234, S5678). PREFERRED join key to MA_Lobbying_Bills_Scored and MA_Legislature_Bills: JOIN ON (bill_id, general_court). NULL for rows where chamber is not H/S/HD/SD.
+- `bill_prefix`: Derived bill chamber prefix: "H", "S", "HD", or "SD". NULL for non-standard chamber values (Executive, FY, etc.).
+- `general_court`: MA legislative session (e.g. 193 = 2023–2024). Joins to MA_Legislature_Bills.general_court.
+- `chamber`: Raw chamber string from SoS portal: "House Bill", "Senate Bill", "House Docket", "Senate Docket", "HB", "SB", "Executive", "FY", etc.
+- `position`: Lobbying position: "Support", "Oppose", "Neutral", or empty string. Use for coalition/opposition analysis.
+- `year`: Filing year. Join to MA_Lobbying_Employers on (entity_name, client_name, year) for compensation.
+- `amount`: Per-bill spend in dollars (often NULL — use MA_Lobbying_Employers.compensation for spending analysis).
+
+---
+
+### MA_Lobbying_Bills_Scored (36,780 rows)
+Environmental relevance scores for MA lobbying bills, derived from Gemini embeddings. One row per unique (bill_number, general_court). Key fields: bill_number, general_court, bill_title, bill_id (e.g. H1234), env_relevance_score (float; differential cosine similarity to env vs non-env example bills; higher = more environmentally relevant), is_environmental (1 if env_relevance_score >= 0.05), cluster_id (integer topic cluster 0–24; -1 = unassigned; 25 clusters total). Join to MA_Lobbying_Bills on (bill_number, general_court) to find which clients lobbied env bills. Join to MA_Bill_Cluster_Labels on cluster_id for human-readable cluster topic labels. IMPORTANT: is_environmental is per-bill; no cluster is purely environmental.
+
+```sql
+CREATE TABLE "MA_Lobbying_Bills_Scored" (
+	"index" BIGINT, 
+	bill_number BIGINT, 
+	general_court BIGINT, 
+	bill_title TEXT, 
+	bill_id TEXT, 
+	env_relevance_score FLOAT, 
+	is_environmental BIGINT, 
+	cluster_id BIGINT, 
+	summary TEXT, 
+	categories TEXT, 
+	tags TEXT, 
+	is_env_llm BOOLEAN, 
+	is_environmental_embedding BIGINT
+)
+```
+
+/* 5 rows from MA_Lobbying_Bills_Scored:
+bill_number	general_court	bill_title	bill_id	env_relevance_score	is_environmental	cluster_id	summary	categories	tags	is_env_llm	is_environmental_embedding
+4853	194	An act protecting our soil, farms and food from PFAS contamination	H4853	0.1758822798728943	1	19	This bill would protect agricultural land, farms, and the food supply from contamination by PFAS chemicals. If passed, it would likely establish regulations or programs aimed at preventing the presence of these harmful substances in soil and food products, thereby safeguarding public health and supporting the agricultural industry.	["Environmental Protection", "Food, Drugs and Alcohol"]	["Soil pollution", "Hazardous wastes and toxic substances", "Food supply, safety, and labeling", "Environmental health"]	1	1
+2802	194	An Act protecting our soil and farms from PFAS contamination	S2802	0.1644791960716247	1	12	This bill would protect agricultural land and farms from contamination by PFAS, often called "forever chemicals." If passed, it would likely establish regulations or programs aimed at preventing these harmful substances from entering the soil and water used for farming. The policy intent is to safeguard the food supply and the economic viability of farms by addressing a significant environmental health concern.	["Environmental Protection", "Food, Drugs and Alcohol"]	["Soil pollution", "Hazardous wastes and toxic substances", "Food supply, safety, and labeling", "Environmental health"]	1	1
+3678	194	An Act relative to chemical recycling	HD3678	0.1475380659103393	1	22	This bill would define "chemical recycling" as a manufacturing process for plastics, rather than a waste management process. If passed, this reclassification could alter how facilities using this process are regulated, potentially impacting environmental oversight and permitting requirements for such operations in Massachusetts.	["Environmental Protection"]	["Solid waste and recycling", "Environmental regulatory procedures", "Pollution control and abatement"]	1	1
+664	194	An Act relative to liability for release of hazardous materials	S664	0.1361947059631347	1	22	This bill would establish clear rules for who is responsible when hazardous materials are released into the environment. If passed, it would help ensure that the parties responsible for pollution are held accountable for cleanup costs and damages. This could lead to faster remediation of contaminated sites and provide a legal framework for victims to seek compensation.	["Environmental Protection"]	["Hazardous wastes and toxic substances", "Pollution control and abatement", "Environmental regulatory procedures", "Environmental health"]	1	1
+4563	193	An Act relative to landfills and areas of critical environmental concern	H4563	0.1332122683525085	1	0	This bill would prohibit the creation of new landfills, monofills, or ash landfills in or next to areas officially designated by the state as "areas of critical environmental concern." If passed, this would protect environmentally sensitive regions from the potential negative impacts associated with waste disposal facilities, such as pollution and habitat destruction. The policy intent is to safeguard specific natural areas that are deemed vital for environmental protection.	["Environmental Protection"]	["Hazardous wastes and toxic substances", "Solid waste and recycling", "Environmental regulatory procedures", "Pollution control and abatement"]	1	1
+*/
+
+**Column notes:**
+- `bill_number`: MA bill number. Join key to MA_Lobbying_Bills and MA_Legislature_Bills.
+- `general_court`: MA legislative session number. Join key to MA_Lobbying_Bills.
+- `bill_id`: Chamber-prefixed bill ID (e.g. H1234, S567). Used for Legislature API lookups.
+- `env_relevance_score`: Differential cosine similarity: max_sim(env_examples) - max_sim(non_env_examples). Positive = more env-like than non-env. Threshold for is_environmental is 0.05.
+- `is_environmental`: 1 if env_relevance_score >= 0.05. Use this to filter to environmentally relevant bills.
+- `cluster_id`: Topic cluster integer (0–24; 25 clusters). -1 means unassigned. Join to MA_Bill_Cluster_Labels for label.
+
+---
+
+### MA_Lobbying_CampaignContributions (124,536 rows)
+Political campaign contributions made by lobbyists, disclosed in their lobbying reports. One row per contribution: date, lobbyist_name (the donor), recipient_name (candidate/committee), office_sought, amount, plus the reporting entity_name and year. Use to analyze lobbyist donations to legislators/candidates. Independent of bills and compensation.
+
+```sql
+CREATE TABLE "MA_Lobbying_CampaignContributions" (
+	"index" BIGINT, 
+	entity_name TEXT, 
+	year BIGINT, 
+	date TEXT, 
+	lobbyist_name TEXT, 
+	recipient_name TEXT, 
+	office_sought TEXT, 
+	amount FLOAT, 
+	entity_name_norm TEXT
+)
+```
+
+/* 5 rows from MA_Lobbying_CampaignContributions:
+entity_name	year	date	lobbyist_name	recipient_name	office_sought	amount	entity_name_norm
+Grant Associates	2005	2/15/2005	Joseph M Grant	Sal Dimasi	Representative	200.0	GRANT
+Grant Associates	2005	2/15/2005	Joseph M Grant	Mark Montigney	Senate	200.0	GRANT
+Grant Associates	2005	2/15/2005	Joseph M Grant	Michael Morrisey	Senate	200.0	GRANT
+Grant Associates	2005	3/22/2005	Joseph M Grant	Robert  Antonioni	Senate	200.0	GRANT
+Grant Associates	2005	4/22/2005	Joseph M Grant	Joseph Wagner	Representative	200.0	GRANT
+*/
+
+---
+
+### MA_Lobbying_ClientPurposes (49,759 rows)
+Per-client annual summary from the registrant summary page: the annual amount a client paid and a free-text purpose-of-employment description of what was lobbied for. One row per (entity_name, client_name, year). The purpose text is richer than bill titles and good for topic search. The amount is the summary-page annual per-client total (often a cleaner single figure than summing per-period rows in MA_Lobbying_Bills).
+
+```sql
+CREATE TABLE "MA_Lobbying_ClientPurposes" (
+	"index" BIGINT, 
+	entity_name TEXT, 
+	year BIGINT, 
+	client_name TEXT, 
+	amount FLOAT, 
+	purpose TEXT, 
+	entity_name_norm TEXT, 
+	client_name_norm TEXT
+)
+```
+
+/* 5 rows from MA_Lobbying_ClientPurposes:
+entity_name	year	client_name	amount	purpose	entity_name_norm	client_name_norm
+Monica Lawton	2005	Associated Subcontractors of Massachusetts, Inc	15500.0	NULL	MONICA LAWTON	ASSOCIATED SUBCONTRACTORS OF MASSACHUSETTS
+James D Shaer	2005	Boston University	25704.0	NULL	JAMES D SHAER	BOSTON UNIVERSITY
+Jo Ann Fitzgerald	2005	Mass. Teachers Association	2778.7	NULL	JO ANN FITZGERALD	MASS TEACHERS ASSOCIATION
+Stephen J. D'Amato	2005	Center for Insurance Research, Inc.	3662.0	NULL	STEPHEN J D AMATO	CENTER FOR INSURANCE RESEARCH
+Margaret G Grant	2005	Mass. Assoc. of Realtors	10000.0	NULL	MARGARET G GRANT	MASS ASSOC OF REALTORS
+*/
+
+---
+
+### MA_Lobbying_Employers (36,583 rows)
+MA Secretary of State lobbying disclosures: one row per (lobbying firm, client/employer, year). CRITICAL DISTINCTION: entity_name = the lobbying firm (e.g. "Smith & Jones Lobbying LLC"); client_name = the actual employer paying for lobbying (e.g. "National Grid USA"). Always use client_name for employer-level analysis. Key fields: entity_name, client_name, year, compensation (total dollars paid by client to firm that year), reg_type (registration type). Data covers 2009–present; older years have sparse compensation data. Join to MA_Lobbying_Bills on (entity_name, client_name, year) to see which bills a client lobbied. IMPORTANT: this table has NO spending column called total_expenditure — the column is compensation.
+
+```sql
+CREATE TABLE "MA_Lobbying_Employers" (
+	"index" BIGINT, 
+	entity_name TEXT, 
+	client_name TEXT, 
+	year BIGINT, 
+	compensation FLOAT, 
+	reg_type TEXT, 
+	entity_name_norm TEXT, 
+	client_name_norm TEXT
+)
+```
+
+/* 5 rows from MA_Lobbying_Employers:
+entity_name	client_name	year	compensation	reg_type	entity_name_norm	client_name_norm
+Minahan Companies, The	_total_salary_	2005	75000.0	Lobbyist Entity	MINAHAN COMPANIES	_TOTAL_SALARY_
+Capital Associates Inc.	_total_salary_	2005	60000.0	Lobbyist Entity	CAPITAL	_TOTAL_SALARY_
+Burke & Mawn Consultants	_total_salary_	2005	39000.0	Lobbyist Entity	BURKE AND MAWN CONSULTANTS	_TOTAL_SALARY_
+Brown Rudnick Berlack Israels LLP	_total_salary_	2005	12500.0	Lobbyist Entity	BROWN RUDNICK BERLACK ISRAELS	_TOTAL_SALARY_
+Ventry Associates, LLP	_total_salary_	2005	30499.97	Lobbyist Entity	VENTRY	_TOTAL_SALARY_
+*/
+
+**Column notes:**
+- `entity_name`: Lobbying firm name (e.g. "Smith Advocacy LLC"). NOT the employer — use client_name for employer analysis.
+- `client_name`: Paying employer/client (e.g. "National Grid USA"). Use this for employer-level analysis, NOT entity_name.
+- `year`: Calendar year of the filing. Compensation data is sparse before 2019; 2019–present is complete.
+- `compensation`: Total dollars paid by client_name to entity_name for lobbying that year. IMPORTANT: the column is "compensation", NOT "total_expenditure".
+- `reg_type`: Registration type (e.g. "Lobbying Entity"). Use to filter out non-employer rows if needed.
+
+---
+
+### MA_Lobbying_Expenses (74,838 rows)
+Itemized lobbying expenses reported by entities. One row per expense: expense_type (one of 'operating', 'meals_entertainment_travel', 'additional'), date, payee, description, amount, plus reporting entity_name and year. Blank $0 template rows are excluded. Separate from client compensation (MA_Lobbying_Employers) and salaries (MA_Lobbying_Lobbyists).
+
+```sql
+CREATE TABLE "MA_Lobbying_Expenses" (
+	"index" BIGINT, 
+	entity_name TEXT, 
+	year BIGINT, 
+	expense_type TEXT, 
+	date TEXT, 
+	payee TEXT, 
+	description TEXT, 
+	amount FLOAT, 
+	entity_name_norm TEXT
+)
+```
+
+/* 5 rows from MA_Lobbying_Expenses:
+entity_name	year	expense_type	date	payee	description	amount	entity_name_norm
+Grant Associates	2005	additional	1/1 to 6/30	1/1 to 6/30	Boston View Corporation Office and parking	5175.0	GRANT
+Grant Associates	2005	additional	1/1 to 6/30	1/1 to 6/30	Verizon NSTAR utilites	590.0	GRANT
+Grant Associates	2005	additional	NULL	NULL	Total amount	5765.0	GRANT
+Eric Bourassa	2005	operating	7/1/2005-12/31/2005	Verizon	Telephone, cell phone, handheld	30.0	ERIC BOURASSA
+Eric Bourassa	2005	operating	7/1/2005-12/31/2005	US Postal SErvice	Postage, shipping, delivery	15.0	ERIC BOURASSA
+*/
+
+**Column notes:**
+- `expense_type`: operating, meals_entertainment_travel, additional
+
+---
+
+### MA_Lobbying_Lobbyists (7,443 rows)
+Maps individual lobbyists to the entity (firm) that employs them, per year, with the salary the entity paid that lobbyist. One row per (lobbyist_name, entity_name, year). Use to see who works for which firm. NOTE: salary here is the entity-to-lobbyist payment (internal cost), which is SEPARATE from client compensation in MA_Lobbying_Employers — do not add salaries to client compensation when totaling lobbying spend.
+
+```sql
+CREATE TABLE "MA_Lobbying_Lobbyists" (
+	"index" BIGINT, 
+	year BIGINT, 
+	lobbyist_name TEXT, 
+	entity_name TEXT, 
+	salary FLOAT, 
+	entity_name_norm TEXT
+)
+```
+
+/* 5 rows from MA_Lobbying_Lobbyists:
+year	lobbyist_name	entity_name	salary	entity_name_norm
+2005	Robert M. Platt	National Consulting,LLC	240500.0	NATIONAL CONSULTING
+2005	Alfred A Minahan	Minahan Companies, The	79000.0	MINAHAN COMPANIES
+2005	John F Hahesy	Minahan Companies, The	71000.0	MINAHAN COMPANIES
+2005	John R Sasso	Advanced Strategies	109200.0	ADVANCED STRATEGIES
+2005	Henry S Gillet	HSG & Associates	25000.0	HSG
+*/
 
 ---
 

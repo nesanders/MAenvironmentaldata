@@ -188,6 +188,88 @@ TABLE_DESCRIPTIONS = {
         'have quantitative progress data suitable for analysis. '
         'Charles River phosphorus dominates the quantitative data; other watersheds have fewer records.'
     ),
+    'MA_Lobbying_Employers': (
+        'MA Secretary of State lobbying disclosures: one row per (lobbying firm, client/employer, year). '
+        'CRITICAL DISTINCTION: entity_name = the lobbying firm (e.g. "Smith & Jones Lobbying LLC"); '
+        'client_name = the actual employer paying for lobbying (e.g. "National Grid USA"). '
+        'Always use client_name for employer-level analysis. '
+        'Key fields: entity_name, client_name, year, compensation (total dollars paid by client to firm that year), '
+        'reg_type (registration type). '
+        'Data covers 2009–present; older years have sparse compensation data. '
+        'Join to MA_Lobbying_Bills on (entity_name, client_name, year) to see which bills a client lobbied. '
+        'IMPORTANT: this table has NO spending column called total_expenditure — the column is compensation.'
+    ),
+    'MA_Lobbying_Bills': (
+        'MA SoS lobbying disclosures: fact table linking employers to bills they lobbied. '
+        'One row per (entity_name, client_name, general_court, bill_number, year). '
+        'CRITICAL DISTINCTION: entity_name = lobbying firm; client_name = paying employer. '
+        'Key fields: entity_name, client_name, year, general_court, bill_number, bill_id, bill_prefix, '
+        'bill_title, position ("Support", "Oppose", "Neutral", or empty), chamber, amount (per-bill spend if reported). '
+        'bill_id is a derived column combining bill_prefix + bill_number (e.g. H1234, S5678). '
+        'bill_prefix is derived from chamber: "House Bill"/"HB" → "H"; "Senate Bill"/"SB" → "S"; '
+        '"House Docket"/"HD" → "HD"; "Senate Docket"/"SD" → "SD". '
+        'PREFERRED join to MA_Lobbying_Bills_Scored: use (bill_id, general_court) — '
+        'do NOT use (bill_number, general_court) alone as H and S bills can share the same integer bill_number. '
+        'Join to MA_Legislature_Bills on (bill_id, general_court) for passed status. '
+        'Join to MA_Lobbying_Employers on (entity_name, client_name, year) for total compensation. '
+        'IMPORTANT: this table has NO single spending column — compensation lives in MA_Lobbying_Employers.'
+    ),
+    'MA_Legislature_Bills': (
+        'MA Legislature OpenAPI: one row per bill. '
+        'Key fields: bill_id (full prefixed ID, e.g. H1234, S5678), bill_number (integer), bill_prefix (H/S/HD/SD), '
+        'general_court (session number), title (bill title), sponsor_name, status (final status text), '
+        'passed (1 if signed/enacted, 0 otherwise). '
+        'PREFERRED join to MA_Lobbying_Bills: JOIN ON (bill_id, general_court) — '
+        'do NOT use (bill_number, general_court) as H and S bills can share the same integer. '
+        'NOTE: environmental relevance scoring lives in MA_Lobbying_Bills_Scored, not here.'
+    ),
+    'MA_Lobbying_Bills_Scored': (
+        'Environmental relevance scores for MA lobbying bills, derived from Gemini embeddings. '
+        'One row per unique (bill_number, general_court). '
+        'Key fields: bill_number, general_court, bill_title, bill_id (e.g. H1234), '
+        'env_relevance_score (float; differential cosine similarity to env vs non-env example bills; '
+        'higher = more environmentally relevant), '
+        'is_environmental (1 if env_relevance_score >= 0.05), '
+        'cluster_id (integer topic cluster 0–24; -1 = unassigned; 25 clusters total). '
+        'Join to MA_Lobbying_Bills on (bill_number, general_court) to find which clients lobbied env bills. '
+        'Join to MA_Bill_Cluster_Labels on cluster_id for human-readable cluster topic labels. '
+        'IMPORTANT: is_environmental is per-bill; no cluster is purely environmental.'
+    ),
+    'MA_Bill_Cluster_Labels': (
+        'Topic cluster labels for MA lobbying bill clusters derived from k-means on Gemini embeddings. '
+        'One row per cluster_id (0–24); 25 clusters total. '
+        'Key fields: cluster_id (join key to MA_Lobbying_Bills_Scored.cluster_id), '
+        'label (3–5 word topic description, e.g. "Massachusetts Clean Energy Transition"), '
+        'n_bills (total bills in cluster), n_env_bills (environmental bills in cluster). '
+        'IMPORTANT: this table has NO bill_number or general_court column — it is a lookup table only. '
+        'To get bills by topic, join MA_Lobbying_Bills_Scored on cluster_id, then join MA_Lobbying_Bills.'
+    ),
+    'MA_Lobbying_Lobbyists': (
+        'Maps individual lobbyists to the entity (firm) that employs them, per year, with the salary '
+        'the entity paid that lobbyist. One row per (lobbyist_name, entity_name, year). '
+        'Use to see who works for which firm. NOTE: salary here is the entity-to-lobbyist payment '
+        '(internal cost), which is SEPARATE from client compensation in MA_Lobbying_Employers — do not '
+        'add salaries to client compensation when totaling lobbying spend.'
+    ),
+    'MA_Lobbying_CampaignContributions': (
+        'Political campaign contributions made by lobbyists, disclosed in their lobbying reports. '
+        'One row per contribution: date, lobbyist_name (the donor), recipient_name (candidate/committee), '
+        'office_sought, amount, plus the reporting entity_name and year. '
+        'Use to analyze lobbyist donations to legislators/candidates. Independent of bills and compensation.'
+    ),
+    'MA_Lobbying_Expenses': (
+        'Itemized lobbying expenses reported by entities. One row per expense: expense_type '
+        "(one of 'operating', 'meals_entertainment_travel', 'additional'), date, payee, description, amount, "
+        'plus reporting entity_name and year. Blank $0 template rows are excluded. '
+        'Separate from client compensation (MA_Lobbying_Employers) and salaries (MA_Lobbying_Lobbyists).'
+    ),
+    'MA_Lobbying_ClientPurposes': (
+        'Per-client annual summary from the registrant summary page: the annual amount a client paid and '
+        'a free-text purpose-of-employment description of what was lobbied for. '
+        'One row per (entity_name, client_name, year). The purpose text is richer than bill titles and good '
+        'for topic search. The amount is the summary-page annual per-client total (often a cleaner single '
+        'figure than summing per-period rows in MA_Lobbying_Bills).'
+    ),
 }
 
 # ─── Column-level notes for key tables ────────────────────────────────────────
@@ -282,6 +364,49 @@ COLUMN_NOTES = {
         'csoWaterBody': 'ALL CAPS waterBody value from MAEEADP_CSO. Joins on MAEEADP_CSO.waterBody.',
         'waterbody303d': 'Mixed case waterbody name from EPA_303d_Impairments. Joins on EPA_303d_Impairments.waterbody. WARNING: this table has no other columns — reportingCycle, hasTmdl, attainment all come from EPA_303d_Impairments, not this table.',
     },
+    'MA_Lobbying_Employers': {
+        'entity_name': 'Lobbying firm name (e.g. "Smith Advocacy LLC"). NOT the employer — use client_name for employer analysis.',
+        'client_name': 'Paying employer/client (e.g. "National Grid USA"). Use this for employer-level analysis, NOT entity_name.',
+        'year': 'Calendar year of the filing. Compensation data is sparse before 2019; 2019–present is complete.',
+        'compensation': 'Total dollars paid by client_name to entity_name for lobbying that year. IMPORTANT: the column is "compensation", NOT "total_expenditure".',
+        'reg_type': 'Registration type (e.g. "Lobbying Entity"). Use to filter out non-employer rows if needed.',
+    },
+    'MA_Lobbying_Bills': {
+        'entity_name': 'Lobbying firm. IMPORTANT: use client_name (not entity_name) to identify the paying employer.',
+        'client_name': 'Paying employer. Join key to MA_Lobbying_Employers.client_name. Use this for all employer-level analysis.',
+        'bill_number': 'Integer bill number (e.g. 1234). WARNING: H and S bills can share the same integer — '
+                       'always combine with bill_id (or bill_prefix) to distinguish them.',
+        'bill_id': 'Derived chamber-prefixed bill ID (e.g. H1234, S5678). '
+                   'PREFERRED join key to MA_Lobbying_Bills_Scored and MA_Legislature_Bills: '
+                   'JOIN ON (bill_id, general_court). NULL for rows where chamber is not H/S/HD/SD.',
+        'bill_prefix': 'Derived bill chamber prefix: "H", "S", "HD", or "SD". NULL for non-standard chamber values (Executive, FY, etc.).',
+        'general_court': 'MA legislative session (e.g. 193 = 2023–2024). Joins to MA_Legislature_Bills.general_court.',
+        'chamber': 'Raw chamber string from SoS portal: "House Bill", "Senate Bill", "House Docket", "Senate Docket", "HB", "SB", "Executive", "FY", etc.',
+        'position': 'Lobbying position: "Support", "Oppose", "Neutral", or empty string. Use for coalition/opposition analysis.',
+        'year': 'Filing year. Join to MA_Lobbying_Employers on (entity_name, client_name, year) for compensation.',
+        'amount': 'Per-bill spend in dollars (often NULL — use MA_Lobbying_Employers.compensation for spending analysis).',
+    },
+    'MA_Legislature_Bills': {
+        'bill_id': 'Full chamber-prefixed bill ID (e.g. H1234, S5678). PREFERRED join key — use (bill_id, general_court) to join to MA_Lobbying_Bills and MA_Lobbying_Bills_Scored.',
+        'bill_number': 'Integer bill number. WARNING: H and S bills can share the same integer — always use bill_id for joins, not bill_number alone.',
+        'bill_prefix': 'Chamber prefix: H, S, HD, or SD.',
+        'general_court': 'Session number. 185=2009-10, 186=2011-12, ..., 192=2021-22, 193=2023-24, 194=2025-26.',
+        'passed': '1 if the bill was signed into law or enacted; 0 if it died or is still pending.',
+    },
+    'MA_Lobbying_Bills_Scored': {
+        'bill_number': 'MA bill number. Join key to MA_Lobbying_Bills and MA_Legislature_Bills.',
+        'general_court': 'MA legislative session number. Join key to MA_Lobbying_Bills.',
+        'bill_id': 'Chamber-prefixed bill ID (e.g. H1234, S567). Used for Legislature API lookups.',
+        'env_relevance_score': 'Differential cosine similarity: max_sim(env_examples) - max_sim(non_env_examples). Positive = more env-like than non-env. Threshold for is_environmental is 0.05.',
+        'is_environmental': '1 if env_relevance_score >= 0.05. Use this to filter to environmentally relevant bills.',
+        'cluster_id': 'Topic cluster integer (0–24; 25 clusters). -1 means unassigned. Join to MA_Bill_Cluster_Labels for label.',
+    },
+    'MA_Bill_Cluster_Labels': {
+        'cluster_id': 'Integer cluster ID (0–24). Join key to MA_Lobbying_Bills_Scored.cluster_id.',
+        'label': '3–5 word topic label generated by Gemini 2.5 Flash (e.g. "Clean Energy Policy").',
+        'n_bills': 'Total number of bills assigned to this cluster.',
+        'n_env_bills': 'Number of bills in this cluster flagged is_environmental=1.',
+    },
 }
 
 # ─── Columns to skip in sample rows (too wide / noisy) ────────────────────────
@@ -356,6 +481,90 @@ JOIN_RELATIONSHIPS = """
   Example: SELECT m.municipality_normalized, AVG(m.mcm3_illicit_found) as avg_illicit, SUM(c.volumnOfEvent) as total_cso
   FROM MS4_AnnualReports m JOIN MAEEADP_CSO c ON m.municipality_normalized = c.municipality
   WHERE m.extraction_confidence != 'low' AND c.eventType LIKE 'CSO%' GROUP BY 1
+
+- **Lobbying spend on environmental bills by year** (proportional allocation):
+  -- For each (entity, client, year): env_fraction = env_bills / total_bills; env_spend = compensation × env_fraction
+  -- Use (bill_id, general_court) to join MA_Lobbying_Bills → MA_Lobbying_Bills_Scored (avoids H/S collision)
+  WITH bill_counts AS (
+    SELECT entity_name, client_name, year, COUNT(DISTINCT bill_id) AS n_all
+    FROM MA_Lobbying_Bills WHERE bill_id IS NOT NULL GROUP BY entity_name, client_name, year
+  ), env_counts AS (
+    SELECT l.entity_name, l.client_name, l.year, COUNT(DISTINCT l.bill_id) AS n_env
+    FROM MA_Lobbying_Bills l
+    JOIN MA_Lobbying_Bills_Scored s ON l.bill_id = s.bill_id AND l.general_court = s.general_court
+    WHERE s.is_environmental = 1
+    GROUP BY l.entity_name, l.client_name, l.year
+  )
+  SELECT e.year, SUM(e.compensation * CAST(ec.n_env AS FLOAT) / bc.n_all) AS env_spend
+  FROM MA_Lobbying_Employers e
+  JOIN bill_counts bc ON e.entity_name = bc.entity_name AND e.client_name = bc.client_name AND e.year = bc.year
+  JOIN env_counts ec ON e.entity_name = ec.entity_name AND e.client_name = ec.client_name AND e.year = ec.year
+  GROUP BY e.year ORDER BY e.year
+  NOTE: compensation is in MA_Lobbying_Employers (column name is "compensation", NOT "total_expenditure").
+  NOTE: is_environmental is in MA_Lobbying_Bills_Scored, NOT in MA_Legislature_Bills.
+  NOTE: Join key between MA_Lobbying_Bills and MA_Lobbying_Employers is (entity_name, client_name, year) — three columns.
+  NOTE: ALWAYS join MA_Lobbying_Bills to MA_Lobbying_Bills_Scored via (bill_id, general_court) not (bill_number, general_court).
+
+- **Top clients (employers) by total lobbying spend** (most recent year):
+  SELECT e.client_name, SUM(e.compensation) AS total_spend
+  FROM MA_Lobbying_Employers e
+  WHERE e.year = (SELECT MAX(year) FROM MA_Lobbying_Employers)
+    AND e.client_name != 'Total salaries received'
+  GROUP BY e.client_name
+  ORDER BY total_spend DESC LIMIT 15
+  NOTE: use client_name (paying employer), NOT entity_name (lobbying firm).
+
+- **Top clients on environmental bills** (most recent year):
+  SELECT e.client_name, SUM(e.compensation) AS total_spend
+  FROM MA_Lobbying_Employers e
+  WHERE e.year = (SELECT MAX(year) FROM MA_Lobbying_Employers)
+  AND EXISTS (
+    SELECT 1 FROM MA_Lobbying_Bills l
+    JOIN MA_Lobbying_Bills_Scored s ON l.bill_id = s.bill_id AND l.general_court = s.general_court
+    WHERE l.entity_name = e.entity_name AND l.client_name = e.client_name
+      AND l.year = e.year AND s.is_environmental = 1
+  )
+  GROUP BY e.client_name ORDER BY total_spend DESC LIMIT 15
+
+- **Lobbying activity by topic cluster** (how many clients per cluster):
+  SELECT c.label, COUNT(DISTINCT l.client_name) AS n_clients, COUNT(DISTINCT l.bill_id) AS n_bills
+  FROM MA_Lobbying_Bills l
+  JOIN MA_Lobbying_Bills_Scored s ON l.bill_id = s.bill_id AND l.general_court = s.general_court
+  JOIN MA_Bill_Cluster_Labels c ON s.cluster_id = c.cluster_id
+  GROUP BY c.label ORDER BY n_clients DESC
+
+- **Lobbying spend vs. enforcement count by year** (dual-axis):
+  WITH spend AS (
+    SELECT year, SUM(compensation) AS lobbying_spend FROM MA_Lobbying_Employers
+    WHERE client_name != 'Total salaries received' GROUP BY year
+  ), enforcement AS (
+    SELECT strftime('%Y', EnforcementDate) AS year, COUNT(*) AS n_actions FROM MAEEADP_Enforcement GROUP BY 1
+  )
+  SELECT s.year, s.lobbying_spend, e.n_actions FROM spend s LEFT JOIN enforcement e ON s.year = e.year ORDER BY s.year
+
+- **Support vs. oppose positions on environmental bills by year**:
+  SELECT l.year, l.position, COUNT(DISTINCT l.client_name) AS n_clients
+  FROM MA_Lobbying_Bills l
+  JOIN MA_Lobbying_Bills_Scored s ON l.bill_id = s.bill_id AND l.general_court = s.general_court
+  WHERE s.is_environmental = 1 AND l.position IN ('Support', 'Oppose', 'Neutral')
+  GROUP BY l.year, l.position ORDER BY l.year, l.position
+  NOTE: position column is on MA_Lobbying_Bills, not MA_Lobbying_Employers.
+
+- **Bill passage rate by lobbying intensity**:
+  SELECT
+    CASE WHEN client_count >= 10 THEN 'Heavily lobbied (10+ clients)'
+         WHEN client_count >= 3  THEN 'Moderately lobbied (3–9 clients)'
+         ELSE 'Lightly lobbied (1–2 clients)' END AS lobby_tier,
+    AVG(CAST(b.passed AS FLOAT)) AS pass_rate,
+    COUNT(*) AS n_bills
+  FROM (
+    SELECT l.bill_id, l.general_court, COUNT(DISTINCT l.client_name) AS client_count
+    FROM MA_Lobbying_Bills l WHERE l.bill_id IS NOT NULL GROUP BY l.bill_id, l.general_court
+  ) counts
+  JOIN MA_Lobbying_Bills_Scored s ON counts.bill_id = s.bill_id AND counts.general_court = s.general_court
+  JOIN MA_Legislature_Bills b ON counts.bill_id = b.bill_id AND counts.general_court = b.general_court
+  WHERE s.is_environmental = 1
+  GROUP BY lobby_tier
 
 - **CSO discharges to 303(d) impaired waters** (two-step join):
   MAEEADP_CSO JOIN CSO_303d_Mapping ON MAEEADP_CSO.waterBody = CSO_303d_Mapping.csoWaterBody

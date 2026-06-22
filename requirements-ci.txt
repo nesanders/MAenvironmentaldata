@@ -29,9 +29,12 @@ shapely==2.1.2
 pyproj==3.6.0
 fiona==1.10b2
 
-# Numerical / stats (scipy used inline in MADEP scripts; joblib used by NECIR_CSO_map)
+# Numerical / stats (scipy used inline in MADEP scripts; joblib/scikit-learn used by clustering pipeline)
 scipy==1.17.1
-joblib==1.2.0
+joblib==1.5.3
+scikit-learn==1.8.0
+gcsfs==2026.5.0
+pyarrow==24.0.0
 
 # PDF extraction + AI (used by get_MS4_annual_reports.py in CI pipeline)
 pdfplumber==0.11.9
