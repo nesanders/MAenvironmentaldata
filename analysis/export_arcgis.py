@@ -66,6 +66,25 @@ FIELD_ALIASES = {
 }
 
 
+def _write_geojson(gdf: gpd.GeoDataFrame, path: str, name: str) -> None:
+    """Write RFC 7946-compliant GeoJSON that ArcGIS Online will publish.
+
+    The MassGIS-derived boundary files contain occasional self-intersecting
+    rings (from MapShaper simplification) and non-RFC ring winding; either can
+    make AGO fail with "There was an error publishing the service". Repair
+    invalid geometries and let GDAL enforce RFC 7946 (ring winding, 7-decimal
+    precision, no legacy "crs" member).
+    """
+    invalid = ~gdf.is_valid
+    if invalid.any():
+        label_col = next(c for c in gdf.columns if c != 'geometry')
+        print(f'  repairing {invalid.sum()} invalid geometrie(s) in {name}: '
+              f'{gdf.loc[invalid, label_col].tolist()}')
+        gdf.loc[invalid, 'geometry'] = gdf.loc[invalid, 'geometry'].buffer(0)
+        assert gdf.is_valid.all(), f'{name}: geometry repair failed'
+    gdf.to_file(path, driver='GeoJSON', RFC7946='YES')
+
+
 def _check_bbox(gdf: gpd.GeoDataFrame, name: str) -> None:
     minx, miny, maxx, maxy = gdf.total_bounds
     assert MA_BBOX[0] < minx and miny > MA_BBOX[1] and maxx < MA_BBOX[2] and maxy < MA_BBOX[3], \
@@ -149,7 +168,7 @@ def export_watersheds(outdir: str) -> float:
     assert gdf.crs.to_epsg() == 4326
     _check_bbox(gdf, 'watersheds')
     path = os.path.join(outdir, 'watersheds_ej_discharge.geojson')
-    gdf.to_file(path, driver='GeoJSON')
+    _write_geojson(gdf, path, 'watersheds')
     total = gdf['discharge_mgal'].sum()
     print(f'  {path}: {len(gdf)} watershed polygons, {total:,.1f} Mgal total')
     return total
@@ -175,7 +194,7 @@ def export_towns(outdir: str) -> float:
     _check_bbox(gdf, 'towns')
     n_no_ej = gdf['pct_minority'].isna().sum()
     path = os.path.join(outdir, 'towns_ej_discharge.geojson')
-    gdf.to_file(path, driver='GeoJSON')
+    _write_geojson(gdf, path, 'towns')
     total = gdf['discharge_mgal'].sum()
     print(f'  {path}: {len(gdf)} town polygons ({n_no_ej} without EJ data), {total:,.1f} Mgal total')
     return total
@@ -206,7 +225,7 @@ def export_block_groups(outdir: str) -> float:
     assert gdf.crs.to_epsg() == 4326
     _check_bbox(gdf, 'block groups')
     path = os.path.join(outdir, 'block_groups_ej_discharge.geojson')
-    gdf.to_file(path, driver='GeoJSON')
+    _write_geojson(gdf, path, 'block groups')
     total = gdf['discharge_mgal'].sum()
     size_mb = os.path.getsize(path) / 1e6
     print(f'  {path}: {len(gdf)} block-group polygons ({size_mb:.1f} MB), {total:,.1f} Mgal total')
