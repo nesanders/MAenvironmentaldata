@@ -171,7 +171,7 @@ def export_watersheds(outdir: str) -> float:
     _write_geojson(gdf, path, 'watersheds')
     total = gdf['discharge_mgal'].sum()
     print(f'  {path}: {len(gdf)} watershed polygons, {total:,.1f} Mgal total')
-    return total
+    return total, gdf
 
 
 def export_towns(outdir: str) -> float:
@@ -197,7 +197,7 @@ def export_towns(outdir: str) -> float:
     _write_geojson(gdf, path, 'towns')
     total = gdf['discharge_mgal'].sum()
     print(f'  {path}: {len(gdf)} town polygons ({n_no_ej} without EJ data), {total:,.1f} Mgal total')
-    return total
+    return total, gdf
 
 
 def export_block_groups(outdir: str) -> float:
@@ -229,7 +229,40 @@ def export_block_groups(outdir: str) -> float:
     total = gdf['discharge_mgal'].sum()
     size_mb = os.path.getsize(path) / 1e6
     print(f'  {path}: {len(gdf)} block-group polygons ({size_mb:.1f} MB), {total:,.1f} Mgal total')
-    return total
+    return total, gdf
+
+
+def export_filegdb(outdir: str, layers: dict) -> None:
+    """Bundle the polygon layers into a single zipped Esri File Geodatabase.
+
+    ArcGIS Online's GeoJSON publisher rejects some of the MassGIS-derived
+    polygon layers with an opaque "error publishing the service"; its FileGDB
+    ingest path is Esri-native and battle-tested, keeps full field names
+    (unlike shapefile's 10-character limit), and preserves true nulls.
+    Uploading the zip creates ONE hosted feature layer item with one sublayer
+    per geodatabase layer.
+    """
+    import shutil
+
+    gdb_path = os.path.join(outdir, 'amend_polygons.gdb')
+    zip_path = f'{gdb_path}.zip'
+    if os.path.isdir(gdb_path):
+        shutil.rmtree(gdb_path)
+    if os.path.exists(zip_path):
+        os.remove(zip_path)
+    for layer_name, gdf in layers.items():
+        # FileGDB layers hold one geometry type; ours mix Polygon/MultiPolygon
+        gdf.to_file(gdb_path, layer=layer_name, driver='OpenFileGDB', promote_to_multi=True)
+    # AGO expects the .gdb directory itself at the root of the zip
+    shutil.make_archive(gdb_path, 'zip', root_dir=outdir, base_dir='amend_polygons.gdb')
+    shutil.rmtree(gdb_path)
+
+    # Read-back verification of the zipped geodatabase
+    for layer_name, gdf in layers.items():
+        check = gpd.read_file(zip_path, layer=layer_name)
+        assert len(check) == len(gdf), (layer_name, len(check), len(gdf))
+    size_mb = os.path.getsize(zip_path) / 1e6
+    print(f'  {zip_path}: file geodatabase with {len(layers)} polygon layers ({size_mb:.1f} MB)')
 
 
 def export_necir_2011(outdir: str) -> None:
@@ -270,9 +303,14 @@ Generated {datetime.now():%Y-%m-%d %H:%M} by `analysis/export_arcgis.py` from th
 ## Files
 
 - `cso_outfalls_2022_2025.csv` — 193 CSO/SSO outfall points (locate by `latitude`/`longitude`, WGS84).
-- `watersheds_ej_discharge.geojson` — 32 major watersheds (MassGIS) with EJ + discharge attributes.
-- `towns_ej_discharge.geojson` — 351 municipalities (MassGIS) with EJ + discharge attributes.
-- `block_groups_ej_discharge.geojson` — 4,982 census block groups (2017 cartographic boundaries) with EJ + discharge attributes.{necir_section}
+- **`amend_polygons.gdb.zip`** — the recommended upload for all polygon layers: a File
+  Geodatabase containing the watershed (32), town (351), and block-group (4,982) layers.
+  Upload the zip as-is; publishing creates one hosted feature layer item with three
+  sublayers. (ArcGIS Online's GeoJSON importer rejects some of the MassGIS-derived
+  polygons with "There was an error publishing the service"; the FileGDB path does not.)
+- `watersheds_ej_discharge.geojson` / `towns_ej_discharge.geojson` /
+  `block_groups_ej_discharge.geojson` — the same three layers as standalone GeoJSON,
+  for non-Esri tools.{necir_section}
 
 ## Units and definitions
 
@@ -333,9 +371,14 @@ if __name__ == '__main__':
     print(f'Exporting ArcGIS layers to {args.outdir}')
 
     total_outfalls = export_outfalls(args.outdir)
-    total_ws = export_watersheds(args.outdir)
-    total_towns = export_towns(args.outdir)
-    total_bg = export_block_groups(args.outdir)
+    total_ws, gdf_ws = export_watersheds(args.outdir)
+    total_towns, gdf_towns = export_towns(args.outdir)
+    total_bg, gdf_bg = export_block_groups(args.outdir)
+    export_filegdb(args.outdir, {
+        'watersheds_ej_discharge': gdf_ws,
+        'towns_ej_discharge': gdf_towns,
+        'block_groups_ej_discharge': gdf_bg,
+    })
     if args.include_2011:
         export_necir_2011(args.outdir)
     write_readme(args.outdir, args.include_2011)
