@@ -120,6 +120,17 @@ def main():
     else:
         df = new_data
 
+    # Never persist days with zero reporting stations. Such rows carry no signal
+    # (precip_in_avg is NaN) and are almost always trailing/future placeholders
+    # left over from an earlier full-calendar-year fetch (e.g. a run that wrote
+    # Jan 1–Dec 31 and padded every day after the last real observation with
+    # n_stations=0). Dropping them keeps the row count monotonic across weekly
+    # runs and prevents the validate_data row-count regression that this causes.
+    before = len(df)
+    df = df[df['n_stations'] > 0].copy()
+    if len(df) < before:
+        print(f'  Dropped {before - len(df)} empty (0-station) day rows')
+
     df.to_csv(out_path, index=False)
     print(f'\nWrote {len(df)} rows to {out_path} ({len(new_data)} newly fetched)')
 

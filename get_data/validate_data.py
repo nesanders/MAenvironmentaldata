@@ -107,6 +107,7 @@ ROW_DECREASE_TOLERANCE_PCT = {
     'EEADP_facility.csv': 1.0,    # EEA API may drop/merge facilities
     'EEADP_inspection.csv': 1.0,  # EEA API data source updates
     'EEADP_enforcement.csv': 1.0, # EEA API data source updates
+    'MA_precipitation_daily.csv': 1.0,  # ACIS may retract recent provisional station-days
 }
 
 
