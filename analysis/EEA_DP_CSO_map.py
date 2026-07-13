@@ -582,6 +582,14 @@ class CSOAnalysisEEADP(CSOAnalysis):
             return None, None
         df_rain['date'] = pd.to_datetime(df_rain['date'])
         df_rain = df_rain.sort_values('date').set_index('date')
+        # Reindex to a dense daily calendar: shift() and rolling() below are
+        # positional, so a missing date (possible now that zero-station days are
+        # dropped at fetch time) would silently misalign the obs-day shift and
+        # the lookback window.  Missing days become NaN, which the rolling sum
+        # and downstream dropna() already handle.
+        df_rain = df_rain.reindex(
+            pd.date_range(df_rain.index.min(), df_rain.index.max(), freq='D')
+        )
         # ACIS daily precipitation is observation-day dated: most COOP stations
         # observe in the morning and attribute the preceding ~24 hours of rain to
         # the observation day, so rain that falls on day d is predominantly
