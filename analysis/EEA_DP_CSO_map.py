@@ -935,6 +935,82 @@ class CSOAnalysisEEADP(CSOAnalysis):
         mychart.jekyll_write(outpath)
         print(f'  Wrote rainfall CDF chart to {outpath}')
 
+    def write_rainfall_discharge_facts(self, window_days: int=2):
+        """Compute the rainfall-discharge summary statistics quoted in the analysis
+        post and upsert them into the fact file.
+
+        Values are written as bare numbers (percentages as whole ints); units and
+        phrasing live in the post prose.  Entries under other keys already in the
+        fact file are preserved, so this can be re-run without a full analysis pass.
+        """
+        print('Writing rainfall-discharge facts')
+        prior_rain, df_all = self._load_rain_and_cso(window_days)
+        if prior_rain is None:
+            print('  Daily precipitation CSV not found; skipping rainfall facts')
+            return
+
+        # Day table: every day in the analysis window with its prior rainfall and
+        # whether any discharge was reported (same construction as
+        # plot_discharge_frequency_by_rain)
+        discharge_days = set(df_all['incidentDate'].dt.normalize())
+        all_dates = prior_rain.index[
+            (prior_rain.index >= pd.Timestamp(self.cso_data_start))
+            & (prior_rain.index <= pd.Timestamp(self.cso_data_end))
+        ]
+        df_days = pd.DataFrame({
+            'prior_rain_in': prior_rain.reindex(all_dates),
+            'had_discharge': [d in discharge_days for d in all_dates],
+        }).dropna()
+
+        dry_sel        = df_days['prior_rain_in'] < 0.05
+        heavy_sel      = (df_days['prior_rain_in'] >= 0.75) & (df_days['prior_rain_in'] < 1.5)
+        very_heavy_sel = df_days['prior_rain_in'] >= 1.5
+
+        # Dry-day report cohort: every report whose incident date falls on a day
+        # with < 0.05 in of prior-48-hr rainfall
+        dry_dates = set(df_days.index[dry_sel])
+        df_reports = df_all.assign(discharge_date=df_all['incidentDate'].dt.normalize())
+        dry_reports = df_reports[df_reports['discharge_date'].isin(dry_dates)]
+        munis_per_dry_day = dry_reports.groupby('discharge_date')['municipality'].nunique()
+
+        # Spearman rank correlation across (day, event-type-group) pairs, matching
+        # the point set of plot_rainfall_discharge_scatter
+        daily_by_type = (
+            df_all.groupby(['incidentDate', 'type_group'])['volumnOfEvent'].sum() / 1e6
+        ).rename('discharge_mgal').reset_index()
+        daily_by_type = daily_by_type.join(
+            prior_rain.rename('prior_rain_in'), on='incidentDate'
+        ).dropna()
+        spearman_rho = daily_by_type['prior_rain_in'].corr(
+            daily_by_type['discharge_mgal'], method='spearman'
+        )
+
+        facts = {
+            'rain_freq_dry_pct':        round(df_days.loc[dry_sel, 'had_discharge'].mean() * 100),
+            'rain_freq_wet_pct':        round(df_days.loc[~dry_sel, 'had_discharge'].mean() * 100),
+            'rain_freq_heavy_pct':      round(df_days.loc[heavy_sel, 'had_discharge'].mean() * 100),
+            'rain_freq_very_heavy_pct': round(df_days.loc[very_heavy_sel, 'had_discharge'].mean() * 100),
+            'dry_reports':              int(len(dry_reports)),
+            'dry_days':                 int(dry_reports['discharge_date'].nunique()),
+            'dry_untreated_reports':    int((dry_reports['type_group'] == 'CSO – Untreated').sum()),
+            'dry_median_munis_per_day': int(munis_per_dry_day.median()),
+            'rain_volume_spearman_rho': f'{spearman_rho:.1f}',
+        }
+
+        # Upsert: preserve all fact-file entries under other keys
+        existing = []
+        if os.path.exists(self.fact_file):
+            with open(self.fact_file) as f:
+                existing = [
+                    line for line in f
+                    if line.split(':')[0].strip() not in facts
+                ]
+        with open(self.fact_file, 'w') as f:
+            f.writelines(existing)
+            for key, val in facts.items():
+                f.write(f'{key}: {val}\n')
+        print(f'  Wrote {len(facts)} rainfall facts to {self.fact_file}')
+
     # -------------------------
     # Dashboard-specific plots
     # -------------------------
@@ -1202,6 +1278,7 @@ class CSOAnalysisEEADP(CSOAnalysis):
         self.plot_discharge_frequency_by_rain()
         self.plot_rainfall_cdf_by_type()
         self.plot_rainfall_discharge_scatter()
+        self.write_rainfall_discharge_facts()
 
     # -------------------------
     # Per-year EJ evolution

@@ -760,8 +760,10 @@ class CSOAnalysis():
     def run_analysis(self):
         """Load all data and generate all plots and analysis.
         """
-        # Clear out the fact file
-        open(self.fact_file, 'w').close()
+        # Clear out the fact file (only when regression will regenerate its facts;
+        # a --plots-only run must not wipe the committed regression facts)
+        if self.make_regression:
+            open(self.fact_file, 'w').close()
         
         # Data ETL
         self.geo_towns_df, self.geo_watersheds_df, self.geo_blockgroups_df = self.get_geo_files()
