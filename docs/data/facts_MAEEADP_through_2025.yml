@@ -20,3 +20,12 @@ annual_ej_LOWINCPCT_2025: 3.2 times (90% CI 1.4–7.0)
 annual_ej_LINGISOPCT_2023: 1.9 times (90% CI 1.2–15.3)
 annual_ej_LINGISOPCT_2024: 2.3 times (90% CI 1.1–66.5)
 annual_ej_LINGISOPCT_2025: 1.8 times (90% CI 1.1–18.8)
+rain_freq_dry_pct: 12
+rain_freq_wet_pct: 60
+rain_freq_heavy_pct: 90
+rain_freq_very_heavy_pct: 100
+dry_reports: 119
+dry_days: 66
+dry_untreated_reports: 81
+dry_median_munis_per_day: 1
+rain_volume_spearman_rho: 0.5
