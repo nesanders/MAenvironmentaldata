@@ -124,7 +124,12 @@ def get_data() -> pd.DataFrame:
         existing = pd.read_csv(csv_path, index_col=0)
         existing['incidentDate'] = pd.to_datetime(existing['incidentDate'], format='ISO8601')
         max_date = existing['incidentDate'].max()
-        from_date = max_date.strftime('%m/%d/%Y')
+        # The CSOAPI parses IncidentFromDate as DD/MM/YYYY (day-first), NOT the
+        # US-style MM/DD/YYYY. Sending month-first silently filters from the wrong
+        # month when the day is <= 12, and returns HTTP 500 (invalid month) when the
+        # day is > 12 — which run_query() swallows as "no new records", silently
+        # freezing the dataset (this stalled CSO updates at 2026-04-19 for months).
+        from_date = max_date.strftime('%d/%m/%Y')
         # Drop cached rows on the boundary date — the API refetch will include them.
         existing = existing[existing['incidentDate'].dt.date < max_date.date()].copy()
         print(f'  Cached data through {max_date.date()}; fetching from {from_date} (inclusive)')
