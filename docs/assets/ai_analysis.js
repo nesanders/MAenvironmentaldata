@@ -23,6 +23,16 @@ const DB_URL = 'https://storage.googleapis.com/openamend-data/amend.db.gz';
 const SCHEMA_QUERY = "SELECT name, sql FROM sqlite_master WHERE type='table' ORDER BY name";
 const MAX_PREVIEW_ROWS = 20;
 const WRITE_BLOCK_RE = /\b(INSERT|UPDATE|DELETE|DROP|CREATE|ALTER|TRUNCATE)\b/i;
+// Max automatic SQL repair attempts: on a SQLite error we feed the failing SQL +
+// error back to the model to correct, up to this many times, before giving up.
+const MAX_SQL_RETRIES = 3;
+
+// Normalize model-generated SQL before execution. Currently quotes the reserved
+// word "index" (a pandas artifact column) when it appears outside string
+// literals. Applied to both first-pass and retried SQL.
+function normalizeGeneratedSql(sql) {
+  return sql.replace(/\b(index)\b(?=(?:[^"]*"[^"]*")*[^"]*$)/gi, '"index"');
+}
 
 const PROVIDER_CONFIG = {
   groq: {
@@ -667,6 +677,8 @@ function buildStage1SystemPrompt(schema) {
     'SQL rules:',
     '- Never reference the column named "index" — it is a pandas artifact and a reserved SQLite keyword; always omit it',
     '- Write valid SQLite SELECT statements only',
+    '- The SQLite engine does not support window functions. Never use OVER(), PARTITION BY, ROW_NUMBER(), RANK(), DENSE_RANK(), NTILE(), LAG(), LEAD(), or FILTER(...).',
+    '- To pick the top row(s) within each group, use a correlated subquery instead of a window function: for the single top row per group, keep rows whose value equals (SELECT MAX(value) FROM t2 WHERE t2.group_key = t.group_key); for the top N per group, keep rows whose count of higher-valued peers in the same group is less than N.',
     '- Never use INSERT, UPDATE, DELETE, DROP, CREATE, ALTER, or TRUNCATE',
     '- Use LIMIT 500 for row-level queries; no LIMIT for aggregations by geography',
     '- Column names must exactly match the schema above',
@@ -738,7 +750,7 @@ async function runAnalysis(question) {
 
   // Quote bare `index` keyword (pandas artifact; reserved SQLite word).
   // Matches `index` that is not already inside quotes and not part of a longer word.
-  stage1.sql = stage1.sql.replace(/\b(index)\b(?=(?:[^"]*"[^"]*")*[^"]*$)/gi, '"index"');
+  stage1.sql = normalizeGeneratedSql(stage1.sql);
 
   // SQL safety check
   if (WRITE_BLOCK_RE.test(stage1.sql)) {
@@ -747,16 +759,24 @@ async function runAnalysis(question) {
 
   updateLastStatus('⏳ Executing SQL query…');
 
-  // Execute SQL via worker
+  // Execute SQL via worker, with a guarded auto-repair loop: on a SQLite error
+  // we feed the failing SQL + error back to the model to correct, then re-run,
+  // up to MAX_SQL_RETRIES times. Recovers from errors the engine raises (e.g.
+  // unsupported syntax) without the user having to click "Fix error".
   var sqlResult = await workerExec({ action: 'exec', sql: stage1.sql });
-  if (sqlResult.error) {
-    // Attempt retry with error context
-    stage1 = await retrySQLWithError(question, stage1.sql, sqlResult.error);
+  for (var attempt = 1; sqlResult.error && attempt <= MAX_SQL_RETRIES; attempt++) {
+    stage1 = await retrySQLWithError(question, stage1.sql, sqlResult.error, attempt);
+    if (!stage1.sql) {
+      throw new Error('SQL error and the model did not return a corrected query: ' + sqlResult.error);
+    }
+    stage1.sql = normalizeGeneratedSql(stage1.sql);
     if (WRITE_BLOCK_RE.test(stage1.sql)) {
       throw new Error('Retry produced SQL with disallowed operations.');
     }
     sqlResult = await workerExec({ action: 'exec', sql: stage1.sql });
-    if (sqlResult.error) throw new Error('SQL error after retry: ' + sqlResult.error);
+  }
+  if (sqlResult.error) {
+    throw new Error('SQL error after ' + MAX_SQL_RETRIES + ' repair attempts: ' + sqlResult.error);
   }
 
   var queryResults = sqlResult.results && sqlResult.results[0];
@@ -826,8 +846,9 @@ async function runAnalysis(question) {
   }
 }
 
-async function retrySQLWithError(question, failedSQL, errorMsg) {
-  appendChatMessage('assistant', '⚠️ SQL error, retrying with correction…', 'status');
+async function retrySQLWithError(question, failedSQL, errorMsg, attempt) {
+  var label = attempt ? ' (attempt ' + attempt + '/' + MAX_SQL_RETRIES + ')' : '';
+  appendChatMessage('assistant', '⚠️ SQL error, retrying with correction' + label + '…', 'status');
   var retryMessages = [
     { role: 'system', content: buildStage1SystemPrompt(STATE.schema) },
     { role: 'user', content: question },
