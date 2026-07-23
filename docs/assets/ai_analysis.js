@@ -27,6 +27,11 @@ const WRITE_BLOCK_RE = /\b(INSERT|UPDATE|DELETE|DROP|CREATE|ALTER|TRUNCATE)\b/i;
 // error back to the model to correct, up to this many times, before giving up.
 const MAX_SQL_RETRIES = 3;
 
+// Build marker — bump when changing this file so a loaded page can be identified
+// (logged to console and shown next to the DB-status line). Lets you confirm the
+// browser is running the current JS rather than a cached/older build.
+const AI_BUILD = 'sql-compat-retry+diagnostics+models+jsonfix · 2026-07-21';
+
 // Normalize model-generated SQL before execution. Currently quotes the reserved
 // word "index" (a pandas artifact column) when it appears outside string
 // literals. Applied to both first-pass and retried SQL.
@@ -47,7 +52,7 @@ const PROVIDER_CONFIG = {
   },
   gemini: {
     endpoint: 'https://generativelanguage.googleapis.com/v1beta/models/{model}:generateContent',
-    defaultModel: 'gemini-2.5-flash',
+    defaultModel: 'gemini-flash-latest',
     format: 'gemini',
   },
 };
@@ -606,7 +611,40 @@ function callGemini(endpointTemplate, apiKey, model, messages) {
 function parseJSON(text) {
   // Strip markdown code fences if present
   var cleaned = text.replace(/^```(?:json)?\s*/i, '').replace(/\s*```\s*$/, '').trim();
-  return JSON.parse(cleaned);
+  try {
+    return JSON.parse(cleaned);
+  } catch (e) {
+    // Models sometimes wrap the JSON in prose or append commentary after the
+    // closing brace ("Unexpected non-whitespace character after JSON…").
+    // Fall back to extracting the first balanced {...} object and parse that.
+    var obj = extractFirstJSONObject(cleaned);
+    if (obj !== null) return JSON.parse(obj);
+    throw e;
+  }
+}
+
+// Return the first balanced top-level {...} object in a string, ignoring braces
+// inside string literals (escape-aware), or null if none is found.
+function extractFirstJSONObject(s) {
+  var start = s.indexOf('{');
+  if (start < 0) return null;
+  var depth = 0, inStr = false, esc = false;
+  for (var i = start; i < s.length; i++) {
+    var c = s.charAt(i);
+    if (inStr) {
+      if (esc) esc = false;
+      else if (c === '\\') esc = true;
+      else if (c === '"') inStr = false;
+    } else if (c === '"') {
+      inStr = true;
+    } else if (c === '{') {
+      depth++;
+    } else if (c === '}') {
+      depth--;
+      if (depth === 0) return s.slice(start, i + 1);
+    }
+  }
+  return null;
 }
 
 // ─── System Prompts ──────────────────────────────────────────────────────────
@@ -763,10 +801,17 @@ async function runAnalysis(question) {
   // we feed the failing SQL + error back to the model to correct, then re-run,
   // up to MAX_SQL_RETRIES times. Recovers from errors the engine raises (e.g.
   // unsupported syntax) without the user having to click "Fix error".
+  // Each attempt is recorded; diagnostics are rendered once at the end so a
+  // single-attempt success shows just the SQL that ran (no "initial vs final"),
+  // while a revised query shows the final SQL plus a collapsed list of the
+  // earlier attempts. See renderSqlDiagnostics().
+  var sqlAttempts = [];
   var sqlResult = await workerExec({ action: 'exec', sql: stage1.sql });
+  sqlAttempts.push({ sql: stage1.sql, error: sqlResult.error || null });
   for (var attempt = 1; sqlResult.error && attempt <= MAX_SQL_RETRIES; attempt++) {
     stage1 = await retrySQLWithError(question, stage1.sql, sqlResult.error, attempt);
     if (!stage1.sql) {
+      renderSqlDiagnostics(sqlAttempts, null);
       throw new Error('SQL error and the model did not return a corrected query: ' + sqlResult.error);
     }
     stage1.sql = normalizeGeneratedSql(stage1.sql);
@@ -774,10 +819,13 @@ async function runAnalysis(question) {
       throw new Error('Retry produced SQL with disallowed operations.');
     }
     sqlResult = await workerExec({ action: 'exec', sql: stage1.sql });
+    sqlAttempts.push({ sql: stage1.sql, error: sqlResult.error || null });
   }
   if (sqlResult.error) {
+    renderSqlDiagnostics(sqlAttempts, null);
     throw new Error('SQL error after ' + MAX_SQL_RETRIES + ' repair attempts: ' + sqlResult.error);
   }
+  renderSqlDiagnostics(sqlAttempts, stage1.sql);
 
   var queryResults = sqlResult.results && sqlResult.results[0];
   // sql.js returns [] (empty array) for a SELECT that matched 0 rows — results[0] is undefined
@@ -1401,6 +1449,82 @@ function appendChatMessage(role, text, subtype, artifactId) {
   return div;
 }
 
+// Visual SQL diagnostic: shows an attempt/error/success line plus (optionally)
+// the SQL or error text in a monospace block, so retries and the final query are
+// visible in the chat panel. kind ∈ {'attempt','error','success'}.
+function appendSqlDiagnostic(title, body, kind) {
+  var log = document.getElementById('ai-chat-log');
+  var div = document.createElement('div');
+  div.className = 'ai-chat-msg ai-chat-msg--assistant ai-diagnostic ai-diagnostic--' + (kind || 'attempt');
+  div.setAttribute('data-subtype', 'diagnostic');
+  var html = '<div class="ai-diag-title">' + escapeHTML(title) + '</div>';
+  if (body) html += '<pre class="ai-sql-block">' + escapeHTML(body) + '</pre>';
+  div.innerHTML = html;
+  log.appendChild(div);
+  log.scrollTop = log.scrollHeight;
+  return div;
+}
+
+// Render SQL diagnostics after execution resolves.
+//   attempts : [{sql, error}] in order (error null on the successful run)
+//   finalSql : the SQL that succeeded, or null if every attempt failed
+// If the query was never revised (one attempt), show a single block with the SQL
+// that ran. If it was revised, show the final SQL plus a collapsed <details> of
+// the earlier (failed) attempts, closed by default.
+function renderSqlDiagnostics(attempts, finalSql) {
+  var revised = attempts.length > 1;
+
+  if (finalSql && !revised) {
+    appendSqlDiagnostic('✓ SQL executed successfully', finalSql, 'success');
+    return;
+  }
+
+  var earlier = finalSql ? attempts.slice(0, -1) : attempts;
+
+  if (finalSql) {
+    appendSqlDiagnostic(
+      '✓ SQL executed successfully (after ' + earlier.length +
+        ' revision' + (earlier.length === 1 ? '' : 's') + ')',
+      finalSql, 'success'
+    );
+  } else {
+    appendSqlDiagnostic(
+      'Could not run a valid query after ' + attempts.length + ' attempts',
+      attempts[attempts.length - 1].error, 'error'
+    );
+  }
+
+  if (!earlier.length) return;
+
+  var log = document.getElementById('ai-chat-log');
+  var details = document.createElement('details');
+  details.className = 'ai-chat-msg ai-chat-msg--assistant ai-diagnostic ai-diagnostic--attempt ai-diag-earlier';
+  details.setAttribute('data-subtype', 'diagnostic');
+  var summary = document.createElement('summary');
+  summary.className = 'ai-diag-title';
+  summary.textContent = 'Earlier attempt' + (earlier.length === 1 ? '' : 's') +
+    ' (' + earlier.length + ')';
+  details.appendChild(summary);
+  earlier.forEach(function(a, i) {
+    var t = document.createElement('div');
+    t.className = 'ai-diag-title ai-diag-earlier-label';
+    t.textContent = 'Attempt ' + (i + 1) + ' — failed';
+    details.appendChild(t);
+    var sqlPre = document.createElement('pre');
+    sqlPre.className = 'ai-sql-block';
+    sqlPre.textContent = a.sql;
+    details.appendChild(sqlPre);
+    if (a.error) {
+      var errPre = document.createElement('pre');
+      errPre.className = 'ai-sql-block';
+      errPre.textContent = 'Error: ' + a.error;
+      details.appendChild(errPre);
+    }
+  });
+  log.appendChild(details);
+  log.scrollTop = log.scrollHeight;
+}
+
 function updateLastStatus(text) {
   var log = document.getElementById('ai-chat-log');
   var statusMsgs = log.querySelectorAll('[data-subtype="status"]');
@@ -1516,7 +1640,8 @@ async function handleSubmit() {
   }
 }
 
-document.addEventListener('DOMContentLoaded', function() {
+if (typeof document !== 'undefined') document.addEventListener('DOMContentLoaded', function() {
+  console.log('[AMEND AI] build: ' + AI_BUILD);
   initWorker();
   populateSettingsUI();
   fetchSemanticContext();
@@ -1556,3 +1681,14 @@ document.addEventListener('DOMContentLoaded', function() {
     });
   });
 });
+
+// CommonJS export of the pure, DOM-free helpers so they can be unit-tested with
+// `node --test`. No effect in the browser (module is undefined there).
+if (typeof module !== 'undefined' && module.exports) {
+  module.exports = {
+    parseJSON: parseJSON,
+    extractFirstJSONObject: extractFirstJSONObject,
+    normalizeGeneratedSql: normalizeGeneratedSql,
+    buildStage1SystemPrompt: buildStage1SystemPrompt,
+  };
+}
