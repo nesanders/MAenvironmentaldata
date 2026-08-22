@@ -60,8 +60,20 @@ jobs:
           python get_MS4_annual_reports.py --yes --skip-download
 
       - name: Fetch — MA lobbying disclosures (incremental)
-        timeout-minutes: 45
+        # 45 min was too tight during the Jul/Jan full-sweep filing windows: the
+        # last 3 consecutive weekly runs (2026-08-03, -10, -17) all hit the
+        # timeout while still making real progress (e.g. 1550/1682 registrants
+        # done, 305 new disclosures found, right up to the kill). Bumped with
+        # real margin above the observed ~49 min full-sweep completion time.
+        timeout-minutes: 90
         working-directory: get_data
+        env:
+          # Unbuffered stdout: without this, Python fully block-buffers when its
+          # output isn't a TTY (true for a CI-piped log), so the GH Actions log
+          # shows nothing for many minutes at a time and then dumps a huge burst
+          # — making it impossible to tell a slow-but-progressing run apart from
+          # a real hang without downloading and timestamp-diffing the raw log.
+          PYTHONUNBUFFERED: "1"
         run: python get_MA_lobbying.py --archive-raw
 
       - name: Fetch — MA legislature bills (incremental)
