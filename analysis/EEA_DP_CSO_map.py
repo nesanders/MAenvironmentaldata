@@ -89,7 +89,12 @@ class CSOAnalysisEEADP(CSOAnalysis):
         print(f'Loading EEA Data Portal CSO data')
         disk_engine = get_engine()
         data_cso = pd.read_sql_query(self.EEA_DP_CSO_QUERY, disk_engine)
-        data_cso['incidentDate'] = pd.to_datetime(data_cso['incidentDate'])
+        # format='mixed': incidentDate is written as a uniform string by
+        # get_eea_dp_cso.py, but this is the first parse of the raw column and a
+        # defensive fallback in case any stored value ever has a different (but
+        # still valid) format than the rest — a strict single-format parse would
+        # crash the whole dashboard build on one bad row.
+        data_cso['incidentDate'] = pd.to_datetime(data_cso['incidentDate'], format='mixed')
         data_cso.rename(columns={
             'volumnOfEvent': self.discharge_vol_col,
             'outfallId': 'cso_id'

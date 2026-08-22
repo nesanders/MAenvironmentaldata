@@ -123,6 +123,11 @@ def get_data() -> pd.DataFrame:
     try:
         existing = pd.read_csv(csv_path, index_col=0)
         existing['incidentDate'] = pd.to_datetime(existing['incidentDate'], format='ISO8601')
+        # submittedDate must also be parsed here (not just incidentDate): leaving it
+        # as a raw string column means pd.concat([existing, new_df]) below produces
+        # a mixed object column (raw CSV strings next to real Timestamps from
+        # _parse_dates), which the write-side normalization can't safely re-parse.
+        existing['submittedDate'] = pd.to_datetime(existing['submittedDate'], format='ISO8601')
         max_date = existing['incidentDate'].max()
         # The CSOAPI parses IncidentFromDate as DD/MM/YYYY (day-first), NOT the
         # US-style MM/DD/YYYY. Sending month-first silently filters from the wrong
@@ -162,8 +167,23 @@ def get_data() -> pd.DataFrame:
 def write_data(df: pd.DataFrame):
     """Write data to a local table for integration with AMEND."""
     print('Writing out queried data')
-    df.to_csv('../docs/data/EEADP_CSO.csv', index=True)
-    df.sample(n=10).to_csv('../docs/data/EEADP_CSO_sample.csv', index=False)
+    # incidentDate is always midnight in the API (time-of-day lives in the
+    # separate incidentTime field); when an incremental batch of new rows is
+    # ALL exactly midnight, pandas' to_csv formats that batch as bare
+    # "YYYY-MM-DD" (no time) while older rows in the same file keep
+    # "YYYY-MM-DD HH:MM:SS" — a genuinely mixed-format column that later
+    # breaks a plain pd.to_datetime() re-parse (ValueError: time data
+    # "YYYY-MM-DD" doesn't match format "%Y-%m-%d %H:%M:%S"). Format both
+    # date columns to an explicit, uniform string before writing so every
+    # row is unambiguous regardless of pandas' internal formatting.
+    out = df.copy()
+    for col in ('incidentDate', 'submittedDate'):
+        # format='mixed': the incoming column may itself be a mix of raw CSV
+        # strings and real Timestamp objects (e.g. if a caller skipped parsing
+        # on load) — infer per-element rather than assuming one format.
+        out[col] = pd.to_datetime(out[col], format='mixed').dt.strftime('%Y-%m-%d %H:%M:%S')
+    out.to_csv('../docs/data/EEADP_CSO.csv', index=True)
+    out.sample(n=10).to_csv('../docs/data/EEADP_CSO_sample.csv', index=False)
 
 
 def main():
