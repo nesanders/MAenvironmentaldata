@@ -22,11 +22,11 @@ year_backlog_cleared: 2100
 n_cso_mapped: 39
 n_cso_unique_wb: 56
 n_cso_not_matched: 17
-vol_not_supporting_bgal: 16.0
+vol_not_supporting_bgal: 16.2
 vol_not_matched_bgal: 4.4
-vol_total_bgal: 20.4
+vol_total_bgal: 20.6
 pct_vol_impaired_of_matched: 100.0
-pct_vol_impaired_of_total: 78.4
+pct_vol_impaired_of_total: 78.5
 n_persistent: "1,108"
 n_delisted: 70
 n_newly_added: 456
