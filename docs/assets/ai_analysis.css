@@ -492,6 +492,37 @@
   font-family: 'Courier New', monospace;
 }
 
+/* ─── SQL diagnostics + build tag ────────────────────────────────────────── */
+
+.ai-diagnostic {
+  background: #f4f7fb;
+  border-left: 3px solid #90a4c8;
+}
+.ai-diagnostic--error {
+  background: #fdecea;
+  border-left-color: #c62828;
+}
+.ai-diagnostic--success {
+  background: #eaf6ea;
+  border-left-color: #2e7d32;
+}
+.ai-diag-title {
+  font-size: 0.8em;
+  font-weight: 600;
+  color: #555;
+}
+.ai-diagnostic--error .ai-diag-title { color: #c62828; }
+.ai-diagnostic--success .ai-diag-title { color: #2e7d32; }
+
+.ai-diag-earlier > summary {
+  cursor: pointer;
+  color: #666;
+}
+.ai-diag-earlier-label {
+  margin-top: 8px;
+  color: #c62828;
+}
+
 /* ─── Data Table ─────────────────────────────────────────────────────────── */
 .ai-data-section {
   margin-top: 8px;
