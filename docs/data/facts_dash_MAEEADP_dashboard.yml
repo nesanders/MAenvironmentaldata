@@ -1,9 +1,9 @@
 rain_freq_dry_pct: 12
-rain_freq_wet_pct: 58
+rain_freq_wet_pct: 57
 rain_freq_heavy_pct: 87
 rain_freq_very_heavy_pct: 100
-dry_reports: 139
-dry_days: 75
+dry_reports: 140
+dry_days: 76
 dry_untreated_reports: 90
 dry_median_munis_per_day: 1
 rain_volume_spearman_rho: 0.5
