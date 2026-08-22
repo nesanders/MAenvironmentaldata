@@ -1,0 +1,73 @@
+{% raw  %}
+<html>
+    <head>
+        <title>Unique Clients by Position on Environmental Bills</title>
+        <script src='https://cdn.jsdelivr.net/npm/chart.js@4.4.4/dist/chart.umd.min.js'></script>
+    </head>
+    <body>
+        <div style="width: 700px; height: 380px; max-width: 99%" class="chartjs">
+
+            <canvas id="Unique Clients by Position on Environmental Bills" height="380" width="700"></canvas>
+            <script>
+                Chart.defaults.font.size = 12;
+                var chart_data = {
+
+                    data: {
+                        labels: ["2010", "2011", "2012", "2013", "2014", "2015", "2016", "2017", "2018", "2019", "2020", "2021", "2022", "2023", "2024", "2025"],
+                        datasets: [{'data': [30.0, 37.0, 55.0, 40.0, 214.0, 188.0, 207.0, 128.0, 212.0, 135.0, 210.0, 194.0, 288.0, 198.0, 287.0, 233.0], 'label': 'Support', 'backgroundColor': 'rgba(60, 170, 80, 0.85)', 'stack': 'pos'},{'data': [25.0, 27.0, 44.0, 34.0, 170.0, 149.0, 248.0, 97.0, 197.0, 105.0, 180.0, 198.0, 285.0, 168.0, 363.0, 263.0], 'label': 'Neutral', 'backgroundColor': 'rgba(150, 150, 150, 0.6)', 'stack': 'pos'},{'data': [27.0, 29.0, 49.0, 22.0, 189.0, 124.0, 177.0, 99.0, 163.0, 93.0, 150.0, 108.0, 130.0, 112.0, 145.0, 166.0], 'label': 'Oppose', 'backgroundColor': 'rgba(200, 60, 60, 0.85)', 'stack': 'pos'}]
+                    },
+                    type: 'bar',
+                    options: {
+                        scales: {
+                            y: {
+                                display: true,
+                                title: {
+                                    display: true,
+                                    text: 'Unique lobbying clients'
+                                },
+                                position: 'left',
+                                stacked: true
+                            },
+                            y1: {
+                                display: false,
+                                title: {
+                                    display: true,
+                                    text: ''
+                                },
+                                position: 'right'
+                            },
+                            x: {
+                                title: {
+                                    display: true,
+                                    text: 'Year'
+                                },
+                                stacked: true,
+                                ticks: {
+                                    autoSkip: true
+                                }
+                            }
+                        },
+                        plugins: {
+                            legend: {
+                                display: true
+                            },
+                            tooltip: {
+                                enabled: true
+                            }
+                        }
+                    }
+                }
+                
+                
+            </script>
+            <script>
+                {
+
+                    var ctx = document.getElementById("Unique Clients by Position on Environmental Bills").getContext("2d");
+                    var mychart = new Chart(ctx, chart_data);
+                }
+            </script>
+        </div>
+    </body>
+</html>
+{% endraw  %}

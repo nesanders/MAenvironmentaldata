@@ -1,0 +1,73 @@
+{% raw  %}
+<html>
+    <head>
+        <title>Environmental Bills by Topic Category and Legislative Session</title>
+        <script src='https://cdn.jsdelivr.net/npm/chart.js@4.4.4/dist/chart.umd.min.js'></script>
+    </head>
+    <body>
+        <div style="width: 720px; height: 400px; max-width: 99%" class="chartjs">
+
+            <canvas id="Environmental Bills by Topic Category and Legislative Session" height="400" width="720"></canvas>
+            <script>
+                Chart.defaults.font.size = 12;
+                var chart_data = {
+
+                    data: {
+                        labels: ["GC184", "GC185", "GC186", "GC187", "GC188", "GC189", "GC190", "GC191", "GC192", "GC193", "GC194"],
+                        datasets: [{'data': [42, 50, 94, 188, 409, 368, 451, 529, 598, 577, 555], 'label': 'Environmental Protection', 'backgroundColor': 'rgba(54, 110, 179, 0.85)', 'stack': 'cat'},{'data': [2, 2, 27, 58, 153, 157, 205, 246, 291, 278, 214], 'label': 'Energy', 'backgroundColor': 'rgba(230, 140, 40, 0.85)', 'stack': 'cat'},{'data': [8, 20, 26, 44, 81, 81, 93, 91, 95, 97, 84], 'label': 'Public and Natural Resources', 'backgroundColor': 'rgba(60, 170, 80, 0.85)', 'stack': 'cat'},{'data': [0, 2, 13, 20, 62, 50, 62, 67, 58, 87, 61], 'label': 'Government Operations and Politics', 'backgroundColor': 'rgba(200, 60, 60, 0.85)', 'stack': 'cat'},{'data': [0, 1, 6, 23, 37, 30, 28, 48, 65, 50, 42], 'label': 'Transportation and Public Works', 'backgroundColor': 'rgba(130, 80, 200, 0.85)', 'stack': 'cat'},{'data': [26, 41, 41, 96, 194, 184, 198, 227, 294, 263, 243], 'label': 'Other', 'backgroundColor': 'rgba(30, 160, 160, 0.85)', 'stack': 'cat'}]
+                    },
+                    type: 'bar',
+                    options: {
+                        scales: {
+                            y: {
+                                display: true,
+                                title: {
+                                    display: true,
+                                    text: 'Unique environmental bills'
+                                },
+                                position: 'left',
+                                stacked: true
+                            },
+                            y1: {
+                                display: false,
+                                title: {
+                                    display: true,
+                                    text: ''
+                                },
+                                position: 'right'
+                            },
+                            x: {
+                                title: {
+                                    display: true,
+                                    text: 'General Court (legislative session)'
+                                },
+                                stacked: true,
+                                ticks: {
+                                    autoSkip: true
+                                }
+                            }
+                        },
+                        plugins: {
+                            legend: {
+                                display: true
+                            },
+                            tooltip: {
+                                enabled: true
+                            }
+                        }
+                    }
+                }
+                
+                
+            </script>
+            <script>
+                {
+
+                    var ctx = document.getElementById("Environmental Bills by Topic Category and Legislative Session").getContext("2d");
+                    var mychart = new Chart(ctx, chart_data);
+                }
+            </script>
+        </div>
+    </body>
+</html>
+{% endraw  %}

@@ -1,0 +1,73 @@
+{% raw  %}
+<html>
+    <head>
+        <title>Environmental Lobbying Spend vs. DEP Staff Headcount</title>
+        <script src='https://cdn.jsdelivr.net/npm/chart.js@4.4.4/dist/chart.umd.min.js'></script>
+    </head>
+    <body>
+        <div style="width: 700px; height: 400px; max-width: 99%" class="chartjs">
+
+            <canvas id="Environmental Lobbying Spend vs. DEP Staff Headcount" height="400" width="700"></canvas>
+            <script>
+                Chart.defaults.font.size = 12;
+                var chart_data = {
+
+                    data: {
+                        labels: ["2010", "2011", "2012", "2013", "2014", "2015", "2016", "2017", "2018", "2019", "2020", "2021", "2022", "2023", "2024"],
+                        datasets: [{'data': [0.5331743781176923, 0.5107008277939288, 0.9745506438880933, 0.917219373474375, 3.666642236419212, 3.0168652608550284, 4.774327957275744, 2.2371831433741147, 3.75122182652979, 2.731203140571212, 4.464122129455884, 3.98001635879674, 6.33532681416131, 5.136936043689343, 7.76174714679887], 'label': 'Industry lobbying spend ($M)', 'backgroundColor': 'rgba(230, 140, 40, 0.85)', 'yAxisID': 'y'},{'data': [982, 887, 894, 912, 931, 928, 873, 849, 747, 864, 802, 843, 932, 1008, 942], 'label': 'DEP staff (FTE)', 'backgroundColor': 'rgba(54, 110, 179, 0.85)', 'type': 'line', 'yAxisID': 'y1'}]
+                    },
+                    type: 'bar',
+                    options: {
+                        scales: {
+                            y: {
+                                display: true,
+                                title: {
+                                    display: true,
+                                    text: 'Lobbying spend ($M)'
+                                },
+                                position: 'left',
+                                stacked: false
+                            },
+                            y1: {
+                                display: true,
+                                title: {
+                                    display: true,
+                                    text: 'DEP staff (FTE)'
+                                },
+                                position: 'right'
+                            },
+                            x: {
+                                title: {
+                                    display: true,
+                                    text: 'Year'
+                                },
+                                stacked: false,
+                                ticks: {
+                                    autoSkip: true
+                                }
+                            }
+                        },
+                        plugins: {
+                            legend: {
+                                display: true
+                            },
+                            tooltip: {
+                                enabled: true
+                            }
+                        }
+                    }
+                }
+                
+                
+            </script>
+            <script>
+                {
+
+                    var ctx = document.getElementById("Environmental Lobbying Spend vs. DEP Staff Headcount").getContext("2d");
+                    var mychart = new Chart(ctx, chart_data);
+                }
+            </script>
+        </div>
+    </body>
+</html>
+{% endraw  %}
