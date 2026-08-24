@@ -1,5 +1,5 @@
-EEADP_CSO.csv: 18613
-EEADP_enforcement.csv: 55682
+EEADP_CSO.csv: 18621
+EEADP_enforcement.csv: 55702
 EEADP_facility.csv: 53717
 EEADP_inspection.csv: 84768
 EEADP_permit.csv: 101144
@@ -15,7 +15,7 @@ MA_lobbying_client_purposes.csv: 140675
 MA_lobbying_employers.csv: 38918
 MA_lobbying_expenses.csv: 81903
 MA_lobbying_lobbyists.csv: 7794
-MA_precipitation_daily.csv: 9731
+MA_precipitation_daily.csv: 9732
 MassBudget_environmental_infadjusted.csv: 72
 MassBudget_environmental_noinfadjusted.csv: 72
 MassBudget_environmental_summary.csv: 27
