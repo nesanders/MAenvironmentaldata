@@ -136,3 +136,4 @@ docs/data/MA_lobbying_lobbyists.csv
 docs/data/MA_lobbying_expenses.csv
 docs/data/MA_lobbying_client_purposes.csv
 get_data/MEMO_lobbying_rescrape_for_site.md
+arcgis_export/
