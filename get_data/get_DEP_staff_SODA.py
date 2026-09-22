@@ -1,14 +1,19 @@
 """
 MA DEP staff data can be collected from the MA office of the Comptroller of the Commonwealth:
 
-https://cthru.data.socrata.com/Government/Comptroller-of-the-Commonwealth-Payroll/rr3a-7twk
+https://cthru.data.socrata.com/d/9ttk-7vz6
 
 The Comptroller provides a SODA API, which is used here to retrieve the data:
 
-https://dev.socrata.com/foundry/cthru.data.socrata.com/rr3a-7twk
+https://dev.socrata.com/foundry/cthru.data.socrata.com/9ttk-7vz6
 
 Unfortunately, the Comptroller's site only provides data back
 to 2010, whereas other sources extend back to 2004.
+
+Note: the Comptroller retired the previous dataset slug (rr3a-7twk,
+"Comptroller of the Commonwealth Payroll") around September 2026 and
+replaced it with "Commonwealth Of Massachusetts Payroll v4" (9ttk-7vz6),
+which has the same column schema.
 """
 
 import pandas as pd
@@ -18,7 +23,7 @@ import os
 
 print(f'[{datetime.datetime.now().isoformat()}] get_DEP_staff_SODA.py starting...')
 
-DEP_SLUG = "rr3a-7twk"
+DEP_SLUG = "9ttk-7vz6"
 
 ### Load credentials - you need to sign up for a SODA account to register a token
 print(f'[{datetime.datetime.now().isoformat()}] Loading SODA credentials from SECRET_SODA_token...')
