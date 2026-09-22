@@ -1,0 +1,74 @@
+{% raw  %}
+<html>
+    <head>
+        <title>Top 20 Clients Opposing Environmental Bills (all years)</title>
+        <script src='https://cdn.jsdelivr.net/npm/chart.js@4.4.4/dist/chart.umd.min.js'></script>
+    </head>
+    <body>
+        <div style="width: 750px; height: 520px; max-width: 99%" class="chartjs">
+
+            <canvas id="Top 20 Clients Opposing Environmental Bills (all years)" height="520" width="750"></canvas>
+            <script>
+                Chart.defaults.font.size = 12;
+                var chart_data = {
+
+                    data: {
+                        labels: ["Casella Waste Systems, Inc.", "Eastman Chemical Company", "Consumer Technology Association", "NAIOP Massachusetts, Inc.", "Eversource", "Exxon Mobil Corporation", "RISE (Responsible Industry for a Sound Environment)", "Retailers Association of Massachusetts, Inc.", "Massachusetts Municipal Association", "Waste Management of Massachusetts, Inc.", "Greater Boston Real Estate Board", "NAIOP Massachusetts", "National Grid USA", "Massachusetts Association of Realtors", "Associated Industries of Massachusetts (AIM)", "American Petroleum Institute", "Retailers Association of Massachusetts", "National Grid", "American Chemistry Council", "National Federation of Independent Business"],
+                        datasets: [{'data': [49, 50, 51, 52, 54, 56, 62, 67, 68, 72, 74, 78, 86, 92, 100, 166, 168, 179, 209, 210], 'label': 'Unique env bills opposed', 'backgroundColor': 'rgba(200, 60, 60, 0.85)'}]
+                    },
+                    type: 'bar',
+                    options: {
+                        indexAxis: 'y',
+                        scales: {
+                            y: {
+                                display: true,
+                                title: {
+                                    display: true,
+                                    text: ''
+                                },
+                                position: 'left',
+                                stacked: false
+                            },
+                            y1: {
+                                display: false,
+                                title: {
+                                    display: true,
+                                    text: ''
+                                },
+                                position: 'right'
+                            },
+                            x: {
+                                title: {
+                                    display: true,
+                                    text: 'Unique environmental bills opposed'
+                                },
+                                stacked: false,
+                                ticks: {
+                                    autoSkip: true
+                                }
+                            }
+                        },
+                        plugins: {
+                            legend: {
+                                display: true
+                            },
+                            tooltip: {
+                                enabled: true
+                            }
+                        }
+                    }
+                }
+                
+                
+            </script>
+            <script>
+                {
+
+                    var ctx = document.getElementById("Top 20 Clients Opposing Environmental Bills (all years)").getContext("2d");
+                    var mychart = new Chart(ctx, chart_data);
+                }
+            </script>
+        </div>
+    </body>
+</html>
+{% endraw  %}

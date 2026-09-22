@@ -1,0 +1,74 @@
+{% raw  %}
+<html>
+    <head>
+        <title>Top 20 Clients by Cumulative Environmental Lobbying Spend</title>
+        <script src='https://cdn.jsdelivr.net/npm/chart.js@4.4.4/dist/chart.umd.min.js'></script>
+    </head>
+    <body>
+        <div style="width: 750px; height: 520px; max-width: 99%" class="chartjs">
+
+            <canvas id="Top 20 Clients by Cumulative Environmental Lobbying Spend" height="520" width="750"></canvas>
+            <script>
+                Chart.defaults.font.size = 12;
+                var chart_data = {
+
+                    data: {
+                        labels: ["Sunrun Inc.", "Massachusetts Beverage Association", "Greater Boston Plumbing Contractors Association, Inc.", "Exelon Generation Company, LLC", "Associated Industries of Massachusetts (AIM)", "NAIOP Massachusetts", "Waste Management of Massachusetts, Inc.", "Massachusetts Municipal Wholesale Electric Company", "NextEra Energy Project Management, LLC", "Massachusetts Municipal Association", "Consumers for Sensible Energy", "Eversource Energy", "FirstLight Power Resources", "National Grid USA", "Kinder Morgan, Inc.", "PepsiCo, Inc.", "American Petroleum Institute", "American Chemistry Council", "National Grid", "Eversource"],
+                        datasets: [{'data': [0.26109440529756933, 0.2686646103896104, 0.28306818181818183, 0.28566625276349833, 0.28881741151834744, 0.2970119297950554, 0.30360497648484336, 0.306691626, 0.30875, 0.30890448796786374, 0.309375, 0.3191328720731264, 0.32925802424242423, 0.33277538264696466, 0.37820599667953664, 0.4190875104361494, 0.4351370398336885, 0.48876290771818215, 0.5010595542295008, 0.7172750430973852], 'label': 'Total env-bill spend ($M, all years)', 'backgroundColor': 'rgba(60, 170, 80, 0.85)'}]
+                    },
+                    type: 'bar',
+                    options: {
+                        indexAxis: 'y',
+                        scales: {
+                            y: {
+                                display: true,
+                                title: {
+                                    display: true,
+                                    text: ''
+                                },
+                                position: 'left',
+                                stacked: false
+                            },
+                            y1: {
+                                display: false,
+                                title: {
+                                    display: true,
+                                    text: ''
+                                },
+                                position: 'right'
+                            },
+                            x: {
+                                title: {
+                                    display: true,
+                                    text: 'Cumulative env-bill spend ($M)'
+                                },
+                                stacked: false,
+                                ticks: {
+                                    autoSkip: true
+                                }
+                            }
+                        },
+                        plugins: {
+                            legend: {
+                                display: true
+                            },
+                            tooltip: {
+                                enabled: true
+                            }
+                        }
+                    }
+                }
+                
+                
+            </script>
+            <script>
+                {
+
+                    var ctx = document.getElementById("Top 20 Clients by Cumulative Environmental Lobbying Spend").getContext("2d");
+                    var mychart = new Chart(ctx, chart_data);
+                }
+            </script>
+        </div>
+    </body>
+</html>
+{% endraw  %}

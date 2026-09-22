@@ -1,0 +1,73 @@
+{% raw  %}
+<html>
+    <head>
+        <title>Environmental Lobbying Engagement by Legislative Session</title>
+        <script src='https://cdn.jsdelivr.net/npm/chart.js@4.4.4/dist/chart.umd.min.js'></script>
+    </head>
+    <body>
+        <div style="width: 720px; height: 380px; max-width: 99%" class="chartjs">
+
+            <canvas id="Environmental Lobbying Engagement by Legislative Session" height="380" width="720"></canvas>
+            <script>
+                Chart.defaults.font.size = 12;
+                var chart_data = {
+
+                    data: {
+                        labels: ["GC184", "GC185", "GC186", "GC187", "GC188", "GC189", "GC190", "GC191", "GC192", "GC193", "GC194"],
+                        datasets: [{'data': [50, 68, 113, 237, 520, 484, 577, 665, 766, 736, 671], 'label': 'Unique env bills lobbied', 'backgroundColor': 'rgba(30, 160, 160, 0.85)', 'yAxisID': 'y'},{'data': [64, 91, 83, 143, 395, 596, 500, 450, 732, 682, 458], 'label': 'Unique employer clients', 'backgroundColor': 'rgba(230, 140, 40, 0.85)', 'type': 'line', 'yAxisID': 'y1'}]
+                    },
+                    type: 'bar',
+                    options: {
+                        scales: {
+                            y: {
+                                display: true,
+                                title: {
+                                    display: true,
+                                    text: 'Unique environmental bills'
+                                },
+                                position: 'left',
+                                stacked: false
+                            },
+                            y1: {
+                                display: true,
+                                title: {
+                                    display: true,
+                                    text: 'Unique employer clients'
+                                },
+                                position: 'right'
+                            },
+                            x: {
+                                title: {
+                                    display: true,
+                                    text: 'General Court (legislative session)'
+                                },
+                                stacked: false,
+                                ticks: {
+                                    autoSkip: true
+                                }
+                            }
+                        },
+                        plugins: {
+                            legend: {
+                                display: true
+                            },
+                            tooltip: {
+                                enabled: true
+                            }
+                        }
+                    }
+                }
+                
+                
+            </script>
+            <script>
+                {
+
+                    var ctx = document.getElementById("Environmental Lobbying Engagement by Legislative Session").getContext("2d");
+                    var mychart = new Chart(ctx, chart_data);
+                }
+            </script>
+        </div>
+    </body>
+</html>
+{% endraw  %}
