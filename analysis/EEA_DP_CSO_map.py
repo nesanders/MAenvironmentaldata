@@ -261,7 +261,9 @@ class CSOAnalysisEEADP(CSOAnalysis):
         mychart = chartjs.chart("Discharge volume per operator by discharge type", "Bar", 640, 480)
 
         data_types = self.data_cso_filtered_reports['eventType'].unique()
-        all_operators = sorted(self.data_cso_filtered_reports['permiteeName'].unique())
+        # dropna: a handful of raw incident records lack a permiteeName, which mixes
+        # NaN (float) into the unique values and breaks sorted() against the strings
+        all_operators = sorted(self.data_cso_filtered_reports['permiteeName'].dropna().unique())
 
         # Optionally truncate labels for readability
         if truncate_labels:
