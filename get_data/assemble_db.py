@@ -86,7 +86,10 @@ if __name__ == '__main__':
 		# Extend with placeholder row (zero growth) for missing years
 		new_row = data_csv['SSAWages'].iloc[-1:].copy()
 		new_row.iloc[0, 0] = yr  # Update year column
-		new_row.iloc[0, 2:] = 0  # Zero-fill growth columns
+		# Zero-fill growth columns, matching each column's dtype (pandas 3.0's
+		# Arrow-backed string dtype rejects assigning int 0 into a str column)
+		for col in data_csv['SSAWages'].columns[2:]:
+			new_row[col] = 0 if pd.api.types.is_numeric_dtype(data_csv['SSAWages'][col]) else '0'
 		data_csv['SSAWages'] = pd.concat([data_csv['SSAWages'], new_row], ignore_index=True)
 
 	## Build waterBody -> watershed lookup table for CSO choropleth mapping.
