@@ -289,6 +289,72 @@ def _parse_amount(text: str) -> float | None:
         return None
 
 
+_PERIOD_RE = re.compile(r'(\d{2}/\d{2}/\d{4})\s*-\s*(\d{2}/\d{2}/\d{4})')
+
+
+def parse_disclosure_period(soup: BeautifulSoup) -> tuple[str | None, str | None]:
+    """Extract the true (period_start, period_end) reporting period, as ISO date
+    strings, from a CompleteDisclosure page.
+
+    The Summary page's own `lblYear` field holds only the 4-digit year (e.g.
+    "2026"), which is all `parse_summary()` reads. But the CompleteDisclosure
+    page reuses the same field id for the actual filing period, formatted as
+    "MM/DD/YYYY - MM/DD/YYYY" (e.g. "01/01/2026 - 06/30/2026") — verified across
+    all four HTML format eras back to 2005. This is the field MAPLE's sister
+    project (codeforboston/maple#2250) found was never captured, and whose
+    absence is the root cause of AMEND's own year-only dedup-key collisions
+    between an entity's H1 and H2 filings (nesanders/MAenvironmentaldata#126).
+    """
+    tag = soup.find(id='ContentPlaceHolder1_lblYear')
+    if not tag:
+        return None, None
+    m = _PERIOD_RE.search(tag.get_text(strip=True))
+    if not m:
+        return None, None
+    start = datetime.datetime.strptime(m.group(1), '%m/%d/%Y').date().isoformat()
+    end = datetime.datetime.strptime(m.group(2), '%m/%d/%Y').date().isoformat()
+    return start, end
+
+
+def parse_disclosure_registrant(soup: BeautifulSoup) -> tuple[str | None, str | None]:
+    """Extract the true (registrant_name, registrant_type) that filed this
+    CompleteDisclosure page, read from the page's own registrant-info block —
+    NOT from whichever Summary page happened to link to it.
+
+    A disc_url is only ever fetched once (`existing_disc_urls` dedup), keyed
+    off of whichever Summary page's disclosure_urls list first surfaced it.
+    But the state's portal cross-lists a single filing from multiple Summary
+    pages: an entity's (firm's) own filing also appears on the individual
+    Summary page of every lobbyist employed there (e.g. as an "Authorizing
+    Officer"). If that lobbyist's own Summary page is processed before (or
+    instead of) the entity's, every compensation/bill row from that filing
+    was being silently attributed to the lobbyist's personal name instead of
+    the entity that actually filed it — verified against a live page where
+    `entity_name` from the discovering Summary page was "Matthew B LeBretton"
+    but the disclosure's own registrant block named the actual filer as
+    "Charles Street Strategies, LLC".
+
+    Two templates exist (verified present, mutually exclusive, on every
+    disclosure page sampled across all eras back to 2005):
+      Entity template:   `ERegistrationInfoReview1_lblEntityCompany`
+      Lobbyist template: `LRegistrationInfoReview1_lblLobbyist{First,Middle,Last}Name`
+    Returns (None, None) if neither is present (defensive fallback — callers
+    should fall back to the discovering Summary page's entity_name in that case).
+    """
+    entity_tag = soup.find(id='ContentPlaceHolder1_ERegistrationInfoReview1_lblEntityCompany')
+    if entity_tag and entity_tag.get_text(strip=True):
+        return entity_tag.get_text(strip=True), 'Lobbyist Entity'
+
+    last = soup.find(id='ContentPlaceHolder1_LRegistrationInfoReview1_lblLobbyistLastName')
+    if last and last.get_text(strip=True):
+        first = soup.find(id='ContentPlaceHolder1_LRegistrationInfoReview1_lblLobbyistFirstName')
+        middle = soup.find(id='ContentPlaceHolder1_LRegistrationInfoReview1_lblLobbyistMiddleName')
+        parts = [t.get_text(strip=True) for t in (first, middle, last) if t and t.get_text(strip=True)]
+        return ' '.join(parts), 'Lobbyist'
+
+    return None, None
+
+
 def fetch_disclosure_detail(session, disc_url: str, year: int) -> dict:
     """Fetch + parse a CompleteDisclosure page."""
     return parse_disclosure_detail(_get(session, disc_url), year)
@@ -324,10 +390,18 @@ def parse_disclosure_detail(soup: BeautifulSoup, year: int) -> dict:
       compensation: list of {client_name, amount}
       bills:        list of {client_name, chamber, bill_number, bill_title,
                               position, amount, general_court}
+      period_start, period_end: ISO date strings for the true filing period
+        (see parse_disclosure_period()), or None if unparseable
+      registrant_name, registrant_type: the true filer of this disclosure,
+        read from the page's own registrant block (see
+        parse_disclosure_registrant()) — NOT necessarily the entity_name of
+        whichever Summary page's link led here; None if unparseable
     """
     compensation = []
     bills = []
     gc = _year_to_general_court(year)
+    period_start, period_end = parse_disclosure_period(soup)
+    registrant_name, registrant_type = parse_disclosure_registrant(soup)
 
     # ── Modern / Hybrid: per-client bill activity tables ───────────────────────
     # ID patterns: 2014–2018 → grdvActivitiesNew_{n} (no year);
@@ -400,7 +474,9 @@ def parse_disclosure_detail(soup: BeautifulSoup, year: int) -> dict:
                 compensation.append({'client_name': client_name, 'amount': amt})
 
     if comp_table or bills:
-        return {'compensation': compensation, 'bills': bills}
+        return {'compensation': compensation, 'bills': bills,
+                'period_start': period_start, 'period_end': period_end,
+                'registrant_name': registrant_name, 'registrant_type': registrant_type}
 
     # ── Legacy format (2005–2013): single grdvActivities table ─────────────────
     # Three known column layouts; registrant type (individual vs. entity), not
@@ -502,7 +578,9 @@ def parse_disclosure_detail(soup: BeautifulSoup, year: int) -> dict:
             if total:
                 compensation.append({'client_name': '_total_salary_', 'amount': total})
 
-    return {'compensation': compensation, 'bills': bills}
+    return {'compensation': compensation, 'bills': bills,
+            'period_start': period_start, 'period_end': period_end,
+            'registrant_name': registrant_name, 'registrant_type': registrant_type}
 
 
 # ─── Additional disclosure-page fields (parsed offline from the raw archive) ────
@@ -761,10 +839,15 @@ def main():
     def _append(df: pd.DataFrame, new_rows: list[dict], dedup_keys: list[str]) -> pd.DataFrame:
         if not new_rows:
             return df
-        new_df = pd.DataFrame(new_rows).drop_duplicates(subset=dedup_keys)
+        # keep='last': matches reparse_lobbying_archive.py's full-rebuild semantics,
+        # so a genuine same-period collision (an amendment re-filed under a new
+        # disc_url) is resolved consistently by both pipelines. Distinct periods
+        # (H1 vs H2) no longer collide at all now that period_end is in the key
+        # (nesanders/MAenvironmentaldata#126).
+        new_df = pd.DataFrame(new_rows).drop_duplicates(subset=dedup_keys, keep='last')
         if df.empty:
             return new_df
-        return pd.concat([df, new_df], ignore_index=True).drop_duplicates(subset=dedup_keys)
+        return pd.concat([df, new_df], ignore_index=True).drop_duplicates(subset=dedup_keys, keep='last')
 
     def _flush(n_new_disc: int) -> None:
         links_df.to_csv(links_path, index=False)
@@ -878,21 +961,34 @@ def main():
 
                 detail = fetch_disclosure_detail(session, disc_url, year)
 
+                # The disclosure page's own registrant block is authoritative — a
+                # single filing is cross-listed from every affiliated lobbyist's
+                # own Summary page too (e.g. as "Authorizing Officer"), so trusting
+                # meta['entity_name']/reg_type (whichever Summary page's link
+                # happened to surface this disc_url first) can misattribute the
+                # whole filing to the wrong registrant. Fall back to the Summary
+                # page's values only if the disclosure page itself is unparseable.
+                true_entity = detail.get('registrant_name') or entity_name
+                true_reg_type = detail.get('registrant_type') or reg_type
+                period_end = detail.get('period_end')
+
                 new_employer_rows = [
                     {
-                        'entity_name': entity_name,
+                        'entity_name': true_entity,
                         'client_name': comp['client_name'],
                         'year': year,
-                        'reg_type': reg_type,
+                        'period_end': period_end,
+                        'reg_type': true_reg_type,
                         'compensation': comp['amount'],
                     }
                     for comp in detail['compensation']
                 ]
                 new_bill_rows = [
                     {
-                        'entity_name': entity_name,
+                        'entity_name': true_entity,
                         'client_name': bill['client_name'],
                         'year': year,
+                        'period_end': period_end,
                         'general_court': bill['general_court'],
                         'chamber': bill['chamber'],
                         'bill_number': bill['bill_number'],
@@ -903,10 +999,16 @@ def main():
                     for bill in detail['bills']
                 ]
 
+                # period_end distinguishes H1 vs H2 filings for the same client/bill
+                # (year alone previously collided them — #126); year stays in the key
+                # too as a defensive fallback for the rare page where period couldn't
+                # be parsed (both rows would then share period_end=None and still dedupe
+                # correctly against genuine same-period re-processing).
                 employers_df = _append(employers_df, new_employer_rows,
-                                       ['entity_name', 'client_name', 'year'])
+                                       ['entity_name', 'client_name', 'year', 'period_end'])
                 bills_df     = _append(bills_df, new_bill_rows,
-                                       ['entity_name', 'client_name', 'bill_number', 'general_court'])
+                                       ['entity_name', 'client_name', 'bill_number',
+                                        'general_court', 'year', 'period_end'])
                 # Drop any visited-marker row for this page before adding the real link
                 if not links_df.empty:
                     links_df = links_df[~(links_df['summary_url'].eq(summary_url)
