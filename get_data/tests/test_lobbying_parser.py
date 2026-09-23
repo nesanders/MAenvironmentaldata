@@ -196,3 +196,60 @@ def test_expenses_filters_zero_template_rows():
     ex = g.parse_expenses(_soup('2011e_disc'))
     assert len(ex) == 2
     assert sum(e['amount'] for e in ex) == pytest.approx(414_750.0, abs=1.0)
+
+
+# ── Reporting period + true registrant (nesanders/MAenvironmentaldata#126) ──────
+# The Summary page's own lblYear only ever gives a bare year, which collided an
+# entity's H1 and H2 filings under the same dedup key. And the discovering
+# Summary page's registrant name is not reliably who actually filed a given
+# disclosure — a single filing is cross-listed from every affiliated lobbyist's
+# own Summary page too (e.g. 2024i_disc below: discovered via individual
+# lobbyist Anthony Arthur Abdelahad's Summary page, per SUMMARY_CASES above, but
+# actually filed by his employer entity "Ventry Associates, LLP").
+
+# (fixture, year, period_start, period_end)
+PERIOD_CASES = [
+    ('2007e_disc', 2007, '2007-01-01', '2007-06-30'),
+    ('2011e_disc', 2011, '2011-01-01', '2011-06-30'),
+    ('2016e_disc', 2016, '2016-01-01', '2016-06-30'),
+    ('2024e_disc', 2024, '2024-01-01', '2024-06-30'),
+    ('2024i_disc', 2024, '2024-07-01', '2024-12-31'),
+    ('2011i_disc', 2011, '2011-01-01', '2011-06-30'),
+]
+
+
+@pytest.mark.parametrize('fix,year,start,end', PERIOD_CASES)
+def test_disclosure_period(fix, year, start, end):
+    assert g.parse_disclosure_period(_soup(fix)) == (start, end)
+    d = g.parse_disclosure_detail(_soup(fix), year)
+    assert (d['period_start'], d['period_end']) == (start, end)
+
+
+# (fixture, true_registrant_name, true_registrant_type)
+REGISTRANT_CASES = [
+    ('2007e_disc', 'Ventry Associates, LLP', 'Lobbyist Entity'),
+    ('2011e_disc', 'ML Strategies, LLC', 'Lobbyist Entity'),
+    ('2016e_disc', 'Murphy Donoghue Partners', 'Lobbyist Entity'),
+    ('2024e_disc', '21c, LLC', 'Lobbyist Entity'),
+    # Discovered via individual lobbyist Anthony Arthur Abdelahad's Summary page
+    # (see SUMMARY_CASES) but actually filed by his employer entity — exactly
+    # the misattribution this parser exists to catch.
+    ('2024i_disc', 'Ventry Associates, LLP', 'Lobbyist Entity'),
+    ('2011i_disc', 'Aaron Judd Agulnek', 'Lobbyist'),
+]
+
+
+@pytest.mark.parametrize('fix,name,reg_type', REGISTRANT_CASES)
+def test_disclosure_registrant(fix, name, reg_type):
+    assert g.parse_disclosure_registrant(_soup(fix)) == (name, reg_type)
+    d = g.parse_disclosure_detail(_soup(fix), 2024)
+    assert (d['registrant_name'], d['registrant_type']) == (name, reg_type)
+
+
+def test_disclosure_registrant_falls_back_to_none_when_unparseable():
+    """A page with neither registrant template (e.g. a Summary page, or a
+    malformed fetch) must return (None, None) so callers fall back to the
+    discovering Summary page's entity_name rather than silently keying on
+    a wrong or empty value."""
+    assert g.parse_disclosure_registrant(_soup('2024i_summ')) == (None, None)
+    assert g.parse_disclosure_period(_soup('2024i_summ')) == (None, None)
