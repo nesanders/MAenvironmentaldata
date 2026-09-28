@@ -157,15 +157,25 @@ def main():
                         continue
                     seen_disc.add(hf.name)
                     detail = g.parse_disclosure_detail(soup, year)
+                    # The disclosure page's own registrant block is authoritative —
+                    # `entity` here is just whichever Summary page's link first
+                    # surfaced this disc_url in the manifest, which can be a
+                    # different (but affiliated) lobbyist/entity than the one that
+                    # actually filed it (see parse_disclosure_registrant()).
+                    true_entity = detail.get('registrant_name') or entity
+                    period_end = detail.get('period_end')
                     for c in detail['compensation']:
-                        employers.append({'entity_name': entity, 'client_name': c['client_name'],
-                                          'year': year, 'compensation': c['amount']})
+                        employers.append({'entity_name': true_entity, 'client_name': c['client_name'],
+                                          'year': year, 'period_end': period_end,
+                                          'compensation': c['amount'],
+                                          '_disc_reg_type': detail.get('registrant_type')})
                     for b in detail['bills']:
-                        bills.append({'entity_name': entity, 'year': year, **b})
+                        bills.append({'entity_name': true_entity, 'year': year,
+                                      'period_end': period_end, **b})
                     for cc in g.parse_campaign_contributions(soup):
-                        campaigns.append({'entity_name': entity, 'year': year, **cc})
+                        campaigns.append({'entity_name': true_entity, 'year': year, **cc})
                     for ex in g.parse_expenses(soup):
-                        expenses.append({'entity_name': entity, 'year': year, **ex})
+                        expenses.append({'entity_name': true_entity, 'year': year, **ex})
 
                 elif ptype == 'summary':
                     if hf.name in seen_summ:
@@ -194,10 +204,14 @@ def main():
         print(f'NOTE: {n_unmatched:,} archived pages had no manifest match '
               '(stale links or search pages) — skipped')
 
-    # reg_type lives on the summary page, not the disclosure page; attach it to
-    # employer rows (needed for the compensation dedup and the site memo).
+    # reg_type is normally read off the entity's own summary page. Prefer that
+    # when available, but fall back to the type derived directly from the
+    # disclosure page's own registrant block (_disc_reg_type) — the corrected
+    # true_entity's own summary page may never have been separately visited if
+    # this disclosure was only discovered via an affiliated lobbyist's page.
     for row in employers:
-        row['reg_type'] = reg_by.get((row['entity_name'], row['year']))
+        disc_reg_type = row.pop('_disc_reg_type', None)
+        row['reg_type'] = reg_by.get((row['entity_name'], row['year'])) or disc_reg_type
 
     # ── Write CSVs (dedup where a natural key exists) ───────────────────────────
     # In incremental mode, merge new rows into the existing CSV restored from GCS;
@@ -219,9 +233,17 @@ def main():
 
     print('\nWriting CSVs...')
     paths = [
-        _write(employers, 'MA_lobbying_employers.csv', dedup=['entity_name', 'client_name', 'year']),
+        # period_end distinguishes H1 vs H2 filings for the same client/bill
+        # (year alone previously collided them — #126); year stays in the key
+        # too as a defensive fallback for the rare page where period couldn't
+        # be parsed. bills previously had no year in its key at all, which
+        # could also collide same-bill/same-client rows across the two
+        # calendar years of a single General Court session.
+        _write(employers, 'MA_lobbying_employers.csv',
+               dedup=['entity_name', 'client_name', 'year', 'period_end']),
         _write(bills, 'MA_lobbying_bills.csv',
-               dedup=['entity_name', 'client_name', 'bill_number', 'general_court'], quote_all=True),
+               dedup=['entity_name', 'client_name', 'bill_number', 'general_court',
+                      'year', 'period_end'], quote_all=True),
         _write(campaigns, 'MA_lobbying_campaign_contributions.csv',
                dedup=['entity_name', 'year', 'lobbyist_name', 'recipient_name', 'date', 'amount']),
         _write(edges, 'MA_lobbying_lobbyists.csv', dedup=['lobbyist_name', 'entity_name', 'year']),

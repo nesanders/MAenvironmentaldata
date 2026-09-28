@@ -444,11 +444,17 @@ if __name__ == '__main__':
 		if 'general_court' in _lb.columns:
 			_lb['general_court'] = pd.to_numeric(_lb['general_court'], errors='coerce').astype('Int64')
 		# Deduplicate: null-bill rows ("no specific bills") are sometimes scraped
-		# multiple times from the SoS portal across filing periods.  Drop exact
-		# duplicates on the logical key; keep the row with the highest amount so
-		# no spend is lost when two copies carry different values.
-		_lb_key = ['entity_name', 'client_name', 'year', 'general_court',
-		           'bill_number', 'position']
+		# multiple times from the SoS portal. Drop exact duplicates on the logical
+		# key; keep the row with the highest amount so no spend is lost when two
+		# copies carry different values.
+		# IMPORTANT: period_end is in the key so this doesn't re-collapse an
+		# entity's distinct H1 and H2 filings for the same client/bill back into
+		# one row (nesanders/MAenvironmentaldata#126) — that upstream fix is
+		# undone here if period_end is dropped from this key, since the two
+		# periods' rows otherwise collide on every other field and this step
+		# would silently keep only the higher-amount period.
+		_lb_key = ['entity_name', 'client_name', 'year', 'period_end',
+		           'general_court', 'bill_number', 'position']
 		_lb_before = len(_lb)
 		_lb = (_lb.sort_values('amount', ascending=False, na_position='last')
 		          .drop_duplicates(subset=_lb_key, keep='first')

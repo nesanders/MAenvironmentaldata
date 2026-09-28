@@ -189,29 +189,36 @@ TABLE_DESCRIPTIONS = {
         'Charles River phosphorus dominates the quantitative data; other watersheds have fewer records.'
     ),
     'MA_Lobbying_Employers': (
-        'MA Secretary of State lobbying disclosures: one row per (lobbying firm, client/employer, year). '
+        'MA Secretary of State lobbying disclosures: one row per (lobbying firm, client/employer, semi-annual filing period). '
         'CRITICAL DISTINCTION: entity_name = the lobbying firm (e.g. "Smith & Jones Lobbying LLC"); '
         'client_name = the actual employer paying for lobbying (e.g. "National Grid USA"). '
         'Always use client_name for employer-level analysis. '
-        'Key fields: entity_name, client_name, year, compensation (total dollars paid by client to firm that year), '
-        'reg_type (registration type). '
+        'Key fields: entity_name, client_name, year, period_end, compensation (dollars paid by client to firm for that '
+        'H1/H2 filing — sum both periods for an annual total), reg_type (registration type). '
+        'period_end is the last day of the filing period (Jun 30 for H1, Dec 31 for H2); a client that recurs in '
+        'both H1 and H2 filings from the same entity in the same year has TWO rows, one per period — do not assume '
+        'one row per (entity_name, client_name, year). '
         'Data covers 2009–present; older years have sparse compensation data. '
-        'Join to MA_Lobbying_Bills on (entity_name, client_name, year) to see which bills a client lobbied. '
+        'Join to MA_Lobbying_Bills on (entity_name, client_name, year) to see which bills a client lobbied '
+        '(add period_end too for period-exact joins). '
         'IMPORTANT: this table has NO spending column called total_expenditure — the column is compensation.'
     ),
     'MA_Lobbying_Bills': (
         'MA SoS lobbying disclosures: fact table linking employers to bills they lobbied. '
-        'One row per (entity_name, client_name, general_court, bill_number, year). '
+        'One row per (entity_name, client_name, general_court, bill_number, year, period_end) — see period_end note below. '
         'CRITICAL DISTINCTION: entity_name = lobbying firm; client_name = paying employer. '
-        'Key fields: entity_name, client_name, year, general_court, bill_number, bill_id, bill_prefix, '
+        'Key fields: entity_name, client_name, year, period_end, general_court, bill_number, bill_id, bill_prefix, '
         'bill_title, position ("Support", "Oppose", "Neutral", or empty), chamber, amount (per-bill spend if reported). '
+        'period_end is the last day of the filing period (Jun 30 for H1, Dec 31 for H2); the same bill/client can '
+        'appear once per filing period the entity lobbied it in. '
         'bill_id is a derived column combining bill_prefix + bill_number (e.g. H1234, S5678). '
         'bill_prefix is derived from chamber: "House Bill"/"HB" → "H"; "Senate Bill"/"SB" → "S"; '
         '"House Docket"/"HD" → "HD"; "Senate Docket"/"SD" → "SD". '
         'PREFERRED join to MA_Lobbying_Bills_Scored: use (bill_id, general_court) — '
         'do NOT use (bill_number, general_court) alone as H and S bills can share the same integer bill_number. '
         'Join to MA_Legislature_Bills on (bill_id, general_court) for passed status. '
-        'Join to MA_Lobbying_Employers on (entity_name, client_name, year) for total compensation. '
+        'Join to MA_Lobbying_Employers on (entity_name, client_name, year) for total compensation '
+        '(add period_end too for period-exact joins). '
         'IMPORTANT: this table has NO single spending column — compensation lives in MA_Lobbying_Employers.'
     ),
     'MA_Legislature_Bills': (
@@ -368,7 +375,10 @@ COLUMN_NOTES = {
         'entity_name': 'Lobbying firm name (e.g. "Smith Advocacy LLC"). NOT the employer — use client_name for employer analysis.',
         'client_name': 'Paying employer/client (e.g. "National Grid USA"). Use this for employer-level analysis, NOT entity_name.',
         'year': 'Calendar year of the filing. Compensation data is sparse before 2019; 2019–present is complete.',
-        'compensation': 'Total dollars paid by client_name to entity_name for lobbying that year. IMPORTANT: the column is "compensation", NOT "total_expenditure".',
+        'period_end': 'Last day of the semi-annual filing period this row reports (2026-06-30 for H1, 2026-12-31 for H2). '
+                      'A client paying the same entity in both halves of a year has two rows — sum compensation across '
+                      'period_end values for an annual total; do not just filter to one row per (entity_name, client_name, year).',
+        'compensation': 'Dollars paid by client_name to entity_name for lobbying in that filing period (see period_end). IMPORTANT: the column is "compensation", NOT "total_expenditure".',
         'reg_type': 'Registration type (e.g. "Lobbying Entity"). Use to filter out non-employer rows if needed.',
     },
     'MA_Lobbying_Bills': {
@@ -384,6 +394,7 @@ COLUMN_NOTES = {
         'chamber': 'Raw chamber string from SoS portal: "House Bill", "Senate Bill", "House Docket", "Senate Docket", "HB", "SB", "Executive", "FY", etc.',
         'position': 'Lobbying position: "Support", "Oppose", "Neutral", or empty string. Use for coalition/opposition analysis.',
         'year': 'Filing year. Join to MA_Lobbying_Employers on (entity_name, client_name, year) for compensation.',
+        'period_end': 'Last day of the semi-annual filing period (Jun 30 for H1, Dec 31 for H2) — same bill/client can appear once per period lobbied.',
         'amount': 'Per-bill spend in dollars (often NULL — use MA_Lobbying_Employers.compensation for spending analysis).',
     },
     'MA_Legislature_Bills': {

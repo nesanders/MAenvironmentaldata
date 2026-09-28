@@ -1,5 +1,5 @@
 # AMEND Database Semantic Context
-Generated: 2026-06-21
+Generated: 2026-09-23
 
 ## Global Data Notes
 
@@ -331,7 +331,7 @@ Alabama	Amount from Federal Government	18112231	2016_old
 
 ---
 
-### EPARegion1_permits (4,460 rows)
+### EPARegion1_permits (4,513 rows)
 EPA Region 1 NPDES (water discharge) permit listings for MA facilities. Key fields: Facility_Name, Permit_Number, Date_of_Issuance, Watershed, State, Stage.
 
 ```sql
@@ -919,7 +919,7 @@ CalendarYear	EmployeeName	JobTitle	Earnings	JobType	JobLevel	Seniority	name_firs
 
 ---
 
-### MADEP_staff_Comptroller (13,394 rows)
+### MADEP_staff_Comptroller (15,423 rows)
 MassDEP staffing data from MA Comptroller payroll via SODA API (more recent, updated weekly). Each row is one employee-year. Key fields: year, name_first, name_last, position_title, pay_total_actual, pay_base_actual.
 
 ```sql
@@ -928,7 +928,7 @@ CREATE TABLE "MADEP_staff_Comptroller" (
 	bargaining_group_title TEXT, 
 	contract TEXT, 
 	department_division TEXT, 
-	department_location_zip_code BIGINT, 
+	department_location_zip_code TEXT, 
 	name_first TEXT, 
 	name_last TEXT, 
 	pay_base_actual FLOAT, 
@@ -943,11 +943,11 @@ CREATE TABLE "MADEP_staff_Comptroller" (
 
 /* 5 rows from MADEP_staff_Comptroller:
 bargaining_group_title	contract	department_division	department_location_zip_code	name_first	name_last	pay_base_actual	pay_buyout_actual	pay_overtime_actual	pay_total_actual	position_title	position_type	year
-MOSES - Engineers/Scientists	MOSES - Engineers/Scientists (09)	DEPARTMENT OF ENVIRONMENTAL PROTECTION (EQE)	21084746	Robert	Lucci	68276.59	0.0	0.0	68276.59	Environmental Analyst IV	Full Time Employee	2010
-NAGE - Professional Admin.	NAGE - Professional Admin. (06)	DEPARTMENT OF ENVIRONMENTAL PROTECTION (EQE)	21084746	Steven	Korzen	54946.92	0.0	0.0	54946.92	Program Coordinator III	Part Time Employee	2010
-MOSES - Engineers/Scientists	MOSES - Engineers/Scientists (09)	DEPARTMENT OF ENVIRONMENTAL PROTECTION (EQE)	21084746	Catherine	Finneran	74173.57	0.0	0.0	74173.57	Regional Planner V	Full Time Employee	2010
-MOSES - Engineers/Scientists	MOSES - Engineers/Scientists (09)	DEPARTMENT OF ENVIRONMENTAL PROTECTION (EQE)	16082022	John	Stapler	64586.67	0.0	0.0	64586.67	Environmental Engineer III	Full Time Employee	2010
-MOSES - Engineers/Scientists	MOSES - Engineers/Scientists (09)	DEPARTMENT OF ENVIRONMENTAL PROTECTION (EQE)	23471676	Angela	Gallagher	51676.08	0.0	0.0	51676.08	Environmental Analyst III	Full Time Employee	2010
+MOSES - Engineers/Scientists	MOSES - Engineers/Scientists (09)	DEPARTMENT OF ENVIRONMENTAL PROTECTION (EQE)	01608-2022	Stephen	Majkut	17360.51	0.0	0.0	17360.51	Environmental Engineer III	Full Time Employee	2013
+MOSES - Engineers/Scientists	MOSES - Engineers/Scientists (09)	DEPARTMENT OF ENVIRONMENTAL PROTECTION (EQE)	01608-2022	Stephen	Majkut	55134.42	0.0	0.0	55134.42	Environmental Engineer III	Full Time Employee	2014
+MOSES - Engineers/Scientists	MOSES - Engineers/Scientists (09)	DEPARTMENT OF ENVIRONMENTAL PROTECTION (EQE)	01606	Stephen	Majkut	25190.5	0.0	0.0	25190.5	Environmental Engineer III	Part Time Employee	2015
+MOSES - Engineers/Scientists	MOSES - Engineers/Scientists (09)	DEPARTMENT OF ENVIRONMENTAL PROTECTION (EQE)	01606	Stephen	Majkut	42080.71	0.0	0.0	42080.71	Environmental Engineer III	Full Time Employee	2015
+MOSES - Engineers/Scientists	MOSES - Engineers/Scientists (09)	DEPARTMENT OF ENVIRONMENTAL PROTECTION (EQE)	01606	Stephen	Majkut	54643.38	1389.83	0.0	61033.21	Environmental Engineer III	Part Time Employee	2016
 */
 
 **Column notes:**
@@ -956,11 +956,12 @@ MOSES - Engineers/Scientists	MOSES - Engineers/Scientists (09)	DEPARTMENT OF ENV
 - `bargaining_group_title`: MOSES - Engineers/Scientists, NAGE - Professional Admin., Managers  (EXE), No Union, Post Retiree, NAGE - Clerical/Administrative, Unclassifieds, Legislative Employees, AFSCME/Council 93
 - `contract`: MOSES - Engineers/Scientists (09), NAGE - Professional Admin. (06), Managers  (EXE) (M99), No Union (NON), Post Retiree (PRT), NAGE - Clerical/Administrative (01), Unclassifieds (000), MOSES - Engineers/Scientists (D09), Legislative Employees (LEG), AFSCME/Council 93 (02)
 - `department_division`: ALL CAPS. DEPARTMENT OF ENVIRONMENTAL PROTECTION (EQE)
+- `department_location_zip_code`: 02108-4746, 02347-1676, 01887-2941, 01606, 01103-0000, 02114-2524, 01843-0000, 01608-2022, 01801, 02180-0000, 02133-0000, 02114-2104, 02111-1722, 02108-1518, 01523-0000, 02721-4300, 02210-0000, 02119-2118, 02118, 02116-3933, 02043, 01854-2916, 01581-0000, 01475-0000, 01105-1320
 - `position_type`: Full Time Employee, Part Time Employee, Full Time Contractor, Part Time Contractor
 
 ---
 
-### MAEEADP_CSO (17,732 rows)
+### MAEEADP_CSO (18,700 rows)
 EEA Data Portal: Combined Sewer Overflow (CSO) and Sanitary Sewer Overflow (SSO) discharge incidents reported to MassDEP. Each row is one discharge event at a specific outfall. Key fields: waterBody, municipality, volumeOfEvent / volumnOfEvent (gallons), latitude/longitude, incidentDate, Year. IMPORTANT: Data spans June 2022 to present — years available: 2022, 2023, 2024, 2025, 2026. Do NOT assume data ends in an earlier year; always query the full range and check MAX(Year) if unsure.
 
 ```sql
@@ -1020,14 +1021,14 @@ Unnamed: 0	incidentId	incidentNumber	incidentDate	incidentTime	amPm	reporterClas
 - `amPm`: ALL CAPS. PM, AM
 - `reporterClass`: Verified Data Report, Public Notification Report, No Events for the month
 - `permiteeClass`: CSO, Non-CSO
-- `permiteeName`: ALL CAPS. CITY OF NEW BEDFORD, CITY OF FALL RIVER, SPRINGFIELD WATER & SEWER COMMISSION, CITY OF HOLYOKE, LOWELL REGIONAL WASTEWATER UTILITY, CITY OF CHICOPEE, CITY OF HAVERHILL, CITY OF FITCHBURG, BOSTON WATER & SEWER COMMISSION, MASSACHUSETTS WATER RESOURCES AUTHORITY, LYNN WATER & SEWER COMMISSION, TOWN OF MONTAGUE, CITY OF CAMBRIDGE, GREATER LAWRENCE SANITARY DISTRICT, BILLERICA WASTEWATER TREATMENT FACILITY, ATTLEBORO WASTEWATER TREATMENT FACILITY, CITY OF WORCESTER, CITY OF SOMERVILLE, CITY OF GLOUCESTER, CITY OF CHELSEA, REVERE, CITY OF, CITY OF TAUNTON, BRAINTREE, TOWN OF, AMESBURY WATER POLLUTION ABATEMENT PLANT, UPPER BLACKSTONE WATER POLLUTION ABATEMENT DISTRICT, ... (66 total)
-- `permiteeId`: ALL CAPS. MA0100781, MA0100382, MA0101613, MA0101630, MA0100633, MA0101508, MA0101621, MA0100986, MA0101192, MA0103284, MA0100552, MA0100137, MA0101974, MA0100447, MA0101711, MA0100595, MA0102997, MA0101982, MA0100625, MA0101877, MA0100897, MA0101745, MA0102369, MA0101923, MA0101214, ... (44 total)
+- `permiteeName`: ALL CAPS. CITY OF NEW BEDFORD, CITY OF FALL RIVER, SPRINGFIELD WATER & SEWER COMMISSION, CITY OF HOLYOKE, LOWELL REGIONAL WASTEWATER UTILITY, CITY OF CHICOPEE, CITY OF HAVERHILL, CITY OF FITCHBURG, BOSTON WATER & SEWER COMMISSION, LYNN WATER & SEWER COMMISSION, MASSACHUSETTS WATER RESOURCES AUTHORITY, TOWN OF MONTAGUE, CITY OF CAMBRIDGE, BILLERICA WASTEWATER TREATMENT FACILITY, GREATER LAWRENCE SANITARY DISTRICT, ATTLEBORO WASTEWATER TREATMENT FACILITY, CITY OF WORCESTER, CITY OF SOMERVILLE, CITY OF CHELSEA, CITY OF GLOUCESTER, REVERE, CITY OF, BRAINTREE, TOWN OF, AMESBURY WATER POLLUTION ABATEMENT PLANT, CITY OF TAUNTON, GREENFIELD WATER POLLUTION CONTROL FACILITY, ... (67 total)
+- `permiteeId`: ALL CAPS. MA0100781, MA0100382, MA0101613, MA0101630, MA0100633, MA0101508, MA0101621, MA0100986, MA0101192, MA0100552, MA0103284, MA0100137, MA0101974, MA0101711, MA0100447, MA0100595, MA0102997, MA0101982, MA0101877, MA0100625, MA0101745, MA0100897, MA0101214, MA0101923, MA0102369, ... (44 total)
 - `reportingType`: Initial-Ceased, Initial-Ongoing, Ongoing, Ceased
-- `month`: Feb, Jan, Sep, Nov, Oct, Dec, Mar, Jun, Jul, Apr, Aug, May
+- `month`: Aug
 
 ---
 
-### MAEEADP_DrinkingWater (169,623 rows)
+### MAEEADP_DrinkingWater (170,803 rows)
 EEA Data Portal: Annual drinking water quality monitoring results by water system. Key fields: Year, PWSName (public water system name), ContaminantGroup, Result.
 
 ```sql
@@ -1056,7 +1057,7 @@ Year	PWSName	ContaminantGroup	RaworFinished	Result
 
 ---
 
-### MAEEADP_Enforcement (55,182 rows)
+### MAEEADP_Enforcement (55,834 rows)
 EEA Data Portal: MassDEP enforcement actions against regulated entities, 1996–present. Each row is one action. Key fields: Town, Program, EnforcementType, PenaltyAssessed, FacilityId, FacilityName, EnforcementDate. Use with MAEEADP_Facility via FacilityId.
 
 ```sql
@@ -1092,7 +1093,7 @@ Id	Town	Program	EnforcementType	PenaltyAssessed	FacilityId	FacilityName	Enforcem
 
 ---
 
-### MAEEADP_Facility (53,490 rows)
+### MAEEADP_Facility (53,746 rows)
 EEA Data Portal: Regulated facilities tracked by MassDEP/EEA. Key fields: Id (joins to FacilityId in other tables), Town, FacilityType, FacilityName, Program, Active.
 
 ```sql
@@ -1127,7 +1128,7 @@ Id	StreetName	Town	FacilityType	FacilityName	Program	ProgramSpecificId	Active
 
 ---
 
-### MAEEADP_Inspection (84,266 rows)
+### MAEEADP_Inspection (84,942 rows)
 EEA Data Portal: MassDEP inspection records for regulated facilities. Key fields: Town, Program, FacilityId, FacilityName, InspectionType, InspectionDate.
 
 ```sql
@@ -1230,7 +1231,7 @@ cluster_id	label	n_bills	n_env_bills
 
 ---
 
-### MA_Legislature_Bills (37,087 rows)
+### MA_Legislature_Bills (37,648 rows)
 MA Legislature OpenAPI: one row per bill. Key fields: bill_id (full prefixed ID, e.g. H1234, S5678), bill_number (integer), bill_prefix (H/S/HD/SD), general_court (session number), title (bill title), sponsor_name, status (final status text), passed (1 if signed/enacted, 0 otherwise). PREFERRED join to MA_Lobbying_Bills: JOIN ON (bill_id, general_court) — do NOT use (bill_number, general_court) as H and S bills can share the same integer. NOTE: environmental relevance scoring lives in MA_Lobbying_Bills_Scored, not here.
 
 ```sql
@@ -1265,14 +1266,15 @@ H1069	1069	H	193	An Act to increase access to nurse-midwifery services	Kay Khan	
 
 ---
 
-### MA_Lobbying_Bills (344,948 rows)
-MA SoS lobbying disclosures: fact table linking employers to bills they lobbied. One row per (entity_name, client_name, general_court, bill_number, year). CRITICAL DISTINCTION: entity_name = lobbying firm; client_name = paying employer. Key fields: entity_name, client_name, year, general_court, bill_number, bill_id, bill_prefix, bill_title, position ("Support", "Oppose", "Neutral", or empty), chamber, amount (per-bill spend if reported). bill_id is a derived column combining bill_prefix + bill_number (e.g. H1234, S5678). bill_prefix is derived from chamber: "House Bill"/"HB" → "H"; "Senate Bill"/"SB" → "S"; "House Docket"/"HD" → "HD"; "Senate Docket"/"SD" → "SD". PREFERRED join to MA_Lobbying_Bills_Scored: use (bill_id, general_court) — do NOT use (bill_number, general_court) alone as H and S bills can share the same integer bill_number. Join to MA_Legislature_Bills on (bill_id, general_court) for passed status. Join to MA_Lobbying_Employers on (entity_name, client_name, year) for total compensation. IMPORTANT: this table has NO single spending column — compensation lives in MA_Lobbying_Employers.
+### MA_Lobbying_Bills (584,258 rows)
+MA SoS lobbying disclosures: fact table linking employers to bills they lobbied. One row per (entity_name, client_name, general_court, bill_number, year, period_end) — see period_end note below. CRITICAL DISTINCTION: entity_name = lobbying firm; client_name = paying employer. Key fields: entity_name, client_name, year, period_end, general_court, bill_number, bill_id, bill_prefix, bill_title, position ("Support", "Oppose", "Neutral", or empty), chamber, amount (per-bill spend if reported). period_end is the last day of the filing period (Jun 30 for H1, Dec 31 for H2); the same bill/client can appear once per filing period the entity lobbied it in. bill_id is a derived column combining bill_prefix + bill_number (e.g. H1234, S5678). bill_prefix is derived from chamber: "House Bill"/"HB" → "H"; "Senate Bill"/"SB" → "S"; "House Docket"/"HD" → "HD"; "Senate Docket"/"SD" → "SD". PREFERRED join to MA_Lobbying_Bills_Scored: use (bill_id, general_court) — do NOT use (bill_number, general_court) alone as H and S bills can share the same integer bill_number. Join to MA_Legislature_Bills on (bill_id, general_court) for passed status. Join to MA_Lobbying_Employers on (entity_name, client_name, year) for total compensation (add period_end too for period-exact joins). IMPORTANT: this table has NO single spending column — compensation lives in MA_Lobbying_Employers.
 
 ```sql
 CREATE TABLE "MA_Lobbying_Bills" (
 	"index" BIGINT, 
 	entity_name TEXT, 
 	year BIGINT, 
+	period_end TEXT, 
 	client_name TEXT, 
 	chamber TEXT, 
 	bill_number BIGINT, 
@@ -1288,12 +1290,25 @@ CREATE TABLE "MA_Lobbying_Bills" (
 ```
 
 /* 5 rows from MA_Lobbying_Bills:
-entity_name	year	client_name	chamber	bill_number	bill_title	position	amount	general_court	entity_name_norm	client_name_norm	bill_prefix	bill_id
-Robert Alan Baker	2014	Smaller Business Association of New England	House Bill	4165	An Act Promoting Economic Growth Across the Commonwealth. Sought funding for manufacturing grant and layoff aversion program. met with key legislators from Economic Development committee and Ways and Means.	Support	170000.0	188	ROBERT ALAN BAKER	SMALLER BUSINESS ASSOCIATION OF NEW ENGLAND	H	H4165
-Joseph M Corazzini	2025	Clark University	Executive	NULL	Review and assess Higher education related issues that may have an impact on the institution and relay the information to the President. If necessary, lobby on an issue on behalf of the institution.	Support	118000.0	194	JOSEPH M CORAZZINI	CLARK UNIVERSITY	NULL	NULL
-Edwards Wildman Palmer LLP	2013	Steward Health Care LLC	SB	3	Text of the recommended amendment to the House Bill making appropriations for the fiscal year 2014 for the maintenance of the departments, boards, commissions, institutions and certain activities of the Commonwealth, for interest, sinking fund and serial bond requirements and for certain permanent improvements; SB1800 Text of the Senate amendments to the House Bill making appropriations for the fiscal year 2014 for the maintenance of the departments, boards, commissions, institutions and certain activities of the Commonwealth, for interest, sinking fund and serial bond requirements and for certain permanent improvements; HB3538 An Act making appropriations for the Fiscal Year 2014 for the maintenance of the departments, boards, commissions, institutions and certain activities of the commonwealth, for interest, sinking fund and serial bond requirements and for certain permanent improvements.	Support	96555.0	188	EDWARDS WILDMAN PALMER	STEWARD HEALTH CARE	S	S3
-Law Office of Attorney James F McGrail	2018	Outfront Media, LLC	Executive	NULL	Matters in connection with Outfront Media Group LLC's participation in the request for proposals for advertising rights on the Massachusetts Bay Transportation Authority.	Support	90000.0	190	ATTORNEY JAMES F MCGRAIL	OUTFRONT MEDIA	NULL	NULL
-Edwards Wildman Palmer LLP	2012	Steward Health Care LLC	HB	4070	An Act relative to Health Care Quality Improvement and Cost Reduction Act of 2012 HB4127 An Act improving the quality of health care and reducing costs through increased transparency, efficiency and innovation HB4128 Order relative to special procedures for consideration of the House Bill improving the quality of health care and reducing costs through increased transparency, efficiency and innovation HB4155 Printed as amended version of the engrossed Bill improving the quality of health care and reducing costs through increased transparency, efficiency and innovation HB4561 An Act relative to the medical loss ratio SB2260 An Act improving the quality of health care and reducing costs through increased transparency, efficiency and innovation SB2270 Printed as amended version of the engrossed Bill relative to improving the quality of health care and reducing costs through increased transparency, efficiency and innovation SB2400 An Act improving the quality of health care and reducing costs through increased transparency, efficiency and innovation.	Support	83784.92	187	EDWARDS WILDMAN PALMER	STEWARD HEALTH CARE	H	H4070
+entity_name	year	period_end	client_name	chamber	bill_number	bill_title	position	amount	general_court	entity_name_norm	client_name_norm	bill_prefix	bill_id
+Robert Alan Baker	2014	2014-12-31	Smaller Business Association of New England	House Bill	4165	An Act Promoting Growth across the Commonwealth. Sought funding for manufacturing grant program and layoff aversion program. Met with key legislators from Economic developmet committee and Ways and Means	Support	175000.0	188	ROBERT ALAN BAKER	SMALLER BUSINESS ASSOCIATION OF NEW ENGLAND	H	H4165
+Robert Alan Baker	2014	2014-06-30	Smaller Business Association of New England	House Bill	4165	An Act Promoting Economic Growth Across the Commonwealth. Sought funding for manufacturing grant and layoff aversion program. met with key legislators from Economic Development committee and Ways and Means.	Support	170000.0	188	ROBERT ALAN BAKER	SMALLER BUSINESS ASSOCIATION OF NEW ENGLAND	H	H4165
+Robert Alan Baker	2011	2011-06-30	Smaller Business Association of New England	House Bill	2293	NULL	Oppose	151000.0	187	ROBERT ALAN BAKER	SMALLER BUSINESS ASSOCIATION OF NEW ENGLAND	H	H2293
+Brian S. Hickey Associates, Inc./Strategic Management Services	2013	2013-12-31	FUJIFILM Pharmaceutical USA, Inc.	HB	1	- Governor - An Act making appropriations for FY2014
+HB3400 - House Ways and Means - An Act making appropriations for the fiscal year 2014 for the maintenance of the departments, boards, commissions, institutions and certain activities of the Commonwealth, for interest, sinking fund and serial bond requirements and for certain permanent improvements
+HB3401 - House Ways and Means - Printed as amended version of the Bill making appropriations for the fiscal year 2014 for the maintenance of departments, boards, commissions, institutions and certain activities of the Commonwealth, for interest, sinking fund and serial bond requirements and for certain permanent improvements
+HB3538 (Chapter 38 of 2013) - Conference Committee - An Act making appropriations for the Fiscal Year 2014 for the maintenance of the departments, boards, commissions, institutions and certain activities of the commonwealth, for interest, sinking fund and serial bond requirements and for certain permanent improvements
+HB3559 (Chapter 60 of 2013) - Governor - Engrossed Bill relative to a hospital merger market impact review (see House, No. 3559). [Being a printed copy of Section 19 contained in the engrossed Bill making appropriations for the fiscal year 2014 for the maintenance of the departments, boards, commissions, institutions and certain activities of the Commonwealth, for interest, sinking fund and serial bond requirements and for certain permanent improvements (see House, No. 3538), which had been returned by His Excellency the Governor with recommendation of amendment (for message, see House, No. 3566, Attachment D).]
+HB3560 - Governor - Engrossed Bill establishing a public employee retirement administration commission (see House, No. 3560). [Being a printed copy of Section 21 contained in the engrossed Bill making appropriations for the fiscal year 2014 for the maintenance of the departments, boards, commissions, institutions and certain activities of the Commonwealth, for interest, sinking fund and serial bond requirements and for certain permanent improvements (see House, No. 3538), which had been returned by His Excellency the Governor with recommendation of amendment (for message, see House, No. 3566, Attachment E).]
+HB3561 (Chapter 64 of 2013) - Governor - Engrossed Bill relative to distribution of regional greenhouse gas initiative auction proceeds (see House, No. 3561). [Being a printed copy of Section 36 contained in the engrossed Bill making appropriations for the fiscal year 2014 for the maintenance of the departments, boards, commissions, institutions and certain activities of the Commonwealth, for interest, sinking fund and serial bond requirements and for certain permanent improvements (see House, No. 3538), which had been returned by His Excellency the Governor with recommendation of amendment (for message, see House, No. 3566, Attachment F).]
+HB3562 (Chapter 150 of 2013) - Governor - Engrossed Bill relative to price adjustments for certain materials in construction projects (see House, No. 3562).
+[Being a printed copy of Section 45 contained in the engrossed Bill making appropriations for the fiscal year 2014 for the maintenance of the departments, boards, commissions, institutions and certain activities of the Commonwealth, for interest, sinking fund and serial bond requirements and for certain permanent improvements (see House, No. 3538), which had been returned by His Excellency the Governor with recommendation of amendment (for message, see House, No. 3566, Attachment G).]
+HB3564 (Chapter 61 of 2013) - Governor - An Act relative to judicial compensation; Sections 114 to 134, inclusive, and sections 216 and 217 contained in the engrossed Bill making appropriations for the fiscal year 2014 (see House, No. 3538), which had been returned by His Excellency the Governor with recommendation of amendment (for message, see Attachment I of House, No. 3566)
+HB3565 - Governor - An Act relative to the taxation of carbon-based fuels; Section 207 contained in the engrossed Bill making appropriations for the fiscal year 2014 (see House, No. 3538), which had been returned by His Excellency the Governor with recommendation of amendment (for message, see Attachment J of House, No. 3566)
+HB3566 - Governor - Message from His Excellency the Governor returning with his disapproval of certain sections, and also with recommendation of amendment of certain sections contained in the engrossed Bill making appropriations for the fiscal year 2014 for the maintenance of the departments, boards, commissions, institutions and certain activities of the Commonwealth, for interest, sinking fund and serial bond requirements and for certain permanent improvements (see House, No. 3538).
+SB3 - Senate Ways and Means - Text of the recommended amendment to the House Bill making appropriations for the fiscal year 2014 for the maintenance of the departments, boards, commissions, institutions and certain activities of the Commonwealth, for interest, sinking fund and serial bond requirements and for certain permanent improvements
+SB1800 - Senate Ways and Means - Text of the Senate amendments to the House Bill making appropriations for the fiscal year 2014 for the maintenance of the departments, boards, commissions, institutions and certain activities of the Commonwealth, for interest, sinking fund and serial bond requirements and for certain permanent improvements	Neutral	150000.0	188	BRIAN S HICKEY /STRATEGIC MANAGEMENT SERVICES	FUJIFILM PHARMACEUTICAL USA	H	H1
+Joseph M Corazzini	2025	2025-06-30	Clark University	Executive	NULL	Review and assess Higher education related issues that may have an impact on the institution and relay the information to the President. If necessary, lobby on an issue on behalf of the institution.	Support	118000.0	194	JOSEPH M CORAZZINI	CLARK UNIVERSITY	NULL	NULL
 */
 
 **Column notes:**
@@ -1306,6 +1321,7 @@ Edwards Wildman Palmer LLP	2012	Steward Health Care LLC	HB	4070	An Act relative 
 - `chamber`: Raw chamber string from SoS portal: "House Bill", "Senate Bill", "House Docket", "Senate Docket", "HB", "SB", "Executive", "FY", etc.
 - `position`: Lobbying position: "Support", "Oppose", "Neutral", or empty string. Use for coalition/opposition analysis.
 - `year`: Filing year. Join to MA_Lobbying_Employers on (entity_name, client_name, year) for compensation.
+- `period_end`: Last day of the semi-annual filing period (Jun 30 for H1, Dec 31 for H2) — same bill/client can appear once per period lobbied.
 - `amount`: Per-bill spend in dollars (often NULL — use MA_Lobbying_Employers.compensation for spending analysis).
 
 ---
@@ -1350,7 +1366,7 @@ bill_number	general_court	bill_title	bill_id	env_relevance_score	is_environmenta
 
 ---
 
-### MA_Lobbying_CampaignContributions (124,536 rows)
+### MA_Lobbying_CampaignContributions (128,570 rows)
 Political campaign contributions made by lobbyists, disclosed in their lobbying reports. One row per contribution: date, lobbyist_name (the donor), recipient_name (candidate/committee), office_sought, amount, plus the reporting entity_name and year. Use to analyze lobbyist donations to legislators/candidates. Independent of bills and compensation.
 
 ```sql
@@ -1378,7 +1394,7 @@ Grant Associates	2005	4/22/2005	Joseph M Grant	Joseph Wagner	Representative	200.
 
 ---
 
-### MA_Lobbying_ClientPurposes (49,759 rows)
+### MA_Lobbying_ClientPurposes (52,478 rows)
 Per-client annual summary from the registrant summary page: the annual amount a client paid and a free-text purpose-of-employment description of what was lobbied for. One row per (entity_name, client_name, year). The purpose text is richer than bill titles and good for topic search. The amount is the summary-page annual per-client total (often a cleaner single figure than summing per-period rows in MA_Lobbying_Bills).
 
 ```sql
@@ -1405,8 +1421,8 @@ Margaret G Grant	2005	Mass. Assoc. of Realtors	10000.0	NULL	MARGARET G GRANT	MAS
 
 ---
 
-### MA_Lobbying_Employers (36,583 rows)
-MA Secretary of State lobbying disclosures: one row per (lobbying firm, client/employer, year). CRITICAL DISTINCTION: entity_name = the lobbying firm (e.g. "Smith & Jones Lobbying LLC"); client_name = the actual employer paying for lobbying (e.g. "National Grid USA"). Always use client_name for employer-level analysis. Key fields: entity_name, client_name, year, compensation (total dollars paid by client to firm that year), reg_type (registration type). Data covers 2009–present; older years have sparse compensation data. Join to MA_Lobbying_Bills on (entity_name, client_name, year) to see which bills a client lobbied. IMPORTANT: this table has NO spending column called total_expenditure — the column is compensation.
+### MA_Lobbying_Employers (67,745 rows)
+MA Secretary of State lobbying disclosures: one row per (lobbying firm, client/employer, semi-annual filing period). CRITICAL DISTINCTION: entity_name = the lobbying firm (e.g. "Smith & Jones Lobbying LLC"); client_name = the actual employer paying for lobbying (e.g. "National Grid USA"). Always use client_name for employer-level analysis. Key fields: entity_name, client_name, year, period_end, compensation (dollars paid by client to firm for that H1/H2 filing — sum both periods for an annual total), reg_type (registration type). period_end is the last day of the filing period (Jun 30 for H1, Dec 31 for H2); a client that recurs in both H1 and H2 filings from the same entity in the same year has TWO rows, one per period — do not assume one row per (entity_name, client_name, year). Data covers 2009–present; older years have sparse compensation data. Join to MA_Lobbying_Bills on (entity_name, client_name, year) to see which bills a client lobbied (add period_end too for period-exact joins). IMPORTANT: this table has NO spending column called total_expenditure — the column is compensation.
 
 ```sql
 CREATE TABLE "MA_Lobbying_Employers" (
@@ -1414,6 +1430,7 @@ CREATE TABLE "MA_Lobbying_Employers" (
 	entity_name TEXT, 
 	client_name TEXT, 
 	year BIGINT, 
+	period_end TEXT, 
 	compensation FLOAT, 
 	reg_type TEXT, 
 	entity_name_norm TEXT, 
@@ -1422,24 +1439,25 @@ CREATE TABLE "MA_Lobbying_Employers" (
 ```
 
 /* 5 rows from MA_Lobbying_Employers:
-entity_name	client_name	year	compensation	reg_type	entity_name_norm	client_name_norm
-Minahan Companies, The	_total_salary_	2005	75000.0	Lobbyist Entity	MINAHAN COMPANIES	_TOTAL_SALARY_
-Capital Associates Inc.	_total_salary_	2005	60000.0	Lobbyist Entity	CAPITAL	_TOTAL_SALARY_
-Burke & Mawn Consultants	_total_salary_	2005	39000.0	Lobbyist Entity	BURKE AND MAWN CONSULTANTS	_TOTAL_SALARY_
-Brown Rudnick Berlack Israels LLP	_total_salary_	2005	12500.0	Lobbyist Entity	BROWN RUDNICK BERLACK ISRAELS	_TOTAL_SALARY_
-Ventry Associates, LLP	_total_salary_	2005	30499.97	Lobbyist Entity	VENTRY	_TOTAL_SALARY_
+entity_name	client_name	year	period_end	compensation	reg_type	entity_name_norm	client_name_norm
+Grant Associates	_total_salary_	2005	2005-06-30	30000.0	Lobbyist Entity	GRANT	_TOTAL_SALARY_
+Fort Hill Advisors	_total_salary_	2005	2005-12-31	122500.0	Lobbyist Entity	FORT HILL ADVISORS	_TOTAL_SALARY_
+Brown Rudnick Berlack Israels LLP	_total_salary_	2005	2005-12-31	62500.0	Lobbyist Entity	BROWN RUDNICK BERLACK ISRAELS	_TOTAL_SALARY_
+Burke & Mawn Consultants	_total_salary_	2005	2005-12-31	17500.0	Lobbyist Entity	BURKE AND MAWN CONSULTANTS	_TOTAL_SALARY_
+Minahan Companies, The	_total_salary_	2005	2005-12-31	75000.0	Lobbyist Entity	MINAHAN COMPANIES	_TOTAL_SALARY_
 */
 
 **Column notes:**
 - `entity_name`: Lobbying firm name (e.g. "Smith Advocacy LLC"). NOT the employer — use client_name for employer analysis.
 - `client_name`: Paying employer/client (e.g. "National Grid USA"). Use this for employer-level analysis, NOT entity_name.
 - `year`: Calendar year of the filing. Compensation data is sparse before 2019; 2019–present is complete.
-- `compensation`: Total dollars paid by client_name to entity_name for lobbying that year. IMPORTANT: the column is "compensation", NOT "total_expenditure".
+- `period_end`: Last day of the semi-annual filing period this row reports (2026-06-30 for H1, 2026-12-31 for H2). A client paying the same entity in both halves of a year has two rows — sum compensation across period_end values for an annual total; do not just filter to one row per (entity_name, client_name, year).
+- `compensation`: Dollars paid by client_name to entity_name for lobbying in that filing period (see period_end). IMPORTANT: the column is "compensation", NOT "total_expenditure".
 - `reg_type`: Registration type (e.g. "Lobbying Entity"). Use to filter out non-employer rows if needed.
 
 ---
 
-### MA_Lobbying_Expenses (74,838 rows)
+### MA_Lobbying_Expenses (76,760 rows)
 Itemized lobbying expenses reported by entities. One row per expense: expense_type (one of 'operating', 'meals_entertainment_travel', 'additional'), date, payee, description, amount, plus reporting entity_name and year. Blank $0 template rows are excluded. Separate from client compensation (MA_Lobbying_Employers) and salaries (MA_Lobbying_Lobbyists).
 
 ```sql
@@ -1470,7 +1488,7 @@ Eric Bourassa	2005	operating	7/1/2005-12/31/2005	US Postal SErvice	Postage, ship
 
 ---
 
-### MA_Lobbying_Lobbyists (7,443 rows)
+### MA_Lobbying_Lobbyists (7,791 rows)
 Maps individual lobbyists to the entity (firm) that employs them, per year, with the salary the entity paid that lobbyist. One row per (lobbyist_name, entity_name, year). Use to see who works for which firm. NOTE: salary here is the entity-to-lobbyist payment (internal cost), which is SEPARATE from client compensation in MA_Lobbying_Employers — do not add salaries to client compensation when totaling lobbying spend.
 
 ```sql
@@ -1495,7 +1513,7 @@ year	lobbyist_name	entity_name	salary	entity_name_norm
 
 ---
 
-### MA_precipitation_daily (9,862 rows)
+### MA_precipitation_daily (9,762 rows)
 Daily precipitation averages across Massachusetts weather stations (NOAA ACIS). Key fields: date (YYYY-MM-DD), precip_in_avg (inches), n_stations.
 
 ```sql
@@ -1873,7 +1891,7 @@ CREATE TABLE "MassBudget_noinfadjusted" (
 
 ---
 
-### MassBudget_summary (26 rows)
+### MassBudget_summary (27 rows)
 Annual MA environmental agency budget totals (FY2001–present). PREFERRED table for budget trend queries. Key fields: Year, FiscalYear, DEPAdministration_inf_float (inflation-adjusted DEP budget), TotalBudget_inf_float, GovernorsBudget.
 
 ```sql
@@ -1946,7 +1964,7 @@ Latitude	Longitude	Nearest_Pipe_Address	Municipality	DischargesBody	2011_Dischar
 
 ---
 
-### SSAWages (40 rows)
+### SSAWages (42 rows)
 Social Security Administration Average Wage Index by year (used to adjust staffing pay for inflation). Key fields: Year, AWI, Average amount.
 
 ```sql
@@ -1972,7 +1990,7 @@ Year	AWI	Increase	Prior year average amount	Average amount	Number of workers	Agg
 */
 
 **Column notes:**
-- `Increase`: 8.89%, 6.38%, 5.84%, 5.57%, 5.53%, 5.32%, 5.23%, 5.15%, 4.93%, 4.89%, 4.84%, 4.65%, 4.62%, 4.60%, 4.54%, 4.43%, 4.26%, 4.01%, 3.96%, 3.75%, 3.73%, 3.66%, 3.62%, 3.55%, 3.48%, ... (40 total)
-- `Prior year average amount`: 63932.64, 61220.07, 58129.99, 53383.18, 51916.27, 50040.96, 48251.57, 46640.94, 46119.78, 44569.2, 43041.39, 42498.21, 41211.36, 39959.3, 39652.61, 39036.67, 38760.95, 37078.27, 35448.93, 34197.63, 32678.48, 31898.7, 31581.97, 30846.09, 29229.69, ... (40 total)
+- `Increase`: 0, 8.89%, 6.38%, 5.84%, 5.57%, 5.53%, 5.32%, 5.23%, 5.15%, 4.93%, 4.89%, 4.84%, 4.65%, 4.62%, 4.60%, 4.54%, 4.43%, 4.26%, 4.01%, 3.96%, 3.75%, 3.73%, 3.66%, 3.62%, 3.55%, ... (41 total)
+- `Prior year average amount`: 0, 63932.64, 61220.07, 58129.99, 53383.18, 51916.27, 50040.96, 48251.57, 46640.94, 46119.78, 44569.2, 43041.39, 42498.21, 41211.36, 39959.3, 39652.61, 39036.67, 38760.95, 37078.27, 35448.93, 34197.63, 32678.48, 31898.7, 31581.97, 30846.09, ... (41 total)
 
 ---

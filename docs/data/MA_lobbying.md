@@ -70,20 +70,20 @@ These links will be active once the initial full-history scrape is complete and 
 
 ### Lobbying Employers
 
-One row per (entity, client, year). Records how much each client paid each lobbying entity in a given year.
+One row per (entity, client, filing period). Records how much each client paid each lobbying entity in a given semi-annual filing (`period_end` is the last day of that H1/H2 period — Jun 30 or Dec 31 — so an entity's two annual filings for the same recurring client are kept as distinct rows rather than merged). `entity_name` is read from each disclosure's own registrant block, not from whichever Summary page happened to link to it, since a single filing is cross-listed from every affiliated lobbyist's own page too.
 
-| Entity Name | Client Name | Year | Reg Type | Compensation |
-| --- | --- | --- | --- | --- |{% for row in site.data.MA_lobbying_employers_sample limit:10 %}
-| {{ row.entity_name }} | {{ row.client_name }} | {{ row.year }} | {{ row.reg_type }} | {{ row.compensation }} |{% endfor %}
+| Entity Name | Client Name | Year | Period End | Reg Type | Compensation |
+| --- | --- | --- | --- | --- | --- |{% for row in site.data.MA_lobbying_employers_sample limit:10 %}
+| {{ row.entity_name }} | {{ row.client_name }} | {{ row.year }} | {{ row.period_end }} | {{ row.reg_type }} | {{ row.compensation }} |{% endfor %}
 {: .sortable}
 
 ### Lobbying Bills
 
-One row per (entity, client, bill, session). Records which bills each entity lobbied on behalf of each client, with the lobbying position.
+One row per (entity, client, bill, filing period). Records which bills each entity lobbied on behalf of each client, with the lobbying position. As with Employers above, `entity_name` and `period_end` are read from the disclosure's own filing, not the discovering Summary page.
 
-| Entity Name | Client Name | Year | Chamber | Bill | Bill Title | Position |
-| --- | --- | --- | --- | --- | --- | --- |{% for row in site.data.MA_lobbying_bills_sample limit:10 %}
-| {{ row.entity_name }} | {{ row.client_name }} | {{ row.year }} | {{ row.chamber }} | {{ row.bill_id }} | {{ row.bill_title | truncate: 60 }} | {{ row.position }} |{% endfor %}
+| Entity Name | Client Name | Year | Period End | Chamber | Bill | Bill Title | Position |
+| --- | --- | --- | --- | --- | --- | --- | --- |{% for row in site.data.MA_lobbying_bills_sample limit:10 %}
+| {{ row.entity_name }} | {{ row.client_name }} | {{ row.year }} | {{ row.period_end }} | {{ row.chamber }} | {{ row.bill_id }} | {{ row.bill_title | truncate: 60 }} | {{ row.position }} |{% endfor %}
 {: .sortable}
 
 ### Legislature Bills
