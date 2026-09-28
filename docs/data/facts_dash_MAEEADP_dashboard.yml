@@ -1,7 +1,7 @@
-rain_freq_dry_pct: 12
-rain_freq_wet_pct: 57
+rain_freq_dry_pct: 11
+rain_freq_wet_pct: 56
 rain_freq_heavy_pct: 86
-rain_freq_very_heavy_pct: 100
+rain_freq_very_heavy_pct: 95
 dry_reports: 141
 dry_days: 77
 dry_untreated_reports: 90
