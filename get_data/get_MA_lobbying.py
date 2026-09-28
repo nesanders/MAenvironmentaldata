@@ -289,6 +289,19 @@ def _parse_amount(text: str) -> float | None:
         return None
 
 
+# Summary rows the portal appends to compensation/salary tables (e.g. "Total
+# salaries received"). Anchored so a real client/lobbyist name that merely
+# contains "total" (e.g. "ADP TotalSource") is never excluded — sister
+# project MAPLE (codeforboston/maple#2256) found the same gap in its own
+# parser: an unanchored `'Total' in name` check both missed unlisted total-row
+# wordings and could exclude a real name containing "total" as a substring.
+_TOTAL_ROW_RE = re.compile(r'^total(\s+(amount|salar(y|ies)(\s+(received|paid))?))?$', re.IGNORECASE)
+
+
+def _is_total_row(name: str) -> bool:
+    return bool(_TOTAL_ROW_RE.match(name.strip()))
+
+
 _PERIOD_RE = re.compile(r'(\d{2}/\d{2}/\d{4})\s*-\s*(\d{2}/\d{2}/\d{4})')
 
 
@@ -411,10 +424,14 @@ def parse_disclosure_detail(soup: BeautifulSoup, year: int) -> dict:
         id=lambda x: x and 'grdvClientPaidToEntity' in (x or '')
     )
     if comp_table:
-        # Modern: authoritative per-client compensation table.
+        # Modern: authoritative per-client compensation table. Unlike the
+        # legacy/salary paths below, this table had no total-row filter at
+        # all -- a "Total salaries received"-style summary row would have
+        # been silently captured as a fake client (matches a gap sister
+        # project MAPLE found and fixed in its own parser: maple#2256).
         for row in comp_table.find_all('tr', class_=lambda c: c and 'Grid' in c and 'Header' not in c):
             cells = [td.get_text(strip=True) for td in row.find_all('td')]
-            if len(cells) >= 2:
+            if len(cells) >= 2 and not _is_total_row(cells[0]):
                 compensation.append({
                     'client_name': cells[0],
                     'amount': _parse_amount(cells[1]),
@@ -573,7 +590,7 @@ def parse_disclosure_detail(soup: BeautifulSoup, year: int) -> dict:
                 cells = [td.get_text(strip=True) for td in row.find_all('td')]
                 if len(cells) >= 2:
                     amt = _parse_amount(cells[1])
-                    if amt and 'Total' not in cells[0]:
+                    if amt and not _is_total_row(cells[0]):
                         total += amt
             if total:
                 compensation.append({'client_name': '_total_salary_', 'amount': total})
@@ -669,7 +686,7 @@ def parse_salaries(soup: BeautifulSoup) -> list[dict]:
         return out
     for row in table.find_all('tr'):
         cells = [td.get_text(strip=True) for td in row.find_all('td')]
-        if len(cells) < 2 or not cells[0] or 'Total' in cells[0] or cells[0] == 'Lobbyist or Entity name':
+        if len(cells) < 2 or not cells[0] or _is_total_row(cells[0]) or cells[0] == 'Lobbyist or Entity name':
             continue
         out.append({'lobbyist_name': cells[0], 'salary': _parse_amount(cells[1])})
     return out

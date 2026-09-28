@@ -37,8 +37,14 @@ DISCLOSURE_CASES = [
     ('2007e', 2007, 112_500.00, 1, 2, 'legacy 4-col -> _total_salary_'),
     ('2011e', 2011, 641_243.0, 23, 4, 'legacy 6-col -> per-client comp'),
     ('2016e', 2016, 990_474.00, 30, 1357, 'hybrid -> Panel1 totals'),
-    ('2024e', 2024, 115_000.00, 5, 22, 'modern -> grdvClientPaidToEntity'),
-    ('2024i', 2024, 1_095_200.0, 17, 135, 'modern individual'),
+    # 115_000.00/5 and 1_095_200.0/17 were the pre-fix expectations: both
+    # fixtures' grdvClientPaidToEntity table has a real "Total salaries
+    # received" row that the modern-era parser had no filter for at all and
+    # was capturing as a fake 17th/5th "client" -- exactly the gap sister
+    # project MAPLE found and fixed in its own parser (maple#2256). Values
+    # below are net of that row.
+    ('2024e', 2024, 57_500.00, 4, 22, 'modern -> grdvClientPaidToEntity'),
+    ('2024i', 2024, 547_600.15, 16, 135, 'modern individual'),
     ('2011i', 2011, 18_518.00, 1, 0, 'legacy individual'),
 ]
 
@@ -53,11 +59,23 @@ def test_disclosure_compensation_and_bills(fix, year, exp_comp, n_clients, n_bil
 
 @pytest.mark.parametrize('fix,year,_c,_n,_b,_e', DISCLOSURE_CASES)
 def test_no_total_amount_artifact(fix, year, _c, _n, _b, _e):
-    """The legacy summary row (client_name == 'Total amount') must never be
-    captured as a real client — that bug inflated 2010-2013 by ~4,000 rows."""
+    """A portal-appended summary row ('Total amount', 'Total salaries
+    received', etc.) must never be captured as a real client — the legacy
+    variant inflated 2010-2013 by ~4,000 rows; the modern grdvClientPaidToEntity
+    table had no filter for its own variant at all until this was caught via
+    maple#2256 (2024e/2024i fixtures both contain a real "Total salaries
+    received" row)."""
     d = g.parse_disclosure_detail(_soup(f'{fix}_disc'), year)
-    bad = [c for c in d['compensation'] if c['client_name'] in ('Total amount', 'Total', '')]
+    bad = [c for c in d['compensation'] if g._is_total_row(c['client_name'] or '')]
     assert not bad, f'{fix} produced summary-row artifacts: {bad}'
+
+
+def test_is_total_row():
+    for name in ('Total', 'Total amount', 'Total salaries received', 'Total salary paid',
+                 'total salaries', '  Total  '):
+        assert g._is_total_row(name), f'{name!r} should match as a total row'
+    for name in ('ADP TotalSource', 'Total Wealth Advisors, LLC', 'Totally Kids Inc', ''):
+        assert not g._is_total_row(name), f'{name!r} should NOT match as a total row'
 
 
 def test_legacy_2007_uses_total_salary_placeholder():
