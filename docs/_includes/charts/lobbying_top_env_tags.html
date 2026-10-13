@@ -1,0 +1,74 @@
+{% raw  %}
+<html>
+    <head>
+        <title>Top 15 Tags on Environmental Bills (LLM-assigned)</title>
+        <script src='https://cdn.jsdelivr.net/npm/chart.js@4.4.4/dist/chart.umd.min.js'></script>
+    </head>
+    <body>
+        <div style="width: 720px; height: 480px; max-width: 99%" class="chartjs">
+
+            <canvas id="Top 15 Tags on Environmental Bills (LLM-assigned)" height="480" width="720"></canvas>
+            <script>
+                Chart.defaults.font.size = 12;
+                var chart_data = {
+
+                    data: {
+                        labels: ["Consumer Protection", "Public-private cooperation", "Marine and coastal resources, fisheries", "Energy storage, supplies, demand", "Water resources", "Water quality", "Hazardous wastes and toxic substances", "Solid waste and recycling", "Air quality", "Environmental health", "Environmental assessment, monitoring, research", "Energy efficiency and conservation", "Renewable energy sources", "Environmental regulatory procedures", "Pollution control and abatement"],
+                        datasets: [{'data': [293, 329, 388, 417, 425, 694, 697, 811, 885, 941, 951, 1227, 1323, 1716, 2547], 'label': 'Bills with tag', 'backgroundColor': 'rgba(30, 160, 160, 0.85)'}]
+                    },
+                    type: 'bar',
+                    options: {
+                        indexAxis: 'y',
+                        scales: {
+                            y: {
+                                display: true,
+                                title: {
+                                    display: true,
+                                    text: ''
+                                },
+                                position: 'left',
+                                stacked: false
+                            },
+                            y1: {
+                                display: false,
+                                title: {
+                                    display: true,
+                                    text: ''
+                                },
+                                position: 'right'
+                            },
+                            x: {
+                                title: {
+                                    display: true,
+                                    text: 'Number of environmental bills'
+                                },
+                                stacked: false,
+                                ticks: {
+                                    autoSkip: true
+                                }
+                            }
+                        },
+                        plugins: {
+                            legend: {
+                                display: true
+                            },
+                            tooltip: {
+                                enabled: true
+                            }
+                        }
+                    }
+                }
+                
+                
+            </script>
+            <script>
+                {
+
+                    var ctx = document.getElementById("Top 15 Tags on Environmental Bills (LLM-assigned)").getContext("2d");
+                    var mychart = new Chart(ctx, chart_data);
+                }
+            </script>
+        </div>
+    </body>
+</html>
+{% endraw  %}

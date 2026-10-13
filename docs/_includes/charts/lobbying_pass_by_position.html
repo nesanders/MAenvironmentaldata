@@ -1,0 +1,73 @@
+{% raw  %}
+<html>
+    <head>
+        <title>Environmental Bill Pass Rate by Lobbying Position</title>
+        <script src='https://cdn.jsdelivr.net/npm/chart.js@4.4.4/dist/chart.umd.min.js'></script>
+    </head>
+    <body>
+        <div style="width: 520px; height: 360px; max-width: 99%" class="chartjs">
+
+            <canvas id="Environmental Bill Pass Rate by Lobbying Position" height="360" width="520"></canvas>
+            <script>
+                Chart.defaults.font.size = 12;
+                var chart_data = {
+
+                    data: {
+                        labels: ["Mostly supported", "Mostly opposed", "Contested / Neutral"],
+                        datasets: [{'data': [2.3, 0.7, 0.7], 'label': 'Pass rate (%)', 'backgroundColor': ["'rgba(60, 170, 80, 0.85)'", "'rgba(200, 60, 60, 0.85)'", "'rgba(150, 150, 150, 0.6)'"]}]
+                    },
+                    type: 'bar',
+                    options: {
+                        scales: {
+                            y: {
+                                display: true,
+                                title: {
+                                    display: true,
+                                    text: 'Pass rate (%)'
+                                },
+                                position: 'left',
+                                stacked: false
+                            },
+                            y1: {
+                                display: false,
+                                title: {
+                                    display: true,
+                                    text: ''
+                                },
+                                position: 'right'
+                            },
+                            x: {
+                                title: {
+                                    display: true,
+                                    text: 'Dominant lobbying position'
+                                },
+                                stacked: false,
+                                ticks: {
+                                    autoSkip: true
+                                }
+                            }
+                        },
+                        plugins: {
+                            legend: {
+                                display: true
+                            },
+                            tooltip: {
+                                enabled: true
+                            }
+                        }
+                    }
+                }
+                
+                
+            </script>
+            <script>
+                {
+
+                    var ctx = document.getElementById("Environmental Bill Pass Rate by Lobbying Position").getContext("2d");
+                    var mychart = new Chart(ctx, chart_data);
+                }
+            </script>
+        </div>
+    </body>
+</html>
+{% endraw  %}

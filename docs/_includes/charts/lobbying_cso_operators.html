@@ -1,0 +1,73 @@
+{% raw  %}
+<html>
+    <head>
+        <title>Total Lobbying Spend by Known CSO Operators</title>
+        <script src='https://cdn.jsdelivr.net/npm/chart.js@4.4.4/dist/chart.umd.min.js'></script>
+    </head>
+    <body>
+        <div style="width: 750px; height: 420px; max-width: 99%" class="chartjs">
+
+            <canvas id="Total Lobbying Spend by Known CSO Operators" height="420" width="750"></canvas>
+            <script>
+                Chart.defaults.font.size = 12;
+                var chart_data = {
+
+                    data: {
+                        labels: ["2010", "2011", "2012", "2013", "2014", "2015", "2016", "2017", "2018", "2019", "2020", "2021", "2022", "2023", "2024", "2025"],
+                        datasets: [{'data': [0.00540042, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0], 'label': 'BEDFORD, TOWN OF', 'backgroundColor': 'rgba(54, 110, 179, 0.85)', 'stack': 'a'},{'data': [0.00179805, 5.41e-05, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0], 'label': 'CITY OF FALL RIVER', 'backgroundColor': 'rgba(230, 140, 40, 0.85)', 'stack': 'a'},{'data': [0.09436377, 0.05854887, 0.05612393, 0.048077699999999994, 0.11349438, 0.11004707, 0.13274418, 0.138742, 0.12283958, 0.20525368, 0.19202392999999998, 0.21396651, 0.18477256, 0.20170198, 0.22145794, 0.22830851000000002], 'label': 'Massachusetts Municipal Association (CSO proxy)', 'backgroundColor': 'rgba(60, 170, 80, 0.85)', 'stack': 'a'},{'data': [0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.01, 0.015], 'label': 'SPRINGFIELD WATER & SEWER COMMISSION', 'backgroundColor': 'rgba(200, 60, 60, 0.85)', 'stack': 'a'}]
+                    },
+                    type: 'bar',
+                    options: {
+                        scales: {
+                            y: {
+                                display: true,
+                                title: {
+                                    display: true,
+                                    text: 'Annual lobbying spend ($M)'
+                                },
+                                position: 'left',
+                                stacked: true
+                            },
+                            y1: {
+                                display: false,
+                                title: {
+                                    display: true,
+                                    text: ''
+                                },
+                                position: 'right'
+                            },
+                            x: {
+                                title: {
+                                    display: true,
+                                    text: 'Year'
+                                },
+                                stacked: true,
+                                ticks: {
+                                    autoSkip: true
+                                }
+                            }
+                        },
+                        plugins: {
+                            legend: {
+                                display: true
+                            },
+                            tooltip: {
+                                enabled: true
+                            }
+                        }
+                    }
+                }
+                
+                
+            </script>
+            <script>
+                {
+
+                    var ctx = document.getElementById("Total Lobbying Spend by Known CSO Operators").getContext("2d");
+                    var mychart = new Chart(ctx, chart_data);
+                }
+            </script>
+        </div>
+    </body>
+</html>
+{% endraw  %}
