@@ -19,9 +19,77 @@ Outputs:
 import argparse
 import pandas as pd
 import datetime
+import re as _re
 from sqlalchemy import create_engine
 import os
 from generate_semantic_context import generate_semantic_context
+
+# Entity name normalization — applied at DB assembly time so raw portal names
+# are preserved in GCS CSVs while the DB exposes cleaned columns for analysis.
+#
+# Design:
+# 1. Strip d/b/a suffix first (before any other transforms) so the trade name
+#    doesn't bleed into the canonical form.
+# 2. Normalize hyphens -> spaces before punctuation removal, so "LAN-TEL" and
+#    "LAN TEL" collapse to the same key.
+# 3. Replace punctuation with a space (not '') so adjacent tokens don't
+#    concatenate (e.g. ",INC" -> " INC" -> caught by whole-word removal).
+# 4. Remove legal entity type words with whole-word regex so "INCORPORATED"
+#    and "CORP" are caught in addition to "LLC"/"INC".
+# 5. Remove "THE" as a whole word anywhere (leading or trailing) rather than
+#    just the prefix "THE ".
+_ENTITY_DBA_RE = _re.compile(
+	r'\s+D\s*/+B\s*/+A?\s+.*|\s+DBA\s+.*', _re.IGNORECASE)
+_ENTITY_LEGAL_RE = _re.compile(
+	r'\b(LLC|LLP|INC|INCORPORATED|CORPORATION|CORP|LTD|LIMITED|PC|PLLC)\b')
+_ENTITY_ARTICLE_RE = _re.compile(r'\bTHE\b')
+# Descriptive phrases dropped so variants of one firm's name group together
+# (e.g. "Smith & Associates" / "Smith Public Policy Group"). Word-boundary
+# anchored (not plain substring replace) so these never match inside an
+# unrelated word.
+_ENTITY_MISC = [
+	'LAW OFFICE OF', 'AND ASSOCIATES', '& ASSOCIATES', 'AND ASSOC',
+	'ATTORNEY AT LAW', 'ATTORNEY@LAW', 'ATTORNET AT LAW', 'AND PARTNERS',
+	'PUBLIC POLICY GROUP', 'LEGISLATIVE SERVICES', 'POLICY GROUP',
+	'ASSOCIATES', 'COUNSELLORS AT LAW',
+]
+_ENTITY_MISC_RES = [_re.compile(r'\b' + _re.escape(p) + r'\b') for p in _ENTITY_MISC]
+_ENTITY_GLUED_ASSOCIATES_RE = _re.compile(r'(\w)(ASSOCIATES)\b')
+_ENTITY_AND_ASSOC_RE = _re.compile(r'\bAND ASSOC(IATES)?\b')
+
+
+def _normalize_entity(x):
+	if not isinstance(x, str):
+		return x
+	x = x.upper()
+	x = _ENTITY_DBA_RE.sub('', x)             # strip d/b/a trade-name suffix
+	x = x.replace('-', ' ')                    # hyphen -> space
+	for ch in (',', '.', "'", '‘', '’', '(', ')'):
+		x = x.replace(ch, ' ')                # punctuation -> space (not '')
+	x = _ENTITY_LEGAL_RE.sub(' ', x)           # remove entity-type words
+	x = _ENTITY_ARTICLE_RE.sub(' ', x)         # remove THE (anywhere)
+	x = x.replace('&', ' AND ')                # ampersand -> AND, spaced ("A&B" -> "A AND B")
+	x = x.replace('ASSICIATES', 'ASSOCIATES')  # legacy typo fix
+	x = _ENTITY_GLUED_ASSOCIATES_RE.sub(r'\1 \2', x)  # "SMITHASSOCIATES" -> "SMITH ASSOCIATES"
+	base = _re.sub(r'\s+', ' ', x).strip()
+	# Strip descriptive phrases (ASSOCIATES, LEGISLATIVE SERVICES, POLICY
+	# GROUP, ...) UNLESS doing so would leave a bare one-word surname --
+	# that merges genuinely different firms that share a surname (verified
+	# against AMEND's own data: "Delaney & Associates", "Delaney
+	# Legislative Services", and "Delaney Policy Group" are three distinct,
+	# unrelated registrants that would otherwise all collapse to "DELANEY".
+	# Matches the fix sister project MAPLE made for the identical bug:
+	# codeforboston/maple#2280).
+	stripped = base
+	for phrase_re in _ENTITY_MISC_RES:
+		stripped = phrase_re.sub(' ', stripped)
+	stripped = _re.sub(r'\s+', ' ', stripped).strip()
+	if len(stripped.split()) < 2:
+		x = _ENTITY_AND_ASSOC_RE.sub('ASSOCIATES', base)
+	else:
+		x = stripped
+	return x
+
 
 if __name__ == '__main__':
 	parser = argparse.ArgumentParser()
@@ -319,50 +387,6 @@ if __name__ == '__main__':
 	print(f'MS4: {len(data_csv["MS4_AnnualReports"])} reports, {len(data_csv["MS4_TMDL"])} TMDL entries')
 
 	## MA Lobbying and Legislature data (loaded only if available; not yet in CI)
-
-	# Entity name normalization — applied at DB assembly time so raw portal names
-	# are preserved in GCS CSVs while the DB exposes cleaned columns for analysis.
-	#
-	# Design:
-	# 1. Strip d/b/a suffix first (before any other transforms) so the trade name
-	#    doesn't bleed into the canonical form.
-	# 2. Normalize hyphens -> spaces before punctuation removal, so "LAN-TEL" and
-	#    "LAN TEL" collapse to the same key.
-	# 3. Replace punctuation with a space (not '') so adjacent tokens don't
-	#    concatenate (e.g. ",INC" -> " INC" -> caught by whole-word removal).
-	# 4. Remove legal entity type words with whole-word regex so "INCORPORATED"
-	#    and "CORP" are caught in addition to "LLC"/"INC".
-	# 5. Remove "THE" as a whole word anywhere (leading or trailing) rather than
-	#    just the prefix "THE ".
-	import re as _re
-	_ENTITY_DBA_RE = _re.compile(
-		r'\s+D\s*/+B\s*/+A?\s+.*|\s+DBA\s+.*', _re.IGNORECASE)
-	_ENTITY_LEGAL_RE = _re.compile(
-		r'\b(LLC|LLP|INC|INCORPORATED|CORPORATION|CORP|LTD|LIMITED|PC|PLLC)\b')
-	_ENTITY_ARTICLE_RE = _re.compile(r'\bTHE\b')
-	_ENTITY_MISC = [
-		'LAW OFFICE OF', 'AND ASSOCIATES', '& ASSOCIATES', 'AND ASSOC',
-		'ATTORNEY AT LAW', 'ATTORNEY@LAW', 'ATTORNET AT LAW', 'AND PARTNERS',
-		'PUBLIC POLICY GROUP', 'LEGISLATIVE SERVICES', 'POLICY GROUP',
-		'ASSOCIATES', 'COUNSELLORS AT LAW',
-	]
-
-	def _normalize_entity(x):
-		if not isinstance(x, str):
-			return x
-		x = x.upper()
-		x = _ENTITY_DBA_RE.sub('', x)             # strip d/b/a trade-name suffix
-		x = x.replace('-', ' ')                    # hyphen -> space
-		for ch in (',', '.', "'", '\u2018', '\u2019', '(', ')'):
-			x = x.replace(ch, ' ')                # punctuation -> space (not '')
-		x = _ENTITY_LEGAL_RE.sub(' ', x)           # remove entity-type words
-		x = _ENTITY_ARTICLE_RE.sub(' ', x)         # remove THE (anywhere)
-		x = x.replace('&', 'AND')
-		x = x.replace('ASSICIATES', 'ASSOCIATES')  # legacy typo fix
-		for token in _ENTITY_MISC:
-			x = x.replace(token, ' ')
-		x = _re.sub(r'\s+', ' ', x).strip()
-		return x
 
 	_lobbying_employers_path = '../docs/data/MA_lobbying_employers.csv'
 	_lobbying_lobbyists_path = '../docs/data/MA_lobbying_lobbyists.csv'
