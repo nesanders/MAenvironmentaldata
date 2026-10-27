@@ -1,7 +1,7 @@
 ,entity_name,year,expense_type,date,payee,description,amount,entity_name_norm
-0,Grant Associates,2005,additional,1/1 to 6/30,1/1 to 6/30,Boston View Corporation Office and parking,5175.0,GRANT
-1,Grant Associates,2005,additional,1/1 to 6/30,1/1 to 6/30,Verizon NSTAR utilites,590.0,GRANT
-2,Grant Associates,2005,additional,,,Total amount,5765.0,GRANT
+0,Grant Associates,2005,additional,1/1 to 6/30,1/1 to 6/30,Boston View Corporation Office and parking,5175.0,GRANT ASSOCIATES
+1,Grant Associates,2005,additional,1/1 to 6/30,1/1 to 6/30,Verizon NSTAR utilites,590.0,GRANT ASSOCIATES
+2,Grant Associates,2005,additional,,,Total amount,5765.0,GRANT ASSOCIATES
 3,Eric Bourassa,2005,operating,7/1/2005-12/31/2005,Verizon,"Telephone, cell phone, handheld",30.0,ERIC BOURASSA
 4,Eric Bourassa,2005,operating,7/1/2005-12/31/2005,US Postal SErvice,"Postage, shipping, delivery",15.0,ERIC BOURASSA
 5,Eric Bourassa,2005,operating,,,Total operating expenses,45.0,ERIC BOURASSA
@@ -54,14 +54,14 @@
 52,Tevnan & Tevnan LLP,2005,additional,1/1/05,6/30/05,State House News Service Research,714.0,TEVNAN AND TEVNAN
 53,Tevnan & Tevnan LLP,2005,additional,1/1/05,6/30/05,Cynthia A. Eid Consulting services,30000.0,TEVNAN AND TEVNAN
 54,Tevnan & Tevnan LLP,2005,additional,,,Total amount,99466.0,TEVNAN AND TEVNAN
-55,Capital Associates Inc.,2005,operating,7-1-05 to 12-31-05,Verizon Wireless,"Telephone, cell phone, handheld",750.0,CAPITAL
-56,Capital Associates Inc.,2005,operating,7-1--05 to 12-31-05,Veriizon,"Telephone, cell phone, handheld",600.0,CAPITAL
-57,Capital Associates Inc.,2005,operating,7-1-05 to 12-31-05,Avaya,"Telephone, cell phone, handheld",150.0,CAPITAL
-58,Capital Associates Inc.,2005,operating,,,Total operating expenses,1500.0,CAPITAL
-59,Capital Associates Inc.,2005,additional,7,1,44 School St. LLC office rent,1500.0,CAPITAL
-60,Capital Associates Inc.,2005,additional,7,1,N Star electric bill,150.0,CAPITAL
-61,Capital Associates Inc.,2005,additional,7,1,Province St. Garage parking,600.0,CAPITAL
-62,Capital Associates Inc.,2005,additional,,,Total amount,2250.0,CAPITAL
+55,Capital Associates Inc.,2005,operating,7-1-05 to 12-31-05,Verizon Wireless,"Telephone, cell phone, handheld",750.0,CAPITAL ASSOCIATES
+56,Capital Associates Inc.,2005,operating,7-1--05 to 12-31-05,Veriizon,"Telephone, cell phone, handheld",600.0,CAPITAL ASSOCIATES
+57,Capital Associates Inc.,2005,operating,7-1-05 to 12-31-05,Avaya,"Telephone, cell phone, handheld",150.0,CAPITAL ASSOCIATES
+58,Capital Associates Inc.,2005,operating,,,Total operating expenses,1500.0,CAPITAL ASSOCIATES
+59,Capital Associates Inc.,2005,additional,7,1,44 School St. LLC office rent,1500.0,CAPITAL ASSOCIATES
+60,Capital Associates Inc.,2005,additional,7,1,N Star electric bill,150.0,CAPITAL ASSOCIATES
+61,Capital Associates Inc.,2005,additional,7,1,Province St. Garage parking,600.0,CAPITAL ASSOCIATES
+62,Capital Associates Inc.,2005,additional,,,Total amount,2250.0,CAPITAL ASSOCIATES
 63,Hub Strategies,2005,operating,3/13/05,us postmaster,"Postage, shipping, delivery",74.0,HUB STRATEGIES
 64,Hub Strategies,2005,operating,,,Total operating expenses,74.0,HUB STRATEGIES
 65,Deborah E Banda,2005,operating,7/27/05,Mass General Court & Secy of EOEA,"Postage, shipping, delivery",120.6,DEBORAH E BANDA
@@ -76,13 +76,13 @@
 74,Brian S. Hickey Associates,2005,additional,1/1/2005,6/30/2005,Northeast Business Trust Health,11400.0,BRIAN S HICKEY
 75,Brian S. Hickey Associates,2005,additional,1/1/2005,6/30/2005,Kate Piccolo Secretarial,18000.0,BRIAN S HICKEY
 76,Brian S. Hickey Associates,2005,additional,,,Total amount,80200.0,BRIAN S HICKEY
-77,Capital Associates Inc.,2005,operating,1/1/05-6/30/05,Verizon Wireless,"Telephone, cell phone, handheld",400.0,CAPITAL
-78,Capital Associates Inc.,2005,operating,1/1/05-6/30/05,Verizon,"Telephone, cell phone, handheld",360.0,CAPITAL
-79,Capital Associates Inc.,2005,operating,,,Total operating expenses,760.0,CAPITAL
-80,Capital Associates Inc.,2005,additional,1/1/05,6/30/05,"44 School St., LLC rent",1200.0,CAPITAL
-81,Capital Associates Inc.,2005,additional,1/1/05,6/30/05,NStar electricity,90.0,CAPITAL
-82,Capital Associates Inc.,2005,additional,1/1/05,6/30/05,Avaya telephone lease,60.0,CAPITAL
-83,Capital Associates Inc.,2005,additional,,,Total amount,1350.0,CAPITAL
+77,Capital Associates Inc.,2005,operating,1/1/05-6/30/05,Verizon Wireless,"Telephone, cell phone, handheld",400.0,CAPITAL ASSOCIATES
+78,Capital Associates Inc.,2005,operating,1/1/05-6/30/05,Verizon,"Telephone, cell phone, handheld",360.0,CAPITAL ASSOCIATES
+79,Capital Associates Inc.,2005,operating,,,Total operating expenses,760.0,CAPITAL ASSOCIATES
+80,Capital Associates Inc.,2005,additional,1/1/05,6/30/05,"44 School St., LLC rent",1200.0,CAPITAL ASSOCIATES
+81,Capital Associates Inc.,2005,additional,1/1/05,6/30/05,NStar electricity,90.0,CAPITAL ASSOCIATES
+82,Capital Associates Inc.,2005,additional,1/1/05,6/30/05,Avaya telephone lease,60.0,CAPITAL ASSOCIATES
+83,Capital Associates Inc.,2005,additional,,,Total amount,1350.0,CAPITAL ASSOCIATES
 84,Quinn & Morris,2005,operating,1/1/05-6/30/05,US Postal Service,"Postage, shipping, delivery",1125.0,QUINN AND MORRIS
 85,Quinn & Morris,2005,operating,1/1/05-6/30/05,Broadview Network,"Telephone, cell phone, handheld",2340.0,QUINN AND MORRIS
 86,Quinn & Morris,2005,operating,1/1/05-6/30/05,Cingular,"Telephone, cell phone, handheld",1291.0,QUINN AND MORRIS

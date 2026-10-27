@@ -1,16 +1,16 @@
 ,entity_name,year,date,lobbyist_name,recipient_name,office_sought,amount,entity_name_norm
-0,Grant Associates,2005,2/15/2005,Joseph M Grant,Sal Dimasi,Representative,200.0,GRANT
-1,Grant Associates,2005,2/15/2005,Joseph M Grant,Mark Montigney,Senate,200.0,GRANT
-2,Grant Associates,2005,2/15/2005,Joseph M Grant,Michael Morrisey,Senate,200.0,GRANT
-3,Grant Associates,2005,3/22/2005,Joseph M Grant,Robert  Antonioni,Senate,200.0,GRANT
-4,Grant Associates,2005,4/22/2005,Joseph M Grant,Joseph Wagner,Representative,200.0,GRANT
-5,Grant Associates,2005,4/22/2005,Joseph M Grant,Thomas  Kennedy,Representative,200.0,GRANT
-6,Grant Associates,2005,5/25/2005,Joseph M Grant,Richard Moore,Senate,200.0,GRANT
-7,Grant Associates,2005,5/4/2005,Joseph M Grant,Andrea Nuciforo,Senate,200.0,GRANT
-8,Grant Associates,2005,6/20/2005,Joseph M Grant,Robert Deleo,Representative,200.0,GRANT
-9,Grant Associates,2005,6/22/2005,Joseph M Grant,William Galvin,Representative,200.0,GRANT
-10,Grant Associates,2005,6/24/2005,Joseph M Grant,John Bienda,Representative,200.0,GRANT
-11,Grant Associates,2005,6/6/2005,Joseph M Grant,James Timilty,Senate,200.0,GRANT
+0,Grant Associates,2005,2/15/2005,Joseph M Grant,Sal Dimasi,Representative,200.0,GRANT ASSOCIATES
+1,Grant Associates,2005,2/15/2005,Joseph M Grant,Mark Montigney,Senate,200.0,GRANT ASSOCIATES
+2,Grant Associates,2005,2/15/2005,Joseph M Grant,Michael Morrisey,Senate,200.0,GRANT ASSOCIATES
+3,Grant Associates,2005,3/22/2005,Joseph M Grant,Robert  Antonioni,Senate,200.0,GRANT ASSOCIATES
+4,Grant Associates,2005,4/22/2005,Joseph M Grant,Joseph Wagner,Representative,200.0,GRANT ASSOCIATES
+5,Grant Associates,2005,4/22/2005,Joseph M Grant,Thomas  Kennedy,Representative,200.0,GRANT ASSOCIATES
+6,Grant Associates,2005,5/25/2005,Joseph M Grant,Richard Moore,Senate,200.0,GRANT ASSOCIATES
+7,Grant Associates,2005,5/4/2005,Joseph M Grant,Andrea Nuciforo,Senate,200.0,GRANT ASSOCIATES
+8,Grant Associates,2005,6/20/2005,Joseph M Grant,Robert Deleo,Representative,200.0,GRANT ASSOCIATES
+9,Grant Associates,2005,6/22/2005,Joseph M Grant,William Galvin,Representative,200.0,GRANT ASSOCIATES
+10,Grant Associates,2005,6/24/2005,Joseph M Grant,John Bienda,Representative,200.0,GRANT ASSOCIATES
+11,Grant Associates,2005,6/6/2005,Joseph M Grant,James Timilty,Senate,200.0,GRANT ASSOCIATES
 12,Fort Hill Advisors,2005,11/16/2005,Scott H. Bosworth,Edward Augustus,Senator,200.0,FORT HILL ADVISORS
 13,Fort Hill Advisors,2005,9/30/2005,Scott H. Bosworth,Michael F. Flaherty Jr.,"City Wide, Boston",200.0,FORT HILL ADVISORS
 14,Fort Hill Advisors,2005,06/09/2005,Joseph A. Giannino,James Valee,State Representative,100.0,FORT HILL ADVISORS
