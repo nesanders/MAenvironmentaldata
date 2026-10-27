@@ -108,6 +108,15 @@ ROW_DECREASE_TOLERANCE_PCT = {
     'EEADP_inspection.csv': 1.0,  # EEA API data source updates
     'EEADP_enforcement.csv': 1.0, # EEA API data source updates
     'MA_precipitation_daily.csv': 1.0,  # ACIS may retract recent provisional station-days
+    # The employers/bills dedup key now includes period_end (#126), so a
+    # legitimate amendment can supersede and remove a previously-recorded
+    # row via keep='last' -- a real, intended decrease, not data loss. Seen
+    # in production: MA_lobbying_bills.csv dropped by 5 rows (~0.001%) on
+    # 2026-10-05 and has been correctly stable there since; a 1.0% tolerance
+    # absorbs ordinary amendment churn while still catching a real fetch
+    # failure (which would be a much larger drop).
+    'MA_lobbying_employers.csv': 1.0,
+    'MA_lobbying_bills.csv': 1.0,
 }
 
 
