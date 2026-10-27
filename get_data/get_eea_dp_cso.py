@@ -21,8 +21,9 @@ Key implementation notes:
 Incremental fetching:
   When a cached CSV exists, we load it, find the max incidentDate, and fetch only
   records from that date onward (inclusive, to catch records that arrived after the
-  last pull).  Cached rows on the boundary date are dropped before merging so there
-  are no duplicates.  A full fetch is used when no cache exists.
+  last pull).  Cached rows on the boundary date are dropped before merging and the
+  result is deduplicated on incidentId; rows with no incidentDate ("No Events for
+  the month" reports) are kept.  A full fetch is used when no cache exists.
 
 Example API URL:
   https://eeaonline.eea.state.ma.us/dep/CSOAPI/api/Incident/GetIncidentsBySearchFields/
@@ -136,7 +137,12 @@ def get_data() -> pd.DataFrame:
         # freezing the dataset (this stalled CSO updates at 2026-04-19 for months).
         from_date = max_date.strftime('%d/%m/%Y')
         # Drop cached rows on the boundary date — the API refetch will include them.
-        existing = existing[existing['incidentDate'].dt.date < max_date.date()].copy()
+        # Keep rows with no incidentDate ("No Events for the month" reports): a bare
+        # `< max_date` comparison is False for NaT, so these were silently deleted on
+        # every incremental run, and the date-filtered refetch doesn't reliably
+        # return them. Duplicates are removed by incidentId after the merge.
+        existing = existing[existing['incidentDate'].isna()
+                            | (existing['incidentDate'].dt.date < max_date.date())].copy()
         print(f'  Cached data through {max_date.date()}; fetching from {from_date} (inclusive)')
     except FileNotFoundError:
         print('  No cache found; running full query')
@@ -158,6 +164,7 @@ def get_data() -> pd.DataFrame:
 
     if existing is not None:
         df = pd.concat([existing, new_df], ignore_index=True)
+        df = df.drop_duplicates(subset='incidentId', keep='last').reset_index(drop=True)
     else:
         df = new_df
 
