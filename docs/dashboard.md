@@ -197,6 +197,10 @@ This data provides the outcome measure for AMEND's regulatory inputs.**
 Data: [EPA 303(d) Integrated List of MA Impaired Waters]({{ site.url }}{{ site.baseurl }}/data/EPA_303d_ImpairedWaters.html).
 Full analysis: [MA Impaired Waters: Trends, Causes, and the CSO Connection]({{ site.url }}{{ site.baseurl }}/2026/04/11/ma-impaired-waters-303d.html).
 
+{% if site.data.ts_update_ATTAINS_303d.latest_cycle < 2024 %}
+*Note: Data after 2022 is not yet available. MassDEP released its 2024/2026 list as a draft in December 2025, and it will appear here once EPA approves it and MassGIS publishes the data.*
+{% endif %}
+
 <details>
 <summary>About this data and methodology</summary>
 
@@ -205,9 +209,9 @@ identifying waterbodies that fail water quality standards. MA submits the list t
 of even-numbered years; EPA typically approves it within 6–18 months.
 
 Data is sourced from MassGIS shapefiles. Available cycles: 2010, 2012, 2014, 2016, 2018, 2022.
-The 2024/2026 cycle is currently in draft — AMEND will automatically incorporate it
-when MassGIS publishes the approved data. Because cycles are released biennially, no new data
-appears between cycles.
+The 2024/2026 cycle is currently in draft. AMEND checks MassGIS weekly and flags a newly
+published cycle for addition to the dashboard. Because cycles are released biennially, no new
+data appears between cycles.
 
 "Impaired" in the trend chart includes Categories 4A, 4B, 4C (impaired but with a cleanup plan)
 and 5 (impaired, TMDL needed). Category 5 is the "303(d) list" proper. A TMDL (Total Maximum
