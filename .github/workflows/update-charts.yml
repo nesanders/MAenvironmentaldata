@@ -57,7 +57,9 @@ jobs:
             echo "No chart changes — skipping PR."
             exit 0
           fi
-          BRANCH="auto/charts-$(date -u +%Y-%m-%d)"
+          # Run ID keeps the name unique: a date-only name collides with a branch
+          # left by an earlier run the same UTC day, and the push is rejected.
+          BRANCH="auto/charts-$(date -u +%Y-%m-%d)-${GITHUB_RUN_ID}"
           git checkout -b "$BRANCH"
           git commit -m "Auto-update dashboard charts $(date -u +%Y-%m-%d)"
           git push origin "$BRANCH"
@@ -67,6 +69,8 @@ jobs:
             --base main \
             --head "$BRANCH"
           gh pr merge "$BRANCH" --squash
+          # Clean up the merged branch; a failed cleanup must not fail the data run.
+          git push origin --delete "$BRANCH" || echo "WARNING: could not delete $BRANCH"
 
       - name: Open issue on failure
         if: failure()
