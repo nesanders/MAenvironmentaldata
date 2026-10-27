@@ -10,7 +10,11 @@ MADEP_staff.csv: 12048
 MADEP_staff_SODA.csv: 15432
 MA_legislature_bills.csv: 39794
 MA_lobbying_bills.csv: 695028
+MA_lobbying_campaign_contributions.csv: 129366
+MA_lobbying_client_purposes.csv: 140509
 MA_lobbying_employers.csv: 65845
+MA_lobbying_expenses.csv: 81991
+MA_lobbying_lobbyists.csv: 7791
 MA_precipitation_daily.csv: 9796
 MassBudget_environmental_infadjusted.csv: 72
 MassBudget_environmental_noinfadjusted.csv: 72

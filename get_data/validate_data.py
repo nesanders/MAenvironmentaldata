@@ -86,18 +86,20 @@ MIN_ROWS = {
     'MA_lobbying_lobbyists.csv': 500,
     'MA_lobbying_bills.csv': 1000,
     'MA_legislature_bills.csv': 500,
+    'MA_lobbying_campaign_contributions.csv': 1000,
+    'MA_lobbying_expenses.csv': 1000,
+    'MA_lobbying_client_purposes.csv': 1000,
 }
 
 # Files that are not yet present on first CI run (populated by optional/manual fetch steps).
 # Missing files in this set produce a warning rather than a validation failure.
+# The four reparse-archive tables (lobbyists, campaign contributions, expenses,
+# client purposes) are deliberately NOT here: they were, and when CI skipped
+# restoring them from GCS they silently dropped out of AMEND.db for weeks.
 OPTIONAL_DATASETS = {
     'MA_lobbying_employers.csv',
-    'MA_lobbying_lobbyists.csv',
     'MA_lobbying_bills.csv',
     'MA_legislature_bills.csv',
-    'MA_lobbying_campaign_contributions.csv',
-    'MA_lobbying_expenses.csv',
-    'MA_lobbying_client_purposes.csv',
 }
 
 # Allow small row decreases (%) due to data source updates, API changes, etc.
