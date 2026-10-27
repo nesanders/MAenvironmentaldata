@@ -123,7 +123,17 @@ def main():
     print(f'Mode: {mode} | {len(all_batches)} total batches, '
           f'{len(processed)} already processed, {len(batches)} to process')
     if args.incremental and not batches:
-        print('No new batches — nothing to do.')
+        # These CSVs are gitignored, so a fresh CI runner only has them if they
+        # are pulled from GCS. _write() normally does that, but it never runs on
+        # this path -- and assemble_db.py silently skips any table whose CSV is
+        # absent, so on weeks with no new batches the DB shipped without them.
+        for name in ('MA_lobbying_employers.csv', 'MA_lobbying_bills.csv',
+                     'MA_lobbying_campaign_contributions.csv', 'MA_lobbying_lobbyists.csv',
+                     'MA_lobbying_expenses.csv', 'MA_lobbying_client_purposes.csv'):
+            if not (DATA_DIR / name).exists():
+                if os.system(f'gsutil -q cp {GCS_BUCKET}/{name} {DATA_DIR / name}') != 0:
+                    print(f'  WARNING: failed to restore {name} from GCS')
+        print('No new batches — nothing to do (existing CSVs restored from GCS).')
         return
 
     employers, bills, campaigns, edges, expenses, purposes = [], [], [], [], [], []
