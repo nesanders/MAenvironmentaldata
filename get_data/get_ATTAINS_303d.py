@@ -9,7 +9,12 @@ Data source: MassGIS (Massachusetts Bureau of Geographic Information)
 
 Available cycles: 2010, 2012, 2014, 2016, 2018, 2022 (see CYCLES dict below).
 Note: 2002–2008 are not available from MassGIS; 2020 is missing from the S3 bucket.
-The next cycle (2024) will be submitted April 2026 and added to CYCLES when published.
+
+New cycles are NOT ingested automatically: each cycle's DBF name and columns have
+differed, so a new one needs a CYCLES + IMPAIRMENT_DBF entry (and a _normalize check)
+added by hand.  To make sure a new cycle isn't missed, every run lists the MassGIS
+bucket and emits a GitHub Actions warning for any Integrated List zip not in CYCLES.
+The 2024/2026 list was released as a draft in Dec 2025 and is pending EPA approval.
 
 The impairment DBF (one row per assessment-unit × designated-use × impairment-cause) is read
 directly as a binary DBF file — no geopandas or shapefile reading needed.
@@ -37,6 +42,7 @@ Outputs:
 """
 
 import io
+import re
 import struct
 import zipfile
 import datetime
@@ -48,8 +54,8 @@ from urllib3.util.retry import Retry
 import pandas as pd
 
 # ── Cycle → S3 URL mapping ─────────────────────────────────────────────────────
-# Add new entries here when MassGIS publishes a new cycle.
-# 2024 cycle expected April 2026 after EPA approval of MA's submission.
+# Add new entries here when MassGIS publishes a new cycle (check_for_new_cycles()
+# warns when one appears).
 CYCLES = {
     2010: 'https://s3.us-east-1.amazonaws.com/download.massgis.digital.mass.gov/shapefiles/state/il2010_shp.zip',
     2012: 'https://s3.us-east-1.amazonaws.com/download.massgis.digital.mass.gov/shapefiles/state/il2012_shp.zip',
@@ -68,6 +74,9 @@ IMPAIRMENT_DBF = {
     2018: 'ATTAIN18.dbf',
     2022: 'IL_ATTAINS_2022.dbf',
 }
+
+MASSGIS_BUCKET_URL = 'https://s3.us-east-1.amazonaws.com/download.massgis.digital.mass.gov/'
+IL_KEY_PREFIX = 'shapefiles/state/il'
 
 OUTPUT_CSV = '../docs/data/EPA_303d_impairments.csv'
 SAMPLE_CSV = '../docs/data/EPA_303d_impairments_sample.csv'
@@ -244,7 +253,37 @@ def fetch_cycle(session: requests.Session, year: int) -> pd.DataFrame:
     return df
 
 
+def check_for_new_cycles(session: requests.Session) -> list[str]:
+    """Warn about Integrated List zips on MassGIS that aren't in CYCLES.
+
+    Lists the bucket rather than guessing filenames, since a new cycle may not
+    follow the il<YYYY>_shp.zip pattern (e.g. the combined 2024/2026 cycle).
+    A listing failure only prints a note: this check must never fail the run.
+    """
+    try:
+        resp = session.get(MASSGIS_BUCKET_URL,
+                           params={'list-type': '2', 'prefix': IL_KEY_PREFIX},
+                           timeout=(30, 60))
+        resp.raise_for_status()
+    except requests.RequestException as e:
+        print(f'  NOTE: could not list MassGIS bucket to check for new cycles: {e}')
+        return []
+
+    keys = re.findall(r'<Key>([^<]+)</Key>', resp.text)
+    known = {url.removeprefix(MASSGIS_BUCKET_URL) for url in CYCLES.values()}
+    new_keys = [k for k in keys if k.endswith('.zip') and k not in known]
+    for key in new_keys:
+        # ::warning:: surfaces as an annotation on the GitHub Actions run summary.
+        print(f'::warning title=New 303(d) cycle on MassGIS::{MASSGIS_BUCKET_URL}{key} '
+              'is not in CYCLES. Add it (plus IMPAIRMENT_DBF) to get_ATTAINS_303d.py '
+              'and review CSO_303d_Mapping in assemble_db.py.')
+    return new_keys
+
+
 def main():
+    session = _make_session()
+    check_for_new_cycles(session)
+
     cached = _get_cached_cycles()
     new_cycles = sorted(set(CYCLES.keys()) - cached)
 
@@ -253,7 +292,6 @@ def main():
         return
 
     print(f'Fetching 303(d) cycles: {new_cycles}')
-    session = _make_session()
 
     dfs = []
 

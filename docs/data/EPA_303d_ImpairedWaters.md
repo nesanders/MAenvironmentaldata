@@ -50,7 +50,7 @@ which publishes each approved cycle as shapefiles with tabular attribute files.
 The data from MassGIS has been archived on this site, last updated on
 **{{ site.data.ts_update_ATTAINS_303d.updated | date: "%-d %B %Y %I:%M %P" }}**
 (latest cycle: **{{ site.data.ts_update_ATTAINS_303d.latest_cycle }}**).
-AMEND checks weekly and will automatically incorporate new data when MassGIS publishes a new cycle;
+AMEND checks MassGIS weekly and flags a newly published cycle for addition to the archive;
 because data is only released biennially, no new data will appear between cycles.
 
 ## Download archive
